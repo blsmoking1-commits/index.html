@@ -38,7 +38,7 @@
         .btn-bluetooth { background: #7c3aed; color: white; }
         
         .tab-menu { display: flex; gap: 3px; margin-bottom: 15px; overflow-x: auto; }
-        .tab-btn { flex: 1; padding: 8px 4px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold; font-size: 10.5px; border-radius: 6px; cursor: pointer; text-align: center; white-space: nowrap; }
+        .tab-btn { flex: 1; padding: 8px 4px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold; font-size: 10px; border-radius: 6px; cursor: pointer; text-align: center; white-space: nowrap; }
         .tab-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
 
         .delegate-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; }
@@ -91,7 +91,7 @@
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
             <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
             <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
-            <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 رصيد السيارة</div>
+            <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة</div>
             <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف</div>
             <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
             <div id="tabLmInvoices" class="tab-btn" onclick="switchTab('lmInvoices')" style="display:none; background:#fef3c7;">🚬 فواتير LM</div>
@@ -125,13 +125,6 @@
 
         <!-- ب) الفواتير المحفوظة -->
         <div id="sectionSaved" style="display: none;">
-            <div id="adminFilterContainer" style="display:none; margin-bottom: 12px; background:#f8fafc; padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
-                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">🔍 فلترة وبحث:</h4>
-                <select id="adminFilterDelegate" class="form-control" style="font-size:12px; padding:6px; margin-bottom:6px;" onchange="renderSavedInvoices()">
-                    <option value="ALL">📋 عرض الكل (جميع المندوبين)</option>
-                </select>
-                <input type="text" id="adminClientSearch" placeholder="بحث باسم العميل..." style="font-size:12px; padding:6px;" oninput="renderSavedInvoices()">
-            </div>
             <h4 style="margin: 0 0 10px 0; font-size: 13px;">📂 سجل الفواتير السحابية:</h4>
             <div style="overflow-x: auto;">
                 <table class="report-table">
@@ -184,7 +177,7 @@
             </div>
         </div>
 
-        <!-- هـ) التحميل من منوف -->
+        <!-- هـ) التحميل من منوف (للمدير) -->
         <div id="sectionMenof" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (سعر الكرتونة = 23,925 ج.م | 1 كرتونة = 50 رابطة):</h4>
             <div class="filter-box">
@@ -200,7 +193,7 @@
             </table>
         </div>
 
-        <!-- و) المحلات -->
+        <!-- و) المحلات (للمدير) -->
         <div id="sectionShops" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (خصم بضاعة وتسجيل السداد):</h4>
             <div class="filter-box">
@@ -215,7 +208,7 @@
             </table>
         </div>
 
-        <!-- ز) فواتير LM -->
+        <!-- ز) فواتير LM (للمدير) -->
         <div id="sectionLmInvoices" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM (محمد وحسام):</h4>
             <div class="filter-box">
@@ -267,8 +260,6 @@
         const ADMIN_PASS = "Hossam2023@";
         const COMPANY_EMAIL = "hosamrezoo@gmail.com";
         const TARGET_PHONE_WA = "201011112764";
-
-        // رابط صورة الختم المرفق (يمكن استبداله بـ Base64 أو رابط مباشر)
         const STAMP_IMAGE_URL = "217.jpg";
 
         const defaultCarStock = { "1500000000": 100, "1500000002": 100, "1500000004": 100, "1500000005": 100, "1500000008": 100, "1500000009": 100, "1500000010": 100, "1500000146": 100 };
@@ -295,7 +286,7 @@
         let cloudShops = [];
         let cloudLmInvoices = [];
 
-        db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; if(document.getElementById('sectionSaved').style.display === 'block') renderSavedInvoices(); });
+        db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
         db.ref('delegates').on('value', (s) => { if(s.val()) cloudDelegates = s.val(); });
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); });
         db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; renderMenofTable(); });
@@ -369,6 +360,9 @@
                 }
             });
             if(tab === 'carStock') checkHandoverStatus();
+            if(tab === 'menof') renderMenofTable();
+            if(tab === 'shops') renderShopsTable();
+            if(tab === 'lmInvoices') renderLmTable();
         }
 
         function updateClientsDatalist() {
@@ -474,7 +468,6 @@
             return salesRecord;
         }
 
-        // طباعة الفاتورة متضمنة الختم في أسفل اليسار
         function printInvoiceWithStamp() {
             const rec = createInvoiceObject();
             if(!rec) return;
@@ -521,13 +514,9 @@
                         <hr>
                         <div class="footer-section">
                             <div>توقيع المندوب:<br>.............</div>
-                            <div>
-                                <img src="${STAMP_IMAGE_URL}" class="stamp-img" alt="ختم الشركة">
-                            </div>
+                            <div><img src="${STAMP_IMAGE_URL}" class="stamp-img" alt="ختم الشركة"></div>
                         </div>
-                        <script>
-                            window.onload = function() { window.print(); window.close(); }
-                        <\/script>
+                        <script>window.onload = function() { window.print(); window.close(); }<\/script>
                     </body>
                     </html>`;
                 printWindow.document.write(html);
@@ -545,6 +534,7 @@
 
         function renderSavedInvoices() {
             const tbody = document.getElementById('savedInvoicesBody');
+            if(!tbody) return;
             tbody.innerHTML = '';
             let filtered = cloudSales;
             if(currentDelegate.role !== 'admin') filtered = cloudSales.filter(s => s.delegateCode === currentDelegate.code);
@@ -575,6 +565,7 @@
             document.getElementById('repTotalAmount').innerText = total.toFixed(2);
             document.getElementById('repInvoiceCount').innerText = cloudSales.length;
             const tb = document.getElementById('repProductsBody');
+            if(!tb) return;
             tb.innerHTML = '';
             products.forEach(p => { tb.innerHTML += `<tr><td>${p.name}</td><td>${p.code}</td><td><b>${qMap[p.code]}</b></td></tr>`; });
         }
@@ -590,9 +581,12 @@
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             if(!date || cartons <= 0) { alert("أدخل التاريخ وعدد الكرتونات بشكل صحيح"); return; }
             const total = cartons * 23925;
-            cloudMenofLoads.push({ id: Date.now(), date, cartons, total, deposit });
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads));
-            alert("✅ تم تسجيل شحنة منوف بنجاح!");
+            const newLoad = { id: Date.now(), date, cartons, total, deposit };
+            cloudMenofLoads.push(newLoad);
+            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
+                alert("✅ تم تسجيل شحنة منوف بنجاح!");
+                renderMenofTable();
+            });
         }
         function renderMenofTable() {
             const tb = document.getElementById('menofTableBody');
@@ -610,9 +604,12 @@
             const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
             if(!shopName) { alert("أدخل اسم المحل"); return; }
             const balance = paid - goods;
-            cloudShops.push({ id: Date.now(), shopName, goods, paid, balance });
-            db.ref('shops').set(Object.assign({}, cloudShops));
-            alert("✅ تم حفظ معاملة المحل بنجاح!");
+            const newShop = { id: Date.now(), shopName, goods, paid, balance };
+            cloudShops.push(newShop);
+            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
+                alert("✅ تم حفظ معاملة المحل بنجاح!");
+                renderShopsTable();
+            });
         }
         function renderShopsTable() {
             const tb = document.getElementById('shopsTableBody');
@@ -648,9 +645,12 @@
                 totalSell += (cartons * 50) * sellRibbon;
             });
             const profitLoss = totalSell - totalBuy;
-            cloudLmInvoices.push({ id: Date.now(), type, deposit, totalBuy, totalSell, profitLoss });
-            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices));
-            alert("✅ تم حفظ فاتورة LM بنجاح!");
+            const newLm = { id: Date.now(), type, deposit, totalBuy, totalSell, profitLoss };
+            cloudLmInvoices.push(newLm);
+            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => {
+                alert("✅ تم حفظ فاتورة LM بنجاح!");
+                renderLmTable();
+            });
         }
         function renderLmTable() {
             const tb = document.getElementById('lmInvoicesTableBody');
@@ -704,8 +704,7 @@
             const pass = document.getElementById('newAccPass').value.trim();
             if(!code || !name || !pass) { alert("أدخل كافة بيانات الحساب الجديد"); return; }
             cloudDelegates[code] = { pass, name, role: 'delegate', carStock: {...defaultCarStock}, locked: false };
-            db.ref('delegates').set(cloudDelegates);
-            alert("✅ تم إنشاء الحساب بنجاح!");
+            db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم إنشاء الحساب بنجاح!"); });
         }
 
         function changeMyPassword() {
@@ -714,8 +713,7 @@
             if(!cur || !neu) return;
             if(cloudDelegates[currentDelegate.code].pass === cur) {
                 cloudDelegates[currentDelegate.code].pass = neu;
-                db.ref('delegates').set(cloudDelegates);
-                alert("✅ تم تغيير كلمة السر بنجاح!");
+                db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم تغيير كلمة السر بنجاح!"); });
             } else { alert("❌ كلمة السر الحالية خطأ!"); }
         }
     </script>
