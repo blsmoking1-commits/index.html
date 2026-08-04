@@ -93,6 +93,7 @@
             <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
             <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
             <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة</div>
+            <div id="tabRatios" class="tab-btn" onclick="switchTab('ratios')" style="background:#e0f2fe;">⚖️ حساب النسب</div>
             <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف</div>
             <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
             <div id="tabLmInvoices" class="tab-btn" onclick="switchTab('lmInvoices')" style="display:none; background:#fef3c7;">🚬 فواتير LM</div>
@@ -150,7 +151,7 @@
             </div>
         </div>
 
-        <!-- ج) التقارير المحدثة (تفصيل بالكرتونة والروابط المتبقية) -->
+        <!-- ج) التقارير -->
         <div id="sectionReport" style="display: none;">
             <div class="filter-box">
                 <h4>📊 تخصيص التقارير والفترة الزمنية:</h4>
@@ -222,23 +223,46 @@
             </div>
         </div>
 
-        <!-- هـ) التحميل من منوف (للمدير) -->
+        <!-- هـ) حساب النسب (كليوباترا إلى بوكس / براون / سوبر) -->
+        <div id="sectionRatios" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل (كليوباترا : بوكس / براون / سوبر):</h4>
+            <div class="filter-box">
+                <div style="display:flex; gap:8px;">
+                    <div class="form-group" style="flex:1;"><label>نسبة كليوباترا:</label><input type="number" id="ratioCleopatra" value="2" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة البوكس:</label><input type="number" id="ratioBox" value="1" oninput="calcRatioLoading()"></div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <div class="form-group" style="flex:1;"><label>نسبة براون (اختياري):</label><input type="number" id="ratioBrown" value="0" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة سوبر (اختياري):</label><input type="number" id="ratioSuper" value="0" oninput="calcRatioLoading()"></div>
+                </div>
+                <div class="form-group">
+                    <label>إجمالي الكرتونات المراد تحميلها إجمالاً:</label>
+                    <input type="number" id="totalCartonsTarget" placeholder="مثال: 30" oninput="calcRatioLoading()">
+                </div>
+                <div id="ratioResultBox" style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-top:10px; font-size:13px; color:#166534;">
+                    أدخل النسب وإجمالي الكرتونات لعرض ما يجب تحميله لكل صنف.
+                </div>
+            </div>
+        </div>
+
+        <!-- و) التحميل من منوف (للمدير مع خانة الذمم) -->
         <div id="sectionMenof" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (سعر الكرتونة = 23,925 ج.م | 1 كرتونة = 50 رابطة):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (سعر الكرتونة = 23,925 ج.م | مع حساب الذمم):</h4>
             <div class="filter-box">
                 <div class="form-group"><label>تاريخ التحميل:</label><input type="date" id="menofDate"></div>
                 <div class="form-group"><label>عدد الكرتونات المحملة:</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
                 <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات: <b id="menofTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
-                <div class="form-group"><label>قيمة الإيداع المالي:</label><input type="number" id="menofDeposit" placeholder="0"></div>
+                <div class="form-group"><label>قيمة الإيداع المالي:</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#dc2626;">الذمم (المتبقي علي الحساب): <b id="menofZimam">0.00</b> ج.م</div>
                 <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل شحنة منوف المالية</button>
             </div>
             <table class="report-table">
-                <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>الإجمالي</th><th>الإيداع</th><th>الحالة</th></tr></thead>
+                <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>الإجمالي</th><th>الإيداع</th><th>الذمم</th><th>الحالة</th></tr></thead>
                 <tbody id="menofTableBody"></tbody>
             </table>
         </div>
 
-        <!-- و) المحلات (للمدير) -->
+        <!-- ز) المحلات (للمدير) -->
         <div id="sectionShops" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (خصم بضاعة وتسجيل السداد):</h4>
             <div class="filter-box">
@@ -253,7 +277,7 @@
             </table>
         </div>
 
-        <!-- ز) فواتير LM (للمدير) -->
+        <!-- ح) فواتير LM (للمدير) -->
         <div id="sectionLmInvoices" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM (محمد وحسام):</h4>
             <div class="filter-box">
@@ -271,7 +295,7 @@
             </table>
         </div>
 
-        <!-- ح) الإعدادات -->
+        <!-- ط) الإعدادات -->
         <div id="sectionSettings" style="display: none;">
             <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px; margin-bottom:12px;">
                 <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر:</h4>
@@ -452,7 +476,7 @@
         }
 
         function switchTab(tab) {
-            const tabs = ['invoice', 'saved', 'report', 'carStock', 'menof', 'shops', 'lmInvoices', 'settings'];
+            const tabs = ['invoice', 'saved', 'report', 'carStock', 'ratios', 'menof', 'shops', 'lmInvoices', 'settings'];
             tabs.forEach(t => {
                 let btnId = '';
                 if(t === 'invoice') btnId = 'tabNewInvoice';
@@ -758,7 +782,7 @@
             } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
         }
 
-        // دالة التقارير المحدثة (تحسب الكرتونات والروابط المتبقية بدقة)
+        // دالة التقارير المحدثة
         function renderDailyReport() {
             const selDel = document.getElementById('reportDelegateSelect').value;
             const selClient = document.getElementById('reportClientSelect').value;
@@ -811,8 +835,8 @@
             tb.innerHTML = '';
             products.forEach(p => { 
                 let ribbons = qMap[p.code];
-                let cartons = Math.floor(ribbons / 50); // عدد الكرتونات الكاملة
-                let remRibbons = ribbons % 50; // الروابط المتبقية التي لا تكمل كرتونة
+                let cartons = Math.floor(ribbons / 50); 
+                let remRibbons = ribbons % 50; 
                 
                 let qtyDisplay = `${cartons} كرتونة`;
                 if(remRibbons > 0) {
@@ -829,6 +853,36 @@
                     <td><b style="color:#2563eb;">${qtyDisplay}</b></td>
                 </tr>`; 
             });
+        }
+
+        // حاسبة النسب (كليوباترا / بوكس / براون / سوبر)
+        function calcRatioLoading() {
+            const rc = parseFloat(document.getElementById('ratioCleopatra').value) || 0;
+            const rb = parseFloat(document.getElementById('ratioBox').value) || 0;
+            const rBr = parseFloat(document.getElementById('ratioBrown').value) || 0;
+            const rSu = parseFloat(document.getElementById('ratioSuper').value) || 0;
+            const totalTarget = parseFloat(document.getElementById('totalCartonsTarget').value) || 0;
+
+            const sumRatio = rc + rb + rBr + rSu;
+            const boxRes = document.getElementById('ratioResultBox');
+
+            if(sumRatio <= 0 || totalTarget <= 0) {
+                boxRes.innerHTML = "أدخل النسب وإجمالي الكرتونات بشكل صحيح.";
+                return;
+            }
+
+            let cShare = (rc / sumRatio) * totalTarget;
+            let bShare = (rb / sumRatio) * totalTarget;
+            let brShare = (rBr / sumRatio) * totalTarget;
+            let suShare = (rSu / sumRatio) * totalTarget;
+
+            boxRes.innerHTML = `
+                <b>📌 الكميات المطلوب تحميلها بناءً على النسب:</b><br>
+                - كليوباترا: <b>${cShare.toFixed(2)}</b> كرتونة<br>
+                - بوكس: <b>${bShare.toFixed(2)}</b> كرتونة<br>
+                ${rBr > 0 ? `- براون: <b>${brShare.toFixed(2)}</b> كرتونة<br>` : ''}
+                ${rSu > 0 ? `- سوبر: <b>${suShare.toFixed(2)}</b> كرتونة<br>` : ''}
+            `;
         }
 
         // رصيد السيارة وجرد نهاية اليوم
@@ -936,21 +990,27 @@
             });
         }
 
-        // منوف
+        // منوف (مع حساب الذمم تلقائياً)
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
-            document.getElementById('menofTotalPrice').innerText = (cartons * 23925).toFixed(2);
+            const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
+            const total = cartons * 23925;
+            const zimam = total - deposit;
+            document.getElementById('menofTotalPrice').innerText = total.toFixed(2);
+            document.getElementById('menofZimam').innerText = zimam > 0 ? zimam.toFixed(2) : "0.00";
         }
+
         function saveMenofLoad() {
             const date = document.getElementById('menofDate').value;
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             if(!date || cartons <= 0) { alert("أدخل التاريخ وعدد الكرتونات بشكل صحيح"); return; }
             const total = cartons * 23925;
-            const newLoad = { id: Date.now(), date, cartons, total, deposit };
+            const zimam = total - deposit > 0 ? total - deposit : 0;
+            const newLoad = { id: Date.now(), date, cartons, total, deposit, zimam };
             cloudMenofLoads.push(newLoad);
             db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
-                alert("✅ تم تسجيل شحنة منوف بنجاح!");
+                alert("✅ تم تسجيل شحنة منوف وحساب الذمم بنجاح!");
                 renderMenofTable();
             });
         }
@@ -959,7 +1019,15 @@
             if(!tb) return;
             tb.innerHTML = '';
             cloudMenofLoads.forEach(l => {
-                tb.innerHTML += `<tr><td>${l.date}</td><td>${l.cartons} كرتونة (=${l.cartons*50} رابطة)</td><td>${l.total} ج.م</td><td>${l.deposit} ج.م</td><td>تم التحميل</td></tr>`;
+                const zVal = l.zimam !== undefined ? l.zimam : (l.total - l.deposit > 0 ? l.total - l.deposit : 0);
+                tb.innerHTML += `<tr>
+                    <td>${l.date}</td>
+                    <td>${l.cartons} كرتونة</td>
+                    <td>${l.total} ج.م</td>
+                    <td>${l.deposit} ج.م</td>
+                    <td><b style="color:#dc2626;">${zVal} ج.م</b></td>
+                    <td>مسجل</td>
+                </tr>`;
             });
         }
 
