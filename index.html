@@ -210,7 +210,7 @@
                 <tbody id="carStockTableBody"></tbody>
             </table>
 
-            <div style="margin-top: 15px; background:#f8fafc; padding:12px; border:1px solid #cbd5e1; border-radius:8px;">
+            <div id="handoverBoxContainer" style="margin-top: 15px; background:#f8fafc; padding:12px; border:1px solid #cbd5e1; border-radius:8px;">
                 <h5 style="margin:0 0 8px 0; color:#2563eb;">🌙 جرد نهاية اليوم لتسليم السيارة للإدارة:</h5>
                 <div id="handoverItemsInputs"></div>
                 <button class="btn btn-primary" style="margin-top:8px;" onclick="submitCarHandover()">إرسال جرد نهاية اليوم للمدير (حسام)</button>
@@ -223,7 +223,7 @@
             </div>
         </div>
 
-        <!-- هـ) حساب النسب (كليوباترا إلى بوكس / براون / سوبر) -->
+        <!-- هـ) حساب النسب (كليوباترا : بوكس / براون / سوبر) -->
         <div id="sectionRatios" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل (كليوباترا : بوكس / براون / سوبر):</h4>
             <div class="filter-box">
@@ -308,6 +308,13 @@
                 <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode"></div>
                 <div class="form-group"><label>اسم المستخدم:</label><input type="text" id="newAccName"></div>
                 <div class="form-group"><label>كلمة السر:</label><input type="password" id="newAccPass"></div>
+                <div class="form-group">
+                    <label>نوع الحساب:</label>
+                    <select id="newAccRole" class="form-control">
+                        <option value="delegate">مندوب مبيعات</option>
+                        <option value="viewer">مشاهد فقط (بدون صلاحيات تعديل)</option>
+                    </select>
+                </div>
                 <button class="btn btn-success" onclick="createNewUserAccount()">إنشاء الحساب</button>
             </div>
         </div>
@@ -397,8 +404,15 @@
             document.getElementById('salesView').style.display = 'block';
 
             setupUserTabs();
-            switchTab('invoice');
-            initSalesForm();
+            
+            // إذا كان المستخدم مشاهد فقط، نوجهه مباشرة للتقارير أو الفواتير المحفوظة
+            if (currentDelegate.role === 'viewer') {
+                switchTab('saved');
+            } else {
+                switchTab('invoice');
+                initSalesForm();
+            }
+
             initLmFormInputs();
             initHandoverInputs();
             initAdminCarSetup();
@@ -414,6 +428,12 @@
 
         function setupUserTabs() {
             const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
+            const isViewer = (currentDelegate.role === 'viewer');
+
+            // إخفاء تبويب الفواتير وحساب النسب للمشاهد فقط
+            document.getElementById('tabNewInvoice').style.display = isViewer ? 'none' : 'block';
+            document.getElementById('tabRatios').style.display = isViewer ? 'none' : 'block';
+            
             document.getElementById('tabMenof').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabShops').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabLmInvoices').style.display = isAdm ? 'block' : 'none';
@@ -421,6 +441,10 @@
             document.getElementById('adminCarSetupBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminHandoversApprovalBox').style.display = isAdm ? 'block' : 'none';
             
+            // إخفاء زر إرسال جرد نهاية اليوم للمشاهد فقط
+            const handoverBox = document.getElementById('handoverBoxContainer');
+            if(handoverBox) handoverBox.style.display = isViewer ? 'none' : 'block';
+
             const repDelSel = document.getElementById('reportDelegateSelect');
             if(!isAdm) {
                 repDelSel.innerHTML = `<option value="${currentDelegate.code}">${currentDelegate.name}</option>`;
@@ -541,6 +565,7 @@
         }
 
         function initSalesForm() {
+            if(currentDelegate.role === 'viewer') return;
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('invoiceDate');
             dateInput.value = today;
@@ -593,6 +618,7 @@
         }
 
         function createInvoiceObject() {
+            if(currentDelegate.role === 'viewer') { alert("❌ حساب مشاهد فقط غير مسموح له بإنشاء فواتير!"); return null; }
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const clientCode = document.getElementById('lblClientCode').innerText;
             const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
@@ -701,13 +727,14 @@
                 printWindow.document.write(html);
                 printWindow.document.close();
             }
-            if(!specificInv) {
+            if(!specificInv && currentDelegate.role !== 'viewer') {
                 alert("✅ تم حفظ الفاتورة وطباعتها مع الختم الرسمي بنجاح!");
                 initSalesForm();
             }
         }
 
         function saveAndEmailOnly() { 
+            if(currentDelegate.role === 'viewer') { alert("❌ غير مسموح لك بالحفظ!"); return; }
             const rec = createInvoiceObject();
             if(rec) {
                 alert("✅ تم حفظ الفاتورة بنجاح!");
@@ -736,20 +763,24 @@
             if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5">لا توجد فواتير مطابقة.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
+                let actionButtons = `<button class="btn btn-primary" style="padding:2px 6px; font-size:10px;" onclick="printInvoiceWithStamp(cloudSales.find(x=>x.id==='${inv.id}'))">طباعة مباشرة</button>`;
+                
+                if(currentDelegate.role === 'admin') {
+                    actionButtons += `
+                        <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editInvoice('${inv.id}')">تعديل</button>
+                        <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteInvoice('${inv.id}')">حذف</button>
+                    `;
+                }
+
                 tbody.innerHTML += `<tr>
                     <td><b>#${inv.invNo}</b></td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td>
-                    <td>
-                        <button class="btn btn-primary" style="padding:2px 6px; font-size:10px;" onclick="printInvoiceWithStamp(cloudSales.find(x=>x.id==='${inv.id}'))">طباعة مباشرة</button>
-                        ${currentDelegate.role === 'admin' ? `
-                            <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editInvoice('${inv.id}')">تعديل</button>
-                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteInvoice('${inv.id}')">حذف</button>
-                        ` : ''}
-                    </td>
+                    <td>${actionButtons}</td>
                 </tr>`;
             });
         }
 
         function editInvoice(id) {
+            if(currentDelegate.role === 'viewer') return;
             const pass = prompt("🔒 أدخل كلمة سر المدير للتعديل:");
             if(pass === ADMIN_PASS) {
                 const inv = cloudSales.find(s => String(s.id) === String(id));
@@ -771,6 +802,7 @@
         }
 
         function deleteInvoice(id) {
+            if(currentDelegate.role === 'viewer') return;
             const pass = prompt("🔒 أدخل كلمة سر المدير للحذف:");
             if(pass === ADMIN_PASS) {
                 if(confirm("هل تريد حذف الفاتورة نهائياً؟")) {
@@ -782,7 +814,6 @@
             } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
         }
 
-        // دالة التقارير المحدثة
         function renderDailyReport() {
             const selDel = document.getElementById('reportDelegateSelect').value;
             const selClient = document.getElementById('reportClientSelect').value;
@@ -855,7 +886,6 @@
             });
         }
 
-        // حاسبة النسب (كليوباترا / بوكس / براون / سوبر)
         function calcRatioLoading() {
             const rc = parseFloat(document.getElementById('ratioCleopatra').value) || 0;
             const rb = parseFloat(document.getElementById('ratioBox').value) || 0;
@@ -885,12 +915,17 @@
             `;
         }
 
-        // رصيد السيارة وجرد نهاية اليوم
         function renderCarStockTable() {
             const tb = document.getElementById('carStockTableBody');
             if(!tb) return;
             tb.innerHTML = '';
-            const carStock = (currentDelegate.role === 'admin') ? defaultCarStock : (cloudDelegates[currentDelegate.code] ? cloudDelegates[currentDelegate.code].carStock : defaultCarStock);
+            let targetCode = currentDelegate.code;
+            if(currentDelegate.role === 'admin') {
+                targetCode = document.getElementById('filterDelegateSelect') ? document.getElementById('filterDelegateSelect').value : '101';
+                if(targetCode === 'ALL') targetCode = '101';
+            }
+            const carStock = (currentDelegate.role === 'admin') ? (cloudDelegates[targetCode] ? cloudDelegates[targetCode].carStock : defaultCarStock) : (cloudDelegates[currentDelegate.code] ? cloudDelegates[currentDelegate.code].carStock : defaultCarStock);
+            
             products.forEach(p => {
                 const qtyCartons = carStock ? (carStock[p.code] || 0) : 0;
                 tb.innerHTML += `<tr><td>${p.name}</td><td><b>${qtyCartons.toFixed(2)}</b> كرتونة</td></tr>`;
@@ -935,6 +970,7 @@
         }
 
         function submitCarHandover() {
+            if(currentDelegate.role === 'viewer') return;
             let handoverData = {};
             products.forEach((p, idx) => {
                 handoverData[p.code] = parseFloat(document.getElementById(`handover_q_${idx}`).value) || 0;
@@ -952,7 +988,7 @@
 
         function checkHandoverStatus() {
             const msg = document.getElementById('handoverStatusMsg');
-            if(!msg) return;
+            if(!msg || currentDelegate.role === 'viewer') return;
             db.ref('handovers/' + currentDelegate.code).once('value', snapshot => {
                 const h = snapshot.val();
                 if(!h) { msg.innerText = "لم تقم بإرسال جرد نهاية اليوم بعد."; msg.style.color = "#64748b"; return; }
@@ -990,7 +1026,6 @@
             });
         }
 
-        // منوف (مع حساب الذمم تلقائياً)
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
@@ -1001,6 +1036,7 @@
         }
 
         function saveMenofLoad() {
+            if(currentDelegate.role === 'viewer') return;
             const date = document.getElementById('menofDate').value;
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
@@ -1031,8 +1067,8 @@
             });
         }
 
-        // المحلات
         function saveShopTransaction() {
+            if(currentDelegate.role === 'viewer') return;
             const shopName = document.getElementById('shopNameInput').value.trim();
             const goods = parseFloat(document.getElementById('shopGoodsVal').value) || 0;
             const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
@@ -1055,7 +1091,6 @@
             });
         }
 
-        // فواتير LM
         function initLmFormInputs() {
             const cont = document.getElementById('lmItemsContainer');
             if(!cont) return;
@@ -1069,6 +1104,7 @@
             });
         }
         function saveLmInvoice() {
+            if(currentDelegate.role === 'viewer') return;
             const type = document.getElementById('lmInvoiceType').value;
             const deposit = parseFloat(document.getElementById('lmDeposit').value) || 0;
             let totalBuy = 0, totalSell = 0;
@@ -1103,8 +1139,9 @@
             const code = document.getElementById('newAccCode').value.trim();
             const name = document.getElementById('newAccName').value.trim();
             const pass = document.getElementById('newAccPass').value.trim();
+            const role = document.getElementById('newAccRole').value;
             if(!code || !name || !pass) { alert("أدخل كافة بيانات الحساب الجديد"); return; }
-            cloudDelegates[code] = { pass, name, role: 'delegate', carStock: {...defaultCarStock}, locked: false };
+            cloudDelegates[code] = { pass, name, role: role, carStock: {...defaultCarStock}, locked: false };
             db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم إنشاء الحساب بنجاح!"); });
         }
 
