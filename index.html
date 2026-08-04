@@ -352,13 +352,22 @@
         function switchTab(tab) {
             const tabs = ['invoice', 'saved', 'report', 'carStock', 'menof', 'shops', 'lmInvoices', 'settings'];
             tabs.forEach(t => {
-                const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+                let btnId = '';
+                if(t === 'invoice') btnId = 'tabNewInvoice';
+                else if(t === 'saved') btnId = 'tabSavedInvoices';
+                else if(t === 'report') btnId = 'tabDailyReport';
+                else btnId = 'tab' + t.charAt(0).toUpperCase() + t.slice(1);
+
+                const btn = document.getElementById(btnId);
                 const sec = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
                 if(btn && sec) {
                     if(t === tab) { btn.classList.add('active'); sec.style.display = 'block'; }
                     else { btn.classList.remove('active'); sec.style.display = 'none'; }
                 }
             });
+
+            if(tab === 'saved') renderSavedInvoices();
+            if(tab === 'report') renderDailyReport();
             if(tab === 'carStock') checkHandoverStatus();
             if(tab === 'menof') renderMenofTable();
             if(tab === 'shops') renderShopsTable();
