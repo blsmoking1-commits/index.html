@@ -9,7 +9,7 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
         body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
-        .card { max-width: 600px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .card { max-width: 650px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .text-center { text-align: center; }
         
         .logo-box {
@@ -56,6 +56,7 @@
         .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
         .report-table th, .report-table td { border: 1px solid #cbd5e1; padding: 6px; text-align: center; }
         .report-table th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; }
+        .client-history-box { background: #fef08a; padding: 8px; border-radius: 6px; font-size: 11px; margin-top: 6px; display: none; color: #713f12; }
     </style>
 </head>
 <body>
@@ -106,6 +107,7 @@
                 <input type="text" id="clientName" list="clientsListOptions" placeholder="اكتب أو اختر اسم العميل..." oninput="onClientNameInput()">
                 <datalist id="clientsListOptions"></datalist>
                 <div style="font-size: 11px; color: #64748b; margin-top: 3px;">كود العميل الثابت: <b id="lblClientCode" style="color:#2563eb;">--</b></div>
+                <div id="clientMonthlyHistory" class="client-history-box"></div>
             </div>
 
             <div style="display: flex; gap: 8px;">
@@ -123,8 +125,14 @@
             <div id="statusAlert" class="status-alert"></div>
         </div>
 
-        <!-- ب) الفواتير المحفوظة (مع أزرار الطباعة، التعديل، والحذف للأدمن) -->
+        <!-- ب) الفواتير المحفوظة والتحكم في المناديب -->
         <div id="sectionSaved" style="display: none;">
+            <div class="filter-box" id="adminDelegateFilterBox" style="display:none;">
+                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">👤 فلترة مبيعات المناديب:</h4>
+                <select id="filterDelegateSelect" class="form-control" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
+                    <option value="ALL">📋 عرض كل المناديب</option>
+                </select>
+            </div>
             <h4 style="margin: 0 0 10px 0; font-size: 13px;">📂 سجل الفواتير السحابية:</h4>
             <div style="overflow-x: auto;">
                 <table class="report-table">
@@ -162,18 +170,32 @@
             </table>
         </div>
 
-        <!-- د) رصيد السيارة وجرد التسليم -->
+        <!-- د) رصيد السيارة وجرد التسليم وموافقات المدير -->
         <div id="sectionCarStock" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد السيارة الحالي (بالرابطة):</h4>
+            
+            <div id="adminCarSetupBox" style="display:none; background:#eff6ff; padding:10px; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:10px;">
+                <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ تعيين كمية السيارة الأولية (للمدير):</h5>
+                <select id="selectDelegateForStock" class="form-control" style="margin-bottom:6px; font-size:11px;"></select>
+                <div id="adminCarStockInputs" style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;"></div>
+                <button class="btn btn-primary" style="padding:6px; font-size:11px;" onclick="saveAdminCarStock()">حفظ رصيد السيارة للمندوب</button>
+            </div>
+
             <table class="report-table">
                 <thead><tr><th>الصنف</th><th>المتبقي بالسيارة</th></tr></thead>
                 <tbody id="carStockTableBody"></tbody>
             </table>
+
             <div style="margin-top: 15px; background:#f8fafc; padding:12px; border:1px solid #cbd5e1; border-radius:8px;">
                 <h5 style="margin:0 0 8px 0; color:#2563eb;">📋 جرد تسليم السيارة للإدارة:</h5>
                 <div id="handoverItemsInputs"></div>
                 <button class="btn btn-primary" style="margin-top:8px;" onclick="submitCarHandover()">إرسال الجرد للمدير (حسام)</button>
                 <div id="handoverStatusMsg" style="margin-top:8px; font-weight:bold; font-size:12px;"></div>
+            </div>
+
+            <div id="adminHandoversApprovalBox" style="display:none; margin-top:15px; background:#fef3c7; padding:12px; border-radius:8px; border:1px solid #fde047;">
+                <h5 style="margin:0 0 8px 0; color:#b45309;">🔔 موافقات جرود المناديب المعلقة (حسام):</h5>
+                <div id="pendingHandoversList">لا توجد جرود معلقة.</div>
             </div>
         </div>
 
@@ -285,13 +307,15 @@
         let cloudMenofLoads = [];
         let cloudShops = [];
         let cloudLmInvoices = [];
+        let cloudHandovers = {};
 
         db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; if(document.getElementById('sectionSaved').style.display === 'block') renderSavedInvoices(); });
-        db.ref('delegates').on('value', (s) => { if(s.val()) cloudDelegates = s.val(); });
+        db.ref('delegates').on('value', (s) => { if(s.val()) { cloudDelegates = s.val(); updateDelegatesSelects(); } });
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); });
         db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; renderMenofTable(); });
         db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; renderShopsTable(); });
         db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; renderLmTable(); });
+        db.ref('handovers').on('value', (s) => { cloudHandovers = s.val() || {}; if(currentDelegate && currentDelegate.role === 'admin') renderPendingHandovers(); });
 
         const products = [
             { name: "سوفت كوين", code: "1500000000" }, { name: "كيلوبترا بوكس", code: "1500000002" },
@@ -318,7 +342,7 @@
                 if (dDB[code].locked) { alert("❌ الحساب مقفل!"); return; }
                 if (dDB[code].pass === pass) {
                     currentDelegate = { code: code, name: dDB[code].name, role: dDB[code].role || 'delegate' };
-                } else { alert("❌ كلمة السر غير صحيحة!"); return; }
+                } else { alert("❌ كلمة السر غير صحيحةة!"); return; }
             } else { alert("❌ كود المستخدم غير موجود!"); return; }
 
             document.getElementById('lblDelegateName').innerText = currentDelegate.name;
@@ -331,6 +355,7 @@
             initSalesForm();
             initLmFormInputs();
             initHandoverInputs();
+            initAdminCarSetup();
         }
 
         function handleLogout() {
@@ -346,7 +371,34 @@
             document.getElementById('tabMenof').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabShops').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabLmInvoices').style.display = isAdm ? 'block' : 'none';
-            if(isAdm) document.getElementById('adminUserManagement').style.display = 'block';
+            document.getElementById('adminDelegateFilterBox').style.display = isAdm ? 'block' : 'none';
+            document.getElementById('adminCarSetupBox').style.display = isAdm ? 'block' : 'none';
+            document.getElementById('adminHandoversApprovalBox').style.display = isAdm ? 'block' : 'none';
+            if(isAdm) {
+                document.getElementById('adminUserManagement').style.display = 'block';
+                updateDelegatesSelects();
+            }
+        }
+
+        function updateDelegatesSelects() {
+            const selFilter = document.getElementById('filterDelegateSelect');
+            const selStock = document.getElementById('selectDelegateForStock');
+            if(selFilter) {
+                selFilter.innerHTML = '<option value="ALL">📋 عرض كل المناديب</option>';
+                for(let code in cloudDelegates) {
+                    if(cloudDelegates[code].role !== 'admin') {
+                        selFilter.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
+                    }
+                }
+            }
+            if(selStock) {
+                selStock.innerHTML = '';
+                for(let code in cloudDelegates) {
+                    if(cloudDelegates[code].role !== 'admin') {
+                        selStock.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
+                    }
+                }
+            }
         }
 
         function switchTab(tab) {
@@ -368,7 +420,7 @@
 
             if(tab === 'saved') renderSavedInvoices();
             if(tab === 'report') renderDailyReport();
-            if(tab === 'carStock') checkHandoverStatus();
+            if(tab === 'carStock') { renderCarStockTable(); checkHandoverStatus(); if(currentDelegate.role === 'admin') renderPendingHandovers(); }
             if(tab === 'menof') renderMenofTable();
             if(tab === 'shops') renderShopsTable();
             if(tab === 'lmInvoices') renderLmTable();
@@ -384,13 +436,33 @@
         function onClientNameInput() {
             const val = document.getElementById('clientName').value.trim();
             const lblCode = document.getElementById('lblClientCode');
-            if(!val) { lblCode.innerText = "--"; return; }
-            if(cloudClients[val]) lblCode.innerText = cloudClients[val];
-            else {
+            const historyBox = document.getElementById('clientMonthlyHistory');
+            
+            if(!val) { 
+                lblCode.innerText = "--"; 
+                historyBox.style.display = 'none';
+                return; 
+            }
+            
+            if(cloudClients[val]) {
+                lblCode.innerText = cloudClients[val];
+            } else {
                 const newCode = "C-" + Math.floor(1000 + Math.random() * 9000);
                 cloudClients[val] = newCode;
                 db.ref('clients').set(cloudClients);
                 lblCode.innerText = newCode;
+            }
+
+            // عرض مبيعات العميل لهذا الشهر
+            let clientSales = cloudSales.filter(s => s.client && s.client.toLowerCase() === val.toLowerCase());
+            if(clientSales.length > 0) {
+                let totalMonth = clientSales.reduce((sum, item) => sum + item.total, 0);
+                let details = clientSales.map(i => `فاتورة #${i.invNo}: ${i.total} ج.م (${i.date})`).join(' | ');
+                historyBox.style.display = 'block';
+                historyBox.innerHTML = `<b>📊 مبيعات العميل هذا الشهر:</b> إجمالي الصافي = ${totalMonth} ج.م<br><span style="font-size:10px;">${details}</span>`;
+            } else {
+                historyBox.style.display = 'block';
+                historyBox.innerHTML = `<b>📊 مبيعات العميل هذا الشهر:</b> لا توجد فواتير سابقة مسجلة لهذا العميل.`;
             }
         }
 
@@ -400,6 +472,7 @@
             document.getElementById('editInvoiceId').value = '';
             document.getElementById('clientName').value = '';
             document.getElementById('lblClientCode').innerText = '--';
+            document.getElementById('clientMonthlyHistory').style.display = 'none';
             
             const list = document.getElementById('productsList');
             list.innerHTML = '';
@@ -546,9 +619,18 @@
             const tbody = document.getElementById('savedInvoicesBody');
             if(!tbody) return;
             tbody.innerHTML = '';
+            
             let filtered = cloudSales;
-            if(currentDelegate.role !== 'admin') filtered = cloudSales.filter(s => s.delegateCode === currentDelegate.code);
-            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5">لا توجد فواتير.</td></tr>`; return; }
+            const selectedDel = document.getElementById('filterDelegateSelect').value;
+            
+            if(currentDelegate.role !== 'admin') {
+                filtered = cloudSales.filter(s => s.delegateCode === currentDelegate.code);
+            } else if(selectedDel && selectedDel !== 'ALL') {
+                filtered = cloudSales.filter(s => s.delegateCode === selectedDel);
+            }
+
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5">لا توجد فواتير مطابقة.</td></tr>`; return; }
+            
             filtered.slice().reverse().forEach(inv => {
                 tbody.innerHTML += `<tr>
                     <td><b>#${inv.invNo}</b></td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td>
@@ -610,6 +692,111 @@
             if(!tb) return;
             tb.innerHTML = '';
             products.forEach(p => { tb.innerHTML += `<tr><td>${p.name}</td><td>${p.code}</td><td><b>${qMap[p.code]}</b></td></tr>`; });
+        }
+
+        // رصيد السيارة وجرد التسليم وموافقات المدير
+        function renderCarStockTable() {
+            const tb = document.getElementById('carStockTableBody');
+            if(!tb) return;
+            tb.innerHTML = '';
+            const carStock = (currentDelegate.role === 'admin') ? defaultCarStock : (cloudDelegates[currentDelegate.code] ? cloudDelegates[currentDelegate.code].carStock : defaultCarStock);
+            products.forEach(p => {
+                const qty = carStock ? (carStock[p.code] || 0) : 0;
+                tb.innerHTML += `<tr><td>${p.name}</td><td><b>${qty}</b> رابطة</td></tr>`;
+            });
+        }
+
+        function initAdminCarSetup() {
+            const cont = document.getElementById('adminCarStockInputs');
+            if(!cont) return;
+            cont.innerHTML = '';
+            products.forEach((p, idx) => {
+                cont.innerHTML += `<div>
+                    <label style="font-size:9.5px; color:#475569;">${p.name}</label>
+                    <input type="number" id="adm_stock_${idx}" value="100" style="padding:4px; font-size:11px;" min="0">
+                </div>`;
+            });
+        }
+
+        function saveAdminCarStock() {
+            const delCode = document.getElementById('selectDelegateForStock').value;
+            if(!cloudDelegates[delCode]) return;
+            let newStock = {};
+            products.forEach((p, idx) => {
+                newStock[p.code] = parseFloat(document.getElementById(`adm_stock_${idx}`).value) || 0;
+            });
+            cloudDelegates[delCode].carStock = newStock;
+            db.ref('delegates').set(cloudDelegates).then(() => {
+                alert("✅ تم تعيين كمية السيارة الأولية للمندوب بنجاح!");
+            });
+        }
+
+        function initHandoverInputs() {
+            const cont = document.getElementById('handoverItemsInputs');
+            if(!cont) return;
+            cont.innerHTML = '';
+            products.forEach((p, idx) => {
+                cont.innerHTML += `<div style="display:flex; gap:6px; margin-bottom:5px; align-items:center;">
+                    <span style="flex:2; font-size:11px;">${p.name}:</span>
+                    <input type="number" id="handover_q_${idx}" placeholder="الرابطة الفعلي" style="flex:1; padding:4px;" min="0">
+                </div>`;
+            });
+        }
+
+        function submitCarHandover() {
+            let handoverData = {};
+            products.forEach((p, idx) => {
+                handoverData[p.code] = parseFloat(document.getElementById(`handover_q_${idx}`).value) || 0;
+            });
+            db.ref('handovers/' + currentDelegate.code).set({
+                delegateCode: currentDelegate.code,
+                delegateName: currentDelegate.name, 
+                items: handoverData, 
+                status: 'pending', 
+                timestamp: Date.now()
+            });
+            alert("📤 تم إرسال الجرد للمدير (حسام)، بانتظار الموافقة.");
+            checkHandoverStatus();
+        }
+
+        function checkHandoverStatus() {
+            const msg = document.getElementById('handoverStatusMsg');
+            if(!msg) return;
+            db.ref('handovers/' + currentDelegate.code).once('value', snapshot => {
+                const h = snapshot.val();
+                if(!h) { msg.innerText = "لم تقم بإرسال جرد اليوم بعد."; msg.style.color = "#64748b"; return; }
+                if(h.status === 'pending') { msg.innerText = "⏳ بانتظار موافقة حسام (تم إرسال الجرد)"; msg.style.color = "#d97706"; }
+                else if(h.status === 'approved') { msg.innerText = "✅ تمت الموافقة على الجرد من قبل حسام بنجاح!"; msg.style.color = "#16a34a"; }
+            });
+        }
+
+        function renderPendingHandovers() {
+            const cont = document.getElementById('pendingHandoversList');
+            if(!cont) return;
+            db.ref('handovers').once('value', snapshot => {
+                const hData = snapshot.val();
+                if(!hData) { cont.innerHTML = "لا توجد جرود معلقة."; return; }
+                cont.innerHTML = '';
+                for(let dCode in hData) {
+                    let h = hData[dCode];
+                    if(h.status === 'pending') {
+                        let itemsSummary = Object.keys(h.items).map(k => `${k}: ${h.items[k]}`).join(', ');
+                        cont.innerHTML += `<div style="background:#fff; padding:8px; border-radius:6px; margin-bottom:6px; border:1px solid #fcd34d;">
+                            <b>المندوب: ${h.delegateName} (${dCode})</b><br>
+                            <span style="font-size:10px;">الكميات: ${itemsSummary}</span><br>
+                            <button class="btn btn-success" style="padding:4px 8px; font-size:11px; margin-top:4px;" onclick="approveHandover('${dCode}')">موافقة واعتماد الجرد</button>
+                        </div>`;
+                    }
+                }
+                if(cont.innerHTML === '') cont.innerHTML = "لا توجد جرود معلقة حالياً.";
+            });
+        }
+
+        function approveHandover(dCode) {
+            db.ref('handovers/' + dCode + '/status').set('approved').then(() => {
+                alert("✅ تمت الموافقة على الجرد بنجاح!");
+                renderPendingHandovers();
+            });
         }
 
         // منوف
@@ -704,39 +891,6 @@
                     <td>${i.deposit} ج.م</td><td>${i.totalBuy} ج.م</td><td>${i.totalSell} ج.م</td>
                     <td><b style="color:${i.profitLoss>=0?'#16a34a':'#dc2626'}">${i.profitLoss} ج.م</b></td>
                 </tr>`;
-            });
-        }
-
-        // جرد السيارة وموافقة حسام
-        function initHandoverInputs() {
-            const cont = document.getElementById('handoverItemsInputs');
-            if(!cont) return;
-            cont.innerHTML = '';
-            products.forEach((p, idx) => {
-                cont.innerHTML += `<div style="display:flex; gap:6px; margin-bottom:5px; align-items:center;">
-                    <span style="flex:2; font-size:11px;">${p.name}:</span>
-                    <input type="number" id="handover_q_${idx}" placeholder="الرابطة الفعلي" style="flex:1; padding:4px;" min="0">
-                </div>`;
-            });
-        }
-        function submitCarHandover() {
-            let handoverData = {};
-            products.forEach((p, idx) => {
-                handoverData[p.code] = parseFloat(document.getElementById(`handover_q_${idx}`).value) || 0;
-            });
-            db.ref('handovers/' + currentDelegate.code).set({
-                delegateName: currentDelegate.name, items: handoverData, status: 'pending', timestamp: Date.now()
-            });
-            checkHandoverStatus();
-        }
-        function checkHandoverStatus() {
-            const msg = document.getElementById('handoverStatusMsg');
-            if(!msg) return;
-            db.ref('handovers/' + currentDelegate.code).once('value', snapshot => {
-                const h = snapshot.val();
-                if(!h) { msg.innerText = "لم تقم بإرسال جرد اليوم بعد."; msg.style.color = "#64748b"; return; }
-                if(h.status === 'pending') { msg.innerText = "⏳ بانتظار موافقة حسام (تم إرسال الجرد)"; msg.style.color = "#d97706"; }
-                else if(h.status === 'approved') { msg.innerText = "✅ تمت الموافقة على الجرد من قبل حسام بنجاح!"; msg.style.color = "#16a34a"; }
             });
         }
 
