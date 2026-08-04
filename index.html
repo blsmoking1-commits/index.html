@@ -262,17 +262,19 @@
             </table>
         </div>
 
-        <!-- ز) المحلات (للمدير) -->
+        <!-- ز) المحلات (سعر الكرتونة 23,925) -->
         <div id="sectionShops" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (خصم بضاعة وتسجيل السداد):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (سعر الكرتونة = 23,925 ج.م):</h4>
             <div class="filter-box">
                 <div class="form-group"><label>اسم المحل:</label><input type="text" id="shopNameInput" placeholder="اكتب اسم المحل..."></div>
-                <div class="form-group"><label>قيمة البضاعة المسلمة:</label><input type="number" id="shopGoodsVal" placeholder="0"></div>
-                <div class="form-group"><label>المبلغ المسدد (الواصل):</label><input type="number" id="shopPaidVal" placeholder="0"></div>
+                <div class="form-group"><label>عدد كرتونات البضاعة للمحل:</label><input type="number" id="shopCartons" placeholder="0" oninput="calcShopTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي قيمة البضاعة: <b id="shopTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
+                <div class="form-group"><label>المبلغ المسدد (الإيداع):</label><input type="number" id="shopPaidVal" placeholder="0" oninput="calcShopTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#dc2626;">الذمم (المتبقي على المحل): <b id="shopZimam">0.00</b> ج.م</div>
                 <button class="btn btn-primary" onclick="saveShopTransaction()">حفظ معاملة المحل</button>
             </div>
             <table class="report-table">
-                <thead><tr><th>المحل</th><th>إجمالي البضاعة</th><th>المسدد</th><th>الرصيد / المديونية</th></tr></thead>
+                <thead><tr><th>المحل</th><th>الكرتونات</th><th>إجمالي البضاعة</th><th>المسدد</th><th>الذمم</th><th>الحالة</th></tr></thead>
                 <tbody id="shopsTableBody"></tbody>
             </table>
         </div>
@@ -405,7 +407,6 @@
 
             setupUserTabs();
             
-            // إذا كان المستخدم مشاهد فقط، نوجهه مباشرة للتقارير أو الفواتير المحفوظة
             if (currentDelegate.role === 'viewer') {
                 switchTab('saved');
             } else {
@@ -430,7 +431,6 @@
             const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
             const isViewer = (currentDelegate.role === 'viewer');
 
-            // إخفاء تبويب الفواتير وحساب النسب للمشاهد فقط
             document.getElementById('tabNewInvoice').style.display = isViewer ? 'none' : 'block';
             document.getElementById('tabRatios').style.display = isViewer ? 'none' : 'block';
             
@@ -441,7 +441,6 @@
             document.getElementById('adminCarSetupBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminHandoversApprovalBox').style.display = isAdm ? 'block' : 'none';
             
-            // إخفاء زر إرسال جرد نهاية اليوم للمشاهد فقط
             const handoverBox = document.getElementById('handoverBoxContainer');
             if(handoverBox) handoverBox.style.display = isViewer ? 'none' : 'block';
 
@@ -1067,17 +1066,27 @@
             });
         }
 
+        function calcShopTotal() {
+            const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
+            const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
+            const total = cartons * 23925;
+            const zimam = total - paid;
+            document.getElementById('shopTotalPrice').innerText = total.toFixed(2);
+            document.getElementById('shopZimam').innerText = zimam > 0 ? zimam.toFixed(2) : "0.00";
+        }
+
         function saveShopTransaction() {
             if(currentDelegate.role === 'viewer') return;
             const shopName = document.getElementById('shopNameInput').value.trim();
-            const goods = parseFloat(document.getElementById('shopGoodsVal').value) || 0;
+            const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
             const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
-            if(!shopName) { alert("أدخل اسم المحل"); return; }
-            const balance = paid - goods;
-            const newShop = { id: Date.now(), shopName, goods, paid, balance };
+            if(!shopName || cartons <= 0) { alert("أدخل اسم المحل وعدد الكرتونات بشكل صحيح"); return; }
+            const goods = cartons * 23925;
+            const zimam = goods - paid > 0 ? goods - paid : 0;
+            const newShop = { id: Date.now(), shopName, cartons, goods, paid, zimam };
             cloudShops.push(newShop);
             db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
-                alert("✅ تم حفظ معاملة المحل بنجاح!");
+                alert("✅ تم حفظ معاملة المحل وحساب الذمم بنجاح!");
                 renderShopsTable();
             });
         }
@@ -1086,8 +1095,15 @@
             if(!tb) return;
             tb.innerHTML = '';
             cloudShops.forEach(s => {
-                let status = s.balance > 0 ? `رصيد له: ${s.balance}` : (s.balance < 0 ? `مديونية عليه: ${Math.abs(s.balance)}` : `خالص`);
-                tb.innerHTML += `<tr><td>${s.shopName}</td><td>${s.goods} ج.م</td><td>${s.paid} ج.م</td><td><b style="color:${s.balance>=0?'#16a34a':'#dc2626'}">${status}</b></td></tr>`;
+                const zVal = s.zimam !== undefined ? s.zimam : (s.goods - s.paid > 0 ? s.goods - s.paid : 0);
+                tb.innerHTML += `<tr>
+                    <td>${s.shopName}</td>
+                    <td>${s.cartons || (s.goods / 23925).toFixed(1)} كرتونة</td>
+                    <td>${s.goods} ج.م</td>
+                    <td>${s.paid} ج.م</td>
+                    <td><b style="color:#dc2626;">${zVal} ج.م</b></td>
+                    <td>مسجل</td>
+                </tr>`;
             });
         }
 
