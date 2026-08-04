@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام مبيعات المندوب - شركة بلاك هورس</title>
+    <!-- استدعاء مكتبة فايربيس السحابية للربط اللحظي الفوري بين الأجهزة -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+        body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
+        .card { max-width: 500px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .text-center { text-align: center; }
+        
+        .logo-box {
+            background: #0f172a;
+            color: #fff;
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .logo-box h1 { margin: 0; font-size: 22px; letter-spacing: 0.5px; }
+        .logo-box p { margin: 4px 0 0 0; font-size: 11px; color: #38bdf8; font-weight: bold; }
+        .tax-info { font-size: 9.5px; color: #94a3b8; margin-top: 6px; }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #334155; }
+        .form-group input, .form-group select { width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13.5px; }
+        .readonly-input { background-color: #f1f5f9; color: #64748b; cursor: not-allowed; font-weight: bold; }
+
+        .btn { width: 100%; padding: 11px; border: none; border-radius: 8px; font-weight: bold; font-size: 13.5px; cursor: pointer; transition: 0.2s; margin-top: 6px; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-success { background: #16a34a; color: white; }
+        .btn-info { background: #0284c7; color: white; }
+        .btn-whatsapp { background: #25d366; color: white; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-bluetooth { background: #7c3aed; color: white; }
+        
+        .tab-menu { display: flex; gap: 4px; margin-bottom: 15px; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 8px 4px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold; font-size: 11px; border-radius: 6px; cursor: pointer; text-align: center; white-space: nowrap; }
+        .tab-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+
+        .delegate-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; }
+        
+        .product-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+        .product-title { font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .product-code { font-size: 11px; color: #64748b; font-family: monospace; }
+        .input-row { display: flex; gap: 6px; }
+        .input-row div { flex: 1; }
+        .input-row label { font-size: 9.5px; color: #64748b; display: block; }
+        .input-row input { width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 12px; font-weight: bold; }
+        
+        .grand-box { background: #0f172a; color: #fff; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; margin: 12px 0; }
+        
+        .status-alert { padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-top: 10px; text-align: center; display: none; }
+        .status-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .status-loading { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+
+        .filter-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+        .filter-box h4 { margin: 0 0 10px 0; font-size: 13px; color: #0f172a; }
+        .filter-grid { display: flex; gap: 8px; }
+        .filter-grid div { flex: 1; }
+
+        .summary-card { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 8px; margin-bottom: 12px; text-align: center; }
+        .summary-card h4 { margin: 0; color: #166534; font-size: 13px; }
+        .summary-card .val { font-size: 20px; font-weight: bold; color: #15803d; margin-top: 4px; }
+        
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+        .report-table th, .report-table td { border: 1px solid #cbd5e1; padding: 6px; text-align: center; }
+        .report-table th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. شاشة تسجيل الدخول -->
+    <div id="loginView" class="card">
+        <div class="logo-box">
+            <h1>BLACK HORSE</h1>
+            <p>شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية</p>
+            <div class="tax-info">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027</div>
+        </div>
+
+        <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل دخول المندوب / الإدارة</h3>
+        
+        <div class="form-group">
+            <label>كود المستخدم:</label>
+            <input type="text" id="loginCode" placeholder="أدخل الكود (مثال: 101 أو المدير: admin)">
+        </div>
+        <div class="form-group">
+            <label>كلمة السر:</label>
+            <input type="password" id="loginPass" placeholder="أدخل كلمة السر">
+        </div>
+        <button class="btn btn-primary" onclick="handleLogin()">دخول للنظام ➔</button>
+    </div>
+
+    <!-- 2. شاشة العمل والتنقل -->
+    <div id="salesView" class="card" style="display: none;">
+        <div class="delegate-info">
+            <span>👤 المستخدم: <span id="lblDelegateName" style="color: #2563eb;">--</span> (كود: <span id="lblDelegateCode">--</span>)</span>
+            <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
+        </div>
+
+        <!-- تبويبات التنقل -->
+        <div class="tab-menu">
+            <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة جديدة</div>
+            <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير المحفوظة</div>
+            <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
+            <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 رصيد السيارة</div>
+            <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات</div>
+        </div>
+
+        <!-- محتوى الفاتورة الجديدة -->
+        <div id="sectionInvoice">
+            <input type="hidden" id="editInvoiceId" value="">
+            <div class="form-group">
+                <label>اسم العميل / المحل (مع البحث التلقائي والأكواد):</label>
+                <input type="text" id="clientName" list="clientsListOptions" placeholder="اكتب أو اختر اسم العميل..." oninput="onClientNameInput()">
+                <datalist id="clientsListOptions"></datalist>
+                <div style="font-size: 11px; color: #64748b; margin-top: 3px;">كود العميل الثابت: <b id="lblClientCode" style="color:#2563eb;">--</b></div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>رقم الفاتورة:</label>
+                    <input type="text" id="invoiceNo" value="1001">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>التاريخ:</label>
+                    <input type="text" id="invoiceDate" readonly class="readonly-input">
+                </div>
+            </div>
+
+            <div id="productsList"></div>
+
+            <div class="grand-box">
+                الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م
+            </div>
+
+            <button class="btn btn-bluetooth" onclick="printViaBluetoothXP323B()">🖨️ طباعة فورية (آيفون وأندرويد)</button>
+            <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ وإرسال للإيميل فقط</button>
+            <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال الفاتورة عبر واتساب</button>
+            
+            <div id="statusAlert" class="status-alert"></div>
+        </div>
+
+        <!-- محتوى الفواتير المحفوظة والتحكم -->
+        <div id="sectionSaved" style="display: none;">
+            <div id="adminFilterContainer" style="display:none; margin-bottom: 12px; background:#f8fafc; padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">🔍 لوحة تحكم المدير - فلترة وبحث:</h4>
+                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                    <div style="flex:1;">
+                        <label style="font-size:10px; color:#64748b;">عرض حسب المندوب:</label>
+                        <select id="adminFilterDelegate" class="form-control" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
+                            <option value="ALL">📋 عرض الكل (جميع المندوبين)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:10px; color:#64748b;">بحث باسم العميل:</label>
+                    <input type="text" id="adminClientSearch" placeholder="اكتب اسم العميل للبحث..." style="font-size:12px; padding:6px;" oninput="renderSavedInvoices()">
+                </div>
+            </div>
+
+            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📂 سجل الفواتير المحفوظة بالسحابة:</h4>
+            <div style="overflow-x: auto;">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>الفاتورة</th>
+                            <th>العميل (الكود)</th>
+                            <th>المندوب</th>
+                            <th>الإجمالي</th>
+                            <th id="thLocationCol" style="display:none;">موقع GPS</th>
+                            <th>إجراءات المدير</th>
+                        </tr>
+                    </thead>
+                    <tbody id="savedInvoicesBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- محتوى التقارير للمدير والمناديب -->
+        <div id="sectionReport" style="display: none;">
+            <div class="filter-box">
+                <h4>📅 تحديد الفترة الزمنية للتقرير:</h4>
+                <div class="filter-grid">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>من تاريخ:</label>
+                        <input type="date" id="filterFromDate" onchange="renderDailyReport()">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>إلى تاريخ:</label>
+                        <input type="date" id="filterToDate" onchange="renderDailyReport()">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px; margin-top: 8px;">
+                    <button class="btn btn-primary" style="padding: 6px; font-size:11px;" onclick="setQuickDateRange('today')">مبيعات اليوم</button>
+                    <button class="btn btn-primary" style="padding: 6px; font-size:11px;" onclick="setQuickDateRange('month1')">آخر شهر</button>
+                    <button class="btn btn-primary" style="padding: 6px; font-size:11px;" onclick="setQuickDateRange('month3')">آخر 3 أشهر</button>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <h4>إجمالي مبيعات الفترة المحددة</h4>
+                <div class="val"><span id="repTotalAmount">0.00</span> ج.م</div>
+                <div style="font-size: 11px; color: #475569; margin-top: 2px;">عدد الفواتير بالفترة: <b id="repInvoiceCount">0</b></div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <button class="btn btn-info" onclick="sendReportViaEmail()">📩 إرسال التقرير للإيميل</button>
+                <button class="btn btn-whatsapp" onclick="sendReportViaWhatsApp()">📲 إرسال التقرير عبر واتساب</button>
+            </div>
+
+            <h4 style="margin: 10px 0 5px 0; font-size: 12px; color: #0f172a;">📦 إجمالي الكميات المباعة بالفترة لكل صنف:</h4>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th style="text-align: right;">الصنف</th>
+                        <th>كود الصنف</th>
+                        <th>إجمالي الكميات (ك)</th>
+                    </tr>
+                </thead>
+                <tbody id="repProductsBody"></tbody>
+            </table>
+
+            <div style="margin-top: 20px; border-top: 1px dashed #cbd5e1; padding-top: 12px;" id="adminResetContainer">
+                <button class="btn btn-danger" onclick="adminResetSales()">🔒 تصفير مبيعات الفترة</button>
+            </div>
+        </div>
+
+        <!-- محتوى رصيد السيارة -->
+        <div id="sectionCarStock" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد السيارة الحالي (الباقي بالسيارة):</h4>
+            <p style="font-size:11px; color:#64748b;">هذا الرصيد ينقص تلقائياً كلما قمت بإتمام بيع فاتورة جديدة.</p>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th style="text-align: right;">الصنف</th>
+                        <th>الرصيد المتبقي بالسيارة (ك)</th>
+                    </tr>
+                </thead>
+                <tbody id="carStockTableBody"></tbody>
+            </table>
+            <div id="adminCarStockControl" style="display:none; margin-top:15px; background:#f8fafc; padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                <h5 style="margin:0 0 6px 0; color:#b91c1c;">🛡️ شحن أو تعديل رصيد سيارة مندوب:</h5>
+                <div class="form-group">
+                    <label>اختر المندوب:</label>
+                    <select id="adminCarDelegateSelect" class="form-control" style="font-size:12px; padding:6px;"></select>
+                </div>
+                <button class="btn btn-primary" onclick="adminLoadCarStockForEdit()">تحميل رصيد المندوب للتعديل</button>
+                <div id="adminCarEditContainer" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
+        <!-- محتوى الإعدادات وتغيير كلمة السر -->
+        <div id="sectionSettings" style="display: none;">
+            <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px;">
+                <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر الخاصة بك:</h4>
+                <div class="form-group">
+                    <label>كلمة السر الحالية:</label>
+                    <input type="password" id="currentPassInput" placeholder="أدخل كلمة السر الحالية">
+                </div>
+                <div class="form-group">
+                    <label>كلمة السر الجديدة:</label>
+                    <input type="password" id="newPassInput" placeholder="أدخل كلمة السر الجديدة">
+                </div>
+                <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر الجديدة</button>
+            </div>
+
+            <div id="adminPanelSection" style="display:none; margin-top: 15px; border-top: 2px solid #cbd5e1; padding-top: 12px;">
+                <h4 style="margin-top:0; font-size:14px; color:#b91c1c;">🛡️ إدارة المناديب:</h4>
+                <div class="form-group">
+                    <label>اختر المندوب:</label>
+                    <select id="adminTargetDelegate" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>كلمة السر الجديدة للمندوب:</label>
+                    <input type="text" id="adminNewPass" placeholder="كلمة السر الجديدة">
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-success" style="flex:1;" onclick="adminUpdateDelegatePass()">تغيير الباسورد</button>
+                    <button class="btn btn-danger" style="flex:1;" onclick="adminLockDelegateAccount()">قفل الحساب 🔒</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyARUfzp3O79n5pOONzY13pHcV6uoaMXd9s",
+            authDomain: "blach-horse.firebaseapp.com",
+            databaseURL: "https://blach-horse-default-rtdb.firebaseio.com",
+            projectId: "blach-horse",
+            storageBucket: "blach-horse.firebasestorage.app",
+            messagingSenderId: "419821792502",
+            appId: "1:419821792502:web:827acdd252b26c454090d7"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const ADMIN_PASS = "Hossam2023@";
+        const COMPANY_EMAIL = "hosamrezoo@gmail.com";
+        const TARGET_PHONE_WA = "201011112764";
+
+        const defaultCarStock = {
+            "1500000000": 100,
+            "1500000002": 100,
+            "1500000004": 100,
+            "1500000005": 100,
+            "1500000008": 100,
+            "1500000009": 100,
+            "1500000010": 100,
+            "1500000146": 100
+        };
+
+        const defaultDelegates = {
+            "101": { pass: "2025", name: "وحيد", locked: false, carStock: {...defaultCarStock} },
+            "102": { pass: "2025", name: "مصطفي عبد الرازق", locked: false, carStock: {...defaultCarStock} },
+            "103": { pass: "2025", name: "هاني حذيفه", locked: false, carStock: {...defaultCarStock} },
+            "104": { pass: "2025", name: "احمد المرحومي", locked: false, carStock: {...defaultCarStock} },
+            "105": { pass: "2025", name: "محمد صلاح", locked: false, carStock: {...defaultCarStock} },
+            "106": { pass: "2025", name: "احتياطي", locked: false, carStock: {...defaultCarStock} }
+        };
+
+        let cloudSales = [];
+        let cloudDelegates = defaultDelegates;
+        let cloudClients = {}; // لتخزين العملاء وأكوادهم الثابتة
+
+        db.ref('sales').on('value', (snapshot) => {
+            cloudSales = snapshot.val() ? Object.values(snapshot.val()) : [];
+            if(document.getElementById('sectionSaved').style.display === 'block') renderSavedInvoices();
+            if(document.getElementById('sectionReport').style.display === 'block') renderDailyReport();
+        });
+
+        db.ref('delegates').on('value', (snapshot) => {
+            if (snapshot.val()) {
+                cloudDelegates = snapshot.val();
+            } else {
+                db.ref('delegates').set(defaultDelegates);
+                cloudDelegates = defaultDelegates;
+            }
+            if(currentDelegate && currentDelegate.code === 'admin') {
+                populateAdminDelegatesDropdown();
+                populateAdminFilterDropdown();
+            }
+            if(currentDelegate && currentDelegate.code !== 'admin' && document.getElementById('sectionCarStock').style.display === 'block') {
+                renderCarStock();
+            }
+        });
+
+        db.ref('clients').on('value', (snapshot) => {
+            cloudClients = snapshot.val() || {};
+            updateClientsDatalist();
+        });
+
+        function getDelegatesDB() { return cloudDelegates; }
+        function saveDelegatesDB(dbObj) { db.ref('delegates').set(dbObj); }
+
+        const products = [
+            { name: "سوفت كوين", code: "1500000000" },
+            { name: "كيلوبترا بوكس", code: "1500000002" },
+            { name: "كيلوبترا بوكس راوند", code: "1500000004" },
+            { name: "كيلوبترا سوبر 94", code: "1500000005" },
+            { name: "منديال احمر", code: "1500000008" },
+            { name: "منديال ازرق", code: "1500000009" },
+            { name: "منديال سيلفر", code: "1500000010" },
+            { name: "شعر موتسيان", code: "1500000146" }
+        ];
+
+        let currentDelegate = null;
+        let tempLat = null;
+        let tempLng = null;
+
+        function fetchCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    tempLat = position.coords.latitude;
+                    tempLng = position.coords.longitude;
+                }, error => { console.log("GPS denied"); }, { enableHighAccuracy: true });
+            }
+        }
+
+        function getSavedSales() { return cloudSales; }
+        function saveSalesToCloud(salesArr) {
+            let objToSave = {};
+            salesArr.forEach(s => { objToSave[s.id] = s; });
+            db.ref('sales').set(objToSave);
+        }
+
+        function formatDateISO(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function setQuickDateRange(range) {
+            const today = new Date();
+            const toStr = formatDateISO(today);
+            let fromDate = new Date();
+            if (range === 'today') fromDate = today;
+            else if (range === 'month1') fromDate.setMonth(today.getMonth() - 1);
+            else if (range === 'month3') fromDate.setMonth(today.getMonth() - 3);
+
+            document.getElementById('filterFromDate').value = formatDateISO(fromDate);
+            document.getElementById('filterToDate').value = toStr;
+            renderDailyReport();
+        }
+
+        function handleLogin() {
+            const code = document.getElementById('loginCode').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            const delegatesDB = getDelegatesDB();
+
+            if (code === "admin" && pass === ADMIN_PASS) {
+                currentDelegate = { code: "admin", name: "مدير النظام" };
+            } else if (delegatesDB[code]) {
+                if (delegatesDB[code].locked) { alert("❌ هذا الحساب مقفل من قبل الإدارة!"); return; }
+                if (delegatesDB[code].pass === pass) {
+                    currentDelegate = { code: code, name: delegatesDB[code].name };
+                } else { alert("خطأ: كلمة السر غير صحيحة!"); return; }
+            } else { alert("خطأ: كود المستخدم غير موجود!"); return; }
+
+            document.getElementById('lblDelegateName').innerText = currentDelegate.name;
+            document.getElementById('lblDelegateCode').innerText = currentDelegate.code;
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('salesView').style.display = 'block';
+
+            if (currentDelegate.code === "admin") {
+                document.getElementById('adminPanelSection').style.display = 'block';
+                document.getElementById('adminFilterContainer').style.display = 'block';
+                document.getElementById('adminCarStockControl').style.display = 'block';
+                populateAdminDelegatesDropdown();
+                populateAdminFilterDropdown();
+                populateAdminCarDelegateSelect();
+            } else {
+                document.getElementById('adminPanelSection').style.display = 'none';
+                document.getElementById('adminFilterContainer').style.display = 'none';
+                document.getElementById('adminCarStockControl').style.display = 'none';
+            }
+
+            fetchCurrentLocation();
+            switchTab('invoice');
+            initSalesForm();
+        }
+
+        function handleLogout() {
+            currentDelegate = null;
+            document.getElementById('salesView').style.display = 'none';
+            document.getElementById('loginView').style.display = 'block';
+            document.getElementById('loginCode').value = '';
+            document.getElementById('loginPass').value = '';
+        }
+
+        function switchTab(tab) {
+            const tabs = ['invoice', 'saved', 'report', 'carStock', 'settings'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(t === 'invoice' ? 'tabNewInvoice' : t === 'saved' ? 'tabSavedInvoices' : t === 'report' ? 'tabDailyReport' : t === 'carStock' ? 'tabCarStock' : 'tabSettings');
+                const sec = document.getElementById(t === 'invoice' ? 'sectionInvoice' : t === 'saved' ? 'sectionSaved' : t === 'report' ? 'sectionReport' : t === 'carStock' ? 'sectionCarStock' : 'sectionSettings');
+                if(btn && sec) {
+                    if(t === tab) { btn.classList.add('active'); sec.style.display = 'block'; }
+                    else { btn.classList.remove('active'); sec.style.display = 'none'; }
+                }
+            });
+
+            if (tab === 'saved') {
+                if (currentDelegate.code === 'admin') populateAdminFilterDropdown();
+                renderSavedInvoices();
+            } else if (tab === 'report') {
+                if(!document.getElementById('filterFromDate').value) setQuickDateRange('today');
+                else renderDailyReport();
+            } else if (tab === 'carStock') {
+                renderCarStock();
+            }
+        }
+
+        function updateClientsDatalist() {
+            const datalist = document.getElementById('clientsListOptions');
+            if(!datalist) return;
+            datalist.innerHTML = '';
+            for(let cName in cloudClients) {
+                datalist.innerHTML += `<option value="${cName}">كود: ${cloudClients[cName]}</option>`;
+            }
+        }
+
+        function onClientNameInput() {
+            const val = document.getElementById('clientName').value.trim();
+            const lblCode = document.getElementById('lblClientCode');
+            if(!val) { lblCode.innerText = "--"; return; }
+
+            if(cloudClients[val]) {
+                lblCode.innerText = cloudClients[val];
+            } else {
+                // توليد كود ثابت جديد للعميل
+                const newCode = "C-" + Math.floor(1000 + Math.random() * 9000);
+                cloudClients[val] = newCode;
+                db.ref('clients').set(cloudClients);
+                lblCode.innerText = newCode;
+            }
+        }
+
+        function initSalesForm() {
+            const today = new Date();
+            document.getElementById('invoiceDate').value = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()}`;
+            document.getElementById('editInvoiceId').value = '';
+            document.getElementById('clientName').value = '';
+            document.getElementById('lblClientCode').innerText = '--';
+            
+            const allSales = getSavedSales();
+            if (allSales.length > 0) {
+                const lastInv = parseInt(allSales[allSales.length - 1].invNo) || 1000;
+                document.getElementById('invoiceNo').value = lastInv + 1;
+            } else {
+                document.getElementById('invoiceNo').value = "1001";
+            }
+
+            const list = document.getElementById('productsList');
+            list.innerHTML = '';
+            
+            const delegateCarStock = (currentDelegate.code !== 'admin' && cloudDelegates[currentDelegate.code]) ? cloudDelegates[currentDelegate.code].carStock : defaultCarStock;
+
+            products.forEach((p, idx) => {
+                const stockLeft = delegateCarStock ? (delegateCarStock[p.code] || 0) : 0;
+                list.innerHTML += `
+                    <div class="product-item">
+                        <div class="product-title">
+                            <span>${p.name}</span>
+                            <span class="product-code">متبقي بالسيارة: <b style="color:${stockLeft > 0 ? '#16a34a':'#dc2626'}">${stockLeft}</b> ك</span>
+                        </div>
+                        <div class="input-row">
+                            <div>
+                                <label>الكمية المباعة</label>
+                                <input type="number" id="qty_${idx}" min="0" max="${stockLeft}" placeholder="0" oninput="calcTotals()">
+                            </div>
+                            <div>
+                                <label>سعر الوحدة</label>
+                                <input type="number" id="price_${idx}" value="480" oninput="calcTotals()">
+                            </div>
+                            <div>
+                                <label>الإجمالي</label>
+                                <input type="text" id="total_${idx}" value="0.00" readonly style="background:#eee;">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            calcTotals();
+        }
+
+        function calcTotals() {
+            let grand = 0;
+            products.forEach((p, idx) => {
+                const q = parseFloat(document.getElementById(`qty_${idx}`).value) || 0;
+                const pr = parseFloat(document.getElementById(`price_${idx}`).value) || 0;
+                const tot = q * pr;
+                document.getElementById(`total_${idx}`).value = tot.toFixed(2);
+                grand += tot;
+            });
+            document.getElementById('grandTotal').innerText = grand.toFixed(2);
+        }
+
+        function createInvoiceObject() {
+            const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
+            const clientCode = document.getElementById('lblClientCode').innerText;
+            const invNo = document.getElementById('invoiceNo').value.trim() || "---";
+            const invDate = document.getElementById('invoiceDate').value;
+            const now = new Date();
+            const dateISO = formatDateISO(now);
+            const editId = document.getElementById('editInvoiceId').value;
+
+            if(currentDelegate.code === 'admin') {
+                alert("⚠️ حساب المدير مخصص الإدارة والمتابعة ولا يقوم بعمل فواتير مباشرة.");
+                return null;
+            }
+
+            let grand = 0;
+            let hasItems = false;
+            let itemsSoldList = [];
+            let delegateCarStock = cloudDelegates[currentDelegate.code].carStock || {...defaultCarStock};
+            
+            let invoiceEmailBody = `🧾 فاتورة مبيعات شركة بلاك هورس\nرقم الفاتورة: #${invNo}\nالمندوب: ${currentDelegate.name} (${currentDelegate.code})\nالعميل: ${client} (${clientCode})\nالتاريخ: ${invDate}\n----------------------------------\n`;
+
+            products.forEach((p, idx) => {
+                const q = parseFloat(document.getElementById(`qty_${idx}`).value) || 0;
+                const pr = parseFloat(document.getElementById(`price_${idx}`).value) || 0;
+                const tot = q * pr;
+
+                if (q > 0) {
+                    if(q > (delegateCarStock[p.code] || 0)) {
+                        alert(`❌ الكمية المطلوبة من صنف (${p.name}) أكبر من الرصيد المتبقي في السيارة!`);
+                        hasItems = false;
+                        return null;
+                    }
+                    hasItems = true;
+                    grand += tot;
+                    itemsSoldList.push({ name: p.name, code: p.code, qty: q, price: pr, total: tot });
+                    invoiceEmailBody += `- ${p.name}: ${q} ك × ${pr} = ${tot} ج.م\n`;
+                    
+                    // خصم من رصيد السيارة
+                    delegateCarStock[p.code] -= q;
+                }
+            });
+
+            if (!hasItems) return null;
+
+            // تحديث رصيد السيارة للمندوب سحابياً
+            cloudDelegates[currentDelegate.code].carStock = delegateCarStock;
+            saveDelegatesDB(cloudDelegates);
+
+            invoiceEmailBody += `----------------------------------\nالصافي الإجمالي: ${grand.toFixed(2)} ج.م`;
+
+            let salesArr = getSavedSales();
+            let recordId = editId ? String(editId) : String(Date.now());
+            let existingRecord = editId ? salesArr.find(s => String(s.id) === recordId) : null;
+
+            const salesRecord = {
+                id: recordId,
+                dateISO: existingRecord ? existingRecord.dateISO : dateISO,
+                invNo: invNo,
+                date: invDate,
+                delegateCode: currentDelegate.code,
+                delegateName: currentDelegate.name,
+                client: client,
+                clientCode: clientCode,
+                total: grand,
+                items: itemsSoldList,
+                lat: existingRecord && existingRecord.lat ? existingRecord.lat : tempLat,
+                lng: existingRecord && existingRecord.lng ? existingRecord.lng : tempLng
+            };
+
+            if (editId) salesArr = salesArr.filter(s => String(s.id) !== recordId);
+            salesArr.push(salesRecord);
+            saveSalesToCloud(salesArr);
+
+            return { salesRecord, invoiceEmailBody };
+        }
+
+        function printViaBluetoothXP323B() {
+            const res = createInvoiceObject();
+            if (!res) return;
+            const { salesRecord, invoiceEmailBody } = res;
+            alert("✅ تم الحفظ وخصم الكمية من رصيد السيارة بنجاح!");
+            const mailtoUrl = `mailto:${COMPANY_EMAIL}?subject=${encodeURIComponent("فاتورة #" + salesRecord.invNo)}&body=${encodeURIComponent(invoiceEmailBody)}`;
+            window.location.href = mailtoUrl;
+            initSalesForm();
+        }
+
+        function saveAndEmailOnly() {
+            const res = createInvoiceObject();
+            if (!res) return;
+            const { salesRecord, invoiceEmailBody } = res;
+            alert("✅ تم الحفظ سحابياً بنجاح!");
+            const mailtoUrl = `mailto:${COMPANY_EMAIL}?subject=${encodeURIComponent("فاتورة #" + salesRecord.invNo)}&body=${encodeURIComponent(invoiceEmailBody)}`;
+            window.location.href = mailtoUrl;
+            initSalesForm();
+        }
+
+        function sendSingleInvoiceViaWhatsApp() {
+            const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
+            let text = `🧾 *فاتورة مبيعات شركة بلاك هورس*\n🏪 *العميل:* ${client}\n`;
+            window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function renderSavedInvoices() {
+            const allSales = getSavedSales();
+            const tbody = document.getElementById('savedInvoicesBody');
+            const thLocationCol = document.getElementById('thLocationCol');
+            tbody.innerHTML = '';
+
+            let filteredSales = allSales;
+            if (currentDelegate.code !== 'admin') {
+                filteredSales = allSales.filter(s => s.delegateCode === currentDelegate.code);
+                if(thLocationCol) thLocationCol.style.display = 'none';
+            } else {
+                if(thLocationCol) thLocationCol.style.display = 'table-cell';
+                const selDel = document.getElementById('adminFilterDelegate').value;
+                if (selDel && selDel !== 'ALL') filteredSales = filteredSales.filter(s => s.delegateCode === selDel);
+                const sName = document.getElementById('adminClientSearch').value.trim().toLowerCase();
+                if (sName) filteredSales = filteredSales.filter(s => s.client.toLowerCase().includes(sName));
+            }
+
+            if (filteredSales.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="padding:15px; color:#64748b;">لا توجد فواتير مطابقة.</td></tr>`;
+                return;
+            }
+
+            filteredSales.slice().reverse().forEach((inv) => {
+                let locationHtml = currentDelegate.code === 'admin' ? (inv.lat ? `<td><a href="https://maps.google.com/?q=${inv.lat},${inv.lng}" target="_blank">📍 الموقع</a></td>` : `<td>غير متوفر</td>`) : '';
+                let actionsHtml = `<button style="background:#7c3aed; color:white; border:none; border-radius:4px; padding:3px 6px; font-size:10px; cursor:pointer;" onclick="reprintSavedInvoice('${inv.id}')">طباعة</button>`;
+                
+                if (currentDelegate.code === 'admin') {
+                    actionsHtml += ` <button style="background:#2563eb; color:white; border:none; border-radius:4px; padding:3px 6px; font-size:10px; cursor:pointer;" onclick="editInvoice('${inv.id}')">تعديل</button>
+                                     <button style="background:#dc2626; color:white; border:none; border-radius:4px; padding:3px 6px; font-size:10px; cursor:pointer;" onclick="deleteSingleInvoice('${inv.id}')">حذف</button>`;
+                }
+
+                tbody.innerHTML += `<tr>
+                    <td><b>#${inv.invNo}</b></td>
+                    <td>${inv.client} <br><small>(${inv.clientCode || 'C-000'})</small></td>
+                    <td>${inv.delegateName}</td>
+                    <td>${inv.total.toFixed(1)} ج.م</td>
+                    ${locationHtml}
+                    <td>${actionsHtml}</td>
+                </tr>`;
+            });
+        }
+
+        function editInvoice(id) {
+            const pass = prompt("🔒 أدخل كلمة سر المدير للتعديل:");
+            if (pass === ADMIN_PASS) {
+                const inv = getSavedSales().find(s => String(s.id) === String(id));
+                if (!inv) return;
+                switchTab('invoice');
+                document.getElementById('editInvoiceId').value = inv.id;
+                document.getElementById('clientName').value = inv.client;
+                document.getElementById('lblClientCode').innerText = inv.clientCode || 'C-000';
+                document.getElementById('invoiceNo').value = inv.invNo;
+                document.getElementById('invoiceDate').value = inv.date;
+                products.forEach((p, idx) => {
+                    const it = inv.items.find(x => x.code === p.code);
+                    document.getElementById(`qty_${idx}`).value = it ? it.qty : '';
+                    if(it) document.getElementById(`price_${idx}`).value = it.price;
+                });
+                calcTotals();
+                alert("✏️ تم تحميل الفاتورة للتعديل.");
+            } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
+        }
+
+        function deleteSingleInvoice(id) {
+            const pass = prompt("🔒 أدخل كلمة سر المدير للحذف:");
+            if (pass === ADMIN_PASS) {
+                let sales = getSavedSales().filter(s => String(s.id) !== String(id));
+                saveSalesToCloud(sales);
+                alert("✅ تم الحذف بنجاح!");
+                renderSavedInvoices();
+            } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
+        }
+
+        function reprintSavedInvoice(id) {
+            alert("🖨️ جاري طباعة الفاتورة...");
+        }
+
+        function renderDailyReport() {
+            const fromStr = document.getElementById('filterFromDate').value;
+            const toStr = document.getElementById('filterToDate').value;
+            const allSales = getSavedSales();
+            let totalAmount = 0;
+            let productQuantities = {};
+            products.forEach(p => productQuantities[p.code] = { name: p.name, qty: 0 });
+
+            let filteredSales = allSales.filter(s => {
+                if (currentDelegate.code !== 'admin' && s.delegateCode !== currentDelegate.code) return false;
+                if (!fromStr || !toStr) return true;
+                const recordDate = s.dateISO || formatDateISO(new Date(Number(s.id)));
+                return recordDate >= fromStr && recordDate <= toStr;
+            });
+
+            filteredSales.forEach((inv) => {
+                totalAmount += inv.total;
+                inv.items.forEach(it => { if (productQuantities[it.code]) productQuantities[it.code].qty += it.qty; });
+            });
+
+            document.getElementById('repTotalAmount').innerText = totalAmount.toFixed(2);
+            document.getElementById('repInvoiceCount').innerText = filteredSales.length;
+
+            const prodBody = document.getElementById('repProductsBody');
+            prodBody.innerHTML = '';
+            products.forEach(p => {
+                prodBody.innerHTML += `<tr><td style="text-align: right;">${p.name}</td><td><code>${p.code}</code></td><td><b>${productQuantities[p.code].qty}</b></td></tr>`;
+            });
+        }
+
+        function renderCarStock() {
+            const tbody = document.getElementById('carStockTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            
+            let targetStock = defaultCarStock;
+            if(currentDelegate.code !== 'admin') {
+                if(cloudDelegates[currentDelegate.code] && cloudDelegates[currentDelegate.code].carStock) {
+                    targetStock = cloudDelegates[currentDelegate.code].carStock;
+                }
+            }
+
+            products.forEach(p => {
+                const rem = targetStock[p.code] || 0;
+                tbody.innerHTML += `<tr>
+                    <td style="text-align: right;">${p.name}</td>
+                    <td><b style="color:${rem > 0 ? '#16a34a':'#dc2626'}; font-size:14px;">${rem}</b> كرتونة/قطعة</td>
+                </tr>`;
+            });
+        }
+
+        function adminLoadCarStockForEdit() {
+            const delCode = document.getElementById('adminCarDelegateSelect').value;
+            const container = document.getElementById('adminCarEditContainer');
+            container.innerHTML = '';
+            const stock = cloudDelegates[delCode].carStock || defaultCarStock;
+
+            let html = `<p style="font-size:12px; font-weight:bold; margin:6px 0;">تعديل رصيد سيارة: ${cloudDelegates[delCode].name}</p>`;
+            products.forEach(p => {
+                html += `<div style="display:flex; align-items:center; gap:6px; margin-bottom:5px;">
+                    <span style="flex:2; font-size:11px;">${p.name}:</span>
+                    <input type="number" id="edit_car_${p.code}" value="${stock[p.code] || 0}" style="flex:1; padding:4px; text-align:center;">
+                </div>`;
+            });
+            html += `<button class="btn btn-success" style="margin-top:6px; padding:6px;" onclick="saveAdminCarStock('${delCode}')">حفظ رصيد السيارة الجديد</button>`;
+            container.innerHTML = html;
+        }
+
+        function saveAdminCarStock(delCode) {
+            let newStock = {};
+            products.forEach(p => {
+                const val = parseFloat(document.getElementById(`edit_car_${p.code}`).value) || 0;
+                newStock[p.code] = val;
+            });
+            cloudDelegates[delCode].carStock = newStock;
+            saveDelegatesDB(cloudDelegates);
+            alert("✅ تم تحديث رصيد السيارة للمندوب بنجاح!");
+            document.getElementById('adminCarEditContainer').innerHTML = '';
+        }
+
+        function sendReportViaEmail() {
+            window.location.href = `mailto:${COMPANY_EMAIL}?subject=${encodeURIComponent("تقرير مبيعات بلاك هورس")}&body=${encodeURIComponent("إجمالي المبيعات: " + document.getElementById('repTotalAmount').innerText + " ج.م")}`;
+        }
+        function sendReportViaWhatsApp() {
+            window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent("📊 تقرير مبيعات بلاك هورس الإجمالي: " + document.getElementById('repTotalAmount').innerText + " ج.م")}`, '_blank');
+        }
+        function adminResetSales() {
+            const pass = prompt("🔒 أدخل كلمة سر المدير لتصفير المبيعات:");
+            if (pass === ADMIN_PASS) {
+                if (confirm("هل أنت متأكد من مسح جميع المبيعات؟")) {
+                    db.ref('sales').remove();
+                    alert("✅ تم التصفير بنجاح!");
+                    renderDailyReport();
+                }
+            } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
+        }
+
+        function changeMyPassword() {
+            const cur = document.getElementById('currentPassInput').value.trim();
+            const neu = document.getElementById('newPassInput').value.trim();
+            if(!cur || !neu) { alert("املأ الحقول!"); return; }
+            if(currentDelegate.code === 'admin') { alert("⚠️ باسورد المدير العام لا يغير من هنا."); return; }
+            let dDB = getDelegatesDB();
+            if(dDB[currentDelegate.code].pass === cur) {
+                dDB[currentDelegate.code].pass = neu;
+                saveDelegatesDB(dDB);
+                alert("✅ تم تغيير كلمة السر بنجاح!");
+                document.getElementById('currentPassInput').value = '';
+                document.getElementById('newPassInput').value = '';
+            } else { alert("❌ كلمة السر الحالية غير صحيحة!"); }
+        }
+
+        function populateAdminDelegatesDropdown() {
+            const sel = document.getElementById('adminTargetDelegate');
+            if(!sel) return;
+            sel.innerHTML = '';
+            const dDB = getDelegatesDB();
+            for (let c in dDB) sel.innerHTML += `<option value="${c}">كود ${c} - ${dDB[c].name} ${dDB[c].locked ? '(مقفل)' : ''}</option>`;
+        }
+        function populateAdminFilterDropdown() {
+            const sel = document.getElementById('adminFilterDelegate');
+            if(!sel) return;
+            const cur = sel.value;
+            sel.innerHTML = `<option value="ALL">📋 عرض الكل (جميع المندوبين)</option>`;
+            const dDB = getDelegatesDB();
+            for (let c in dDB) sel.innerHTML += `<option value="${c}">مندوب: ${dDB[c].name} (${c})</option>`;
+            if(cur) sel.value = cur;
+        }
+        function populateAdminCarDelegateSelect() {
+            const sel = document.getElementById('adminCarDelegateSelect');
+            if(!sel) return;
+            sel.innerHTML = '';
+            const dDB = getDelegatesDB();
+            for (let c in dDB) sel.innerHTML += `<option value="${c}">كود ${c} - ${dDB[c].name}</option>`;
+        }
+        function adminUpdateDelegatePass() {
+            const c = document.getElementById('adminTargetDelegate').value;
+            const np = document.getElementById('adminNewPass').value.trim();
+            if(!np) return;
+            let dDB = getDelegatesDB();
+            dDB[c].pass = np;
+            dDB[c].locked = false;
+            saveDelegatesDB(dDB);
+            alert("✅ تم تحديث كلمة السر للمندوب!");
+        }
+        function adminLockDelegateAccount() {
+            const c = document.getElementById('adminTargetDelegate').value;
+            let dDB = getDelegatesDB();
+            dDB[c].locked = true;
+            saveDelegatesDB(dDB);
+            alert("🔒 تم قفل حساب المندوب!");
+        }
+    </script>
+</body>
+</html>
