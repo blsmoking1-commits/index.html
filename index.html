@@ -150,7 +150,7 @@
             </div>
         </div>
 
-        <!-- ج) التقارير المحدثة (مندوب لوحده + عميل لوحده + الفترة المحددة) -->
+        <!-- ج) التقارير المحدثة (تفصيل بالكرتونة والروابط المتبقية) -->
         <div id="sectionReport" style="display: none;">
             <div class="filter-box">
                 <h4>📊 تخصيص التقارير والفترة الزمنية:</h4>
@@ -186,9 +186,9 @@
                 <tbody id="repInvoicesTableBody"></tbody>
             </table>
 
-            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">إجمالي الأصناف المباعة خلال الفترة:</h4>
+            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">إجمالي الأصناف المباعة (بالكرتونة والروابط):</h4>
             <table class="report-table">
-                <thead><tr><th>الصنف</th><th>الكود</th><th>الكمية المباعة (رابطة)</th></tr></thead>
+                <thead><tr><th>الصنف</th><th>الكود</th><th>إجمالي الروابط</th><th>الكمية (كرتونة + روابط)</th></tr></thead>
                 <tbody id="repProductsBody"></tbody>
             </table>
         </div>
@@ -397,7 +397,6 @@
             document.getElementById('adminCarSetupBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminHandoversApprovalBox').style.display = isAdm ? 'block' : 'none';
             
-            // تخصيص خانات تقارير المندوبين
             const repDelSel = document.getElementById('reportDelegateSelect');
             if(!isAdm) {
                 repDelSel.innerHTML = `<option value="${currentDelegate.code}">${currentDelegate.name}</option>`;
@@ -759,7 +758,7 @@
             } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
         }
 
-        // دالة التقارير المحدثة (حسب المندوب، العميل، والفترة)
+        // دالة التقارير المحدثة (تحسب الكرتونات والروابط المتبقية بدقة)
         function renderDailyReport() {
             const selDel = document.getElementById('reportDelegateSelect').value;
             const selClient = document.getElementById('reportClientSelect').value;
@@ -770,14 +769,10 @@
             products.forEach(p => qMap[p.code] = 0);
 
             let filtered = cloudSales.filter(s => {
-                // فلترة المندوب
                 if(selDel !== 'ALL' && s.delegateCode !== selDel) return false;
-                // فلترة العميل
                 if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
                 
-                // فلترة التاريخ (YYYY-MM-DD)
                 if(fromDate || toDate) {
-                    // تحويل تاريخ الفاتورة إذا كان مكتوب بصيغة D/M/YYYY إلى YYYY-MM-DD للمقارنة
                     let parts = s.date.split('/');
                     let formattedInvDate = s.date;
                     if(parts.length === 3) {
@@ -815,7 +810,24 @@
             if(!tb) return;
             tb.innerHTML = '';
             products.forEach(p => { 
-                tb.innerHTML += `<tr><td>${p.name}</td><td>${p.code}</td><td><b>${qMap[p.code]}</b></td></tr>`; 
+                let ribbons = qMap[p.code];
+                let cartons = Math.floor(ribbons / 50); // عدد الكرتونات الكاملة
+                let remRibbons = ribbons % 50; // الروابط المتبقية التي لا تكمل كرتونة
+                
+                let qtyDisplay = `${cartons} كرتونة`;
+                if(remRibbons > 0) {
+                    qtyDisplay += ` و ${remRibbons} رابطة`;
+                }
+                if(ribbons === 0) {
+                    qtyDisplay = `0`;
+                }
+
+                tb.innerHTML += `<tr>
+                    <td>${p.name}</td>
+                    <td>${p.code}</td>
+                    <td><b>${ribbons}</b> رابطة</td>
+                    <td><b style="color:#2563eb;">${qtyDisplay}</b></td>
+                </tr>`; 
             });
         }
 
