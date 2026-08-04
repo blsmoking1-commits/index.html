@@ -123,7 +123,7 @@
             <div id="statusAlert" class="status-alert"></div>
         </div>
 
-        <!-- ب) الفواتير المحفوظة -->
+        <!-- ب) الفواتير المحفوظة (مع أزرار الطباعة، التعديل، والحذف للأدمن) -->
         <div id="sectionSaved" style="display: none;">
             <h4 style="margin: 0 0 10px 0; font-size: 13px;">📂 سجل الفواتير السحابية:</h4>
             <div style="overflow-x: auto;">
@@ -134,7 +134,7 @@
                             <th>العميل</th>
                             <th>المندوب</th>
                             <th>الإجمالي</th>
-                            <th>إجراءات</th>
+                            <th>الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody id="savedInvoicesBody"></tbody>
@@ -286,7 +286,7 @@
         let cloudShops = [];
         let cloudLmInvoices = [];
 
-        db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
+        db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; if(document.getElementById('sectionSaved').style.display === 'block') renderSavedInvoices(); });
         db.ref('delegates').on('value', (s) => { if(s.val()) cloudDelegates = s.val(); });
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); });
         db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; renderMenofTable(); });
@@ -477,8 +477,8 @@
             return salesRecord;
         }
 
-        function printInvoiceWithStamp() {
-            const rec = createInvoiceObject();
+        function printInvoiceWithStamp(specificInv = null) {
+            const rec = specificInv || createInvoiceObject();
             if(!rec) return;
 
             let printWindow = window.open('', '_blank', 'width=400,height=600');
@@ -531,9 +531,10 @@
                 printWindow.document.write(html);
                 printWindow.document.close();
             }
-
-            alert("✅ تم حفظ الفاتورة وطباعتها مع الختم الرسمي بنجاح!");
-            initSalesForm();
+            if(!specificInv) {
+                alert("✅ تم حفظ الفاتورة وطباعتها مع الختم الرسمي بنجاح!");
+                initSalesForm();
+            }
         }
 
         function saveAndEmailOnly() { printInvoiceWithStamp(); }
@@ -551,16 +552,48 @@
             filtered.slice().reverse().forEach(inv => {
                 tbody.innerHTML += `<tr>
                     <td><b>#${inv.invNo}</b></td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td>
-                    <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteInvoice('${inv.id}')">حذف</button></td>
+                    <td>
+                        <button class="btn btn-primary" style="padding:2px 6px; font-size:10px;" onclick="printInvoiceWithStamp(cloudSales.find(x=>x.id==='${inv.id}'))">طباعة</button>
+                        ${currentDelegate.role === 'admin' ? `
+                            <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editInvoice('${inv.id}')">تعديل</button>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteInvoice('${inv.id}')">حذف</button>
+                        ` : ''}
+                    </td>
                 </tr>`;
             });
         }
+
+        function editInvoice(id) {
+            const pass = prompt("🔒 أدخل كلمة سر المدير للتعديل:");
+            if(pass === ADMIN_PASS) {
+                const inv = cloudSales.find(s => String(s.id) === String(id));
+                if(!inv) return;
+                switchTab('invoice');
+                document.getElementById('editInvoiceId').value = inv.id;
+                document.getElementById('clientName').value = inv.client;
+                document.getElementById('lblClientCode').innerText = inv.clientCode || 'C-000';
+                document.getElementById('invoiceNo').value = inv.invNo;
+                document.getElementById('invoiceDate').value = inv.date;
+                products.forEach((p, idx) => {
+                    const it = inv.items.find(x => x.code === p.code);
+                    document.getElementById(`qty_${idx}`).value = it ? it.qty : '';
+                    if(it) document.getElementById(`price_${idx}`).value = it.price;
+                });
+                calcTotals();
+                alert("✏️ تم تحميل الفاتورة للتعديل.");
+            } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
+        }
+
         function deleteInvoice(id) {
-            if(confirm("هل تريد حذف الفاتورة؟")) {
-                let s = cloudSales.filter(x => String(x.id) !== String(id));
-                db.ref('sales').set(Object.assign({}, s));
-                renderSavedInvoices();
-            }
+            const pass = prompt("🔒 أدخل كلمة سر المدير للحذف:");
+            if(pass === ADMIN_PASS) {
+                if(confirm("هل تريد حذف الفاتورة نهائياً؟")) {
+                    let s = cloudSales.filter(x => String(x.id) !== String(id));
+                    db.ref('sales').set(Object.assign({}, s));
+                    renderSavedInvoices();
+                    alert("✅ تم الحذف بنجاح!");
+                }
+            } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
         }
 
         function renderDailyReport() {
