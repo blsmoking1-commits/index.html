@@ -102,7 +102,6 @@
 
         <!-- أ) فاتورة جديدة -->
         <div id="sectionInvoice">
-            <!-- ملخص مبيعات اليوم للمندوب -->
             <div id="delegateTodaySummary" style="background:#e0f2fe; border:1px solid #bae6fd; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; color:#0369a1;">
                 <b>📌 ملخص مبيعاتك اليوم:</b> <span id="todaySummaryText">جاري التحميل...</span>
             </div>
@@ -250,7 +249,7 @@
             </div>
         </div>
 
-        <!-- و) التحميل من منوف (للمدير مع إمكانية التعديل والحذف) -->
+        <!-- و) التحميل من منوف -->
         <div id="sectionMenof" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (سعر الكرتونة = 23,925 ج.م):</h4>
             <div class="filter-box">
@@ -268,7 +267,7 @@
             </table>
         </div>
 
-        <!-- ز) المحلات (سعر الكرتونة 23,925 مع إمكانية التعديل والحذف) -->
+        <!-- ز) المحلات -->
         <div id="sectionShops" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (سعر الكرتونة = 23,925 ج.م):</h4>
             <div class="filter-box">
@@ -286,9 +285,9 @@
             </table>
         </div>
 
-        <!-- ح) فواتير LM (مع الحساب الصحيح: قيمة البيع - قيمة الإيداع، وإمكانية التعديل) -->
+        <!-- ح) فواتير LM -->
         <div id="sectionLmInvoices" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM (محمد وحسام - حساب المكسب والخسارة = البيع - الإيداع):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM (حساب المكسب والخسارة للصنف والفاتورة = البيع - التكلفة / الإيداع):</h4>
             <div class="filter-box">
                 <input type="hidden" id="editLmId" value="">
                 <div class="form-group">
@@ -569,7 +568,7 @@
             } else {
                 const newCode = "C-" + Math.floor(1000 + Math.random() * 9000);
                 cloudClients[val] = newCode;
-                db.ref('clients').set(cloudClients);
+                db.ref('clients').set(cloudClients).catch(err => alert("خطأ في حفظ العميل: " + err.message));
                 lblCode.innerText = newCode;
             }
 
@@ -679,7 +678,7 @@
 
             if(!editId && cloudDelegates[targetDelCode]) {
                 cloudDelegates[targetDelCode].carStock = carStock;
-                db.ref('delegates').set(cloudDelegates);
+                db.ref('delegates').set(cloudDelegates).catch(err => alert("خطأ في تحديث مخزون السيارة: " + err.message));
             }
 
             let salesArr = cloudSales;
@@ -692,7 +691,12 @@
             };
             if(editId) salesArr = salesArr.filter(s => String(s.id) !== recordId);
             salesArr.push(salesRecord);
-            db.ref('sales').set(Object.assign({}, salesArr));
+            
+            // رفع الفاتورة مع التقاط الأخطاء إن وجدت
+            db.ref('sales').set(Object.assign({}, salesArr)).catch(err => {
+                alert("❌ خطأ في رفع الفاتورة على السحابة: " + err.message);
+            });
+
             return salesRecord;
         }
 
@@ -790,7 +794,6 @@
             filtered.slice().reverse().forEach(inv => {
                 let actionButtons = `<button class="btn btn-primary" style="padding:2px 6px; font-size:10px;" onclick="printInvoiceWithStamp(cloudSales.find(x=>x.id==='${inv.id}'))">طباعة مباشرة</button>`;
                 
-                // يحق للمدير تعديل أو حذف أي فاتورة مسجلة
                 if(currentDelegate.role === 'admin') {
                     actionButtons += `
                         <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editInvoice('${inv.id}')">تعديل</button>
@@ -831,10 +834,11 @@
             if(pass === ADMIN_PASS) {
                 if(confirm("هل تريد حذف الفاتورة نهائياً؟")) {
                     let s = cloudSales.filter(x => String(x.id) !== String(id));
-                    db.ref('sales').set(Object.assign({}, s));
-                    renderSavedInvoices();
-                    updateDelegateTodaySummary();
-                    alert("✅ تم الحذف بنجاح!");
+                    db.ref('sales').set(Object.assign({}, s)).then(() => {
+                        renderSavedInvoices();
+                        updateDelegateTodaySummary();
+                        alert("✅ تم الحذف بنجاح!");
+                    }).catch(err => alert("خطأ في الحذف: " + err.message));
                 }
             } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
         }
@@ -979,7 +983,7 @@
             cloudDelegates[delCode].carStock = newStock;
             db.ref('delegates').set(cloudDelegates).then(() => {
                 alert("✅ تم تعيين كمية السيارة الأولية (بالكرتونة) للمندوب بنجاح!");
-            });
+            }).catch(err => alert("خطأ: " + err.message));
         }
 
         function initHandoverInputs() {
@@ -1006,9 +1010,10 @@
                 items: handoverData, 
                 status: 'pending', 
                 timestamp: Date.now()
-            });
-            alert("📤 تم إرسال جرد نهاية اليوم للمدير (حسام)، بانتظار الموافقة.");
-            checkHandoverStatus();
+            }).then(() => {
+                alert("📤 تم إرسال جرد نهاية اليوم للمدير (حسام)، بانتظار الموافقة.");
+                checkHandoverStatus();
+            }).catch(err => alert("خطأ في الإرسال: " + err.message));
         }
 
         function checkHandoverStatus() {
@@ -1048,10 +1053,9 @@
             db.ref('handovers/' + dCode + '/status').set('approved').then(() => {
                 alert("✅ تمت الموافقة على جرد نهاية اليوم بنجاح!");
                 renderPendingHandovers();
-            });
+            }).catch(err => alert("خطأ: " + err.message));
         }
 
-        // منوف (مع دعم التعديل والحذف الكامل للمدير)
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
@@ -1083,7 +1087,7 @@
                 document.getElementById('menofCartons').value = '';
                 document.getElementById('menofDeposit').value = '';
                 renderMenofTable();
-            });
+            }).catch(err => alert("خطأ في الحفظ: " + err.message));
         }
 
         function editMenofLoad(id) {
@@ -1103,7 +1107,7 @@
                 db.ref('menofLoads').set(Object.assign({}, loadsArr)).then(() => {
                     renderMenofTable();
                     alert("✅ تم الحذف بنجاح!");
-                });
+                }).catch(err => alert("خطأ: " + err.message));
             }
         }
 
@@ -1127,7 +1131,6 @@
             });
         }
 
-        // المحلات (مع دعم التعديل والحذف الكامل للمدير)
         function calcShopTotal() {
             const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
             const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
@@ -1160,7 +1163,7 @@
                 document.getElementById('shopCartons').value = '';
                 document.getElementById('shopPaidVal').value = '';
                 renderShopsTable();
-            });
+            }).catch(err => alert("خطأ في الحفظ: " + err.message));
         }
 
         function editShopTransaction(id) {
@@ -1180,7 +1183,7 @@
                 db.ref('shops').set(Object.assign({}, shopsArr)).then(() => {
                     renderShopsTable();
                     alert("✅ تم الحذف بنجاح!");
-                });
+                }).catch(err => alert("خطأ: " + err.message));
             }
         }
 
@@ -1204,7 +1207,6 @@
             });
         }
 
-        // فواتير LM (حساب المكسب والخسارة = قيمة البيع - قيمة الإيداع، مع دعم التعديل والحذف)
         function initLmFormInputs() {
             const cont = document.getElementById('lmItemsContainer');
             if(!cont) return;
@@ -1226,30 +1228,45 @@
             let totalBuy = 0, totalSell = 0;
             
             let itemsData = {};
+            let itemBreakdown = [];
+
             lmItemsList.forEach(item => {
                 const cartons = parseFloat(document.getElementById(`lm_qty_${item.code}`).value) || 0;
                 const sellRibbon = parseFloat(document.getElementById(`lm_sell_${item.code}`).value) || 0;
+                
+                let itemCost = cartons * item.buyPricePerCarton;
+                let itemSell = (cartons * 50) * sellRibbon;
+                let itemProfitLoss = itemSell - itemCost;
+                let itemLossPercentage = itemCost > 0 ? (itemProfitLoss / itemCost) * 100 : 0;
+
                 itemsData[item.code] = { cartons, sellRibbon };
-                totalBuy += cartons * item.buyPricePerCarton;
-                totalSell += (cartons * 50) * sellRibbon;
+                itemBreakdown.push({
+                    name: item.name,
+                    cost: itemCost,
+                    sell: itemSell,
+                    profitLoss: itemProfitLoss,
+                    percentage: itemLossPercentage
+                });
+
+                totalBuy += itemCost;
+                totalSell += itemSell;
             });
 
-            // الحساب المطلوب: قيمة البيع ناقص قيمة الإيداع
             const profitLoss = totalSell - deposit;
             
             let lmId = editId ? String(editId) : String(Date.now());
-            const newLm = { id: lmId, type, deposit, totalBuy, totalSell, profitLoss, items: itemsData };
+            const newLm = { id: lmId, type, deposit, totalBuy, totalSell, profitLoss, items: itemsData, breakdown: itemBreakdown };
             
             let lmArr = cloudLmInvoices.filter(i => String(i.id) !== lmId);
             lmArr.push(newLm);
 
             db.ref('lmInvoices').set(Object.assign({}, lmArr)).then(() => {
-                alert("✅ تم حفظ فاتورة LM بنجاح!");
+                alert("✅ تم حفظ فاتورة LM وحساب تفاصيل كل صنف بنجاح!");
                 document.getElementById('editLmId').value = '';
                 document.getElementById('lmDeposit').value = '';
                 initLmFormInputs();
                 renderLmTable();
-            });
+            }).catch(err => alert("خطأ في الحفظ: " + err.message));
         }
 
         function editLmInvoice(id) {
@@ -1276,7 +1293,7 @@
                 db.ref('lmInvoices').set(Object.assign({}, lmArr)).then(() => {
                     renderLmTable();
                     alert("✅ تم الحذف بنجاح!");
-                });
+                }).catch(err => alert("خطأ: " + err.message));
             }
         }
 
@@ -1285,12 +1302,19 @@
             if(!tb) return;
             tb.innerHTML = '';
             cloudLmInvoices.forEach(i => {
+                let breakdownHtml = "";
+                if(i.breakdown) {
+                    breakdownHtml = "<br><div style='font-size:10px; color:#475569; text-align:right;'><b>تفاصيل الأصناف:</b><br>" + 
+                        i.breakdown.map(b => `- ${b.name}: تكلفة ${b.cost} | بيع ${b.sell} | مكسب/خسارة: <b style='color:${b.profitLoss>=0?'#16a34a':'#dc2626'}'>${b.profitLoss.toFixed(2)} (${b.percentage.toFixed(1)}%)</b>`).join('<br>') + 
+                        "</div>";
+                }
+
                 tb.innerHTML += `<tr>
                     <td>${i.type === 'mohamed' ? 'فاتورة محمد' : 'فاتورة حسام'}</td>
                     <td>${i.deposit} ج.م</td>
                     <td>${i.totalBuy} ج.م</td>
                     <td>${i.totalSell} ج.م</td>
-                    <td><b style="color:${i.profitLoss>=0?'#16a34a':'#dc2626'}">${i.profitLoss} ج.م</b></td>
+                    <td><b style="color:${i.profitLoss>=0?'#16a34a':'#dc2626'}">${i.profitLoss} ج.م</b>${breakdownHtml}</td>
                     <td>
                         <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editLmInvoice('${i.id}')">تعديل</button>
                         <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteLmInvoice('${i.id}')">حذف</button>
@@ -1306,7 +1330,7 @@
             const role = document.getElementById('newAccRole').value;
             if(!code || !name || !pass) { alert("أدخل كافة بيانات الحساب الجديد"); return; }
             cloudDelegates[code] = { pass, name, role: role, carStock: {...defaultCarStock}, locked: false };
-            db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم إنشاء الحساب بنجاح!"); });
+            db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم إنشاء الحساب بنجاح!"); }).catch(err => alert("خطأ: " + err.message));
         }
 
         function changeMyPassword() {
@@ -1315,7 +1339,7 @@
             if(!cur || !neu) return;
             if(cloudDelegates[currentDelegate.code].pass === cur) {
                 cloudDelegates[currentDelegate.code].pass = neu;
-                db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم تغيير كلمة السر بنجاح!"); });
+                db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم تغيير كلمة السر بنجاح!"); }).catch(err => alert("خطأ: " + err.message));
             } else { alert("❌ كلمة السر الحالية خطأ!"); }
         }
     </script>
