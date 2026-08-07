@@ -124,13 +124,13 @@
 
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
 
-            <button class="btn btn-bluetooth" onclick="printViaRawBT()">🖨️ طباعة عبر RawBT (بلوتوث)</button>
+            <button class="btn btn-bluetooth" onclick="printInvoiceWithStamp()">🖨️ طباعة الفاتورة مع الختم الرسمي</button>
             <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة</button>
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
             <div id="statusAlert" class="status-alert"></div>
         </div>
 
-        <!-- ب) الفواتير المحفوظة -->
+        <!-- ب) الفواتير المحفوظة والتحكم في المناديب -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box" id="adminDelegateFilterBox" style="display:none;">
                 <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">👤 فلترة مبيعات المناديب:</h4>
@@ -155,7 +155,7 @@
             </div>
         </div>
 
-        <!-- ج) التقارير -->
+        <!-- ج) التقارير ومبيعات كل سيارة على حدة -->
         <div id="sectionReport" style="display: none;">
             <div class="filter-box">
                 <h4>📊 تخصيص التقارير ومبيعات السيارات والفترة الزمنية:</h4>
@@ -227,9 +227,9 @@
             </div>
         </div>
 
-        <!-- هـ) حساب النسب -->
+        <!-- هـ) حساب النسب (كليوباترا : بوكس / براون / سوبر) -->
         <div id="sectionRatios" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل (كليوباترا : بوكس / براون / سوبر):</h4>
             <div class="filter-box">
                 <div style="display:flex; gap:8px;">
                     <div class="form-group" style="flex:1;"><label>نسبة كليوباترا:</label><input type="number" id="ratioCleopatra" value="2" oninput="calcRatioLoading()"></div>
@@ -285,9 +285,9 @@
             </table>
         </div>
 
-        <!-- ح) فواتير LM -->
+        <!-- ح) فواتير LM مع حساب الخسارة/المكسب لكل صنف -->
         <div id="sectionLmInvoices" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM:</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM (حساب المكسب والخسارة للصنف والفاتورة = البيع - التكلفة / الإيداع):</h4>
             <div class="filter-box">
                 <input type="hidden" id="editLmId" value="">
                 <div class="form-group">
@@ -321,7 +321,7 @@
                     <label>نوع الحساب:</label>
                     <select id="newAccRole" class="form-control">
                         <option value="delegate">مندوب مبيعات</option>
-                        <option value="viewer">مشاهد فقط</option>
+                        <option value="viewer">مشاهد فقط (بدون صلاحيات تعديل)</option>
                     </select>
                 </div>
                 <button class="btn btn-success" onclick="createNewUserAccount()">إنشاء الحساب</button>
@@ -344,6 +344,7 @@
 
         const ADMIN_PASS = "Hossam2023@";
         const TARGET_PHONE_WA = "201011112764";
+        const STAMP_IMAGE_URL = "217.jpg";
 
         const defaultCarStock = { "1500000000": 10, "1500000002": 10, "1500000004": 10, "1500000005": 10, "1500000008": 10, "1500000009": 10, "1500000010": 10, "1500000146": 10 };
         const defaultDelegates = {
@@ -567,7 +568,7 @@
             } else {
                 const newCode = "C-" + Math.floor(1000 + Math.random() * 9000);
                 cloudClients[val] = newCode;
-                db.ref('clients').set(cloudClients).catch(err => alert("خطأ في حفظ العميل: " + err.message));
+                db.ref('clients').set(cloudClients);
                 lblCode.innerText = newCode;
             }
 
@@ -637,7 +638,7 @@
         }
 
         function createInvoiceObject() {
-            if(currentDelegate.role === 'viewer') { alert("❌ حساب مشاهد غير مسموح له بإنشاء فواتير!"); return null; }
+            if(currentDelegate.role === 'viewer') { alert("❌ حساب مشاهد فقط غير مسموح له بإنشاء فواتير!"); return null; }
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const clientCode = document.getElementById('lblClientCode').innerText;
             const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
@@ -651,7 +652,6 @@
             }
 
             let grand = 0, hasItems = false, itemsSoldList = [];
-            let totalQtyCount = 0;
             let carStock = cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].carStock || {...defaultCarStock} : {...defaultCarStock};
 
             products.forEach((p, idx) => {
@@ -667,11 +667,7 @@
                     }
                     hasItems = true; 
                     grand += tot;
-                    totalQtyCount += qRibbons;
-                    let cartonsVal = Math.floor(qRibbons / 50);
-                    let remVal = qRibbons % 50;
-                    let qtyStr = cartonsVal > 0 ? `Outer ${pr} / ${cartonsVal}${remVal>0?`+${remVal}ر`:''}` : `Outer ${pr} / ${qRibbons}`;
-                    itemsSoldList.push({ name: p.name, code: p.code, qty: qRibbons, qtyText: qtyStr, price: pr, total: tot });
+                    itemsSoldList.push({ name: p.name, code: p.code, qty: qRibbons, price: pr, total: tot });
                     if(!editId) {
                         carStock[p.code] -= qCartonsNeeded;
                     }
@@ -682,7 +678,7 @@
 
             if(!editId && cloudDelegates[targetDelCode]) {
                 cloudDelegates[targetDelCode].carStock = carStock;
-                db.ref('delegates').set(cloudDelegates).catch(err => alert("خطأ في تحديث مخزون السيارة: " + err.message));
+                db.ref('delegates').set(cloudDelegates);
             }
 
             let salesArr = cloudSales;
@@ -691,61 +687,70 @@
                 id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
                 delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
                 client: client, clientCode: clientCode,
-                total: grand, totalQty: totalQtyCount, items: itemsSoldList, lat: tempLat, lng: tempLng
+                total: grand, items: itemsSoldList, lat: tempLat, lng: tempLng
             };
-            
             if(editId) salesArr = salesArr.filter(s => String(s.id) !== recordId);
             salesArr.push(salesRecord);
-            
-            db.ref('sales').set(Object.assign({}, salesArr)).catch(err => {
-                alert("❌ خطأ في رفع الفاتورة على السحابة: " + err.message);
-            });
-
+            db.ref('sales').set(Object.assign({}, salesArr));
             return salesRecord;
         }
 
-        // دالة الطباعة عبر RawBT باستخدام نظام الـ Intent المباشر والصحيح لمنع مشكلة الملف الفارغ
-        function printViaRawBT(specificInv = null) {
+        function printInvoiceWithStamp(specificInv = null) {
             const rec = specificInv || createInvoiceObject();
             if(!rec) return;
 
-            let receiptText = "";
-            receiptText += "     BLACK HORSE\n";
-            receiptText += "شركة بلاك هورس - موزع معتمد\n";
-            receiptText += "--------------------------------\n";
-            receiptText += "التاريخ: " + rec.date + " | فاتورة: #" + rec.invNo + "\n";
-            receiptText += "العميل: " + rec.client + " (" + rec.clientCode + ")\n";
-            receiptText += "--------------------------------\n";
-            receiptText += "اسم المنتج      سعر/كمية    إجمالي\n";
-            receiptText += "--------------------------------\n";
+            let printWindow = window.open('', '_blank', 'width=400,height=600');
+            if(printWindow) {
+                let html = `
+                    <html lang="ar" dir="rtl">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>فاتورة مبيعات #${rec.invNo}</title>
+                        <style>
+                            body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0; padding: 10px; color: #000; text-align: right; }
+                            .center { text-align: center; }
+                            hr { border: dashed 1px #000; margin: 5px 0; }
+                            table { width: 100%; font-size: 11px; border-collapse: collapse; }
+                            th, td { padding: 3px; text-align: right; border-bottom: 1px solid #ddd; }
+                            .footer-section { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; }
+                            .stamp-img { width: 90px; height: 90px; object-fit: contain; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="center">
+                            <b>شركة بلاك هورس</b><br>
+                            موزع معتمد لدى الشركة الشرقية<br>
+                            كود: 7761 | ت.ض: 474386335
+                        </div>
+                        <hr>
+                        المندوب: ${rec.delegateName}<br>
+                        التاريخ: ${rec.date} | فاتورة: #${rec.invNo}<br>
+                        العميل: ${rec.client} (${rec.clientCode})
+                        <hr>
+                        <table>
+                            <tr><th>الصنف</th><th>ك</th><th>سعر</th><th>إجمالي</th></tr>`;
+                
+                rec.items.forEach(it => {
+                    html += `<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}</td><td>${it.total}</td></tr>`;
+                });
 
-            rec.items.forEach(it => {
-                receiptText += it.name + "\n";
-                receiptText += "               " + (it.qtyText || (it.price+'/'+it.qty)) + "   " + it.total.toFixed(2) + "\n";
-                receiptText += "               0.00\n";
-            });
-
-            receiptText += "--------------------------------\n";
-            receiptText += "إجمالي قبل الخصم:        " + rec.total.toFixed(2) + "\n";
-            receiptText += "--------------------------------\n";
-            receiptText += "إجمالي الكمية:           " + (rec.totalQty || 0) + "\n";
-            receiptText += "إجمالي الخصومات:         0.00\n";
-            receiptText += "المطلوبة بعد الخصم:      " + rec.total.toFixed(2) + "\n";
-            receiptText += "--------------------------------\n";
-            receiptText += "هذا المستند مستخرج من الحاسب الآلي\n";
-            receiptText += "و يعتد به دون توقيع.\n";
-            receiptText += "استلمت البضاعة المدونة بحالة جيدة.\n";
-            receiptText += "مكتب الإتصال: الشركة الشرقية -\n";
-            receiptText += "المنطقة الصناعية - أكتوبر\n\n\n";
-
-            // استخدام طريقة الـ Intent المباشرة الموثوقة لـ RawBT لتجنب خطأ الملف الفارغ
-            const encodedText = encodeURIComponent(receiptText);
-            const rawbtUrl = "intent://rawbt/print?text=" + encodedText + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
-            
-            window.location.href = rawbtUrl;
-
+                html += `
+                        </table>
+                        <hr>
+                        <b>الصافي الإجمالي: ${rec.total.toFixed(2)} ج.م</b>
+                        <hr>
+                        <div class="footer-section">
+                            <div>توقيع المندوب:<br>.............</div>
+                            <div><img src="${STAMP_IMAGE_URL}" class="stamp-img" alt="ختم الشركة"></div>
+                        </div>
+                        <script>window.onload = function() { window.print(); window.close(); }<\/script>
+                    </body>
+                    </html>`;
+                printWindow.document.write(html);
+                printWindow.document.close();
+            }
             if(!specificInv && currentDelegate.role !== 'viewer') {
-                alert("✅ تم حفظ الفاتورة وجاري إرسالها لتطبيق RawBT للطباعة!");
+                alert("✅ تم حفظ الفاتورة وطباعتها مع الختم الرسمي بنجاح!");
                 initSalesForm();
                 updateDelegateTodaySummary();
             }
@@ -782,7 +787,7 @@
             if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5">لا توجد فواتير مطابقة.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
-                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ طباعة RawBT</button>`;
+                let actionButtons = `<button class="btn btn-primary" style="padding:2px 6px; font-size:10px;" onclick="printInvoiceWithStamp(cloudSales.find(x=>x.id==='${inv.id}'))">طباعة مباشرة</button>`;
                 
                 if(currentDelegate.role === 'admin') {
                     actionButtons += `
@@ -824,11 +829,10 @@
             if(pass === ADMIN_PASS) {
                 if(confirm("هل تريد حذف الفاتورة نهائياً؟")) {
                     let s = cloudSales.filter(x => String(x.id) !== String(id));
-                    db.ref('sales').set(Object.assign({}, s)).then(() => {
-                        renderSavedInvoices();
-                        updateDelegateTodaySummary();
-                        alert("✅ تم الحذف بنجاح!");
-                    }).catch(err => alert("خطأ في الحذف: " + err.message));
+                    db.ref('sales').set(Object.assign({}, s));
+                    renderSavedInvoices();
+                    updateDelegateTodaySummary();
+                    alert("✅ تم الحذف بنجاح!");
                 }
             } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
         }
@@ -972,8 +976,8 @@
             });
             cloudDelegates[delCode].carStock = newStock;
             db.ref('delegates').set(cloudDelegates).then(() => {
-                alert("✅ تم تعيين كمية السيارة الأولية للمندوب بنجاح!");
-            }).catch(err => alert("خطأ: " + err.message));
+                alert("✅ تم تعيين كمية السيارة الأولية (بالكرتونة) للمندوب بنجاح!");
+            });
         }
 
         function initHandoverInputs() {
@@ -1000,10 +1004,9 @@
                 items: handoverData, 
                 status: 'pending', 
                 timestamp: Date.now()
-            }).then(() => {
-                alert("📤 تم إرسال جرد نهاية اليوم للمدير (حسام)، بانتظار الموافقة.");
-                checkHandoverStatus();
-            }).catch(err => alert("خطأ في الإرسال: " + err.message));
+            });
+            alert("📤 تم إرسال جرد نهاية اليوم للمدير (حسام)، بانتظار الموافقة.");
+            checkHandoverStatus();
         }
 
         function checkHandoverStatus() {
@@ -1031,7 +1034,7 @@
                         cont.innerHTML += `<div style="background:#fff; padding:8px; border-radius:6px; margin-bottom:6px; border:1px solid #fcd34d;">
                             <b>المندوب: ${h.delegateName} (${dCode})</b><br>
                             <span style="font-size:10px;">الجرود الفعلية: ${itemsSummary}</span><br>
-                            <button class="btn btn-success" style="padding:4px 8px; font-size:11px; margin-top:4px;" onclick="approveHandover('${dCode}')">موافقة واعتماد</button>
+                            <button class="btn btn-success" style="padding:4px 8px; font-size:11px; margin-top:4px;" onclick="approveHandover('${dCode}')">موافقة واعتماد جرد نهاية اليوم</button>
                         </div>`;
                     }
                 }
@@ -1041,9 +1044,9 @@
 
         function approveHandover(dCode) {
             db.ref('handovers/' + dCode + '/status').set('approved').then(() => {
-                alert("✅ تمت الموافقة بنجاح!");
+                alert("✅ تمت الموافقة على جرد نهاية اليوم بنجاح!");
                 renderPendingHandovers();
-            }).catch(err => alert("خطأ: " + err.message));
+            });
         }
 
         function calcMenofTotal() {
@@ -1077,7 +1080,7 @@
                 document.getElementById('menofCartons').value = '';
                 document.getElementById('menofDeposit').value = '';
                 renderMenofTable();
-            }).catch(err => alert("خطأ في الحفظ: " + err.message));
+            });
         }
 
         function editMenofLoad(id) {
@@ -1097,7 +1100,7 @@
                 db.ref('menofLoads').set(Object.assign({}, loadsArr)).then(() => {
                     renderMenofTable();
                     alert("✅ تم الحذف بنجاح!");
-                }).catch(err => alert("خطأ: " + err.message));
+                });
             }
         }
 
@@ -1153,7 +1156,7 @@
                 document.getElementById('shopCartons').value = '';
                 document.getElementById('shopPaidVal').value = '';
                 renderShopsTable();
-            }).catch(err => alert("خطأ في الحفظ: " + err.message));
+            });
         }
 
         function editShopTransaction(id) {
@@ -1173,7 +1176,7 @@
                 db.ref('shops').set(Object.assign({}, shopsArr)).then(() => {
                     renderShopsTable();
                     alert("✅ تم الحذف بنجاح!");
-                }).catch(err => alert("خطأ في الحذف: " + err.message));
+                });
             }
         }
 
@@ -1190,7 +1193,7 @@
                     <td>${s.paid} ج.م</td>
                     <td><b style="color:#dc2626;">${zVal} ج.م</b></td>
                     <td>
-                        <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editShopTransaction('${s.id}')">تعديل</button>
+                        <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editShopTransaction('${s.id}')">tعديل</button>
                         <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteShopTransaction('${s.id}')">حذف</button>
                     </td>
                 </tr>`;
@@ -1242,6 +1245,7 @@
                 totalSell += itemSell;
             });
 
+            // حساب المكسب والخسارة الكلي = قيمة البيع - قيمة الإيداع
             const profitLoss = totalSell - deposit;
             
             let lmId = editId ? String(editId) : String(Date.now());
@@ -1251,12 +1255,12 @@
             lmArr.push(newLm);
 
             db.ref('lmInvoices').set(Object.assign({}, lmArr)).then(() => {
-                alert("✅ تم حفظ فاتورة LM بنجاح!");
+                alert("✅ تم حفظ فاتورة LM وحساب تفاصيل كل صنف بنجاح!");
                 document.getElementById('editLmId').value = '';
                 document.getElementById('lmDeposit').value = '';
                 initLmFormInputs();
                 renderLmTable();
-            }).catch(err => alert("خطأ في الحفظ: " + err.message));
+            });
         }
 
         function editLmInvoice(id) {
@@ -1283,7 +1287,7 @@
                 db.ref('lmInvoices').set(Object.assign({}, lmArr)).then(() => {
                     renderLmTable();
                     alert("✅ تم الحذف بنجاح!");
-                }).catch(err => alert("خطأ في الحذف: " + err.message));
+                });
             }
         }
 
@@ -1320,7 +1324,7 @@
             const role = document.getElementById('newAccRole').value;
             if(!code || !name || !pass) { alert("أدخل كافة بيانات الحساب الجديد"); return; }
             cloudDelegates[code] = { pass, name, role: role, carStock: {...defaultCarStock}, locked: false };
-            db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم إنشاء الحساب بنجاح!"); }).catch(err => alert("خطأ: " + err.message));
+            db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم إنشاء الحساب بنجاح!"); });
         }
 
         function changeMyPassword() {
@@ -1329,7 +1333,7 @@
             if(!cur || !neu) return;
             if(cloudDelegates[currentDelegate.code].pass === cur) {
                 cloudDelegates[currentDelegate.code].pass = neu;
-                db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم تغيير كلمة السر بنجاح!"); }).catch(err => alert("خطأ: " + err.message));
+                db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم تغيير كلمة السر بنجاح!"); });
             } else { alert("❌ كلمة السر الحالية خطأ!"); }
         }
     </script>
