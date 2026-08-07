@@ -689,14 +689,11 @@
             let recordId = editId ? String(editId) : String(Date.now());
             const salesRecord = {
                 id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
-                delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDefModal = cloudDelegates[targetDelCode].name] : currentDelegate.name, 
+                delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
                 client: client, clientCode: clientCode,
                 total: grand, totalQty: totalQtyCount, items: itemsSoldList, lat: tempLat, lng: tempLng
             };
             
-            // تصحيح اسم المندوب في السجل
-            salesRecord.delegateName = cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name;
-
             if(editId) salesArr = salesArr.filter(s => String(s.id) !== recordId);
             salesArr.push(salesRecord);
             
@@ -707,34 +704,33 @@
             return salesRecord;
         }
 
-        // دالة الطباعة عبر RawBT باستخدام Intent الـ Android المخصص
+        // دالة الطباعة عبر RawBT باستخدام نظام الـ Intent المباشر والصحيح لمنع مشكلة الملف الفارغ
         function printViaRawBT(specificInv = null) {
             const rec = specificInv || createInvoiceObject();
             if(!rec) return;
 
-            // بناء نص الإيصال ليتوافق مع الطباعة الحرارية وتطبيق RawBT
             let receiptText = "";
             receiptText += "     BLACK HORSE\n";
             receiptText += "شركة بلاك هورس - موزع معتمد\n";
             receiptText += "--------------------------------\n";
-            receiptText += `التاريخ: ${rec.date} | فاتورة: #${rec.invNo}\n`;
-            receiptText += `العميل: ${rec.client} (${rec.clientCode})\n`;
+            receiptText += "التاريخ: " + rec.date + " | فاتورة: #" + rec.invNo + "\n";
+            receiptText += "العميل: " + rec.client + " (" + rec.clientCode + ")\n";
             receiptText += "--------------------------------\n";
             receiptText += "اسم المنتج      سعر/كمية    إجمالي\n";
             receiptText += "--------------------------------\n";
 
             rec.items.forEach(it => {
-                receiptText += `${it.name}\n`;
-                receiptText += `               ${it.qtyText || (it.price+'/'+it.qty)}   ${it.total.toFixed(2)}\n`;
-                receiptText += `               0.00\n`;
+                receiptText += it.name + "\n";
+                receiptText += "               " + (it.qtyText || (it.price+'/'+it.qty)) + "   " + it.total.toFixed(2) + "\n";
+                receiptText += "               0.00\n";
             });
 
             receiptText += "--------------------------------\n";
-            receiptText += `إجمالي قبل الخصم:        ${rec.total.toFixed(2)}\n`;
+            receiptText += "إجمالي قبل الخصم:        " + rec.total.toFixed(2) + "\n";
             receiptText += "--------------------------------\n";
-            receiptText += `إجمالي الكمية:           ${rec.totalQty || 0}\n`;
-            receiptText += `إجمالي الخصومات:         0.00\n`;
-            receiptText += `المطلوبة بعد الخصم:      ${rec.total.toFixed(2)}\n`;
+            receiptText += "إجمالي الكمية:           " + (rec.totalQty || 0) + "\n";
+            receiptText += "إجمالي الخصومات:         0.00\n";
+            receiptText += "المطلوبة بعد الخصم:      " + rec.total.toFixed(2) + "\n";
             receiptText += "--------------------------------\n";
             receiptText += "هذا المستند مستخرج من الحاسب الآلي\n";
             receiptText += "و يعتد به دون توقيع.\n";
@@ -742,14 +738,14 @@
             receiptText += "مكتب الإتصال: الشركة الشرقية -\n";
             receiptText += "المنطقة الصناعية - أكتوبر\n\n\n";
 
-            // إرسال النص لتطبيق RawBT عبر رابط الـ Intent
-            const base64Encoder = btoa(unescape(encodeURIComponent(receiptText)));
-            const rawbtUrl = "rawbt:data:base64," + base64Encoder;
+            // استخدام طريقة الـ Intent المباشرة الموثوقة لـ RawBT لتجنب خطأ الملف الفارغ
+            const encodedText = encodeURIComponent(receiptText);
+            const rawbtUrl = "intent://rawbt/print?text=" + encodedText + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
             
             window.location.href = rawbtUrl;
 
             if(!specificInv && currentDelegate.role !== 'viewer') {
-                alert("✅ تم حفظ الفاتورة وجاري إرسالها للطابعة عبر RawBT!");
+                alert("✅ تم حفظ الفاتورة وجاري إرسالها لتطبيق RawBT للطباعة!");
                 initSalesForm();
                 updateDelegateTodaySummary();
             }
