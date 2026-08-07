@@ -124,7 +124,7 @@
 
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
 
-            <button class="btn btn-bluetooth" onclick="printInvoiceWithCustomLayout()">🖨️ طباعة الفاتورة (تنسيق الإيصال)</button>
+            <button class="btn btn-bluetooth" onclick="printViaRawBT()">🖨️ طباعة عبر RawBT (بلوتوث)</button>
             <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة</button>
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
             <div id="statusAlert" class="status-alert"></div>
@@ -689,10 +689,14 @@
             let recordId = editId ? String(editId) : String(Date.now());
             const salesRecord = {
                 id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
-                delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
+                delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDefModal = cloudDelegates[targetDelCode].name] : currentDelegate.name, 
                 client: client, clientCode: clientCode,
                 total: grand, totalQty: totalQtyCount, items: itemsSoldList, lat: tempLat, lng: tempLng
             };
+            
+            // تصحيح اسم المندوب في السجل
+            salesRecord.delegateName = cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name;
+
             if(editId) salesArr = salesArr.filter(s => String(s.id) !== recordId);
             salesArr.push(salesRecord);
             
@@ -703,88 +707,49 @@
             return salesRecord;
         }
 
-        // دالة الطباعة بالتنسيق الجديد المطلوب تماماً (مطابق للصورة)
-        function printInvoiceWithCustomLayout(specificInv = null) {
+        // دالة الطباعة عبر RawBT باستخدام Intent الـ Android المخصص
+        function printViaRawBT(specificInv = null) {
             const rec = specificInv || createInvoiceObject();
             if(!rec) return;
 
-            let printWindow = window.open('', '_blank', 'width=400,height=600');
-            if(printWindow) {
-                let itemsHtml = '';
-                rec.items.forEach(it => {
-                    itemsHtml += `
-                        <div style="margin-bottom: 6px;">
-                            <div style="display: flex; justify-content: space-between; font-weight: bold;">
-                                <span>${it.total.toFixed(2)}</span>
-                                <span>${it.qtyText || (it.price + ' / ' + it.qty)}</span>
-                                <span style="text-align: left;">${it.name}</span>
-                            </div>
-                            <div style="text-align: left; font-size: 11px; color: #333;">0.00</div>
-                        </div>`;
-                });
+            // بناء نص الإيصال ليتوافق مع الطباعة الحرارية وتطبيق RawBT
+            let receiptText = "";
+            receiptText += "     BLACK HORSE\n";
+            receiptText += "شركة بلاك هورس - موزع معتمد\n";
+            receiptText += "--------------------------------\n";
+            receiptText += `التاريخ: ${rec.date} | فاتورة: #${rec.invNo}\n`;
+            receiptText += `العميل: ${rec.client} (${rec.clientCode})\n`;
+            receiptText += "--------------------------------\n";
+            receiptText += "اسم المنتج      سعر/كمية    إجمالي\n";
+            receiptText += "--------------------------------\n";
 
-                let html = `
-                    <html lang="ar" dir="rtl">
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>فاتورة مبيعات #${rec.invNo}</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; font-size: 13px; width: 80mm; margin: 0; padding: 10px; color: #000; text-align: right; }
-                            .flex-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-                            .divider { border-top: 1px solid #000; margin: 6px 0; }
-                            .footer { margin-top: 10px; font-size: 11px; text-align: right; line-height: 1.4; }
-                        </style>
-                    </head>
-                    <body>
-                        <div style="text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 6px;">
-                            BLACK HORSE<br>شركة بلاك هورس
-                        </div>
-                        <div style="font-size: 11px; margin-bottom: 6px;">
-                            التاريخ: ${rec.date} | فاتورة: #${rec.invNo}<br>
-                            العميل: ${rec.client} (${rec.clientCode})
-                        </div>
-                        <div class="divider"></div>
-                        <div class="flex-row" style="font-weight: bold; font-size: 12px;">
-                            <span>إجمالي</span>
-                            <span>سعر / كمية</span>
-                            <span>أسم المنتج / الخصم</span>
-                        </div>
-                        <div class="divider"></div>
-                        
-                        ${itemsHtml}
+            rec.items.forEach(it => {
+                receiptText += `${it.name}\n`;
+                receiptText += `               ${it.qtyText || (it.price+'/'+it.qty)}   ${it.total.toFixed(2)}\n`;
+                receiptText += `               0.00\n`;
+            });
 
-                        <div class="divider"></div>
-                        <div class="flex-row">
-                            <span>${rec.total.toFixed(2)}</span>
-                            <span>إجمالي قبل الخصم</span>
-                        </div>
-                        <div class="divider" style="border-top: 2px solid #000;"></div>
-                        <div class="flex-row">
-                            <span>${rec.totalQty || 0}</span>
-                            <span>إجمالي الكمية</span>
-                        </div>
-                        <div class="flex-row">
-                            <span>0.00</span>
-                            <span>إجمالي الخصومات</span>
-                        </div>
-                        <div class="flex-row" style="font-weight: bold;">
-                            <span>${rec.total.toFixed(2)}</span>
-                            <span>القيمة المطلوبة بعد الخصم</span>
-                        </div>
-                        <div class="divider" style="border-top: 2px solid #000;"></div>
-                        <div class="footer">
-                            <div>هذا المستند مستخرج من الحاسب الآلي و يعتد به دون توقيع.</div>
-                            <div>استلمت البضاعة المدونة بحالة جيدة.</div>
-                            <div>مكتب الإتصال: الشركة الشرقية - المنطقة الصناعية - أكتوبر</div>
-                        </div>
-                        <script>window.onload = function() { window.print(); window.close(); }<\/script>
-                    </body>
-                    </html>`;
-                printWindow.document.write(html);
-                printWindow.document.close();
-            }
+            receiptText += "--------------------------------\n";
+            receiptText += `إجمالي قبل الخصم:        ${rec.total.toFixed(2)}\n`;
+            receiptText += "--------------------------------\n";
+            receiptText += `إجمالي الكمية:           ${rec.totalQty || 0}\n`;
+            receiptText += `إجمالي الخصومات:         0.00\n`;
+            receiptText += `المطلوبة بعد الخصم:      ${rec.total.toFixed(2)}\n`;
+            receiptText += "--------------------------------\n";
+            receiptText += "هذا المستند مستخرج من الحاسب الآلي\n";
+            receiptText += "و يعتد به دون توقيع.\n";
+            receiptText += "استلمت البضاعة المدونة بحالة جيدة.\n";
+            receiptText += "مكتب الإتصال: الشركة الشرقية -\n";
+            receiptText += "المنطقة الصناعية - أكتوبر\n\n\n";
+
+            // إرسال النص لتطبيق RawBT عبر رابط الـ Intent
+            const base64Encoder = btoa(unescape(encodeURIComponent(receiptText)));
+            const rawbtUrl = "rawbt:data:base64," + base64Encoder;
+            
+            window.location.href = rawbtUrl;
+
             if(!specificInv && currentDelegate.role !== 'viewer') {
-                alert("✅ تم حفظ الفاتورة وطباعتها بالتنسيق الجديد بنجاح!");
+                alert("✅ تم حفظ الفاتورة وجاري إرسالها للطابعة عبر RawBT!");
                 initSalesForm();
                 updateDelegateTodaySummary();
             }
@@ -821,7 +786,7 @@
             if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5">لا توجد فواتير مطابقة.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
-                let actionButtons = `<button class="btn btn-primary" style="padding:2px 6px; font-size:10px;" onclick="printInvoiceWithCustomLayout(cloudSales.find(x=>x.id==='${inv.id}'))">طباعة التنسيق</button>`;
+                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ طباعة RawBT</button>`;
                 
                 if(currentDelegate.role === 'admin') {
                     actionButtons += `
