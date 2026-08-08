@@ -6,6 +6,8 @@
     <title>نظام إدارة المبيعات - شركة بلاك هورس</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <!-- مكتبة الـ Auth للتعامل مع رقم الهاتف في الفايربيز -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
         body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
@@ -94,6 +96,7 @@
         <!-- تبويبات التنقل -->
         <div class="tab-menu" id="tabMenuContainer">
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
+            <div id="tabClientPortal" class="tab-btn" onclick="switchTab('clientPortal')" style="background:#e0f2fe; color:#0369a1;">🌐 تسجيل عميل</div>
             <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
             <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
             <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة والجرد</div>
@@ -132,6 +135,52 @@
             <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة</button>
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
             <div id="statusAlert" class="status-alert"></div>
+        </div>
+
+        <!-- بوابة تسجيل العملاء الجدد ومصادقة التليفون -->
+        <div id="sectionClientPortal" style="display: none;">
+            <div class="filter-box">
+                <h4 style="margin-top:0; color:#1e293b; font-size:14px;">🌐 تسجيل عميل جديد برقم الهاتف</h4>
+                <p style="font-size:11px; color:#64748b;">قم بإدخال بياناتك ورقم هاتفك لتفعيل حسابك وطلب الفواتير مباشرة.</p>
+                
+                <div class="form-group">
+                    <label>اسم العميل / المحل:</label>
+                    <input type="text" id="portalClientName" placeholder="أدخل اسمك أو اسم المحل...">
+                </div>
+                <div class="form-group">
+                    <label>رقم التليفون (متبوعاً بكود الدولة):</label>
+                    <input type="text" id="portalClientPhone" placeholder="مثال: +201012345678">
+                </div>
+                <div class="form-group">
+                    <label>عنوان المحل بالتفصيل:</label>
+                    <input type="text" id="portalClientAddress" placeholder="المدينة، الشارع، المعلم الشهير...">
+                </div>
+
+                <button class="btn btn-primary" id="sendOtpBtn" onclick="sendCustomerOTP()">إرسال رمز التحقق (SMS)</button>
+
+                <!-- قسم إدخال كود التحقق -->
+                <div id="otpVerifySection" style="display:none; margin-top:12px; border-top:1px dashed #cbd5e1; padding-top:10px;">
+                    <div class="form-group">
+                        <label>أدخل كود التحقق المرسل في رسالة SMS:</label>
+                        <input type="text" id="portalOtpCode" placeholder="أدخل الكود المكون من أرقام">
+                    </div>
+                    <button class="btn btn-success" onclick="verifyCustomerOTPAndRegister()">تأكيد وتسجيل الحساب</button>
+                </div>
+                <div id="recaptcha-container"></div>
+            </div>
+
+            <!-- لوحة العميل بعد التسجيل لطلب الفاتورة وتنفيذها -->
+            <div id="clientDashboard" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px;">
+                <h4 style="margin-top:0; color:#166534;">🎉 أهلاً بك يا <span id="loggedClientName">--</span></h4>
+                <p style="font-size:11px; color:#15803d;">حسابك مفعل الآن بنجاح. يمكنك الضغط على زر "تنفيذ" لطلب فاتورتك وإرسالها للآدمن فوراً عبر الواتساب والإيميل.</p>
+                
+                <div class="form-group">
+                    <label>أدخل طلباتك أو الملاحظات للفاتورة:</label>
+                    <input type="text" id="clientOrderNotes" placeholder="مثال: طلب 2 كرتونة كليوباترا بوكس...">
+                </div>
+
+                <button class="btn btn-whatsapp" onclick="executeAndSendClientOrder()">⚡ تنفيذ وطلب الفاتورة (واتساب وإيميل)</button>
+            </div>
         </div>
 
         <!-- ب) الفواتير المحفوظة مع إمكانية التصفية بالتاريخ -->
@@ -363,6 +412,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
 
         const ADMIN_PASS = "Hossam2023@";
         const TARGET_PHONE_WA = "201011112764";
@@ -455,7 +505,7 @@
 
             startLocationTracker();
             setupUserTabs();
-            syncOfflineInvoices(); // مزامنة الفواتير المخزنة محلياً عند تسجيل الدخول لو الإنترنت متصل
+            syncOfflineInvoices();
             
             if (currentDelegate.role === 'viewer') {
                 switchTab('saved');
@@ -561,10 +611,11 @@
         }
 
         function switchTab(tab) {
-            const tabs = ['invoice', 'saved', 'report', 'carStock', 'ratios', 'menof', 'shops', 'lmInvoices', 'settings'];
+            const tabs = ['invoice', 'clientPortal', 'saved', 'report', 'carStock', 'ratios', 'menof', 'shops', 'lmInvoices', 'settings'];
             tabs.forEach(t => {
                 let btnId = '';
                 if(t === 'invoice') btnId = 'tabNewInvoice';
+                else if(t === 'clientPortal') btnId = 'tabClientPortal';
                 else if(t === 'saved') btnId = 'tabSavedInvoices';
                 else if(t === 'report') btnId = 'tabDailyReport';
                 else btnId = 'tab' + t.charAt(0).toUpperCase() + t.slice(1);
@@ -583,6 +634,119 @@
             if(tab === 'menof') renderMenofTable();
             if(tab === 'shops') renderShopsTable();
             if(tab === 'lmInvoices') renderLmTable();
+        }
+
+        // --- وظائف بوابة العميل وتسجيل الهاتف عبر Firebase Authentication ---
+        let customerRecaptchaVerifier = null;
+        let customerConfirmationResult = null;
+
+        function initCustomerRecaptcha() {
+            if (!customerRecaptchaVerifier) {
+                try {
+                    customerRecaptchaVerifier = new firebase.auth.RecaptchaVerifier(auth, 'recaptcha-container', {
+                        'size': 'invisible'
+                    });
+                } catch (e) {
+                    console.log("Recaptcha init note:", e);
+                }
+            }
+        }
+
+        function sendCustomerOTP() {
+            const phone = document.getElementById('portalClientPhone').value.trim();
+            const name = document.getElementById('portalClientName').value.trim();
+            const address = document.getElementById('portalClientAddress').value.trim();
+
+            if(!name || !phone || !address) {
+                alert("❌ يرجى إدخال اسم العميل ورقم الهاتف وعنوان المحل أولاً.");
+                return;
+            }
+
+            initCustomerRecaptcha();
+            const appVerifier = customerRecaptchaVerifier;
+
+            auth.signInWithPhoneNumber(phone, appVerifier)
+                .then((confirmationResult) => {
+                    customerConfirmationResult = confirmationResult;
+                    alert("✅ تم إرسال كود التحقق (SMS) بنجاح إلى رقم هاتفك.");
+                    document.getElementById('otpVerifySection').style.display = 'block';
+                })
+                .catch((error) => {
+                    console.error("SMS Error:", error);
+                    alert("❌ فشل إرسال رسالة التحقق. تأكد من صحة رقم الهاتف (مثال: +2010xxxxxxxx).");
+                });
+        }
+
+        function verifyCustomerOTPAndRegister() {
+            const code = document.getElementById('portalOtpCode').value.trim();
+            const name = document.getElementById('portalClientName').value.trim();
+            const phone = document.getElementById('portalClientPhone').value.trim();
+            const address = document.getElementById('portalClientAddress').value.trim();
+
+            if(!code) {
+                alert("❌ أدخل كود التحقق المرسل في رسالة SMS.");
+                return;
+            }
+
+            if(!customerConfirmationResult) {
+                alert("❌ يجيب طلب إرسال الكود أولاً.");
+                return;
+            }
+
+            customerConfirmationResult.confirm(code).then((result) => {
+                const user = result.user;
+                
+                // حفظ بيانات العميل في قاعدة البيانات تحت فرع clients
+                const clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
+                cloudClients[name] = clientCode;
+                
+                db.ref('clients').set(cloudClients).catch(err => {});
+                db.ref('portalCustomers/' + user.uid).set({
+                    name: name,
+                    phone: phone,
+                    address: address,
+                    clientCode: clientCode,
+                    registeredAt: Date.now()
+                });
+
+                alert("🎉 تم التحقق وتسجيل الحساب بنجاح!");
+                document.getElementById('otpVerifySection').style.display = 'none';
+                document.getElementById('clientDashboard').style.display = 'block';
+                document.getElementById('loggedClientName').innerText = name;
+
+            }).catch((error) => {
+                alert("❌ كود التحقق غير صحيح أو منتهي الصلاحية.");
+            });
+        }
+
+        function executeAndSendClientOrder() {
+            const name = document.getElementById('loggedClientName').innerText;
+            const notes = document.getElementById('clientOrderNotes').value.trim() || "طلب فاتورة جديدة عبر البوابة";
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            let newInv = {
+                id: String(Date.now()),
+                invNo: Math.floor(1000 + Math.random() * 9000),
+                date: todayStr,
+                delegateCode: "portal_client",
+                delegateName: "طلب عبر بوابة العميل",
+                client: name,
+                clientCode: cloudClients[name] || "C-PORTAL",
+                total: 0,
+                totalQty: 1,
+                items: [{ name: notes, qty: 1, price: 0, total: 0 }],
+                lat: tempLat,
+                lng: tempLng
+            };
+
+            cloudSales.push(newInv);
+            db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
+                alert("✅ تم تنفيذ وطلب الفاتورة بنجاح وإرسالها للإدارة!");
+                
+                // إرسال عبر الواتساب والإيميل تلقائياً بضغطة زرار
+                let waText = `طلب فاتورة جديد من العميل: ${name}%0Aالملاحظات: ${notes}%0Aالتاريخ: ${todayStr}`;
+                window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
+            }).catch(err => alert("خطأ في الإرسال: " + err.message));
         }
 
         function updateClientsDatalist() {
@@ -741,7 +905,6 @@
                 total: grand, totalQty: totalQtyCount, items: itemsSoldList, lat: tempLat, lng: tempLng
             };
 
-            // حفظ محلياً دائماً لضمان عدم الضياع (Offline Support)
             saveInvoiceLocally(salesRecord);
 
             if(navigator.onLine) {
@@ -757,7 +920,6 @@
             return salesRecord;
         }
 
-        // إدارة التخزين المحلي للفواتير في حالة انقطاع النت
         function saveInvoiceLocally(inv) {
             let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
             offlineInvs = offlineInvs.filter(i => String(i.id) !== String(inv.id));
@@ -795,7 +957,6 @@
             }).catch(err => {});
         }
 
-        // طباعة عبر RawBT بالتنسيق المطلوب
         function printViaRawBT(specificInv = null) {
             const rec = specificInv || createInvoiceObject();
             if(!rec) return;
@@ -859,7 +1020,6 @@
             if(!tbody) return;
             tbody.innerHTML = '';
             
-            // دمج الفواتير السحابية مع المحلية غير المزامنة لعرضها فوراً
             let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
             let allCombinedSales = [...cloudSales];
             offlineInvs.forEach(offInv => {
