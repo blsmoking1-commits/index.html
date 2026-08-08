@@ -37,6 +37,7 @@
         .btn-whatsapp { background: #25d366; color: white; }
         .btn-danger { background: #dc2626; color: white; }
         .btn-bluetooth { background: #7c3aed; color: white; }
+        .btn-warning { background: #d97706; color: white; }
         
         .tab-menu { display: flex; gap: 3px; margin-bottom: 15px; overflow-x: auto; }
         .tab-btn { flex: 1; padding: 8px 4px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold; font-size: 10px; border-radius: 6px; cursor: pointer; text-align: center; white-space: nowrap; }
@@ -64,14 +65,14 @@
 </head>
 <body>
 
-    <div id="networkStatusBanner">⚠️ لا يوجد اتصال بالإنترنت. يتم حفظ الفواتير محلياً وسيتم رفعها تلقائياً عند عودة الشبكة.</div>
+    <div id="networkStatusBanner">⚠️ لا يوجد اتصال بالإنترنت. يتم حفظ الفواتير محلياً وسيتم رفعها تلقائياً عند عودة الشبكة[span_1](start_span)[span_1](end_span).</div>
 
     <!-- 1. شاشة تسجيل الدخول الرئيسية -->
     <div id="loginView" class="card">
         <div class="logo-box">
             <h1>BLACK HORSE</h1>
-            <p>شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية</p>
-            <div class="tax-info">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027</div>
+            <p>شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية[span_2](start_span)[span_2](end_span)</p>
+            <div class="tax-info">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027[span_3](start_span)[span_3](end_span)</div>
         </div>
         
         <div id="loginMainForm">
@@ -96,8 +97,11 @@
                 <input type="text" id="regClientName" placeholder="أدخل الاسم أو اسم المحل...">
             </div>
             <div class="form-group">
-                <label>رقم التليفون (متبوعاً بكود الدولة):</label>
-                <input type="text" id="regClientPhone" placeholder="مثال: +201012345678">
+                <label>رقم التليفون (مصر):</label>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" value="+20" readonly class="readonly-input" style="width: 70px; text-align: center;">
+                    <input type="text" id="regClientPhone" placeholder="مثال: 1012345678" style="flex: 1;" maxlength="10">
+                </div>
             </div>
             <div class="form-group">
                 <label>عنوان المحل بالتفصيل:</label>
@@ -121,7 +125,7 @@
     <!-- 2. شاشة العمل والتنقل الرئيسية -->
     <div id="salesView" class="card" style="display: none;">
         <div class="delegate-info">
-            <span>👤 المستخدم: <span id="lblDelegateName" style="color: #2563eb;">--</span> (<span id="lblDelegateRoleText">مندوب</span>)</span>
+            <span>👤 المستخدم: <span id="lblDelegateName" style="color: #2563eb;">--</span> (<span id="lblDelegateRoleText">مندوب</span>)[span_4](start_span)[span_4](end_span)</span>
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
@@ -196,7 +200,7 @@
             </div>
         </div>
 
-        <!-- ب) الفواتير المحفوظة مع إمكانية التصفية بالتاريخ -->
+        <!-- ب) الفواتير المحفوظة مع إمكانية التصفية والتعديل -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box">
                 <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:</h4>
@@ -212,7 +216,7 @@
                 </div>
             </div>
 
-            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير (مع إمكانية مراجعة محتواها):</h4>
+            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير (مع إمكانية التعديل والمراجعة):</h4>
             <div style="overflow-x: auto;">
                 <table class="report-table">
                     <thead>
@@ -517,16 +521,18 @@
 
         function sendCustomerRegistrationOTP() {
             const name = document.getElementById('regClientName').value.trim();
-            const phone = document.getElementById('regClientPhone').value.trim();
+            const phoneInput = document.getElementById('regClientPhone').value.trim();
             const address = document.getElementById('regClientAddress').value.trim();
 
-            if(!name || !phone || !address) {
+            if(!name || !phoneInput || !address) {
                 alert("❌ يرجى إدخال كافة بيانات العميل والمحل ورقم الهاتف.");
                 return;
             }
 
+            const fullPhone = "+20" + phoneInput.replace(/^0+/, '');
+
             initRegRecaptcha();
-            auth.signInWithPhoneNumber(phone, regRecaptchaVerifier)
+            auth.signInWithPhoneNumber(fullPhone, regRecaptchaVerifier)
                 .then((confirmationResult) => {
                     regConfirmationResult = confirmationResult;
                     alert("✅ تم إرسال كود التحقق (SMS) بنجاح إلى هاتفك.");
@@ -534,17 +540,19 @@
                 })
                 .catch((error) => {
                     console.error("SMS Error:", error);
-                    alert("❌ فشل إرسال رسالة التحقق. تأكد من صحة رقم الهاتف (مثال: +2010xxxxxxxx).");
+                    alert("❌ فشل إرسال رسالة التحقق. تأكد من صحة رقم الهاتف.");
                 });
         }
 
         function verifyCustomerOTPAndSave() {
             const code = document.getElementById('regOtpCode').value.trim();
             const name = document.getElementById('regClientName').value.trim();
-            const phone = document.getElementById('regClientPhone').value.trim();
+            const phoneInput = document.getElementById('regClientPhone').value.trim();
             const address = document.getElementById('regClientAddress').value.trim();
 
             if(!code) { alert("أدخل كود التحقق."); return; }
+
+            const fullPhone = "+20" + phoneInput.replace(/^0+/, '');
 
             regConfirmationResult.confirm(code).then((result) => {
                 const user = result.user;
@@ -553,7 +561,7 @@
                 cloudClients[name] = clientCode;
                 db.ref('clients').set(cloudClients).catch(err => {});
 
-                const custData = { uid: user.uid, name, phone, address, clientCode };
+                const custData = { uid: user.uid, name, phone: fullPhone, address, clientCode };
                 db.ref('portalCustomers/' + user.uid).set(custData).then(() => {
                     alert("🎉 تم تسجيل الحساب بنجاح! سيتم توجيهك للنظام.");
                     currentPortalCustomer = custData;
@@ -568,10 +576,10 @@
             const code = document.getElementById('loginCode').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
             
-            // البحث عما إذا كان المدخل هو رقم هاتف عميل مسجل مسبقاً
             let foundCustomer = null;
             for(let uid in portalCustomersDB) {
-                if(portalCustomersDB[uid].phone === code) {
+                let dbPhone = portalCustomersDB[uid].phone;
+                if(dbPhone === code || dbPhone === "+20" + code || dbPhone === "+20" + code.replace(/^0+/, '')) {
                     foundCustomer = portalCustomersDB[uid];
                     break;
                 }
@@ -815,6 +823,7 @@
             }
 
             document.getElementById('editInvoiceId').value = '';
+            document.getElementById('invoiceNo').value = Math.floor(1000 + Math.random() * 9000);
             document.getElementById('clientName').value = '';
             document.getElementById('lblClientCode').innerText = '--';
             document.getElementById('clientMonthlyHistory').style.display = 'none';
@@ -853,6 +862,39 @@
                 grand += tot;
             });
             document.getElementById('grandTotal').innerText = grand.toFixed(2);
+        }
+
+        function editInvoice(id) {
+            let allCombinedSales = [...cloudSales];
+            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
+            offlineInvs.forEach(offInv => {
+                if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) allCombinedSales.push(offInv);
+            });
+            const inv = allCombinedSales.find(s => String(s.id) === String(id));
+            if(!inv) { alert("❌ الفاتورة غير موجودة."); return; }
+
+            switchTab('invoice');
+            document.getElementById('editInvoiceId').value = inv.id;
+            document.getElementById('invoiceNo').value = inv.invNo;
+            document.getElementById('invoiceDate').value = inv.date;
+            document.getElementById('clientName').value = inv.client;
+            document.getElementById('lblClientCode').innerText = inv.clientCode || '--';
+            onClientNameInput();
+
+            products.forEach((p, idx) => {
+                document.getElementById(`qty_${idx}`).value = '';
+                document.getElementById(`price_${idx}`).value = '480';
+            });
+
+            inv.items.forEach(it => {
+                const pIdx = products.findIndex(p => p.code === it.code || p.name === it.name);
+                if(pIdx !== -1) {
+                    document.getElementById(`qty_${pIdx}`).value = it.qty;
+                    document.getElementById(`price_${pIdx}`).value = it.price;
+                }
+            });
+            calcTotals();
+            alert("✏️ تم تحميل بيانات الفاتورة للتعديل. قم بتعديل ما تحتاجه ثم اضغط حفظ أو طباعة.");
         }
 
         function createInvoiceObject() {
@@ -949,8 +991,8 @@
 
             let receiptText = "";
             receiptText += "     [ BLACK HORSE ]\n";
-            receiptText += "شركة بلاك هورس - موزع معتمد\n";
-            receiptText += "كود النشاط: 7761 | س.ت: 76027\n";
+            receiptText += "شركة بلاك هورس - موزع معتمد[span_5](start_span)[span_5](end_span)\n";
+            receiptText += "كود النشاط: 7761 | س.ت: 76027[span_6](start_span)[span_6](end_span)\n";
             receiptText += "------------------------\n";
             receiptText += "التاريخ: " + rec.date + "\n";
             receiptText += "فاتورة: #" + rec.invNo + "\n";
@@ -1016,7 +1058,8 @@
             if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="6">لا توجد فواتير مطابقة.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
-                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}') || JSON.parse(localStorage.getItem('blackhorse_offline_invoices')||'[]').find(x=>x.id==='${inv.id}'))">🖨️ طباعة RawBT</button> `;
+                let actionButtons = `<button class="btn btn-warning" style="padding:2px 6px; font-size:10px;" onclick="editInvoice('${inv.id}')">✏️ تعديل</button> `;
+                actionButtons += `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}') || JSON.parse(localStorage.getItem('blackhorse_offline_invoices')||'[]').find(x=>x.id==='${inv.id}'))">🖨️ طباعة</button> `;
                 actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewInvoiceDetails('${inv.id}')">👁️ عرض</button>`;
                 tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${actionButtons}</td></tr>`;
             });
