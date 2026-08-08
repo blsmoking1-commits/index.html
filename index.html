@@ -57,9 +57,13 @@
         .report-table th, .report-table td { border: 1px solid #cbd5e1; padding: 6px; text-align: center; }
         .report-table th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; }
         .client-history-box { background: #fef08a; padding: 8px; border-radius: 6px; font-size: 11px; margin-top: 6px; display: none; color: #713f12; }
+        
+        #networkStatusBanner { background: #ef4444; color: white; text-align: center; font-size: 11px; padding: 4px; display: none; font-weight: bold; }
     </style>
 </head>
 <body>
+
+    <div id="networkStatusBanner">⚠️ لا يوجد اتصال بالإنترنت. يتم حفظ الفواتير محلياً وسيتم رفعها تلقائياً عند عودة الشبكة.</div>
 
     <!-- 1. شاشة تسجيل الدخول -->
     <div id="loginView" class="card">
@@ -388,6 +392,19 @@
         let cloudLmInvoices = [];
         let cloudHandovers = {};
 
+        // مراقبة حالة الاتصال بالإنترنت ومزامنة الفواتير المحلية المعلقة
+        window.addEventListener('online', () => {
+            document.getElementById('networkStatusBanner').style.display = 'none';
+            syncOfflineInvoices();
+        });
+        window.addEventListener('offline', () => {
+            document.getElementById('networkStatusBanner').style.display = 'block';
+        });
+
+        if(!navigator.onLine) {
+            document.getElementById('networkStatusBanner').style.display = 'block';
+        }
+
         db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; if(document.getElementById('sectionSaved').style.display === 'block') renderSavedInvoices(); if(document.getElementById('sectionReport').style.display === 'block') renderDailyReport(); if(currentDelegate) updateDelegateTodaySummary(); });
         db.ref('delegates').on('value', (s) => { if(s.val()) { cloudDelegates = s.val(); updateDelegatesSelects(); } });
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); updateReportClientsSelect(); });
@@ -438,6 +455,7 @@
 
             startLocationTracker();
             setupUserTabs();
+            syncOfflineInvoices(); // مزامنة الفواتير المخزنة محلياً عند تسجيل الدخول لو الإنترنت متصل
             
             if (currentDelegate.role === 'viewer') {
                 switchTab('saved');
@@ -591,7 +609,9 @@
             } else {
                 const newCode = "C-" + Math.floor(1000 + Math.random() * 9000);
                 cloudClients[val] = newCode;
-                db.ref('clients').set(cloudClients).catch(err => alert("خطأ في حفظ العميل: " + err.message));
+                if(navigator.onLine) {
+                    db.ref('clients').set(cloudClients).catch(err => {});
+                }
                 lblCode.innerText = newCode;
             }
 
@@ -708,10 +728,11 @@
 
             if(!editId && cloudDelegates[targetDelCode]) {
                 cloudDelegates[targetDelCode].carStock = carStock;
-                db.ref('delegates').set(cloudDelegates).catch(err => alert("خطأ في تحديث مخزون السيارة: " + err.message));
+                if(navigator.onLine) {
+                    db.ref('delegates').set(cloudDelegates).catch(err => {});
+                }
             }
 
-            let salesArr = cloudSales;
             let recordId = editId ? String(editId) : String(Date.now());
             const salesRecord = {
                 id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
@@ -719,15 +740,59 @@
                 client: client, clientCode: clientCode,
                 total: grand, totalQty: totalQtyCount, items: itemsSoldList, lat: tempLat, lng: tempLng
             };
-            
-            if(editId) salesArr = salesArr.filter(s => String(s.id) !== recordId);
-            salesArr.push(salesRecord);
-            
-            db.ref('sales').set(Object.assign({}, salesArr)).catch(err => {
-                alert("❌ خطأ في رفع الفاتورة على السحابة: " + err.message);
-            });
+
+            // حفظ محلياً دائماً لضمان عدم الضياع (Offline Support)
+            saveInvoiceLocally(salesRecord);
+
+            if(navigator.onLine) {
+                let salesArr = cloudSales.filter(s => String(s.id) !== recordId);
+                salesArr.push(salesRecord);
+                db.ref('sales').set(Object.assign({}, salesArr)).then(() => {
+                    removeOfflineInvoiceLocally(recordId);
+                }).catch(err => {});
+            } else {
+                alert("⚠️ لا يوجد إنترنت حالياً. تم حفظ الفاتورة محلياً وسيتم رفعها تلقائياً عند عودة الشبكة.");
+            }
 
             return salesRecord;
+        }
+
+        // إدارة التخزين المحلي للفواتير في حالة انقطاع النت
+        function saveInvoiceLocally(inv) {
+            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
+            offlineInvs = offlineInvs.filter(i => String(i.id) !== String(inv.id));
+            offlineInvs.push(inv);
+            localStorage.setItem('blackhorse_offline_invoices', JSON.stringify(offlineInvs));
+        }
+
+        function removeOfflineInvoiceLocally(id) {
+            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
+            offlineInvs = offlineInvs.filter(i => String(i.id) !== String(id));
+            localStorage.setItem('blackhorse_offline_invoices', JSON.stringify(offlineInvs));
+        }
+
+        function syncOfflineInvoices() {
+            if(!navigator.onLine) return;
+            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
+            if(offlineInvs.length === 0) return;
+
+            let salesArr = [...cloudSales];
+            let syncedCount = 0;
+
+            offlineInvs.forEach(inv => {
+                let exists = salesArr.some(s => String(s.id) === String(inv.id));
+                if(!exists) {
+                    salesArr.push(inv);
+                }
+                syncedCount++;
+            });
+
+            db.ref('sales').set(Object.assign({}, salesArr)).then(() => {
+                localStorage.removeItem('blackhorse_offline_invoices');
+                if(syncedCount > 0) {
+                    console.log(`✅ تم مزامنة ${syncedCount} فاتورة محفوظة محلياً بنجاح مع السحابة.`);
+                }
+            }).catch(err => {});
         }
 
         // طباعة عبر RawBT بالتنسيق المطلوب
@@ -794,14 +859,23 @@
             if(!tbody) return;
             tbody.innerHTML = '';
             
-            let filtered = cloudSales;
+            // دمج الفواتير السحابية مع المحلية غير المزامنة لعرضها فوراً
+            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
+            let allCombinedSales = [...cloudSales];
+            offlineInvs.forEach(offInv => {
+                if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) {
+                    allCombinedSales.push(offInv);
+                }
+            });
+
+            let filtered = allCombinedSales;
             const selectedDel = document.getElementById('filterDelegateSelect').value;
             const fromDate = document.getElementById('savedFilterFrom').value;
             const toDate = document.getElementById('savedFilterTo').value;
             
             const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
             
-            filtered = cloudSales.filter(s => {
+            filtered = allCombinedSales.filter(s => {
                 if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
                 if(isAdm && selectedDel && selectedDel !== 'ALL' && s.delegateCode !== selectedDel) return false;
 
@@ -820,7 +894,7 @@
             if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="6">لا توجد فواتير مطابقة.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
-                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ طباعة RawBT</button> `;
+                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}') || JSON.parse(localStorage.getItem('blackhorse_offline_invoices')||'[]').find(x=>x.id==='${inv.id}'))">🖨️ طباعة RawBT</button> `;
                 actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewInvoiceDetails('${inv.id}')">👁️ عرض</button> `;
                 
                 if(isAdm || inv.delegateCode === currentDelegate.code) {
@@ -838,7 +912,13 @@
         }
 
         function viewInvoiceDetails(id) {
-            const inv = cloudSales.find(s => String(s.id) === String(id));
+            let allCombinedSales = [...cloudSales];
+            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
+            offlineInvs.forEach(offInv => {
+                if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) allCombinedSales.push(offInv);
+            });
+
+            const inv = allCombinedSales.find(s => String(s.id) === String(id));
             if(!inv) return;
             let itemsHtml = inv.items.map(it => `- ${it.name} | كمية: ${it.qty} | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>');
             let content = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client} (${inv.clientCode})<br><b>المندوب:</b> ${inv.delegateName}<br><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي الكلي:</b> ${inv.total} ج.م`;
@@ -852,7 +932,13 @@
         }
 
         function editInvoice(id) {
-            const inv = cloudSales.find(s => String(s.id) === String(id));
+            let allCombinedSales = [...cloudSales];
+            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
+            offlineInvs.forEach(offInv => {
+                if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) allCombinedSales.push(offInv);
+            });
+
+            const inv = allCombinedSales.find(s => String(s.id) === String(id));
             if(!inv) return;
 
             const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
@@ -891,6 +977,7 @@
             const pass = prompt("🔒 أدخل كلمة سر المدير للحذف:");
             if(pass === ADMIN_PASS) {
                 if(confirm("هل تريد حذف الفاتورة نهائياً؟")) {
+                    removeOfflineInvoiceLocally(id);
                     let s = cloudSales.filter(x => String(x.id) !== String(id));
                     db.ref('sales').set(Object.assign({}, s)).then(() => {
                         renderSavedInvoices();
@@ -908,10 +995,16 @@
             const fromDate = document.getElementById('filterFromDate').value;
             const toDate = document.getElementById('filterToDate').value;
 
+            let allCombinedSales = [...cloudSales];
+            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
+            offlineInvs.forEach(offInv => {
+                if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) allCombinedSales.push(offInv);
+            });
+
             let total = 0, qMap = {};
             products.forEach(p => qMap[p.code] = 0);
 
-            let filtered = cloudSales.filter(s => {
+            let filtered = allCombinedSales.filter(s => {
                 if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
                 if(isAdm && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
                 if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
@@ -1045,9 +1138,13 @@
                 newStock[p.code] = parseFloat(document.getElementById(`adm_stock_${idx}`).value) || 0;
             });
             cloudDelegates[delCode].carStock = newStock;
-            db.ref('delegates').set(cloudDelegates).then(() => {
-                alert("✅ تم تعيين كمية السيارة الأولية للمندوب بنجاح!");
-            }).catch(err => alert("خطأ: " + err.message));
+            if(navigator.onLine) {
+                db.ref('delegates').set(cloudDelegates).then(() => {
+                    alert("✅ تم تعيين كمية السيارة الأولية للمندوب بنجاح!");
+                }).catch(err => alert("خطأ: " + err.message));
+            } else {
+                alert("⚠️ لا يوجد إنترنت لحفظ رصيد السيارة على السحابة.");
+            }
         }
 
         function initHandoverInputs() {
@@ -1073,7 +1170,13 @@
             let initialStock = cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].carStock || {...defaultCarStock} : {...defaultCarStock};
             
             let todayStr = new Date().toISOString().split('T')[0];
-            let mySalesToday = cloudSales.filter(s => s.delegateCode === targetDelCode && s.date === todayStr);
+            let allCombinedSales = [...cloudSales];
+            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
+            offlineInvs.forEach(offInv => {
+                if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) allCombinedSales.push(offInv);
+            });
+
+            let mySalesToday = allCombinedSales.filter(s => s.delegateCode === targetDelCode && s.date === todayStr);
 
             let expectedStock = {...initialStock};
             mySalesToday.forEach(inv => {
