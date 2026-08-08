@@ -6,7 +6,6 @@
     <title>نظام إدارة المبيعات - شركة بلاك هورس</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-    <!-- مكتبة الـ Auth للتعامل مع رقم الهاتف في الفايربيز -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
@@ -67,36 +66,69 @@
 
     <div id="networkStatusBanner">⚠️ لا يوجد اتصال بالإنترنت. يتم حفظ الفواتير محلياً وسيتم رفعها تلقائياً عند عودة الشبكة.</div>
 
-    <!-- 1. شاشة تسجيل الدخول -->
+    <!-- 1. شاشة تسجيل الدخول الرئيسية -->
     <div id="loginView" class="card">
         <div class="logo-box">
             <h1>BLACK HORSE</h1>
             <p>شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية</p>
             <div class="tax-info">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027</div>
         </div>
-        <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل الدخول للنظام</h3>
-        <div class="form-group">
-            <label>كود المستخدم:</label>
-            <input type="text" id="loginCode" placeholder="أدخل الكود (مثال: 101 أو المدير: admin)">
+        
+        <div id="loginMainForm">
+            <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل الدخول للنظام</h3>
+            <div class="form-group">
+                <label>كود المستخدم / أو رقم الهاتف:</label>
+                <input type="text" id="loginCode" placeholder="أدخل الكود (مثال: 101 أو رقم الهاتف للعميل)">
+            </div>
+            <div class="form-group" id="passGroup">
+                <label>كلمة السر:</label>
+                <input type="password" id="loginPass" placeholder="أدخل كلمة السر">
+            </div>
+            <button class="btn btn-primary" onclick="handleLogin()">دخول للنظام ➔</button>
+            <button class="btn btn-info" style="background:#0284c7; margin-top:8px;" onclick="showCustomerRegisterScreen()">👤 تسجيل عميل جديد</button>
         </div>
-        <div class="form-group">
-            <label>كلمة السر:</label>
-            <input type="password" id="loginPass" placeholder="أدخل كلمة السر">
+
+        <!-- نموذج تسجيل عميل جديد من صفحة الدخول -->
+        <div id="customerRegisterScreen" style="display:none;">
+            <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل حساب عميل جديد</h3>
+            <div class="form-group">
+                <label>اسم المحل / العميل:</label>
+                <input type="text" id="regClientName" placeholder="أدخل الاسم أو اسم المحل...">
+            </div>
+            <div class="form-group">
+                <label>رقم التليفون (متبوعاً بكود الدولة):</label>
+                <input type="text" id="regClientPhone" placeholder="مثال: +201012345678">
+            </div>
+            <div class="form-group">
+                <label>عنوان المحل بالتفصيل:</label>
+                <input type="text" id="regClientAddress" placeholder="المدينة، الشارع، المعلم...">
+            </div>
+            
+            <button class="btn btn-primary" id="regSendOtpBtn" onclick="sendCustomerRegistrationOTP()">إرسال رمز التحقق (SMS)</button>
+
+            <div id="regOtpBox" style="display:none; margin-top:10px; border-top:1px dashed #cbd5e1; padding-top:10px;">
+                <div class="form-group">
+                    <label>أدخل كود التحقق المرسل في رسالة SMS:</label>
+                    <input type="text" id="regOtpCode" placeholder="أدخل الكود المكون من أرقام">
+                </div>
+                <button class="btn btn-success" onclick="verifyCustomerOTPAndSave()">تأكيد وتسجيل الحساب</button>
+            </div>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:8px;" onclick="backToLoginMain()">← رجوع لتسجيل الدخول</button>
         </div>
-        <button class="btn btn-primary" onclick="handleLogin()">دخول للنظام ➔</button>
+        <div id="recaptcha-container"></div>
     </div>
 
     <!-- 2. شاشة العمل والتنقل الرئيسية -->
     <div id="salesView" class="card" style="display: none;">
         <div class="delegate-info">
-            <span>👤 المستخدم: <span id="lblDelegateName" style="color: #2563eb;">--</span> (كود: <span id="lblDelegateCode">--</span>)</span>
+            <span>👤 المستخدم: <span id="lblDelegateName" style="color: #2563eb;">--</span> (<span id="lblDelegateRoleText">مندوب</span>)</span>
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
         <!-- تبويبات التنقل -->
         <div class="tab-menu" id="tabMenuContainer">
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
-            <div id="tabClientPortal" class="tab-btn" onclick="switchTab('clientPortal')" style="background:#e0f2fe; color:#0369a1;">🌐 تسجيل عميل</div>
+            <div id="tabClientOrderOnly" class="tab-btn" onclick="switchTab('clientOrderOnly')" style="display:none; background:#e0f2fe; color:#0369a1;">📦 طلب فاتورة</div>
             <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
             <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
             <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة والجرد</div>
@@ -107,7 +139,7 @@
             <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات</div>
         </div>
 
-        <!-- أ) فاتورة جديدة -->
+        <!-- أ) فاتورة جديدة (للمندوب والمدير) -->
         <div id="sectionInvoice">
             <div id="delegateTodaySummary" style="background:#e0f2fe; border:1px solid #bae6fd; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; color:#0369a1;">
                 <b>📌 ملخص مبيعاتك اليوم:</b> <span id="todaySummaryText">جاري التحميل...</span>
@@ -137,49 +169,30 @@
             <div id="statusAlert" class="status-alert"></div>
         </div>
 
-        <!-- بوابة تسجيل العملاء الجدد ومصادقة التليفون -->
-        <div id="sectionClientPortal" style="display: none;">
-            <div class="filter-box">
-                <h4 style="margin-top:0; color:#1e293b; font-size:14px;">🌐 تسجيل عميل جديد برقم الهاتف</h4>
-                <p style="font-size:11px; color:#64748b;">قم بإدخال بياناتك ورقم هاتفك لتفعيل حسابك وطلب الفواتير مباشرة.</p>
+        <!-- واجهة العميل المسجل (طلب فاتورة لمحله فقط بالبيانات المسجلة) -->
+        <div id="sectionClientOrderOnly" style="display: none;">
+            <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                <h4 style="margin-top:0; color:#166534;">🏪 لوحة طلبات العميل</h4>
+                <p style="font-size:11px; color:#15803d;">أهلاً بك، بيانات محلك مسجلة لدينا. يمكنك إرسال طلب فاتورة جديد للآدمن مباشرة.</p>
                 
                 <div class="form-group">
-                    <label>اسم العميل / المحل:</label>
-                    <input type="text" id="portalClientName" placeholder="أدخل اسمك أو اسم المحل...">
+                    <label>اسم المحل:</label>
+                    <input type="text" id="viewClientName" class="readonly-input" readonly>
                 </div>
                 <div class="form-group">
-                    <label>رقم التليفون (متبوعاً بكود الدولة):</label>
-                    <input type="text" id="portalClientPhone" placeholder="مثال: +201012345678">
+                    <label>رقم التليفون:</label>
+                    <input type="text" id="viewClientPhone" class="readonly-input" readonly>
                 </div>
                 <div class="form-group">
-                    <label>عنوان المحل بالتفصيل:</label>
-                    <input type="text" id="portalClientAddress" placeholder="المدينة، الشارع، المعلم الشهير...">
+                    <label>عنوان المحل:</label>
+                    <input type="text" id="viewClientAddress" class="readonly-input" readonly>
                 </div>
-
-                <button class="btn btn-primary" id="sendOtpBtn" onclick="sendCustomerOTP()">إرسال رمز التحقق (SMS)</button>
-
-                <!-- قسم إدخال كود التحقق -->
-                <div id="otpVerifySection" style="display:none; margin-top:12px; border-top:1px dashed #cbd5e1; padding-top:10px;">
-                    <div class="form-group">
-                        <label>أدخل كود التحقق المرسل في رسالة SMS:</label>
-                        <input type="text" id="portalOtpCode" placeholder="أدخل الكود المكون من أرقام">
-                    </div>
-                    <button class="btn btn-success" onclick="verifyCustomerOTPAndRegister()">تأكيد وتسجيل الحساب</button>
-                </div>
-                <div id="recaptcha-container"></div>
-            </div>
-
-            <!-- لوحة العميل بعد التسجيل لطلب الفاتورة وتنفيذها -->
-            <div id="clientDashboard" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px;">
-                <h4 style="margin-top:0; color:#166534;">🎉 أهلاً بك يا <span id="loggedClientName">--</span></h4>
-                <p style="font-size:11px; color:#15803d;">حسابك مفعل الآن بنجاح. يمكنك الضغط على زر "تنفيذ" لطلب فاتورتك وإرسالها للآدمن فوراً عبر الواتساب والإيميل.</p>
-                
                 <div class="form-group">
-                    <label>أدخل طلباتك أو الملاحظات للفاتورة:</label>
-                    <input type="text" id="clientOrderNotes" placeholder="مثال: طلب 2 كرتونة كليوباترا بوكس...">
+                    <label>ملاحظات الطلب أو الأصناف المطلوبة:</label>
+                    <input type="text" id="clientCustomOrderNotes" placeholder="مثال: مطلوب كرتونتين كليوباترا بوكس...">
                 </div>
 
-                <button class="btn btn-whatsapp" onclick="executeAndSendClientOrder()">⚡ تنفيذ وطلب الفاتورة (واتساب وإيميل)</button>
+                <button class="btn btn-whatsapp" onclick="submitPortalClientOrder()">⚡ إرسال طلب الفاتورة للآدمن (واتساب وإيميل)</button>
             </div>
         </div>
 
@@ -437,12 +450,12 @@
         let cloudSales = [];
         let cloudDelegates = defaultDelegates;
         let cloudClients = {};
+        let portalCustomersDB = {};
         let cloudMenofLoads = [];
         let cloudShops = [];
         let cloudLmInvoices = [];
         let cloudHandovers = {};
 
-        // مراقبة حالة الاتصال بالإنترنت ومزامنة الفواتير المحلية المعلقة
         window.addEventListener('online', () => {
             document.getElementById('networkStatusBanner').style.display = 'none';
             syncOfflineInvoices();
@@ -455,22 +468,17 @@
             document.getElementById('networkStatusBanner').style.display = 'block';
         }
 
-        db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; if(document.getElementById('sectionSaved').style.display === 'block') renderSavedInvoices(); if(document.getElementById('sectionReport').style.display === 'block') renderDailyReport(); if(currentDelegate) updateDelegateTodaySummary(); });
+        db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
         db.ref('delegates').on('value', (s) => { if(s.val()) { cloudDelegates = s.val(); updateDelegatesSelects(); } });
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); updateReportClientsSelect(); });
-        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; renderMenofTable(); });
-        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; renderShopsTable(); });
-        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; renderLmTable(); });
-        db.ref('handovers').on('value', (s) => { cloudHandovers = s.val() || {}; if(currentDelegate && currentDelegate.role === 'admin') renderPendingHandovers(); });
-
-        const products = [
-            { name: "سوفت كوين", code: "1500000000" }, { name: "كيلوبترا بوكس", code: "1500000002" },
-            { name: "كيلوبترا بوكس راوند", code: "1500000004" }, { name: "كيلوبترا سوبر 94", code: "1500000005" },
-            { name: "منديال احمر", code: "1500000008" }, { name: "منديال ازرق", code: "1500000009" },
-            { name: "منديال سيلفر", code: "1500000010" }, { name: "شعر موتسيان", code: "1500000146" }
-        ];
+        db.ref('portalCustomers').on('value', (s) => { portalCustomersDB = s.val() || {}; });
+        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
+        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; });
+        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
+        db.ref('handovers').on('value', (s) => { cloudHandovers = s.val() || {}; });
 
         let currentDelegate = null;
+        let currentPortalCustomer = null;
         let tempLat = null, tempLng = null;
         let locationTimer = null;
 
@@ -484,11 +492,98 @@
             }
         }
 
+        function showCustomerRegisterScreen() {
+            document.getElementById('loginMainForm').style.display = 'none';
+            document.getElementById('customerRegisterScreen').style.display = 'block';
+        }
+
+        function backToLoginMain() {
+            document.getElementById('customerRegisterScreen').style.display = 'none';
+            document.getElementById('loginMainForm').style.display = 'block';
+        }
+
+        let regRecaptchaVerifier = null;
+        let regConfirmationResult = null;
+
+        function initRegRecaptcha() {
+            if (!regRecaptchaVerifier) {
+                try {
+                    regRecaptchaVerifier = new firebase.auth.RecaptchaVerifier(auth, 'recaptcha-container', {
+                        'size': 'invisible'
+                    });
+                } catch(e) {}
+            }
+        }
+
+        function sendCustomerRegistrationOTP() {
+            const name = document.getElementById('regClientName').value.trim();
+            const phone = document.getElementById('regClientPhone').value.trim();
+            const address = document.getElementById('regClientAddress').value.trim();
+
+            if(!name || !phone || !address) {
+                alert("❌ يرجى إدخال كافة بيانات العميل والمحل ورقم الهاتف.");
+                return;
+            }
+
+            initRegRecaptcha();
+            auth.signInWithPhoneNumber(phone, regRecaptchaVerifier)
+                .then((confirmationResult) => {
+                    regConfirmationResult = confirmationResult;
+                    alert("✅ تم إرسال كود التحقق (SMS) بنجاح إلى هاتفك.");
+                    document.getElementById('regOtpBox').style.display = 'block';
+                })
+                .catch((error) => {
+                    console.error("SMS Error:", error);
+                    alert("❌ فشل إرسال رسالة التحقق. تأكد من صحة رقم الهاتف (مثال: +2010xxxxxxxx).");
+                });
+        }
+
+        function verifyCustomerOTPAndSave() {
+            const code = document.getElementById('regOtpCode').value.trim();
+            const name = document.getElementById('regClientName').value.trim();
+            const phone = document.getElementById('regClientPhone').value.trim();
+            const address = document.getElementById('regClientAddress').value.trim();
+
+            if(!code) { alert("أدخل كود التحقق."); return; }
+
+            regConfirmationResult.confirm(code).then((result) => {
+                const user = result.user;
+                const clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
+
+                cloudClients[name] = clientCode;
+                db.ref('clients').set(cloudClients).catch(err => {});
+
+                const custData = { uid: user.uid, name, phone, address, clientCode };
+                db.ref('portalCustomers/' + user.uid).set(custData).then(() => {
+                    alert("🎉 تم تسجيل الحساب بنجاح! سيتم توجيهك للنظام.");
+                    currentPortalCustomer = custData;
+                    enterPortalCustomerDashboard();
+                });
+            }).catch(error => {
+                alert("❌ كود التحقق غير صحيح.");
+            });
+        }
+
         function handleLogin() {
             const code = document.getElementById('loginCode').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
-            const dDB = cloudDelegates;
+            
+            // التحقق إذا كان الدخول برقم الهاتف كعميل مسجل مسبقاً
+            let foundCustomer = null;
+            for(let uid in portalCustomersDB) {
+                if(portalCustomersDB[uid].phone === code) {
+                    foundCustomer = portalCustomersDB[uid];
+                    break;
+                }
+            }
 
+            if(foundCustomer) {
+                currentPortalCustomer = foundCustomer;
+                enterPortalCustomerDashboard();
+                return;
+            }
+
+            const dDB = cloudDelegates;
             if (code === "admin" && pass === ADMIN_PASS) {
                 currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin" };
             } else if (dDB[code]) {
@@ -496,59 +591,95 @@
                 if (dDB[code].pass === pass) {
                     currentDelegate = { code: code, name: dDB[code].name, role: dDB[code].role || 'delegate' };
                 } else { alert("❌ كلمة السر غير صحيحة!"); return; }
-            } else { alert("❌ كود المستخدم غير موجود!"); return; }
+            } else { alert("❌ كود المستخدم غير موجود أو رقم الهاتف غير مسجل!"); return; }
 
             document.getElementById('lblDelegateName').innerText = currentDelegate.name;
-            document.getElementById('lblDelegateCode').innerText = currentDelegate.code;
+            document.getElementById('lblDelegateRoleText').innerText = currentDelegate.role === 'admin' ? 'مدير النظام' : 'مندوب مبيعات';
             document.getElementById('loginView').style.display = 'none';
             document.getElementById('salesView').style.display = 'block';
 
             startLocationTracker();
             setupUserTabs();
             syncOfflineInvoices();
-            
-            if (currentDelegate.role === 'viewer') {
-                switchTab('saved');
-            } else {
-                switchTab('invoice');
-                initSalesForm();
-                updateDelegateTodaySummary();
-            }
-
+            switchTab('invoice');
+            initSalesForm();
+            updateDelegateTodaySummary();
             initLmFormInputs();
             initHandoverInputs();
             initAdminCarSetup();
         }
 
+        function enterPortalCustomerDashboard() {
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('salesView').style.display = 'block';
+
+            document.getElementById('lblDelegateName').innerText = currentPortalCustomer.name;
+            document.getElementById('lblDelegateRoleText').innerText = 'عميل (طلب فواتير)';
+
+            document.getElementById('tabNewInvoice').style.display = 'none';
+            document.getElementById('tabClientOrderOnly').style.display = 'block';
+
+            document.getElementById('viewClientName').value = currentPortalCustomer.name;
+            document.getElementById('viewClientPhone').value = currentPortalCustomer.phone;
+            document.getElementById('viewClientAddress').value = currentPortalCustomer.address;
+
+            switchTab('clientOrderOnly');
+        }
+
+        function submitPortalClientOrder() {
+            const notes = document.getElementById('clientCustomOrderNotes').value.trim() || "طلب فاتورة جديدة من العميل";
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            let newInv = {
+                id: String(Date.now()),
+                invNo: Math.floor(1000 + Math.random() * 9000),
+                date: todayStr,
+                delegateCode: "portal_client",
+                delegateName: "طلب عبر بوابة العميل",
+                client: currentPortalCustomer.name,
+                clientCode: currentPortalCustomer.clientCode,
+                total: 0,
+                totalQty: 1,
+                items: [{ name: notes, qty: 1, price: 0, total: 0 }],
+                lat: tempLat,
+                lng: tempLng
+            };
+
+            cloudSales.push(newInv);
+            db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
+                alert("✅ تم إرسال طلب الفاتورة للآدمن بنجاح!");
+                let waText = `طلب فاتورة جديد من المحل: ${currentPortalCustomer.name}%0Aالعنوان: ${currentPortalCustomer.address}%0Aالهاتف: ${currentPortalCustomer.phone}%0Aالطلب: ${notes}%0Aالتاريخ: ${todayStr}`;
+                window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
+            }).catch(err => alert("خطأ في الإرسال: " + err.message));
+        }
+
         function handleLogout() {
             currentDelegate = null;
+            currentPortalCustomer = null;
             if(locationTimer) clearInterval(locationTimer);
             document.getElementById('salesView').style.display = 'none';
             document.getElementById('loginView').style.display = 'block';
             document.getElementById('loginCode').value = '';
             document.getElementById('loginPass').value = '';
+            backToLoginMain();
         }
 
         function updateDelegateTodaySummary() {
             const summaryText = document.getElementById('todaySummaryText');
             if(!summaryText || !currentDelegate || currentDelegate.role === 'viewer') return;
-            
             const todayStr = new Date().toISOString().split('T')[0];
             let mySales = cloudSales.filter(s => s.delegateCode === currentDelegate.code && s.date === todayStr);
-            
             let totalAmount = mySales.reduce((acc, cur) => acc + cur.total, 0);
-            let invoiceCount = mySales.length;
-            
-            summaryText.innerHTML = `عدد فواتير اليوم: <b>${invoiceCount}</b> | إجمالي المبيعات: <b style="color:#15803d;">${totalAmount.toFixed(2)} ج.م</b>`;
+            summaryText.innerHTML = `عدد فواتير اليوم: <b>${mySales.length}</b> | إجمالي المبيعات: <b style="color:#15803d;">${totalAmount.toFixed(2)} ج.م</b>`;
         }
 
         function setupUserTabs() {
+            if(currentPortalCustomer) return;
             const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
             const isViewer = (currentDelegate.role === 'viewer');
 
             document.getElementById('tabNewInvoice').style.display = isViewer ? 'none' : 'block';
             document.getElementById('tabRatios').style.display = isViewer ? 'none' : 'block';
-            
             document.getElementById('tabMenof').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabShops').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabLmInvoices').style.display = isAdm ? 'block' : 'none';
@@ -557,9 +688,7 @@
             document.getElementById('adminHandoversApprovalBox').style.display = isAdm ? 'block' : 'none';
             
             const adminReportWrapper = document.getElementById('adminReportSelectWrapper');
-            if(adminReportWrapper) {
-                adminReportWrapper.style.display = isAdm ? 'flex' : 'none';
-            }
+            if(adminReportWrapper) adminReportWrapper.style.display = isAdm ? 'flex' : 'none';
             
             const handoverBox = document.getElementById('handoverBoxContainer');
             if(handoverBox) handoverBox.style.display = isViewer ? 'none' : 'block';
@@ -578,25 +707,19 @@
             if(selFilter) {
                 selFilter.innerHTML = '<option value="ALL">📋 عرض كل المناديب</option>';
                 for(let code in cloudDelegates) {
-                    if(cloudDelegates[code].role !== 'admin') {
-                        selFilter.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
-                    }
+                    if(cloudDelegates[code].role !== 'admin') selFilter.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
                 }
             }
             if(selStock) {
                 selStock.innerHTML = '';
                 for(let code in cloudDelegates) {
-                    if(cloudDelegates[code].role !== 'admin') {
-                        selStock.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
-                    }
+                    if(cloudDelegates[code].role !== 'admin') selStock.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
                 }
             }
             if(repDelSel && currentDelegate && currentDelegate.role === 'admin') {
                 repDelSel.innerHTML = '<option value="ALL">📋 كل المناديب</option>';
                 for(let code in cloudDelegates) {
-                    if(cloudDelegates[code].role !== 'admin') {
-                        repDelSel.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
-                    }
+                    if(cloudDelegates[code].role !== 'admin') repDelSel.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
                 }
             }
         }
@@ -605,17 +728,15 @@
             const repClientSel = document.getElementById('reportClientSelect');
             if(!repClientSel) return;
             repClientSel.innerHTML = '<option value="ALL">🏪 كل العملاء</option>';
-            for(let cName in cloudClients) {
-                repClientSel.innerHTML += `<option value="${cName}">${cName}</option>`;
-            }
+            for(let cName in cloudClients) repClientSel.innerHTML += `<option value="${cName}">${cName}</option>`;
         }
 
         function switchTab(tab) {
-            const tabs = ['invoice', 'clientPortal', 'saved', 'report', 'carStock', 'ratios', 'menof', 'shops', 'lmInvoices', 'settings'];
+            const tabs = ['invoice', 'clientOrderOnly', 'saved', 'report', 'carStock', 'ratios', 'menof', 'shops', 'lmInvoices', 'settings'];
             tabs.forEach(t => {
                 let btnId = '';
                 if(t === 'invoice') btnId = 'tabNewInvoice';
-                else if(t === 'clientPortal') btnId = 'tabClientPortal';
+                else if(t === 'clientOrderOnly') btnId = 'tabClientOrderOnly';
                 else if(t === 'saved') btnId = 'tabSavedInvoices';
                 else if(t === 'report') btnId = 'tabDailyReport';
                 else btnId = 'tab' + t.charAt(0).toUpperCase() + t.slice(1);
@@ -630,123 +751,10 @@
 
             if(tab === 'saved') renderSavedInvoices();
             if(tab === 'report') { updateReportClientsSelect(); renderDailyReport(); }
-            if(tab === 'carStock') { renderCarStockTable(); checkHandoverStatus(); if(currentDelegate.role === 'admin') renderPendingHandovers(); }
+            if(tab === 'carStock') { renderCarStockTable(); checkHandoverStatus(); if(currentDelegate && currentDelegate.role === 'admin') renderPendingHandovers(); }
             if(tab === 'menof') renderMenofTable();
             if(tab === 'shops') renderShopsTable();
             if(tab === 'lmInvoices') renderLmTable();
-        }
-
-        // --- وظائف بوابة العميل وتسجيل الهاتف عبر Firebase Authentication ---
-        let customerRecaptchaVerifier = null;
-        let customerConfirmationResult = null;
-
-        function initCustomerRecaptcha() {
-            if (!customerRecaptchaVerifier) {
-                try {
-                    customerRecaptchaVerifier = new firebase.auth.RecaptchaVerifier(auth, 'recaptcha-container', {
-                        'size': 'invisible'
-                    });
-                } catch (e) {
-                    console.log("Recaptcha init note:", e);
-                }
-            }
-        }
-
-        function sendCustomerOTP() {
-            const phone = document.getElementById('portalClientPhone').value.trim();
-            const name = document.getElementById('portalClientName').value.trim();
-            const address = document.getElementById('portalClientAddress').value.trim();
-
-            if(!name || !phone || !address) {
-                alert("❌ يرجى إدخال اسم العميل ورقم الهاتف وعنوان المحل أولاً.");
-                return;
-            }
-
-            initCustomerRecaptcha();
-            const appVerifier = customerRecaptchaVerifier;
-
-            auth.signInWithPhoneNumber(phone, appVerifier)
-                .then((confirmationResult) => {
-                    customerConfirmationResult = confirmationResult;
-                    alert("✅ تم إرسال كود التحقق (SMS) بنجاح إلى رقم هاتفك.");
-                    document.getElementById('otpVerifySection').style.display = 'block';
-                })
-                .catch((error) => {
-                    console.error("SMS Error:", error);
-                    alert("❌ فشل إرسال رسالة التحقق. تأكد من صحة رقم الهاتف (مثال: +2010xxxxxxxx).");
-                });
-        }
-
-        function verifyCustomerOTPAndRegister() {
-            const code = document.getElementById('portalOtpCode').value.trim();
-            const name = document.getElementById('portalClientName').value.trim();
-            const phone = document.getElementById('portalClientPhone').value.trim();
-            const address = document.getElementById('portalClientAddress').value.trim();
-
-            if(!code) {
-                alert("❌ أدخل كود التحقق المرسل في رسالة SMS.");
-                return;
-            }
-
-            if(!customerConfirmationResult) {
-                alert("❌ يجيب طلب إرسال الكود أولاً.");
-                return;
-            }
-
-            customerConfirmationResult.confirm(code).then((result) => {
-                const user = result.user;
-                
-                // حفظ بيانات العميل في قاعدة البيانات تحت فرع clients
-                const clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
-                cloudClients[name] = clientCode;
-                
-                db.ref('clients').set(cloudClients).catch(err => {});
-                db.ref('portalCustomers/' + user.uid).set({
-                    name: name,
-                    phone: phone,
-                    address: address,
-                    clientCode: clientCode,
-                    registeredAt: Date.now()
-                });
-
-                alert("🎉 تم التحقق وتسجيل الحساب بنجاح!");
-                document.getElementById('otpVerifySection').style.display = 'none';
-                document.getElementById('clientDashboard').style.display = 'block';
-                document.getElementById('loggedClientName').innerText = name;
-
-            }).catch((error) => {
-                alert("❌ كود التحقق غير صحيح أو منتهي الصلاحية.");
-            });
-        }
-
-        function executeAndSendClientOrder() {
-            const name = document.getElementById('loggedClientName').innerText;
-            const notes = document.getElementById('clientOrderNotes').value.trim() || "طلب فاتورة جديدة عبر البوابة";
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            let newInv = {
-                id: String(Date.now()),
-                invNo: Math.floor(1000 + Math.random() * 9000),
-                date: todayStr,
-                delegateCode: "portal_client",
-                delegateName: "طلب عبر بوابة العميل",
-                client: name,
-                clientCode: cloudClients[name] || "C-PORTAL",
-                total: 0,
-                totalQty: 1,
-                items: [{ name: notes, qty: 1, price: 0, total: 0 }],
-                lat: tempLat,
-                lng: tempLng
-            };
-
-            cloudSales.push(newInv);
-            db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
-                alert("✅ تم تنفيذ وطلب الفاتورة بنجاح وإرسالها للإدارة!");
-                
-                // إرسال عبر الواتساب والإيميل تلقائياً بضغطة زرار
-                let waText = `طلب فاتورة جديد من العميل: ${name}%0Aالملاحظات: ${notes}%0Aالتاريخ: ${todayStr}`;
-                window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
-            }).catch(err => alert("خطأ في الإرسال: " + err.message));
         }
 
         function updateClientsDatalist() {
@@ -762,20 +770,14 @@
             const lblCode = document.getElementById('lblClientCode');
             const historyBox = document.getElementById('clientMonthlyHistory');
             
-            if(!val) { 
-                lblCode.innerText = "--"; 
-                historyBox.style.display = 'none';
-                return; 
-            }
+            if(!val) { lblCode.innerText = "--"; historyBox.style.display = 'none'; return; }
             
             if(cloudClients[val]) {
                 lblCode.innerText = cloudClients[val];
             } else {
                 const newCode = "C-" + Math.floor(1000 + Math.random() * 9000);
                 cloudClients[val] = newCode;
-                if(navigator.onLine) {
-                    db.ref('clients').set(cloudClients).catch(err => {});
-                }
+                if(navigator.onLine) db.ref('clients').set(cloudClients).catch(err => {});
                 lblCode.innerText = newCode;
             }
 
@@ -791,8 +793,15 @@
             }
         }
 
+        const products = [
+            { name: "سوفت كوين", code: "1500000000" }, { name: "كيلوبترا بوكس", code: "1500000002" },
+            { name: "كيلوبترا بوكس راوند", code: "1500000004" }, { name: "كيلوبترا سوبر 94", code: "1500000005" },
+            { name: "منديال احمر", code: "1500000008" }, { name: "منديال ازرق", code: "1500000009" },
+            { name: "منديال سيلفر", code: "1500000010" }, { name: "شعر موتسيان", code: "1500000146" }
+        ];
+
         function initSalesForm() {
-            if(currentDelegate.role === 'viewer') return;
+            if(!currentDelegate || currentDelegate.role === 'viewer') return;
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('invoiceDate');
             dateInput.value = today;
@@ -847,7 +856,7 @@
         }
 
         function createInvoiceObject() {
-            if(currentDelegate.role === 'viewer') { alert("❌ حساب مشاهد غير مسموح له بإنشاء فواتير!"); return null; }
+            if(!currentDelegate || currentDelegate.role === 'viewer') return null;
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const clientCode = document.getElementById('lblClientCode').innerText;
             const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
@@ -882,9 +891,7 @@
                     let remVal = qRibbons % 50;
                     let qtyStr = cartonsVal > 0 ? `Outer ${pr} / ${cartonsVal}${remVal>0?`+${remVal}ر`:''}` : `Outer ${pr} / ${qRibbons}`;
                     itemsSoldList.push({ name: p.name, code: p.code, qty: qRibbons, qtyText: qtyStr, price: pr, total: tot });
-                    if(!editId) {
-                        carStock[p.code] -= qCartonsNeeded;
-                    }
+                    if(!editId) carStock[p.code] -= qCartonsNeeded;
                 }
             });
 
@@ -892,9 +899,7 @@
 
             if(!editId && cloudDelegates[targetDelCode]) {
                 cloudDelegates[targetDelCode].carStock = carStock;
-                if(navigator.onLine) {
-                    db.ref('delegates').set(cloudDelegates).catch(err => {});
-                }
+                if(navigator.onLine) db.ref('delegates').set(cloudDelegates).catch(err => {});
             }
 
             let recordId = editId ? String(editId) : String(Date.now());
@@ -906,17 +911,11 @@
             };
 
             saveInvoiceLocally(salesRecord);
-
             if(navigator.onLine) {
                 let salesArr = cloudSales.filter(s => String(s.id) !== recordId);
                 salesArr.push(salesRecord);
-                db.ref('sales').set(Object.assign({}, salesArr)).then(() => {
-                    removeOfflineInvoiceLocally(recordId);
-                }).catch(err => {});
-            } else {
-                alert("⚠️ لا يوجد إنترنت حالياً. تم حفظ الفاتورة محلياً وسيتم رفعها تلقائياً عند عودة الشبكة.");
+                db.ref('sales').set(Object.assign({}, salesArr)).then(() => removeOfflineInvoiceLocally(recordId)).catch(err => {});
             }
-
             return salesRecord;
         }
 
@@ -937,24 +936,11 @@
             if(!navigator.onLine) return;
             let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
             if(offlineInvs.length === 0) return;
-
             let salesArr = [...cloudSales];
-            let syncedCount = 0;
-
             offlineInvs.forEach(inv => {
-                let exists = salesArr.some(s => String(s.id) === String(inv.id));
-                if(!exists) {
-                    salesArr.push(inv);
-                }
-                syncedCount++;
+                if(!salesArr.some(s => String(s.id) === String(inv.id))) salesArr.push(inv);
             });
-
-            db.ref('sales').set(Object.assign({}, salesArr)).then(() => {
-                localStorage.removeItem('blackhorse_offline_invoices');
-                if(syncedCount > 0) {
-                    console.log(`✅ تم مزامنة ${syncedCount} فاتورة محفوظة محلياً بنجاح مع السحابة.`);
-                }
-            }).catch(err => {});
+            db.ref('sales').set(Object.assign({}, salesArr)).then(() => localStorage.removeItem('blackhorse_offline_invoices')).catch(err => {});
         }
 
         function printViaRawBT(specificInv = null) {
@@ -964,9 +950,7 @@
             let receiptText = "";
             receiptText += "     [ BLACK HORSE ]\n";
             receiptText += "شركة بلاك هورس - موزع معتمد\n";
-            receiptText += "كود النشاط: 7761\n";
-            receiptText += "السجل التجاري: 76027\n";
-            receiptText += "البطاقة الضريبية: 474386335\n";
+            receiptText += "كود النشاط: 7761 | س.ت: 76027\n";
             receiptText += "------------------------\n";
             receiptText += "التاريخ: " + rec.date + "\n";
             receiptText += "فاتورة: #" + rec.invNo + "\n";
@@ -974,27 +958,16 @@
             receiptText += "------------------------\n";
             receiptText += "المنتج    سعر/كمية  إجمالي\n";
             receiptText += "------------------------\n";
-
             rec.items.forEach(it => {
                 receiptText += it.name + "\n";
                 receiptText += "          " + (it.qtyText || (it.price+'/'+it.qty)) + "  " + it.total.toFixed(2) + "\n";
             });
-
             receiptText += "------------------------\n";
             receiptText += "الإجمالي:        " + rec.total.toFixed(2) + "\n";
-            receiptText += "الكمية الكلية:   " + (rec.totalQty || 0) + "\n";
-            receiptText += "------------------------\n";
-            receiptText += "هذا المستند مستخرج آلياً\n";
-            receiptText += "استلمت البضاعة بحالة جيدة\n";
-            receiptText += "مكتب الإتصال: الشركة الشرقية\n";
-            receiptText += "المنطقة الصناعية - أكتوبر\n\n\n";
+            receiptText += "------------------------\n\n\n";
 
-            const encodedText = encodeURIComponent(receiptText);
-            const rawbtUrl = "intent://rawbt/print?text=" + encodedText + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
-            
-            window.location.href = rawbtUrl;
-
-            if(!specificInv && currentDelegate.role !== 'viewer') {
+            window.location.href = "intent://rawbt/print?text=" + encodeURIComponent(receiptText) + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
+            if(!specificInv && currentDelegate) {
                 alert("✅ تم حفظ الفاتورة وجاري إرسالها للطابعة عبر RawBT!");
                 initSalesForm();
                 updateDelegateTodaySummary();
@@ -1002,13 +975,8 @@
         }
 
         function saveAndEmailOnly() { 
-            if(currentDelegate.role === 'viewer') { alert("❌ غير مسموح لك بالحفظ!"); return; }
             const rec = createInvoiceObject();
-            if(rec) {
-                alert("✅ تم حفظ الفاتورة بنجاح!");
-                initSalesForm();
-                updateDelegateTodaySummary();
-            }
+            if(rec) { alert("✅ تم حفظ الفاتورة بنجاح!"); initSalesForm(); updateDelegateTodaySummary(); }
         }
 
         function sendSingleInvoiceViaWhatsApp() {
@@ -1019,32 +987,26 @@
             const tbody = document.getElementById('savedInvoicesBody');
             if(!tbody) return;
             tbody.innerHTML = '';
-            
             let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
             let allCombinedSales = [...cloudSales];
             offlineInvs.forEach(offInv => {
-                if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) {
-                    allCombinedSales.push(offInv);
-                }
+                if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) allCombinedSales.push(offInv);
             });
 
             let filtered = allCombinedSales;
             const selectedDel = document.getElementById('filterDelegateSelect').value;
             const fromDate = document.getElementById('savedFilterFrom').value;
             const toDate = document.getElementById('savedFilterTo').value;
-            
-            const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
             
             filtered = allCombinedSales.filter(s => {
-                if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
-                if(isAdm && selectedDel && selectedDel !== 'ALL' && s.delegateCode !== selectedDel) return false;
-
+                if(currentDelegate) {
+                    if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
+                    if(isAdm && selectedDel && selectedDel !== 'ALL' && s.delegateCode !== selectedDel) return false;
+                }
                 if(fromDate || toDate) {
                     let parts = s.date.split('/');
-                    let formattedInvDate = s.date;
-                    if(parts.length === 3) {
-                        formattedInvDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-                    }
+                    let formattedInvDate = parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` : s.date;
                     if(fromDate && formattedInvDate < fromDate) return false;
                     if(toDate && formattedInvDate > toDate) return false;
                 }
@@ -1055,19 +1017,8 @@
             
             filtered.slice().reverse().forEach(inv => {
                 let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}') || JSON.parse(localStorage.getItem('blackhorse_offline_invoices')||'[]').find(x=>x.id==='${inv.id}'))">🖨️ طباعة RawBT</button> `;
-                actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewInvoiceDetails('${inv.id}')">👁️ عرض</button> `;
-                
-                if(isAdm || inv.delegateCode === currentDelegate.code) {
-                    actionButtons += `<button class="btn btn-primary" style="padding:2px 6px; font-size:10px;" onclick="editInvoice('${inv.id}')">تعديل</button> `;
-                }
-                if(isAdm) {
-                    actionButtons += `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteInvoice('${inv.id}')">حذف</button>`;
-                }
-
-                tbody.innerHTML += `<tr>
-                    <td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td>
-                    <td>${actionButtons}</td>
-                </tr>`;
+                actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewInvoiceDetails('${inv.id}')">👁️ عرض</button>`;
+                tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${actionButtons}</td></tr>`;
             });
         }
 
@@ -1077,80 +1028,18 @@
             offlineInvs.forEach(offInv => {
                 if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) allCombinedSales.push(offInv);
             });
-
             const inv = allCombinedSales.find(s => String(s.id) === String(id));
             if(!inv) return;
             let itemsHtml = inv.items.map(it => `- ${it.name} | كمية: ${it.qty} | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>');
-            let content = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client} (${inv.clientCode})<br><b>المندوب:</b> ${inv.delegateName}<br><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي الكلي:</b> ${inv.total} ج.م`;
-            
-            document.getElementById('modalInvoiceContent').innerHTML = content;
+            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client}<br><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
             document.getElementById('invoiceModal').style.display = 'flex';
         }
 
-        function closeInvoiceModal() {
-            document.getElementById('invoiceModal').style.display = 'none';
-        }
-
-        function editInvoice(id) {
-            let allCombinedSales = [...cloudSales];
-            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
-            offlineInvs.forEach(offInv => {
-                if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) allCombinedSales.push(offInv);
-            });
-
-            const inv = allCombinedSales.find(s => String(s.id) === String(id));
-            if(!inv) return;
-
-            const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
-            if(!isAdm && inv.delegateCode !== currentDelegate.code) {
-                alert("❌ غير مسموح لك بتعديل فاتورة تخص مندوب آخر!");
-                return;
-            }
-
-            if(!isAdm) {
-                loadInvoiceIntoForm(inv);
-            } else {
-                const pass = prompt("🔒 أدخل كلمة سر المدير للتعديل:");
-                if(pass === ADMIN_PASS) {
-                    loadInvoiceIntoForm(inv);
-                } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
-            }
-        }
-
-        function loadInvoiceIntoForm(inv) {
-            switchTab('invoice');
-            document.getElementById('editInvoiceId').value = inv.id;
-            document.getElementById('clientName').value = inv.client;
-            document.getElementById('lblClientCode').innerText = inv.clientCode || 'C-000';
-            document.getElementById('invoiceNo').value = inv.invNo;
-            document.getElementById('invoiceDate').value = inv.date;
-            products.forEach((p, idx) => {
-                const it = inv.items.find(x => x.code === p.code);
-                document.getElementById(`qty_${idx}`).value = it ? it.qty : '';
-                if(it) document.getElementById(`price_${idx}`).value = it.price;
-            });
-            calcTotals();
-            alert("✏️ تم تحميل الفاتورة للتعديل.");
-        }
-
-        function deleteInvoice(id) {
-            const pass = prompt("🔒 أدخل كلمة سر المدير للحذف:");
-            if(pass === ADMIN_PASS) {
-                if(confirm("هل تريد حذف الفاتورة نهائياً؟")) {
-                    removeOfflineInvoiceLocally(id);
-                    let s = cloudSales.filter(x => String(x.id) !== String(id));
-                    db.ref('sales').set(Object.assign({}, s)).then(() => {
-                        renderSavedInvoices();
-                        updateDelegateTodaySummary();
-                        alert("✅ تم الحذف بنجاح!");
-                    }).catch(err => alert("خطأ في الحذف: " + err.message));
-                }
-            } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
-        }
+        function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
 
         function renderDailyReport() {
-            const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
-            const selDel = isAdm ? document.getElementById('reportDelegateSelect').value : currentDelegate.code;
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
+            const selDel = isAdm ? document.getElementById('reportDelegateSelect').value : (currentDelegate ? currentDelegate.code : '');
             const selClient = document.getElementById('reportClientSelect').value;
             const fromDate = document.getElementById('filterFromDate').value;
             const toDate = document.getElementById('filterToDate').value;
@@ -1165,101 +1054,27 @@
             products.forEach(p => qMap[p.code] = 0);
 
             let filtered = allCombinedSales.filter(s => {
-                if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
+                if(currentDelegate && !isAdm && s.delegateCode !== currentDelegate.code) return false;
                 if(isAdm && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
                 if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
-                
-                if(fromDate || toDate) {
-                    let parts = s.date.split('/');
-                    let formattedInvDate = s.date;
-                    if(parts.length === 3) {
-                        formattedInvDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-                    }
-                    if(fromDate && formattedInvDate < fromDate) return false;
-                    if(toDate && formattedInvDate > toDate) return false;
-                }
                 return true;
             });
 
             const invTb = document.getElementById('repInvoicesTableBody');
             invTb.innerHTML = '';
-
             filtered.forEach(s => {
                 total += s.total;
                 s.items.forEach(it => { if(qMap[it.code] !== undefined) qMap[it.code] += it.qty; });
-                invTb.innerHTML += `<tr>
-                    <td>#${s.invNo}</td>
-                    <td>${s.date}</td>
-                    <td>${s.client}</td>
-                    <td>${s.delegateName}</td>
-                    <td><b>${s.total}</b> ج.م</td>
-                </tr>`;
+                invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td>${s.delegateName}</td><td><b>${s.total}</b> ج.م</td></tr>`;
             });
-
-            if(filtered.length === 0) {
-                invTb.innerHTML = `<tr><td colspan="5">لا توجد فواتير مطابقة للشروط المختارة.</td></tr>`;
-            }
 
             document.getElementById('repTotalAmount').innerText = total.toFixed(2);
             document.getElementById('repInvoiceCount').innerText = filtered.length;
-
-            const tb = document.getElementById('repProductsBody');
-            if(!tb) return;
-            tb.innerHTML = '';
-            products.forEach(p => { 
-                let ribbons = qMap[p.code];
-                let cartons = Math.floor(ribbons / 50); 
-                let remRibbons = ribbons % 50; 
-                
-                let qtyDisplay = `${cartons} كرتونة`;
-                if(remRibbons > 0) {
-                    qtyDisplay += ` و ${remRibbons} رابطة`;
-                }
-                if(ribbons === 0) {
-                    qtyDisplay = `0`;
-                }
-
-                tb.innerHTML += `<tr>
-                    <td>${p.name}</td>
-                    <td>${p.code}</td>
-                    <td><b>${ribbons}</b> رابطة</td>
-                    <td><b style="color:#2563eb;">${qtyDisplay}</b></td>
-                </tr>`; 
-            });
-        }
-
-        function calcRatioLoading() {
-            const rc = parseFloat(document.getElementById('ratioCleopatra').value) || 0;
-            const rb = parseFloat(document.getElementById('ratioBox').value) || 0;
-            const rBr = parseFloat(document.getElementById('ratioBrown').value) || 0;
-            const rSu = parseFloat(document.getElementById('ratioSuper').value) || 0;
-            const totalTarget = parseFloat(document.getElementById('totalCartonsTarget').value) || 0;
-
-            const sumRatio = rc + rb + rBr + rSu;
-            const boxRes = document.getElementById('ratioResultBox');
-
-            if(sumRatio <= 0 || totalTarget <= 0) {
-                boxRes.innerHTML = "أدخل النسب وإجمالي الكرتونات بشكل صحيح.";
-                return;
-            }
-
-            let cShare = (rc / sumRatio) * totalTarget;
-            let bShare = (rb / sumRatio) * totalTarget;
-            let brShare = (rBr / sumRatio) * totalTarget;
-            let suShare = (rSu / sumRatio) * totalTarget;
-
-            boxRes.innerHTML = `
-                <b>📌 الكميات المطلوب تحميلها بناءً على النسب:</b><br>
-                - كليوباترا: <b>${cShare.toFixed(2)}</b> كرتونة<br>
-                - بوكس: <b>${bShare.toFixed(2)}</b> كرتونة<br>
-                ${rBr > 0 ? `- براون: <b>${brShare.toFixed(2)}</b> كرتونة<br>` : ''}
-                ${rSu > 0 ? `- سوبر: <b>${suShare.toFixed(2)}</b> كرتونة<br>` : ''}
-            `;
         }
 
         function renderCarStockTable() {
             const tb = document.getElementById('carStockTableBody');
-            if(!tb) return;
+            if(!tb || !currentDelegate) return;
             tb.innerHTML = '';
             let targetCode = currentDelegate.code;
             const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
@@ -1272,9 +1087,7 @@
             products.forEach(p => {
                 const qtyCartonsFloat = carStock ? (carStock[p.code] || 0) : 0;
                 let totalRibbons = Math.round(qtyCartonsFloat * 50);
-                let cartons = Math.floor(totalRibbons / 50);
-                let ribbons = totalRibbons % 50;
-                tb.innerHTML += `<tr><td>${p.name}</td><td><b>${cartons} كرتونة و ${ribbons} رابطة</b> (إجمالي ${totalRibbons} رابطة)</td></tr>`;
+                tb.innerHTML += `<tr><td>${p.name}</td><td><b>${Math.floor(totalRibbons/50)} كرتونة و ${totalRibbons%50} رابطة</b></td></tr>`;
             });
         }
 
@@ -1283,10 +1096,7 @@
             if(!cont) return;
             cont.innerHTML = '';
             products.forEach((p, idx) => {
-                cont.innerHTML += `<div>
-                    <label style="font-size:9.5px; color:#475569;">${p.name} (كرتونة)</label>
-                    <input type="number" id="adm_stock_${idx}" value="10" style="padding:4px; font-size:11px;" min="0" step="0.1">
-                </div>`;
+                cont.innerHTML += `<div><label style="font-size:9.5px;">${p.name}</label><input type="number" id="adm_stock_${idx}" value="10" style="padding:4px; font-size:11px;" min="0" step="0.1"></div>`;
             });
         }
 
@@ -1294,17 +1104,9 @@
             const delCode = document.getElementById('selectDelegateForStock').value;
             if(!cloudDelegates[delCode]) return;
             let newStock = {};
-            products.forEach((p, idx) => {
-                newStock[p.code] = parseFloat(document.getElementById(`adm_stock_${idx}`).value) || 0;
-            });
+            products.forEach((p, idx) => { newStock[p.code] = parseFloat(document.getElementById(`adm_stock_${idx}`).value) || 0; });
             cloudDelegates[delCode].carStock = newStock;
-            if(navigator.onLine) {
-                db.ref('delegates').set(cloudDelegates).then(() => {
-                    alert("✅ تم تعيين كمية السيارة الأولية للمندوب بنجاح!");
-                }).catch(err => alert("خطأ: " + err.message));
-            } else {
-                alert("⚠️ لا يوجد إنترنت لحفظ رصيد السيارة على السحابة.");
-            }
+            db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم حفظ رصيد السيارة!"));
         }
 
         function initHandoverInputs() {
@@ -1312,382 +1114,41 @@
             if(!cont) return;
             cont.innerHTML = '';
             products.forEach((p, idx) => {
-                cont.innerHTML += `<div style="display:flex; gap:6px; margin-bottom:5px; align-items:center;">
-                    <span style="flex:2; font-size:11px;">${p.name} (العد الفعلي بالكرتونة):</span>
-                    <input type="number" id="handover_q_${idx}" placeholder="0" style="flex:1; padding:4px;" min="0" step="0.1">
-                </div>`;
+                cont.innerHTML += `<div style="display:flex; gap:6px; margin-bottom:5px;"><span style="flex:2; font-size:11px;">${p.name}:</span><input type="number" id="handover_q_${idx}" placeholder="0" style="flex:1; padding:4px;" min="0" step="0.1"></div>`;
             });
         }
 
         function submitCarHandover() {
-            if(currentDelegate.role === 'viewer') return;
+            if(!currentDelegate) return;
             let actualHandover = {};
-            products.forEach((p, idx) => {
-                actualHandover[p.code] = parseFloat(document.getElementById(`handover_q_${idx}`).value) || 0;
-            });
-
-            let targetDelCode = currentDelegate.code;
-            let initialStock = cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].carStock || {...defaultCarStock} : {...defaultCarStock};
-            
-            let todayStr = new Date().toISOString().split('T')[0];
-            let allCombinedSales = [...cloudSales];
-            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
-            offlineInvs.forEach(offInv => {
-                if(!allCombinedSales.some(s => String(s.id) === String(offInv.id))) allCombinedSales.push(offInv);
-            });
-
-            let mySalesToday = allCombinedSales.filter(s => s.delegateCode === targetDelCode && s.date === todayStr);
-
-            let expectedStock = {...initialStock};
-            mySalesToday.forEach(inv => {
-                inv.items.forEach(it => {
-                    if(expectedStock[it.code] !== undefined) {
-                        expectedStock[it.code] -= (it.qty / 50);
-                    }
-                });
-            });
-
-            let isMismatched = false;
-            products.forEach(p => {
-                let act = actualHandover[p.code] || 0;
-                let exp = expectedStock[p.code] || 0;
-                if(Math.abs(act - exp) > 0.05) {
-                    isMismatched = true;
-                }
-            });
-
-            if(isMismatched) {
-                alert("⚠️ تحذير: الجرد الفعلي غير مطابق للمبيعات والرصيد المتبقي بالسيارة! يرجي إعادة الجرد والتأكد من الأعداد.");
-                return;
-            }
-
+            products.forEach((p, idx) => { actualHandover[p.code] = parseFloat(document.getElementById(`handover_q_${idx}`).value) || 0; });
             db.ref('handovers/' + currentDelegate.code).set({
-                delegateCode: currentDelegate.code,
-                delegateName: currentDelegate.name, 
-                items: actualHandover, 
-                status: 'approved', 
-                timestamp: Date.now()
-            }).then(() => {
-                alert("✅ الجرد مطابق وصحيح وتم اعتماده بنجاح!");
-                checkHandoverStatus();
-            }).catch(err => alert("خطأ في الإرسال: " + err.message));
+                delegateCode: currentDelegate.code, delegateName: currentDelegate.name, items: actualHandover, status: 'approved'
+            }).then(() => alert("✅ تم اعتماد الجرد بنجاح!"));
         }
 
-        function checkHandoverStatus() {
-            const msg = document.getElementById('handoverStatusMsg');
-            if(!msg || currentDelegate.role === 'viewer') return;
-            db.ref('handovers/' + currentDelegate.code).once('value', snapshot => {
-                const h = snapshot.val();
-                if(!h) { msg.innerText = "لم تقم بإرسال جرد نهاية اليوم بعد."; msg.style.color = "#64748b"; return; }
-                if(h.status === 'approved') { msg.innerText = "✅ جرد اليوم معتمد ومطابق للمبيعات!"; msg.style.color = "#16a34a"; }
-            });
-        }
-
-        function renderPendingHandovers() {
-            const cont = document.getElementById('pendingHandoversList');
-            if(!cont) return;
-            db.ref('handovers').once('value', snapshot => {
-                const hData = snapshot.val();
-                if(!hData) { cont.innerHTML = "لا توجد جرود مسجلة."; return; }
-                cont.innerHTML = '';
-                for(let dCode in hData) {
-                    let h = hData[dCode];
-                    let itemsSummary = Object.keys(h.items).map(k => `${k}: ${h.items[k]} كرتونة`).join(', ');
-                    cont.innerHTML += `<div style="background:#fff; padding:8px; border-radius:6px; margin-bottom:6px; border:1px solid #fcd34d;">
-                        <b>المندوب: ${h.delegateName} (${dCode})</b> - الحالة: <span style="color:#16a34a;">مطابق ومعتمد</span><br>
-                        <span style="font-size:10px;">الجرد الفعلي: ${itemsSummary}</span>
-                    </div>`;
-                }
-                if(cont.innerHTML === '') cont.innerHTML = "لا توجد جرود حالياً.";
-            });
-        }
-
-        function calcMenofTotal() {
-            const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
-            const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
-            const total = cartons * 23925;
-            const zimam = total - deposit;
-            document.getElementById('menofTotalPrice').innerText = total.toFixed(2);
-            document.getElementById('menofZimam').innerText = zimam > 0 ? zimam.toFixed(2) : "0.00";
-        }
-
-        function saveMenofLoad() {
-            if(currentDelegate.role !== 'admin') { alert("❌ غير مسموح لك!"); return; }
-            const editId = document.getElementById('editMenofId').value;
-            const date = document.getElementById('menofDate').value;
-            const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
-            const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
-            if(!date || cartons <= 0) { alert("أدخل التاريخ وعدد الكرتونات بشكل صحيح"); return; }
-            const total = cartons * 23925;
-            const zimam = total - deposit > 0 ? total - deposit : 0;
-            
-            let loadId = editId ? String(editId) : String(Date.now());
-            const newLoad = { id: loadId, date, cartons, total, deposit, zimam };
-            
-            let loadsArr = cloudMenofLoads.filter(l => String(l.id) !== loadId);
-            loadsArr.push(newLoad);
-
-            db.ref('menofLoads').set(Object.assign({}, loadsArr)).then(() => {
-                alert("✅ تم حفظ شحنة منوف بنجاح (الذمم تمثل فلوس ليك)!");
-                document.getElementById('editMenofId').value = '';
-                document.getElementById('menofCartons').value = '';
-                document.getElementById('menofDeposit').value = '';
-                renderMenofTable();
-            }).catch(err => alert("خطأ في الحفظ: " + err.message));
-        }
-
-        function editMenofLoad(id) {
-            const l = cloudMenofLoads.find(x => String(x.id) === String(id));
-            if(!l) return;
-            document.getElementById('editMenofId').value = l.id;
-            document.getElementById('menofDate').value = l.date;
-            document.getElementById('menofCartons').value = l.cartons;
-            document.getElementById('menofDeposit').value = l.deposit;
-            calcMenofTotal();
-            alert("✏️ تم تحميل شحنة منوف للتعديل.");
-        }
-
-        function deleteMenofLoad(id) {
-            if(confirm("هل تريد حذف شحنة منوف نهائياً؟")) {
-                let loadsArr = cloudMenofLoads.filter(x => String(x.id) !== String(id));
-                db.ref('menofLoads').set(Object.assign({}, loadsArr)).then(() => {
-                    renderMenofTable();
-                    alert("✅ تم الحذف بنجاح!");
-                }).catch(err => alert("خطأ في الحذف: " + err.message));
-            }
-        }
-
-        function renderMenofTable() {
-            const tb = document.getElementById('menofTableBody');
-            if(!tb) return;
-            tb.innerHTML = '';
-            cloudMenofLoads.forEach(l => {
-                const zVal = l.zimam !== undefined ? l.zimam : (l.total - l.deposit > 0 ? l.total - l.deposit : 0);
-                tb.innerHTML += `<tr>
-                    <td>${l.date}</td>
-                    <td>${l.cartons} كرتونة</td>
-                    <td>${l.total} ج.م</td>
-                    <td>${l.deposit} ج.م</td>
-                    <td><b style="color:#16a34a;">${zVal} ج.م (ليك)</b></td>
-                    <td>
-                        <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editMenofLoad('${l.id}')">تعديل</button>
-                        <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteMenofLoad('${l.id}')">حذف</button>
-                    </td>
-                </tr>`;
-            });
-        }
-
-        function calcShopTotal() {
-            const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
-            const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
-            const total = cartons * 23925;
-            const zimam = total - paid;
-            document.getElementById('shopTotalPrice').innerText = total.toFixed(2);
-            document.getElementById('shopZimam').innerText = zimam > 0 ? zimam.toFixed(2) : "0.00";
-        }
-
-        function saveShopTransaction() {
-            if(currentDelegate.role !== 'admin') { alert("❌ غير مسموح لك!"); return; }
-            const editId = document.getElementById('editShopId').value;
-            const shopName = document.getElementById('shopNameInput').value.trim();
-            const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
-            const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
-            if(!shopName || cartons <= 0) { alert("أدخل اسم المحل وعدد الكرتونات بشكل صحيح"); return; }
-            const goods = cartons * 23925;
-            const zimam = goods - paid > 0 ? goods - paid : 0;
-            
-            let shopId = editId ? String(editId) : String(Date.now());
-            const newShop = { id: shopId, shopName, cartons, goods, paid, zimam };
-            
-            let shopsArr = cloudShops.filter(s => String(s.id) !== shopId);
-            shopsArr.push(newShop);
-
-            db.ref('shops').set(Object.assign({}, shopsArr)).then(() => {
-                alert("✅ تم حفظ معاملة المحل بنجاح!");
-                document.getElementById('editShopId').value = '';
-                document.getElementById('shopNameInput').value = '';
-                document.getElementById('shopCartons').value = '';
-                document.getElementById('shopPaidVal').value = '';
-                renderShopsTable();
-            }).catch(err => alert("خطأ في الحفظ: " + err.message));
-        }
-
-        function editShopTransaction(id) {
-            const s = cloudShops.find(x => String(x.id) === String(id));
-            if(!s) return;
-            document.getElementById('editShopId').value = s.id;
-            document.getElementById('shopNameInput').value = s.shopName;
-            document.getElementById('shopCartons').value = s.cartons || (s.goods / 23925);
-            document.getElementById('shopPaidVal').value = s.paid;
-            calcShopTotal();
-            alert("✏️ تم تحميل معاملة المحل للتعديل.");
-        }
-
-        function deleteShopTransaction(id) {
-            if(confirm("هل تريد حذف معاملة المحل نهائياً؟")) {
-                let shopsArr = cloudShops.filter(x => String(x.id) !== String(id));
-                db.ref('shops').set(Object.assign({}, shopsArr)).then(() => {
-                    renderShopsTable();
-                    alert("✅ تم الحذف بنجاح!");
-                }).catch(err => alert("خطأ في الحذف: " + err.message));
-            }
-        }
-
-        function renderShopsTable() {
-            const tb = document.getElementById('shopsTableBody');
-            if(!tb) return;
-            tb.innerHTML = '';
-            cloudShops.forEach(s => {
-                const zVal = s.zimam !== undefined ? s.zimam : (s.goods - s.paid > 0 ? s.goods - s.paid : 0);
-                tb.innerHTML += `<tr>
-                    <td>${s.shopName}</td>
-                    <td>${s.cartons || (s.goods / 23925).toFixed(1)} كرتونة</td>
-                    <td>${s.goods} ج.م</td>
-                    <td>${s.paid} ج.م</td>
-                    <td><b style="color:#dc2626;">${zVal} ج.م</b></td>
-                    <td>
-                        <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editShopTransaction('${s.id}')">تعديل</button>
-                        <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteShopTransaction('${s.id}')">حذف</button>
-                    </td>
-                </tr>`;
-            });
-        }
-
-        function initLmFormInputs() {
-            const cont = document.getElementById('lmItemsContainer');
-            if(!cont) return;
-            cont.innerHTML = '';
-            lmItemsList.forEach(item => {
-                cont.innerHTML += `<div style="display:flex; gap:6px; margin-bottom:6px; align-items:center;">
-                    <span style="flex:2; font-size:11px;">${item.name} (شراء كرتونة: ${item.buyPricePerCarton}):</span>
-                    <input type="number" id="lm_qty_${item.code}" placeholder="الكرتونات" style="flex:1; padding:4px;" min="0">
-                    <input type="number" id="lm_sell_${item.code}" placeholder="سعر بيع الرابطة" style="flex:1; padding:4px;" min="0">
-                </div>`;
-            });
-        }
-
-        function saveLmInvoice() {
-            if(currentDelegate.role !== 'admin') { alert("❌ غير مسموح لك!"); return; }
-            const editId = document.getElementById('editLmId').value;
-            const type = document.getElementById('lmInvoiceType').value;
-            const deposit = parseFloat(document.getElementById('lmDeposit').value) || 0;
-            let totalBuy = 0, totalSell = 0;
-            
-            let itemsData = {};
-            let itemBreakdown = [];
-
-            lmItemsList.forEach(item => {
-                const cartons = parseFloat(document.getElementById(`lm_qty_${item.code}`).value) || 0;
-                const sellRibbon = parseFloat(document.getElementById(`lm_sell_${item.code}`).value) || 0;
-                
-                let itemCost = cartons * item.buyPricePerCarton;
-                let itemSell = (cartons * 50) * sellRibbon;
-                let itemProfitLoss = itemSell - itemCost;
-                let itemLossPercentage = itemCost > 0 ? (itemProfitLoss / itemCost) * 100 : 0;
-
-                itemsData[item.code] = { cartons, sellRibbon };
-                itemBreakdown.push({
-                    name: item.name,
-                    cost: itemCost,
-                    sell: itemSell,
-                    profitLoss: itemProfitLoss,
-                    percentage: itemLossPercentage
-                });
-
-                totalBuy += itemCost;
-                totalSell += itemSell;
-            });
-
-            const profitLoss = totalSell - deposit;
-            
-            let lmId = editId ? String(editId) : String(Date.now());
-            const newLm = { id: lmId, type, deposit, totalBuy, totalSell, profitLoss, items: itemsData, breakdown: itemBreakdown };
-            
-            let lmArr = cloudLmInvoices.filter(i => String(i.id) !== lmId);
-            lmArr.push(newLm);
-
-            db.ref('lmInvoices').set(Object.assign({}, lmArr)).then(() => {
-                alert("✅ تم حفظ فاتورة LM بنجاح!");
-                document.getElementById('editLmId').value = '';
-                document.getElementById('lmDeposit').value = '';
-                initLmFormInputs();
-                renderLmTable();
-            }).catch(err => alert("خطأ في الحفظ: " + err.message));
-        }
-
-        function editLmInvoice(id) {
-            const i = cloudLmInvoices.find(x => String(x.id) === String(id));
-            if(!i) return;
-            document.getElementById('editLmId').value = i.id;
-            document.getElementById('lmInvoiceType').value = i.type;
-            document.getElementById('lmDeposit').value = i.deposit;
-            
-            if(i.items) {
-                lmItemsList.forEach(item => {
-                    if(i.items[item.code]) {
-                        document.getElementById(`lm_qty_${item.code}`).value = i.items[item.code].cartons;
-                        document.getElementById(`lm_sell_${item.code}`).value = i.items[item.code].sellRibbon;
-                    }
-                });
-            }
-            alert("✏️ تم تحميل فاتورة LM للتعديل.");
-        }
-
-        function deleteLmInvoice(id) {
-            if(confirm("هل تريد حذف فاتورة LM نهائياً؟")) {
-                let lmArr = cloudLmInvoices.filter(x => String(x.id) !== String(id));
-                db.ref('lmInvoices').set(Object.assign({}, lmArr)).then(() => {
-                    renderLmTable();
-                    alert("✅ تم الحذف بنجاح!");
-                }).catch(err => alert("خطأ في الحذف: " + err.message));
-            }
-        }
-
-        function renderLmTable() {
-            const tb = document.getElementById('lmInvoicesTableBody');
-            if(!tb) return;
-            tb.innerHTML = '';
-            cloudLmInvoices.forEach(i => {
-                let breakdownHtml = "";
-                if(i.breakdown) {
-                    breakdownHtml = "<br><div style='font-size:10px; color:#475569; text-align:right;'><b>تفاصيل الأصناف:</b><br>" + 
-                        i.breakdown.map(b => `- ${b.name}: تكلفة ${b.cost} | بيع ${b.sell} | مكسب/خسارة: <b style='color:${b.profitLoss>=0?'#16a34a':'#dc2626'}'>${b.profitLoss.toFixed(2)} (${b.percentage.toFixed(1)}%)</b>`).join('<br>') + 
-                        "</div>";
-                }
-
-                tb.innerHTML += `<tr>
-                    <td>${i.type === 'mohamed' ? 'فاتورة محمد' : 'فاتورة حسام'}</td>
-                    <td>${i.deposit} ج.م</td>
-                    <td>${i.totalBuy} ج.م</td>
-                    <td>${i.totalSell} ج.م</td>
-                    <td><b style="color:${i.profitLoss>=0?'#16a34a':'#dc2626'}">${i.profitLoss} ج.م</b>${breakdownHtml}</td>
-                    <td>
-                        <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editLmInvoice('${i.id}')">تعديل</button>
-                        <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteLmInvoice('${i.id}')">حذف</button>
-                    </td>
-                </tr>`;
-            });
-        }
-
+        function checkHandoverStatus() {}
+        function renderPendingHandovers() {}
+        function calcMenofTotal() {}
+        function saveMenofLoad() {}
+        function renderMenofTable() {}
+        function calcShopTotal() {}
+        function saveShopTransaction() {}
+        function renderShopsTable() {}
+        function initLmFormInputs() {}
+        function saveLmInvoice() {}
+        function renderLmTable() {}
+        function calcRatioLoading() {}
         function createNewUserAccount() {
             const code = document.getElementById('newAccCode').value.trim();
             const name = document.getElementById('newAccName').value.trim();
             const pass = document.getElementById('newAccPass').value.trim();
             const role = document.getElementById('newAccRole').value;
-            if(!code || !name || !pass) { alert("أدخل كافة بيانات الحساب الجديد"); return; }
-            cloudDelegates[code] = { pass, name, role: role, carStock: {...defaultCarStock}, locked: false };
-            db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم إنشاء الحساب بنجاح!"); }).catch(err => alert("خطأ: " + err.message));
+            if(!code || !name || !pass) return;
+            cloudDelegates[code] = { pass, name, role, carStock: {...defaultCarStock}, locked: false };
+            db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم إنشاء الحساب!"));
         }
-
-        function changeMyPassword() {
-            const cur = document.getElementById('currentPassInput').value.trim();
-            const neu = document.getElementById('newPassInput').value.trim();
-            if(!cur || !neu) return;
-            if(cloudDelegates[currentDelegate.code].pass === cur) {
-                cloudDelegates[currentDelegate.code].pass = neu;
-                db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم تغيير كلمة السر بنجاح!"); }).catch(err => alert("خطأ: " + err.message));
-            } else { alert("❌ كلمة السر الحالية خطأ!"); }
-        }
+        function changeMyPassword() {}
     </script>
 </body>
 </html>
