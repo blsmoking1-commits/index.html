@@ -706,14 +706,15 @@
             return salesRecord;
         }
 
-        // دالة الطباعة عبر RawBT مع إضافة اسم الشركة، السجل التجاري، والبطاقة الضريبية في رأس الفاتورة
+        // طباعة عبر RawBT مع شعار الشركة، كود النشاط، السجل التجاري، والبطاقة الضريبية في أعلى الفاتورة
         function printViaRawBT(specificInv = null) {
             const rec = specificInv || createInvoiceObject();
             if(!rec) return;
 
             let receiptText = "";
-            receiptText += "      BLACK HORSE\n";
+            receiptText += "     [ BLACK HORSE ]\n";
             receiptText += "شركة بلاك هورس - موزع معتمد\n";
+            receiptText += "كود النشاط: 7761\n";
             receiptText += "السجل التجاري: 76027\n";
             receiptText += "البطاقة الضريبية: 474386335\n";
             receiptText += "------------------------\n";
