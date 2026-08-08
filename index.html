@@ -77,12 +77,12 @@
         <div id="loginMainForm">
             <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل الدخول للنظام</h3>
             <div class="form-group">
-                <label>كود المستخدم / أو رقم الهاتف:</label>
-                <input type="text" id="loginCode" placeholder="أدخل الكود (مثال: 101 أو رقم الهاتف للعميل)">
+                <label>كود المستخدم / أو رقم الهاتف للعميل:</label>
+                <input type="text" id="loginCode" placeholder="أدخل كود المندوب أو رقم هاتفك...">
             </div>
             <div class="form-group" id="passGroup">
-                <label>كلمة السر:</label>
-                <input type="password" id="loginPass" placeholder="أدخل كلمة السر">
+                <label>كلمة السر (للمندوب والمدير فقط):</label>
+                <input type="password" id="loginPass" placeholder="أدخل كلمة السر (اتركها فارغة إذا كنت عميل برقم الهاتف)">
             </div>
             <button class="btn btn-primary" onclick="handleLogin()">دخول للنظام ➔</button>
             <button class="btn btn-info" style="background:#0284c7; margin-top:8px;" onclick="showCustomerRegisterScreen()">👤 تسجيل عميل جديد</button>
@@ -568,7 +568,7 @@
             const code = document.getElementById('loginCode').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
             
-            // التحقق إذا كان الدخول برقم الهاتف كعميل مسجل مسبقاً
+            // البحث عما إذا كان المدخل هو رقم هاتف عميل مسجل مسبقاً
             let foundCustomer = null;
             for(let uid in portalCustomersDB) {
                 if(portalCustomersDB[uid].phone === code) {
@@ -591,7 +591,7 @@
                 if (dDB[code].pass === pass) {
                     currentDelegate = { code: code, name: dDB[code].name, role: dDB[code].role || 'delegate' };
                 } else { alert("❌ كلمة السر غير صحيحة!"); return; }
-            } else { alert("❌ كود المستخدم غير موجود أو رقم الهاتف غير مسجل!"); return; }
+            } else { alert("❌ كود المستخدم غير موجود أو رقم الهاتف غير مسجل! قم بتسجيل عميل جديد أولاً."); return; }
 
             document.getElementById('lblDelegateName').innerText = currentDelegate.name;
             document.getElementById('lblDelegateRoleText').innerText = currentDelegate.role === 'admin' ? 'مدير النظام' : 'مندوب مبيعات';
