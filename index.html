@@ -130,20 +130,29 @@
             <div id="statusAlert" class="status-alert"></div>
         </div>
 
-        <!-- ب) الفواتير المحفوظة -->
+        <!-- ب) الفواتير المحفوظة مع إمكانية التصفية بالتاريخ -->
         <div id="sectionSaved" style="display: none;">
-            <div class="filter-box" id="adminDelegateFilterBox" style="display:none;">
-                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">👤 فلترة مبيعات المناديب (مدير فقط):</h4>
-                <select id="filterDelegateSelect" class="form-control" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
-                    <option value="ALL">📋 عرض كل المناديب</option>
-                </select>
+            <div class="filter-box">
+                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:</h4>
+                <div id="adminDelegateFilterBox" style="display:none; margin-bottom:8px;">
+                    <label style="font-size:11px;">المندوب:</label>
+                    <select id="filterDelegateSelect" class="form-control" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
+                        <option value="ALL">📋 عرض كل المناديب</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <div class="form-group" style="flex:1; margin-bottom:0;"><label style="font-size:10px;">من تاريخ:</label><input type="date" id="savedFilterFrom" style="padding:6px; font-size:11px;" onchange="renderSavedInvoices()"></div>
+                    <div class="form-group" style="flex:1; margin-bottom:0;"><label style="font-size:10px;">إلى تاريخ:</label><input type="date" id="savedFilterTo" style="padding:6px; font-size:11px;" onchange="renderSavedInvoices()"></div>
+                </div>
             </div>
-            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📂 سجل الفواتير السحابية (مع إمكانية مراجعة محتوى الفاتورة):</h4>
+
+            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير (مع إمكانية مراجعة محتواها):</h4>
             <div style="overflow-x: auto;">
                 <table class="report-table">
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>التاريخ</th>
                             <th>العميل</th>
                             <th>المندوب</th>
                             <th>الإجمالي</th>
@@ -398,7 +407,6 @@
         let tempLat = null, tempLng = null;
         let locationTimer = null;
 
-        // تحديث الموقع تلقائياً كل ربع ساعة (15 دقيقة = 900,000 مللي ثانية)
         function startLocationTracker() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(p => { tempLat = p.coords.latitude; tempLng = p.coords.longitude; }, e => {}, { enableHighAccuracy: true });
@@ -480,7 +488,6 @@
             document.getElementById('adminCarSetupBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminHandoversApprovalBox').style.display = isAdm ? 'block' : 'none';
             
-            // في التقارير: المدير يرى قائمة المناديب، المندوب يرى تقريره فقط
             const adminReportWrapper = document.getElementById('adminReportSelectWrapper');
             if(adminReportWrapper) {
                 adminReportWrapper.style.display = isAdm ? 'flex' : 'none';
@@ -789,21 +796,33 @@
             
             let filtered = cloudSales;
             const selectedDel = document.getElementById('filterDelegateSelect').value;
+            const fromDate = document.getElementById('savedFilterFrom').value;
+            const toDate = document.getElementById('savedFilterTo').value;
             
             const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
-            if(!isAdm) {
-                filtered = cloudSales.filter(s => s.delegateCode === currentDelegate.code);
-            } else if(selectedDel && selectedDel !== 'ALL') {
-                filtered = cloudSales.filter(s => s.delegateCode === selectedDel);
-            }
+            
+            filtered = cloudSales.filter(s => {
+                if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
+                if(isAdm && selectedDel && selectedDel !== 'ALL' && s.delegateCode !== selectedDel) return false;
 
-            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5">لا توجد فواتير مطابقة.</td></tr>`; return; }
+                if(fromDate || toDate) {
+                    let parts = s.date.split('/');
+                    let formattedInvDate = s.date;
+                    if(parts.length === 3) {
+                        formattedInvDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                    }
+                    if(fromDate && formattedInvDate < fromDate) return false;
+                    if(toDate && formattedInvDate > toDate) return false;
+                }
+                return true;
+            });
+
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="6">لا توجد فواتير مطابقة.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
                 let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ طباعة RawBT</button> `;
-                actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewInvoiceDetails('${inv.id}')">👁️ عرض المحتوى</button> `;
+                actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewInvoiceDetails('${inv.id}')">👁️ عرض</button> `;
                 
-                // المندوب يمكنه تعديل فواتير نفسه فقط، المدير يمكنه تعديل وحذف أي فاتورة
                 if(isAdm || inv.delegateCode === currentDelegate.code) {
                     actionButtons += `<button class="btn btn-primary" style="padding:2px 6px; font-size:10px;" onclick="editInvoice('${inv.id}')">تعديل</button> `;
                 }
@@ -812,7 +831,7 @@
                 }
 
                 tbody.innerHTML += `<tr>
-                    <td><b>#${inv.invNo}</b></td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td>
+                    <td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td>
                     <td>${actionButtons}</td>
                 </tr>`;
             });
@@ -843,7 +862,6 @@
             }
 
             if(!isAdm) {
-                // المندوب يعدل مباشرة دون كلمة سر مدير
                 loadInvoiceIntoForm(inv);
             } else {
                 const pass = prompt("🔒 أدخل كلمة سر المدير للتعديل:");
@@ -894,7 +912,6 @@
             products.forEach(p => qMap[p.code] = 0);
 
             let filtered = cloudSales.filter(s => {
-                // المندوب يرى مبيعاته وفواتيره هو فقط دائماً
                 if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
                 if(isAdm && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
                 if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
