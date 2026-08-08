@@ -706,14 +706,16 @@
             return salesRecord;
         }
 
-        // دالة الطباعة عبر RawBT مضبوطة لعرض 3 سم وطول تلقائي حسب الأصناف
+        // دالة الطباعة عبر RawBT مع إضافة اسم الشركة، السجل التجاري، والبطاقة الضريبية في رأس الفاتورة
         function printViaRawBT(specificInv = null) {
             const rec = specificInv || createInvoiceObject();
             if(!rec) return;
 
             let receiptText = "";
-            receiptText += "    BLACK HORSE\n";
-            receiptText += "شركة بلاك هورس\n";
+            receiptText += "      BLACK HORSE\n";
+            receiptText += "شركة بلاك هورس - موزع معتمد\n";
+            receiptText += "السجل التجاري: 76027\n";
+            receiptText += "البطاقة الضريبية: 474386335\n";
             receiptText += "------------------------\n";
             receiptText += "التاريخ: " + rec.date + "\n";
             receiptText += "فاتورة: #" + rec.invNo + "\n";
@@ -988,7 +990,6 @@
             });
         }
 
-        // جرد نهاية اليوم ومقارنته بالمبيعات والسيارة
         function submitCarHandover() {
             if(currentDelegate.role === 'viewer') return;
             let actualHandover = {};
@@ -996,7 +997,6 @@
                 actualHandover[p.code] = parseFloat(document.getElementById(`handover_q_${idx}`).value) || 0;
             });
 
-            // حساب المتبقي المفترض في السيارة بناءً على الرصيد الأولي مطروحاً منه مبيعات اليوم
             let targetDelCode = currentDelegate.code;
             let initialStock = cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].carStock || {...defaultCarStock} : {...defaultCarStock};
             
@@ -1012,7 +1012,6 @@
                 });
             });
 
-            // مقارنة الجرد الفعلي بالمتوقع
             let isMismatched = false;
             products.forEach(p => {
                 let act = actualHandover[p.code] || 0;
