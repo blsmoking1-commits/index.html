@@ -92,9 +92,9 @@
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
             <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
             <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
-            <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة</div>
+            <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة وجرد اليوم</div>
             <div id="tabRatios" class="tab-btn" onclick="switchTab('ratios')" style="background:#e0f2fe;">⚖️ حساب النسب</div>
-            <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف</div>
+            <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف (فلوس ليك)</div>
             <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
             <div id="tabLmInvoices" class="tab-btn" onclick="switchTab('lmInvoices')" style="display:none; background:#fef3c7;">🚬 فواتير LM</div>
             <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات</div>
@@ -124,13 +124,13 @@
 
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
 
-            <button class="btn btn-bluetooth" onclick="printInvoiceWithStamp()">🖨️ طباعة الفاتورة مع الختم الرسمي</button>
+            <button class="btn btn-bluetooth" onclick="printViaRawBT()">🖨️ طباعة عبر RawBT (بلوتوث)</button>
             <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة</button>
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
             <div id="statusAlert" class="status-alert"></div>
         </div>
 
-        <!-- ب) الفواتير المحفوظة والتحكم في المناديب -->
+        <!-- ب) الفواتير المحفوظة -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box" id="adminDelegateFilterBox" style="display:none;">
                 <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">👤 فلترة مبيعات المناديب:</h4>
@@ -155,7 +155,7 @@
             </div>
         </div>
 
-        <!-- ج) التقارير ومبيعات كل سيارة على حدة -->
+        <!-- ج) التقارير -->
         <div id="sectionReport" style="display: none;">
             <div class="filter-box">
                 <h4>📊 تخصيص التقارير ومبيعات السيارات والفترة الزمنية:</h4>
@@ -200,36 +200,36 @@
 
         <!-- د) رصيد السيارة وجرد نهاية اليوم -->
         <div id="sectionCarStock" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد السيارة الحالي (بالكرتونة):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد السيارة الحالي (اعرف الباقي بالبوكس والكرتونة):</h4>
             
             <div id="adminCarSetupBox" style="display:none; background:#eff6ff; padding:10px; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:10px;">
-                <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ تعيين كمية السيارة الأولية (بالكرتونة للمدير):</h5>
+                <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ تعيين كمية السيارة الأولية (بواسطة المدير حسام):</h5>
                 <select id="selectDelegateForStock" class="form-control" style="margin-bottom:6px; font-size:11px;"></select>
                 <div id="adminCarStockInputs" style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;"></div>
-                <button class="btn btn-primary" style="padding:6px; font-size:11px;" onclick="saveAdminCarStock()">حفظ رصيد السيارة للمندوب</button>
+                <button class="btn btn-primary" style="padding:6px; font-size:11px;" onclick="saveAdminCarStock()">حفظ وتعيين رصيد السيارة</button>
             </div>
 
             <table class="report-table">
-                <thead><tr><th>الصنف</th><th>المتبقي بالسيارة (كرتونة)</th></tr></thead>
+                <thead><tr><th>الصنف</th><th>الرصيد المتبقي بالسيارة</th></tr></thead>
                 <tbody id="carStockTableBody"></tbody>
             </table>
 
             <div id="handoverBoxContainer" style="margin-top: 15px; background:#f8fafc; padding:12px; border:1px solid #cbd5e1; border-radius:8px;">
-                <h5 style="margin:0 0 8px 0; color:#2563eb;">🌙 جرد نهاية اليوم لتسليم السيارة للإدارة:</h5>
+                <h5 style="margin:0 0 8px 0; color:#2563eb;">🌙 جرد نهاية اليوم (مقارنة المبيعات بالرصيد):</h5>
                 <div id="handoverItemsInputs"></div>
-                <button class="btn btn-primary" style="margin-top:8px;" onclick="submitCarHandover()">إرسال جرد نهاية اليوم للمدير (حسام)</button>
+                <button class="btn btn-primary" style="margin-top:8px;" onclick="submitCarHandover()">إرسال جرد نهاية اليوم للمراجعة</button>
                 <div id="handoverStatusMsg" style="margin-top:8px; font-weight:bold; font-size:12px;"></div>
             </div>
 
             <div id="adminHandoversApprovalBox" style="display:none; margin-top:15px; background:#fef3c7; padding:12px; border-radius:8px; border:1px solid #fde047;">
-                <h5 style="margin:0 0 8px 0; color:#b45309;">🔔 موافقات جرود نهاية اليوم للمناديب (حسام):</h5>
+                <h5 style="margin:0 0 8px 0; color:#b45309;">🔔 موافقات وتدقيق جرود نهاية اليوم للمناديب:</h5>
                 <div id="pendingHandoversList">لا توجد جرود معلقة.</div>
             </div>
         </div>
 
-        <!-- هـ) حساب النسب (كليوباترا : بوكس / براون / سوبر) -->
+        <!-- هـ) حساب النسب -->
         <div id="sectionRatios" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل (كليوباترا : بوكس / براون / سوبر):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:</h4>
             <div class="filter-box">
                 <div style="display:flex; gap:8px;">
                     <div class="form-group" style="flex:1;"><label>نسبة كليوباترا:</label><input type="number" id="ratioCleopatra" value="2" oninput="calcRatioLoading()"></div>
@@ -251,18 +251,18 @@
 
         <!-- و) التحميل من منوف -->
         <div id="sectionMenof" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (سعر الكرتونة = 23,925 ج.م):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (الذمم هنا تعني: فلوس ليك عند الشركة/العميل):</h4>
             <div class="filter-box">
                 <input type="hidden" id="editMenofId" value="">
                 <div class="form-group"><label>تاريخ التحميل:</label><input type="date" id="menofDate"></div>
                 <div class="form-group"><label>عدد الكرتونات المحملة:</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
                 <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات: <b id="menofTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
                 <div class="form-group"><label>قيمة الإيداع المالي:</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px; color:#dc2626;">الذمم (المتبقي علي الحساب): <b id="menofZimam">0.00</b> ج.م</div>
-                <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل / تحديث شحنة منوف المالية</button>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#dc2626;">الذمم (فلوس ليك متبقية): <b id="menofZimam">0.00</b> ج.م</div>
+                <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل / تحديث شحنة منوف</button>
             </div>
             <table class="report-table">
-                <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>الإجمالي</th><th>الإيداع</th><th>الذمم</th><th>الإجراءات</th></tr></thead>
+                <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>الإجمالي</th><th>الإيداع</th><th>الذمم (ليك)</th><th>الإجراءات</th></tr></thead>
                 <tbody id="menofTableBody"></tbody>
             </table>
         </div>
@@ -285,9 +285,9 @@
             </table>
         </div>
 
-        <!-- ح) فواتير LM مع حساب الخسارة/المكسب لكل صنف -->
+        <!-- ح) فواتير LM -->
         <div id="sectionLmInvoices" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM (حساب المكسب والخسارة للصنف والفاتورة = البيع - التكلفة / الإيداع):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM:</h4>
             <div class="filter-box">
                 <input type="hidden" id="editLmId" value="">
                 <div class="form-group">
@@ -321,7 +321,7 @@
                     <label>نوع الحساب:</label>
                     <select id="newAccRole" class="form-control">
                         <option value="delegate">مندوب مبيعات</option>
-                        <option value="viewer">مشاهد فقط (بدون صلاحيات تعديل)</option>
+                        <option value="viewer">مشاهد فقط</option>
                     </select>
                 </div>
                 <button class="btn btn-success" onclick="createNewUserAccount()">إنشاء الحساب</button>
@@ -344,7 +344,6 @@
 
         const ADMIN_PASS = "Hossam2023@";
         const TARGET_PHONE_WA = "201011112764";
-        const STAMP_IMAGE_URL = "217.jpg";
 
         const defaultCarStock = { "1500000000": 10, "1500000002": 10, "1500000004": 10, "1500000005": 10, "1500000008": 10, "1500000009": 10, "1500000010": 10, "1500000146": 10 };
         const defaultDelegates = {
@@ -568,7 +567,7 @@
             } else {
                 const newCode = "C-" + Math.floor(1000 + Math.random() * 9000);
                 cloudClients[val] = newCode;
-                db.ref('clients').set(cloudClients);
+                db.ref('clients').set(cloudClients).catch(err => alert("خطأ في حفظ العميل: " + err.message));
                 lblCode.innerText = newCode;
             }
 
@@ -608,12 +607,14 @@
             const carStock = (currentDelegate.code !== 'admin' && cloudDelegates[currentDelegate.code]) ? cloudDelegates[currentDelegate.code].carStock : defaultCarStock;
 
             products.forEach((p, idx) => {
-                const stockCartons = carStock ? (carStock[p.code] || 0) : 0;
+                const stockRibbons = carStock ? (carStock[p.code] || 0) * 50 : 0;
+                let cartonsVal = Math.floor(stockRibbons / 50);
+                let ribbonsVal = stockRibbons % 50;
                 list.innerHTML += `
                     <div class="product-item">
                         <div class="product-title">
                             <span>${p.name}</span>
-                            <span style="font-size:11px; color:#64748b;">المتبقي بالسيارة: <b style="color:${stockCartons > 0 ? '#16a34a':'#dc2626'}">${stockCartons}</b> كرتونة</span>
+                            <span style="font-size:11px; color:#64748b;">المتبقي: <b style="color:${stockRibbons > 0 ? '#16a34a':'#dc2626'}">${cartonsVal} كرتونة و ${ribbonsVal} رابطة</b></span>
                         </div>
                         <div class="input-row">
                             <div><label>الكمية (رابطة)</label><input type="number" id="qty_${idx}" min="0" placeholder="0" oninput="calcTotals()"></div>
@@ -638,7 +639,7 @@
         }
 
         function createInvoiceObject() {
-            if(currentDelegate.role === 'viewer') { alert("❌ حساب مشاهد فقط غير مسموح له بإنشاء فواتير!"); return null; }
+            if(currentDelegate.role === 'viewer') { alert("❌ حساب مشاهد غير مسموح له بإنشاء فواتير!"); return null; }
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const clientCode = document.getElementById('lblClientCode').innerText;
             const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
@@ -652,6 +653,7 @@
             }
 
             let grand = 0, hasItems = false, itemsSoldList = [];
+            let totalQtyCount = 0;
             let carStock = cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].carStock || {...defaultCarStock} : {...defaultCarStock};
 
             products.forEach((p, idx) => {
@@ -667,7 +669,11 @@
                     }
                     hasItems = true; 
                     grand += tot;
-                    itemsSoldList.push({ name: p.name, code: p.code, qty: qRibbons, price: pr, total: tot });
+                    totalQtyCount += qRibbons;
+                    let cartonsVal = Math.floor(qRibbons / 50);
+                    let remVal = qRibbons % 50;
+                    let qtyStr = cartonsVal > 0 ? `Outer ${pr} / ${cartonsVal}${remVal>0?`+${remVal}ر`:''}` : `Outer ${pr} / ${qRibbons}`;
+                    itemsSoldList.push({ name: p.name, code: p.code, qty: qRibbons, qtyText: qtyStr, price: pr, total: tot });
                     if(!editId) {
                         carStock[p.code] -= qCartonsNeeded;
                     }
@@ -678,7 +684,7 @@
 
             if(!editId && cloudDelegates[targetDelCode]) {
                 cloudDelegates[targetDelCode].carStock = carStock;
-                db.ref('delegates').set(cloudDelegates);
+                db.ref('delegates').set(cloudDelegates).catch(err => alert("خطأ في تحديث مخزون السيارة: " + err.message));
             }
 
             let salesArr = cloudSales;
@@ -687,70 +693,56 @@
                 id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
                 delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
                 client: client, clientCode: clientCode,
-                total: grand, items: itemsSoldList, lat: tempLat, lng: tempLng
+                total: grand, totalQty: totalQtyCount, items: itemsSoldList, lat: tempLat, lng: tempLng
             };
+            
             if(editId) salesArr = salesArr.filter(s => String(s.id) !== recordId);
             salesArr.push(salesRecord);
-            db.ref('sales').set(Object.assign({}, salesArr));
+            
+            db.ref('sales').set(Object.assign({}, salesArr)).catch(err => {
+                alert("❌ خطأ في رفع الفاتورة على السحابة: " + err.message);
+            });
+
             return salesRecord;
         }
 
-        function printInvoiceWithStamp(specificInv = null) {
+        // دالة الطباعة عبر RawBT مضبوطة لعرض 3 سم وطول تلقائي حسب الأصناف
+        function printViaRawBT(specificInv = null) {
             const rec = specificInv || createInvoiceObject();
             if(!rec) return;
 
-            let printWindow = window.open('', '_blank', 'width=400,height=600');
-            if(printWindow) {
-                let html = `
-                    <html lang="ar" dir="rtl">
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>فاتورة مبيعات #${rec.invNo}</title>
-                        <style>
-                            body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0; padding: 10px; color: #000; text-align: right; }
-                            .center { text-align: center; }
-                            hr { border: dashed 1px #000; margin: 5px 0; }
-                            table { width: 100%; font-size: 11px; border-collapse: collapse; }
-                            th, td { padding: 3px; text-align: right; border-bottom: 1px solid #ddd; }
-                            .footer-section { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; }
-                            .stamp-img { width: 90px; height: 90px; object-fit: contain; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="center">
-                            <b>شركة بلاك هورس</b><br>
-                            موزع معتمد لدى الشركة الشرقية<br>
-                            كود: 7761 | ت.ض: 474386335
-                        </div>
-                        <hr>
-                        المندوب: ${rec.delegateName}<br>
-                        التاريخ: ${rec.date} | فاتورة: #${rec.invNo}<br>
-                        العميل: ${rec.client} (${rec.clientCode})
-                        <hr>
-                        <table>
-                            <tr><th>الصنف</th><th>ك</th><th>سعر</th><th>إجمالي</th></tr>`;
-                
-                rec.items.forEach(it => {
-                    html += `<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}</td><td>${it.total}</td></tr>`;
-                });
+            let receiptText = "";
+            receiptText += "    BLACK HORSE\n";
+            receiptText += "شركة بلاك هورس\n";
+            receiptText += "------------------------\n";
+            receiptText += "التاريخ: " + rec.date + "\n";
+            receiptText += "فاتورة: #" + rec.invNo + "\n";
+            receiptText += "العميل: " + rec.client + "\n";
+            receiptText += "------------------------\n";
+            receiptText += "المنتج    سعر/كمية  إجمالي\n";
+            receiptText += "------------------------\n";
 
-                html += `
-                        </table>
-                        <hr>
-                        <b>الصافي الإجمالي: ${rec.total.toFixed(2)} ج.م</b>
-                        <hr>
-                        <div class="footer-section">
-                            <div>توقيع المندوب:<br>.............</div>
-                            <div><img src="${STAMP_IMAGE_URL}" class="stamp-img" alt="ختم الشركة"></div>
-                        </div>
-                        <script>window.onload = function() { window.print(); window.close(); }<\/script>
-                    </body>
-                    </html>`;
-                printWindow.document.write(html);
-                printWindow.document.close();
-            }
+            rec.items.forEach(it => {
+                receiptText += it.name + "\n";
+                receiptText += "          " + (it.qtyText || (it.price+'/'+it.qty)) + "  " + it.total.toFixed(2) + "\n";
+            });
+
+            receiptText += "------------------------\n";
+            receiptText += "الإجمالي:        " + rec.total.toFixed(2) + "\n";
+            receiptText += "الكمية الكلية:   " + (rec.totalQty || 0) + "\n";
+            receiptText += "------------------------\n";
+            receiptText += "هذا المستند مستخرج آلياً\n";
+            receiptText += "استلمت البضاعة بحالة جيدة\n";
+            receiptText += "مكتب الإتصال: الشركة الشرقية\n";
+            receiptText += "المنطقة الصناعية - أكتوبر\n\n\n";
+
+            const encodedText = encodeURIComponent(receiptText);
+            const rawbtUrl = "intent://rawbt/print?text=" + encodedText + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
+            
+            window.location.href = rawbtUrl;
+
             if(!specificInv && currentDelegate.role !== 'viewer') {
-                alert("✅ تم حفظ الفاتورة وطباعتها مع الختم الرسمي بنجاح!");
+                alert("✅ تم حفظ الفاتورة وجاري إرسالها للطابعة عبر RawBT!");
                 initSalesForm();
                 updateDelegateTodaySummary();
             }
@@ -787,7 +779,7 @@
             if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5">لا توجد فواتير مطابقة.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
-                let actionButtons = `<button class="btn btn-primary" style="padding:2px 6px; font-size:10px;" onclick="printInvoiceWithStamp(cloudSales.find(x=>x.id==='${inv.id}'))">طباعة مباشرة</button>`;
+                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ طباعة RawBT</button>`;
                 
                 if(currentDelegate.role === 'admin') {
                     actionButtons += `
@@ -829,10 +821,11 @@
             if(pass === ADMIN_PASS) {
                 if(confirm("هل تريد حذف الفاتورة نهائياً؟")) {
                     let s = cloudSales.filter(x => String(x.id) !== String(id));
-                    db.ref('sales').set(Object.assign({}, s));
-                    renderSavedInvoices();
-                    updateDelegateTodaySummary();
-                    alert("✅ تم الحذف بنجاح!");
+                    db.ref('sales').set(Object.assign({}, s)).then(() => {
+                        renderSavedInvoices();
+                        updateDelegateTodaySummary();
+                        alert("✅ تم الحذف بنجاح!");
+                    }).catch(err => alert("خطأ في الحذف: " + err.message));
                 }
             } else if(pass !== null) { alert("❌ كلمة السر خطأ!"); }
         }
@@ -950,8 +943,11 @@
             const carStock = (currentDelegate.role === 'admin') ? (cloudDelegates[targetCode] ? cloudDelegates[targetCode].carStock : defaultCarStock) : (cloudDelegates[currentDelegate.code] ? cloudDelegates[currentDelegate.code].carStock : defaultCarStock);
             
             products.forEach(p => {
-                const qtyCartons = carStock ? (carStock[p.code] || 0) : 0;
-                tb.innerHTML += `<tr><td>${p.name}</td><td><b>${qtyCartons.toFixed(2)}</b> كرتونة</td></tr>`;
+                const qtyCartonsFloat = carStock ? (carStock[p.code] || 0) : 0;
+                let totalRibbons = Math.round(qtyCartonsFloat * 50);
+                let cartons = Math.floor(totalRibbons / 50);
+                let ribbons = totalRibbons % 50;
+                tb.innerHTML += `<tr><td>${p.name}</td><td><b>${cartons} كرتونة و ${ribbons} رابطة</b> (إجمالي ${totalRibbons} رابطة)</td></tr>`;
             });
         }
 
@@ -976,8 +972,8 @@
             });
             cloudDelegates[delCode].carStock = newStock;
             db.ref('delegates').set(cloudDelegates).then(() => {
-                alert("✅ تم تعيين كمية السيارة الأولية (بالكرتونة) للمندوب بنجاح!");
-            });
+                alert("✅ تم تعيين كمية السيارة الأولية (بواسطة حسام) للمندوب بنجاح!");
+            }).catch(err => alert("خطأ: " + err.message));
         }
 
         function initHandoverInputs() {
@@ -986,27 +982,61 @@
             cont.innerHTML = '';
             products.forEach((p, idx) => {
                 cont.innerHTML += `<div style="display:flex; gap:6px; margin-bottom:5px; align-items:center;">
-                    <span style="flex:2; font-size:11px;">${p.name} (الكرتونة الفعلي):</span>
-                    <input type="number" id="handover_q_${idx}" placeholder="عدد الكرتونات" style="flex:1; padding:4px;" min="0" step="0.1">
+                    <span style="flex:2; font-size:11px;">${p.name} (العد الفعلي بالكرتونة):</span>
+                    <input type="number" id="handover_q_${idx}" placeholder="0" style="flex:1; padding:4px;" min="0" step="0.1">
                 </div>`;
             });
         }
 
+        // جرد نهاية اليوم ومقارنته بالمبيعات والسيارة
         function submitCarHandover() {
             if(currentDelegate.role === 'viewer') return;
-            let handoverData = {};
+            let actualHandover = {};
             products.forEach((p, idx) => {
-                handoverData[p.code] = parseFloat(document.getElementById(`handover_q_${idx}`).value) || 0;
+                actualHandover[p.code] = parseFloat(document.getElementById(`handover_q_${idx}`).value) || 0;
             });
+
+            // حساب المتبقي المفترض في السيارة بناءً على الرصيد الأولي مطروحاً منه مبيعات اليوم
+            let targetDelCode = currentDelegate.code;
+            let initialStock = cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].carStock || {...defaultCarStock} : {...defaultCarStock};
+            
+            let todayStr = new Date().toISOString().split('T')[0];
+            let mySalesToday = cloudSales.filter(s => s.delegateCode === targetDelCode && s.date === todayStr);
+
+            let expectedStock = {...initialStock};
+            mySalesToday.forEach(inv => {
+                inv.items.forEach(it => {
+                    if(expectedStock[it.code] !== undefined) {
+                        expectedStock[it.code] -= (it.qty / 50);
+                    }
+                });
+            });
+
+            // مقارنة الجرد الفعلي بالمتوقع
+            let isMismatched = false;
+            products.forEach(p => {
+                let act = actualHandover[p.code] || 0;
+                let exp = expectedStock[p.code] || 0;
+                if(Math.abs(act - exp) > 0.05) {
+                    isMismatched = true;
+                }
+            });
+
+            if(isMismatched) {
+                alert("⚠️ تحذير: الجرد الفعلي غير مطابق للمبيعات والرصيد المتبقي بالسيارة! يرجي إعادة الجرد والتأكد من الأعداد.");
+                return;
+            }
+
             db.ref('handovers/' + currentDelegate.code).set({
                 delegateCode: currentDelegate.code,
                 delegateName: currentDelegate.name, 
-                items: handoverData, 
-                status: 'pending', 
+                items: actualHandover, 
+                status: 'approved', 
                 timestamp: Date.now()
-            });
-            alert("📤 تم إرسال جرد نهاية اليوم للمدير (حسام)، بانتظار الموافقة.");
-            checkHandoverStatus();
+            }).then(() => {
+                alert("✅ الجرد مطابق وصحيح وتم اعتماده بنجاح!");
+                checkHandoverStatus();
+            }).catch(err => alert("خطأ في الإرسال: " + err.message));
         }
 
         function checkHandoverStatus() {
@@ -1015,8 +1045,7 @@
             db.ref('handovers/' + currentDelegate.code).once('value', snapshot => {
                 const h = snapshot.val();
                 if(!h) { msg.innerText = "لم تقم بإرسال جرد نهاية اليوم بعد."; msg.style.color = "#64748b"; return; }
-                if(h.status === 'pending') { msg.innerText = "⏳ بانتظار موافقة حسام على جرد نهاية اليوم"; msg.style.color = "#d97706"; }
-                else if(h.status === 'approved') { msg.innerText = "✅ تمت الموافقة على جرد نهاية اليوم بنجاح!"; msg.style.color = "#16a34a"; }
+                if(h.status === 'approved') { msg.innerText = "✅ جرد اليوم معتمد ومطابق للمبيعات!"; msg.style.color = "#16a34a"; }
             });
         }
 
@@ -1025,27 +1054,17 @@
             if(!cont) return;
             db.ref('handovers').once('value', snapshot => {
                 const hData = snapshot.val();
-                if(!hData) { cont.innerHTML = "لا توجد جرود معلقة."; return; }
+                if(!hData) { cont.innerHTML = "لا توجد جرود مسجلة."; return; }
                 cont.innerHTML = '';
                 for(let dCode in hData) {
                     let h = hData[dCode];
-                    if(h.status === 'pending') {
-                        let itemsSummary = Object.keys(h.items).map(k => `${k}: ${h.items[k]} كرتونة`).join(', ');
-                        cont.innerHTML += `<div style="background:#fff; padding:8px; border-radius:6px; margin-bottom:6px; border:1px solid #fcd34d;">
-                            <b>المندوب: ${h.delegateName} (${dCode})</b><br>
-                            <span style="font-size:10px;">الجرود الفعلية: ${itemsSummary}</span><br>
-                            <button class="btn btn-success" style="padding:4px 8px; font-size:11px; margin-top:4px;" onclick="approveHandover('${dCode}')">موافقة واعتماد جرد نهاية اليوم</button>
-                        </div>`;
-                    }
+                    let itemsSummary = Object.keys(h.items).map(k => `${k}: ${h.items[k]} كرتونة`).join(', ');
+                    cont.innerHTML += `<div style="background:#fff; padding:8px; border-radius:6px; margin-bottom:6px; border:1px solid #fcd34d;">
+                        <b>المندوب: ${h.delegateName} (${dCode})</b> - الحالة: <span style="color:#16a34a;">مطابق ومعتمد</span><br>
+                        <span style="font-size:10px;">الجرد الفعلي: ${itemsSummary}</span>
+                    </div>`;
                 }
-                if(cont.innerHTML === '') cont.innerHTML = "لا توجد جرود معلقة حالياً.";
-            });
-        }
-
-        function approveHandover(dCode) {
-            db.ref('handovers/' + dCode + '/status').set('approved').then(() => {
-                alert("✅ تمت الموافقة على جرد نهاية اليوم بنجاح!");
-                renderPendingHandovers();
+                if(cont.innerHTML === '') cont.innerHTML = "لا توجد جرود حالياً.";
             });
         }
 
@@ -1075,12 +1094,12 @@
             loadsArr.push(newLoad);
 
             db.ref('menofLoads').set(Object.assign({}, loadsArr)).then(() => {
-                alert("✅ تم حفظ شحنة منوف بنجاح!");
+                alert("✅ تم حفظ شحنة منوف بنجاح (الذمم تمثل فلوس ليك)!");
                 document.getElementById('editMenofId').value = '';
                 document.getElementById('menofCartons').value = '';
                 document.getElementById('menofDeposit').value = '';
                 renderMenofTable();
-            });
+            }).catch(err => alert("خطأ في الحفظ: " + err.message));
         }
 
         function editMenofLoad(id) {
@@ -1100,7 +1119,7 @@
                 db.ref('menofLoads').set(Object.assign({}, loadsArr)).then(() => {
                     renderMenofTable();
                     alert("✅ تم الحذف بنجاح!");
-                });
+                }).catch(err => alert("خطأ في الحذف: " + err.message));
             }
         }
 
@@ -1115,7 +1134,7 @@
                     <td>${l.cartons} كرتونة</td>
                     <td>${l.total} ج.م</td>
                     <td>${l.deposit} ج.م</td>
-                    <td><b style="color:#dc2626;">${zVal} ج.م</b></td>
+                    <td><b style="color:#16a34a;">${zVal} ج.م (ليك)</b></td>
                     <td>
                         <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editMenofLoad('${l.id}')">تعديل</button>
                         <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteMenofLoad('${l.id}')">حذف</button>
@@ -1156,7 +1175,7 @@
                 document.getElementById('shopCartons').value = '';
                 document.getElementById('shopPaidVal').value = '';
                 renderShopsTable();
-            });
+            }).catch(err => alert("خطأ في الحفظ: " + err.message));
         }
 
         function editShopTransaction(id) {
@@ -1176,7 +1195,7 @@
                 db.ref('shops').set(Object.assign({}, shopsArr)).then(() => {
                     renderShopsTable();
                     alert("✅ تم الحذف بنجاح!");
-                });
+                }).catch(err => alert("خطأ في الحذف: " + err.message));
             }
         }
 
@@ -1193,7 +1212,7 @@
                     <td>${s.paid} ج.م</td>
                     <td><b style="color:#dc2626;">${zVal} ج.م</b></td>
                     <td>
-                        <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editShopTransaction('${s.id}')">tعديل</button>
+                        <button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="editShopTransaction('${s.id}')">تعديل</button>
                         <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteShopTransaction('${s.id}')">حذف</button>
                     </td>
                 </tr>`;
@@ -1245,7 +1264,6 @@
                 totalSell += itemSell;
             });
 
-            // حساب المكسب والخسارة الكلي = قيمة البيع - قيمة الإيداع
             const profitLoss = totalSell - deposit;
             
             let lmId = editId ? String(editId) : String(Date.now());
@@ -1255,12 +1273,12 @@
             lmArr.push(newLm);
 
             db.ref('lmInvoices').set(Object.assign({}, lmArr)).then(() => {
-                alert("✅ تم حفظ فاتورة LM وحساب تفاصيل كل صنف بنجاح!");
+                alert("✅ تم حفظ فاتورة LM بنجاح!");
                 document.getElementById('editLmId').value = '';
                 document.getElementById('lmDeposit').value = '';
                 initLmFormInputs();
                 renderLmTable();
-            });
+            }).catch(err => alert("خطأ في الحفظ: " + err.message));
         }
 
         function editLmInvoice(id) {
@@ -1287,7 +1305,7 @@
                 db.ref('lmInvoices').set(Object.assign({}, lmArr)).then(() => {
                     renderLmTable();
                     alert("✅ تم الحذف بنجاح!");
-                });
+                }).catch(err => alert("خطأ في الحذف: " + err.message));
             }
         }
 
@@ -1324,7 +1342,7 @@
             const role = document.getElementById('newAccRole').value;
             if(!code || !name || !pass) { alert("أدخل كافة بيانات الحساب الجديد"); return; }
             cloudDelegates[code] = { pass, name, role: role, carStock: {...defaultCarStock}, locked: false };
-            db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم إنشاء الحساب بنجاح!"); });
+            db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم إنشاء الحساب بنجاح!"); }).catch(err => alert("خطأ: " + err.message));
         }
 
         function changeMyPassword() {
@@ -1333,7 +1351,7 @@
             if(!cur || !neu) return;
             if(cloudDelegates[currentDelegate.code].pass === cur) {
                 cloudDelegates[currentDelegate.code].pass = neu;
-                db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم تغيير كلمة السر بنجاح!"); });
+                db.ref('delegates').set(cloudDelegates).then(() => { alert("✅ تم تغيير كلمة السر بنجاح!"); }).catch(err => alert("خطأ: " + err.message));
             } else { alert("❌ كلمة السر الحالية خطأ!"); }
         }
     </script>
