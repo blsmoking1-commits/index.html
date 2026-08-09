@@ -95,7 +95,7 @@
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
-        <!-- تبويبات التنقل -->
+        <!-- تبويبات التنقل الكاملة -->
         <div class="tab-menu" id="tabMenuContainer">
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
             <div id="tabClientOrderOnly" class="tab-btn" onclick="switchTab('clientOrderOnly')" style="display:none; background:#e0f2fe; color:#0369a1;">📦 طلب فاتورة</div>
@@ -117,6 +117,7 @@
                 <datalist id="clientsListOptions"></datalist>
                 <div style="font-size: 11px; color: #64748b; margin-top: 3px;">كود العميل: <b id="lblClientCode" style="color:#2563eb;">--</b></div>
             </div>
+            <input type="hidden" id="editInvoiceId" value="">
             <div style="display: flex; gap: 8px;">
                 <div class="form-group" style="flex: 1;"><label>رقم الفاتورة:</label><input type="text" id="invoiceNo" value="1001"></div>
                 <div class="form-group" style="flex: 1;"><label>التاريخ:</label><input type="date" id="invoiceDate" class="readonly-input"></div>
@@ -138,10 +139,18 @@
             </div>
         </div>
 
-        <!-- ج) الفواتير المحفوظة -->
+        <!-- ج) الفواتير المحفوظة (مع التعديل والطباعة) -->
         <div id="sectionSaved" style="display: none;">
+            <div class="filter-box">
+                <div id="adminDelegateFilterBox" style="display:none; margin-bottom:8px;">
+                    <label style="font-size:11px;">المندوب:</label>
+                    <select id="filterDelegateSelect" class="form-control" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
+                        <option value="ALL">📋 عرض كل المناديب</option>
+                    </select>
+                </div>
+            </div>
             <table class="report-table">
-                <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>الإجمالي</th></tr></thead>
+                <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>الإجمالي</th><th>الإجراءات</th></tr></thead>
                 <tbody id="savedInvoicesBody"></tbody>
             </table>
         </div>
@@ -157,7 +166,7 @@
 
         <!-- هـ) السيارة والجرد -->
         <div id="sectionCarStock" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 الجرد الحالي بالسيارة (التحميل مطروحاً منه المباع):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 إدارة رصيد السيارة والجرد:</h4>
             <div id="adminCarSetupBox" style="display:none; background:#eff6ff; padding:10px; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:10px;">
                 <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ إضافة شحنة (تحميل) للمندوب:</h5>
                 <select id="selectDelegateForStock" class="form-control" style="margin-bottom:6px; font-size:11px;"></select>
@@ -185,7 +194,7 @@
 
         <!-- ز) منوف (ليك) -->
         <div id="sectionMenof" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (الذمم تمثل فلوس ليك):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف:</h4>
             <div class="filter-box">
                 <div class="form-group"><label>عدد الكرتونات:</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
                 <div style="font-size: 12px; margin-bottom: 8px;">الإجمالي: <b id="menofTotalPrice">0.00</b> ج.م</div>
@@ -244,6 +253,15 @@
         </div>
     </div>
 
+    <!-- نافذة عرض الفاتورة -->
+    <div id="invoiceModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center;">
+        <div style="background:#fff; padding:20px; border-radius:10px; width:90%; max-width:400px; max-height:80vh; overflow-y:auto;">
+            <h3 style="margin-top:0;">📄 تفاصيل الفاتورة</h3>
+            <div id="modalInvoiceContent" style="font-size:13px; line-height:1.6; margin-bottom:15px;"></div>
+            <button class="btn btn-primary" onclick="closeInvoiceModal()">إغلاق</button>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyARUfzp3O79n5pOONzY13pHcV6uoaMXd9s",
@@ -282,7 +300,7 @@
         let cloudLmInvoices = [];
 
         db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
-        db.ref('delegates').on('value', (s) => { if(s.val()) cloudDelegates = s.val(); });
+        db.ref('delegates').on('value', (s) => { if(s.val()) { cloudDelegates = s.val(); updateDelegatesSelects(); } });
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); });
         db.ref('carLoads').on('value', (s) => { cloudCarLoads = s.val() ? Object.values(s.val()) : []; });
         db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
@@ -330,8 +348,19 @@
             document.getElementById('tabShops').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabLmInvoices').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminCarSetupBox').style.display = isAdm ? 'block' : 'none';
-            
+            document.getElementById('adminDelegateFilterBox').style.display = isAdm ? 'block' : 'none';
+            updateDelegatesSelects();
+        }
+
+        function updateDelegatesSelects() {
+            const selFilter = document.getElementById('filterDelegateSelect');
             const selStock = document.getElementById('selectDelegateForStock');
+            if(selFilter) {
+                selFilter.innerHTML = '<option value="ALL">📋 عرض كل المناديب</option>';
+                for(let code in cloudDelegates) {
+                    if(cloudDelegates[code].role !== 'admin') selFilter.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
+                }
+            }
             if(selStock) {
                 selStock.innerHTML = '';
                 for(let code in cloudDelegates) {
@@ -378,6 +407,8 @@
         }
 
         function initSalesForm() {
+            document.getElementById('editInvoiceId').value = '';
+            document.getElementById('invoiceNo').value = Math.floor(1000 + Math.random() * 9000);
             document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
             const list = document.getElementById('productsList');
             list.innerHTML = '';
@@ -407,11 +438,36 @@
             document.getElementById('grandTotal').innerText = grand.toFixed(2);
         }
 
+        function editInvoice(id) {
+            const inv = cloudSales.find(s => String(s.id) === String(id));
+            if(!inv) { alert("الفاتورة غير موجودة."); return; }
+            switchTab('invoice');
+            document.getElementById('editInvoiceId').value = inv.id;
+            document.getElementById('invoiceNo').value = inv.invNo;
+            document.getElementById('invoiceDate').value = inv.date;
+            document.getElementById('clientName').value = inv.client;
+            document.getElementById('lblClientCode').innerText = inv.clientCode || '--';
+            products.forEach((p, idx) => {
+                document.getElementById(`qty_${idx}`).value = '0';
+                document.getElementById(`price_${idx}`).value = '480';
+            });
+            inv.items.forEach(it => {
+                const pIdx = products.findIndex(p => p.code === it.code || p.name === it.name);
+                if(pIdx !== -1) {
+                    document.getElementById(`qty_${pIdx}`).value = it.qty;
+                    document.getElementById(`price_${pIdx}`).value = it.price;
+                }
+            });
+            calcTotals();
+            alert("✏️ تم تحميل الفاتورة للتعديل.");
+        }
+
         function createInvoiceObject() {
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const clientCode = document.getElementById('lblClientCode').innerText;
             const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
             const invDate = document.getElementById('invoiceDate').value;
+            const editId = document.getElementById('editInvoiceId').value;
             let grand = 0, hasItems = false, itemsList = [];
 
             products.forEach((p, idx) => {
@@ -427,8 +483,9 @@
 
             if (!hasItems) { alert("أدخل كمية لصنف واحد على الأقل!"); return null; }
 
+            let recordId = editId ? String(editId) : String(Date.now());
             return {
-                id: String(Date.now()), invNo, date: invDate, delegateCode: currentDelegate.code,
+                id: recordId, invNo, date: invDate, delegateCode: currentDelegate.code,
                 delegateName: currentDelegate.name, client, clientCode, total: grand, items: itemsList
             };
         }
@@ -436,18 +493,21 @@
         function saveAndEmailOnly() {
             const rec = createInvoiceObject();
             if(rec) {
-                cloudSales.push(rec);
-                db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
+                let salesArr = cloudSales.filter(s => String(s.id) !== String(rec.id));
+                salesArr.push(rec);
+                db.ref('sales').set(Object.assign({}, salesArr)).then(() => {
                     alert("✅ تم حفظ الفاتورة بنجاح!");
                     initSalesForm();
                 });
             }
         }
 
-        function printViaRawBT() {
-            const rec = createInvoiceObject();
+        function printViaRawBT(specificInv = null) {
+            const rec = specificInv || createInvoiceObject();
             if(!rec) return;
-            let receiptText = `[ BLACK HORSE ]\nموزع معتمد لدى الشرقية\nالتاريخ: ${rec.date}\nالفاتورة: #${rec.invNo}\nالعميل: ${rec.client}\nالإجمالي: ${rec.total.toFixed(2)} ج.م\n`;
+            let receiptText = `[ BLACK HORSE ]\nموزع معتمد لدى الشرقية\nالتاريخ: ${rec.date}\nالفاتورة: #${rec.invNo}\nالعميل: ${rec.client}\n------------------------\n`;
+            rec.items.forEach(it => { receiptText += `${it.name} | كمية: ${it.qty} | ${it.total.toFixed(2)} ج.م\n`; });
+            receiptText += `------------------------\nالإجمالي: ${rec.total.toFixed(2)} ج.م\n`;
             window.location.href = "intent://rawbt/print?text=" + encodeURIComponent(receiptText) + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
         }
 
@@ -459,19 +519,47 @@
             const tbody = document.getElementById('savedInvoicesBody');
             if(!tbody) return;
             tbody.innerHTML = '';
-            cloudSales.slice().reverse().forEach(inv => {
-                tbody.innerHTML += `<tr><td>#${inv.invNo}</td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td></tr>`;
+            const selectedDel = document.getElementById('filterDelegateSelect') ? document.getElementById('filterDelegateSelect').value : 'ALL';
+            const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
+
+            let filtered = cloudSales.filter(s => {
+                if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
+                if(isAdm && selectedDel !== 'ALL' && s.delegateCode !== selectedDel) return false;
+                return true;
+            });
+
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="6">لا توجد فواتير.</td></tr>`; return; }
+
+            filtered.slice().reverse().forEach(inv => {
+                let acts = `<button class="btn btn-warning" style="padding:2px 6px; font-size:10px;" onclick="editInvoice('${inv.id}')">✏️ تعديل</button> `;
+                acts += `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ طباعة</button> `;
+                acts += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewInvoiceDetails('${inv.id}')">👁️ عرض</button>`;
+                tbody.innerHTML += `<tr><td>#${inv.invNo}</td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${acts}</td></tr>`;
             });
         }
 
+        function viewInvoiceDetails(id) {
+            const inv = cloudSales.find(s => String(s.id) === String(id));
+            if(!inv) return;
+            let itemsHtml = inv.items.map(it => `- ${it.name} | كمية: ${it.qty} | إجمالي: ${it.total} ج.م`).join('<br>');
+            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client}<br><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
+            document.getElementById('invoiceModal').style.display = 'flex';
+        }
+        function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
+
         function renderDailyReport() {
             let total = 0;
-            cloudSales.forEach(s => total += s.total);
+            const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
+            cloudSales.forEach(s => {
+                if(isAdm || s.delegateCode === currentDelegate.code) total += s.total;
+            });
             document.getElementById('repTotalAmount').innerText = total.toFixed(2);
             const tbody = document.getElementById('repInvoicesTableBody');
             tbody.innerHTML = '';
-            cloudSales.slice().reverse().forEach(inv => {
-                tbody.innerHTML += `<tr><td>#${inv.invNo}</td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.total} ج.م</td></tr>`;
+            cloudSales.forEach(s => {
+                if(isAdm || s.delegateCode === currentDelegate.code) {
+                    tbody.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td>${s.total} ج.م</td></tr>`;
+                }
             });
         }
 
@@ -492,7 +580,7 @@
                 if(val > 0) itemsLoad[p.code] = val;
             });
             cloudCarLoads.push({ id: String(Date.now()), delegateCode: delCode, date: new Date().toISOString().split('T')[0], items: itemsLoad });
-            db.ref('carLoads').set(Object.assign({}, cloudCarLoads)).then(() => alert("✅ تم إضافة شحنة التحميل بنجاح!"));
+            db.ref('carLoads').set(Object.assign({}, cloudCarLoads)).then(() => alert("✅ تم إضافة شحنة التحميل للمندوب بنجاح!"));
         }
 
         function renderCarStockTable() {
@@ -500,6 +588,10 @@
             if(!tb || !currentDelegate) return;
             tb.innerHTML = '';
             let targetCode = currentDelegate.code;
+            const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
+            if(isAdm) {
+                targetCode = document.getElementById('selectDelegateForStock') ? document.getElementById('selectDelegateForStock').value : '101';
+            }
             let loadedMap = {};
             cloudCarLoads.forEach(ld => {
                 if(ld.delegateCode === targetCode) {
