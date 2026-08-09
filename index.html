@@ -65,14 +65,14 @@
 </head>
 <body>
 
-    <div id="networkStatusBanner">⚠️ لا يوجد اتصال بالإنترنت. يتم حفظ الفواتير محلياً وسيتم رفعها تلقائياً عند عودة الشبكة[span_1](start_span)[span_1](end_span).</div>
+    <div id="networkStatusBanner">⚠️ لا يوجد اتصال بالإنترنت. يتم حفظ الفواتير محلياً وسيتم رفعها تلقائياً عند عودة الشبكة[span_0](start_span)[span_0](end_span).</div>
 
     <!-- 1. شاشة تسجيل الدخول الرئيسية -->
     <div id="loginView" class="card">
         <div class="logo-box">
             <h1>BLACK HORSE</h1>
-            <p>شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية[span_2](start_span)[span_2](end_span)</p>
-            <div class="tax-info">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027[span_3](start_span)[span_3](end_span)</div>
+            <p>شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية[span_1](start_span)[span_1](end_span)</p>
+            <div class="tax-info">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027[span_2](start_span)[span_2](end_span)</div>
         </div>
         
         <div id="loginMainForm">
@@ -125,7 +125,7 @@
     <!-- 2. شاشة العمل والتنقل الرئيسية -->
     <div id="salesView" class="card" style="display: none;">
         <div class="delegate-info">
-            <span>👤 المستخدم: <span id="lblDelegateName" style="color: #2563eb;">--</span> (<span id="lblDelegateRoleText">مندوب</span>)[span_4](start_span)[span_4](end_span)</span>
+            <span>👤 المستخدم: <span id="lblDelegateName" style="color: #2563eb;">--</span> (<span id="lblDelegateRoleText">مندوب</span>)[span_3](start_span)[span_3](end_span)</span>
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
@@ -277,33 +277,31 @@
             </table>
         </div>
 
-        <!-- د) رصيد السيارة وجرد نهاية اليوم -->
+        <!-- د) رصيد السيارة وجرد نهاية اليوم (تحميل وتنزيل) -->
         <div id="sectionCarStock" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد السيارة الحالي (بالبوكس والكرتونة):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 إدارة رصيد السيارة والجرد (تحميل وتنزيل):</h4>
             
             <div id="adminCarSetupBox" style="display:none; background:#eff6ff; padding:10px; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:10px;">
-                <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ تعيين كمية السيارة الأولية للمندوب:</h5>
+                <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ إضافة شحنة (تحميل) للمندوب المحدد بتبرير التاريخ:</h5>
                 <select id="selectDelegateForStock" class="form-control" style="margin-bottom:6px; font-size:11px;"></select>
+                <div class="form-group" style="margin-bottom:6px;"><label style="font-size:10px;">تاريخ التحميل:</label><input type="date" id="adminStockDate" style="padding:4px; font-size:11px;"></div>
                 <div id="adminCarStockInputs" style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;"></div>
-                <button class="btn btn-primary" style="padding:6px; font-size:11px;" onclick="saveAdminCarStock()">حفظ رصيد السيارة</button>
+                <button class="btn btn-primary" style="padding:6px; font-size:11px;" onclick="saveAdminCarStock()">حفظ شحنة التحميل للمندوب فقط</button>
             </div>
 
+            <h5 style="margin:10px 0 5px 0; color:#1e293b; font-size:12px;">📦 سجل التحميلات (المدير):</h5>
+            <div style="overflow-x:auto; margin-bottom:12px;">
+                <table class="report-table">
+                    <thead><tr><th>التاريخ</th><th>المندوب</th><th>الأصناف المحملة</th><th>الإجراء</th></tr></thead>
+                    <tbody id="adminLoadsTableBody"></tbody>
+                </table>
+            </div>
+
+            <h5 style="margin:10px 0 5px 0; color:#1e293b; font-size:12px;">⚖️ الجرد الحالي (التحميل مطروحاً منه المباع):</h5>
             <table class="report-table">
-                <thead><tr><th>الصنف</th><th>الرصيد المتبقي بالسيارة</th></tr></thead>
+                <thead><tr><th>الصنف</th><th>إجمالي التحميل</th><th>إجمالي المباع</th><th>الجرد المتبقي بالسيارة</th></tr></thead>
                 <tbody id="carStockTableBody"></tbody>
             </table>
-
-            <div id="handoverBoxContainer" style="margin-top: 15px; background:#f8fafc; padding:12px; border:1px solid #cbd5e1; border-radius:8px;">
-                <h5 style="margin:0 0 8px 0; color:#2563eb;">🌙 جرد نهاية اليوم (مقارنة المبيعات بالرصيد):</h5>
-                <div id="handoverItemsInputs"></div>
-                <button class="btn btn-primary" style="margin-top:8px;" onclick="submitCarHandover()">إرسال جرد نهاية اليوم للمراجعة</button>
-                <div id="handoverStatusMsg" style="margin-top:8px; font-weight:bold; font-size:12px;"></div>
-            </div>
-
-            <div id="adminHandoversApprovalBox" style="display:none; margin-top:15px; background:#fef3c7; padding:12px; border-radius:8px; border:1px solid #fde047;">
-                <h5 style="margin:0 0 8px 0; color:#b45309;">🔔 موافقات جرود المناديب:</h5>
-                <div id="pendingHandoversList">لا توجد جرود معلقة.</div>
-            </div>
         </div>
 
         <!-- هـ) حساب النسب -->
@@ -434,31 +432,27 @@
         const ADMIN_PASS = "Hossam2023@";
         const TARGET_PHONE_WA = "201011112764";
 
-        const defaultCarStock = { "1500000000": 10, "1500000002": 10, "1500000004": 10, "1500000005": 10, "1500000008": 10, "1500000009": 10, "1500000010": 10, "1500000146": 10 };
         const defaultDelegates = {
-            "admin": { pass: ADMIN_PASS, name: "حسام (المدير)", role: "admin", carStock: {...defaultCarStock} },
-            "101": { pass: "2025", name: "وحيد", role: "delegate", carStock: {...defaultCarStock}, locked: false },
-            "102": { pass: "2025", name: "مصطفي عبد الرازق", role: "delegate", carStock: {...defaultCarStock}, locked: false }
+            "admin": { pass: ADMIN_PASS, name: "حسام (المدير)", role: "admin" },
+            "101": { pass: "2025", name: "وحيد", role: "delegate", locked: false },
+            "102": { pass: "2025", name: "مصطفي عبد الرازق", role: "delegate", locked: false }
         };
 
-        const lmItemsList = [
-            { name: "ال ام احمر", code: "lm_red", buyPricePerCarton: 40788 },
-            { name: "ال ام ازرق", code: "lm_blue", buyPricePerCarton: 40788 },
-            { name: "مارل احمر", code: "marl_red", buyPricePerCarton: 50736 },
-            { name: "مارل ابيض", code: "marl_white", buyPricePerCarton: 5073 },
-            { name: "ميريت", code: "merit", buyPricePerCarton: 55210 },
-            { name: "ال ام ابيض", code: "lm_white", buyPricePerCarton: 40788 },
-            { name: "مارل كرفت", code: "marl_craft", buyPricePerCarton: 39128 }
+        const products = [
+            { name: "سوفت كوين", code: "1500000000" }, { name: "كيلوبترا بوكس", code: "1500000002" },
+            { name: "كيلوبترا بوكس راوند", code: "1500000004" }, { name: "كيلوبترا سوبر 94", code: "1500000005" },
+            { name: "منديال احمر", code: "1500000008" }, { name: "منديال ازرق", code: "1500000009" },
+            { name: "منديال سيلفر", code: "1500000010" }, { name: "شعر موتسيان", code: "1500000146" }
         ];
 
         let cloudSales = [];
         let cloudDelegates = defaultDelegates;
         let cloudClients = {};
         let portalCustomersDB = {};
+        let cloudCarLoads = [];
         let cloudMenofLoads = [];
         let cloudShops = [];
         let cloudLmInvoices = [];
-        let cloudHandovers = {};
 
         window.addEventListener('online', () => {
             document.getElementById('networkStatusBanner').style.display = 'none';
@@ -476,10 +470,10 @@
         db.ref('delegates').on('value', (s) => { if(s.val()) { cloudDelegates = s.val(); updateDelegatesSelects(); } });
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); updateReportClientsSelect(); });
         db.ref('portalCustomers').on('value', (s) => { portalCustomersDB = s.val() || {}; });
+        db.ref('carLoads').on('value', (s) => { cloudCarLoads = s.val() ? Object.values(s.val()) : []; });
         db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
         db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; });
         db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
-        db.ref('handovers').on('value', (s) => { cloudHandovers = s.val() || {}; });
 
         let currentDelegate = null;
         let currentPortalCustomer = null;
@@ -613,7 +607,6 @@
             initSalesForm();
             updateDelegateTodaySummary();
             initLmFormInputs();
-            initHandoverInputs();
             initAdminCarSetup();
         }
 
@@ -693,13 +686,9 @@
             document.getElementById('tabLmInvoices').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminDelegateFilterBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminCarSetupBox').style.display = isAdm ? 'block' : 'none';
-            document.getElementById('adminHandoversApprovalBox').style.display = isAdm ? 'block' : 'none';
             
             const adminReportWrapper = document.getElementById('adminReportSelectWrapper');
             if(adminReportWrapper) adminReportWrapper.style.display = isAdm ? 'flex' : 'none';
-            
-            const handoverBox = document.getElementById('handoverBoxContainer');
-            if(handoverBox) handoverBox.style.display = isViewer ? 'none' : 'block';
 
             if(isAdm) {
                 document.getElementById('adminUserManagement').style.display = 'block';
@@ -759,7 +748,7 @@
 
             if(tab === 'saved') renderSavedInvoices();
             if(tab === 'report') { updateReportClientsSelect(); renderDailyReport(); }
-            if(tab === 'carStock') { renderCarStockTable(); checkHandoverStatus(); if(currentDelegate && currentDelegate.role === 'admin') renderPendingHandovers(); }
+            if(tab === 'carStock') { renderCarStockTable(); renderAdminLoadsTable(); }
             if(tab === 'menof') renderMenofTable();
             if(tab === 'shops') renderShopsTable();
             if(tab === 'lmInvoices') renderLmTable();
@@ -830,10 +819,25 @@
             
             const list = document.getElementById('productsList');
             list.innerHTML = '';
-            const carStock = (currentDelegate.code !== 'admin' && cloudDelegates[currentDelegate.code]) ? cloudDelegates[currentDelegate.code].carStock : defaultCarStock;
+            
+            let targetDelCode = currentDelegate.code;
+            let loadedMap = {};
+            cloudCarLoads.forEach(ld => {
+                if(ld.delegateCode === targetDelCode) {
+                    for(let c in ld.items) { loadedMap[c] = (loadedMap[c] || 0) + ld.items[c]; }
+                }
+            });
+            let soldMap = {};
+            cloudSales.forEach(s => {
+                if(s.delegateCode === targetDelCode) {
+                    s.items.forEach(it => { soldMap[it.code] = (soldMap[it.code] || 0) + (it.qty / 50); });
+                }
+            });
 
             products.forEach((p, idx) => {
-                const stockRibbons = carStock ? (carStock[p.code] || 0) * 50 : 0;
+                let remainingCartons = (loadedMap[p.code] || 0) - (soldMap[p.code] || 0);
+                if(remainingCartons < 0) remainingCartons = 0;
+                let stockRibbons = Math.round(remainingCartons * 50);
                 let cartonsVal = Math.floor(stockRibbons / 50);
                 let ribbonsVal = stockRibbons % 50;
                 list.innerHTML += `
@@ -913,7 +917,19 @@
 
             let grand = 0, hasItems = false, itemsSoldList = [];
             let totalQtyCount = 0;
-            let carStock = cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].carStock || {...defaultCarStock} : {...defaultCarStock};
+
+            let loadedMap = {};
+            cloudCarLoads.forEach(ld => {
+                if(ld.delegateCode === targetDelCode) {
+                    for(let c in ld.items) { loadedMap[c] = (loadedMap[c] || 0) + ld.items[c]; }
+                }
+            });
+            let soldMap = {};
+            cloudSales.forEach(s => {
+                if(s.delegateCode === targetDelCode && String(s.id) !== String(editId)) {
+                    s.items.forEach(it => { soldMap[it.code] = (soldMap[it.code] || 0) + (it.qty / 50); });
+                }
+            });
 
             products.forEach((p, idx) => {
                 const qRibbons = parseFloat(document.getElementById(`qty_${idx}`).value) || 0;
@@ -921,8 +937,9 @@
                 const tot = qRibbons * pr;
                 if (qRibbons > 0) {
                     const qCartonsNeeded = qRibbons / 50;
-                    if(!editId && qCartonsNeeded > (carStock[p.code] || 0)) { 
-                        alert(`❌ الكمية المطلوبة من (${p.name}) أكبر من رصيد السيارة بالكرتونة!`); 
+                    let availableCartons = (loadedMap[p.code] || 0) - (soldMap[p.code] || 0);
+                    if(qCartonsNeeded > availableCartons + 0.0001) { 
+                        alert(`❌ الكمية المطلوبة من (${p.name}) أكبر من الرصيد المتبقي بالسيارة (${availableCartons.toFixed(2)} كرتونة)!`); 
                         hasItems = false; 
                         return null; 
                     }
@@ -933,16 +950,10 @@
                     let remVal = qRibbons % 50;
                     let qtyStr = cartonsVal > 0 ? `Outer ${pr} / ${cartonsVal}${remVal>0?`+${remVal}ر`:''}` : `Outer ${pr} / ${qRibbons}`;
                     itemsSoldList.push({ name: p.name, code: p.code, qty: qRibbons, qtyText: qtyStr, price: pr, total: tot });
-                    if(!editId) carStock[p.code] -= qCartonsNeeded;
                 }
             });
 
             if (!hasItems) { alert("أدخل كمية لصنف واحد على الأقل!"); return null; }
-
-            if(!editId && cloudDelegates[targetDelCode]) {
-                cloudDelegates[targetDelCode].carStock = carStock;
-                if(navigator.onLine) db.ref('delegates').set(cloudDelegates).catch(err => {});
-            }
 
             let recordId = editId ? String(editId) : String(Date.now());
             const salesRecord = {
@@ -991,8 +1002,8 @@
 
             let receiptText = "";
             receiptText += "     [ BLACK HORSE ]\n";
-            receiptText += "شركة بلاك هورس - موزع معتمد[span_5](start_span)[span_5](end_span)\n";
-            receiptText += "كود النشاط: 7761 | س.ت: 76027[span_6](start_span)[span_6](end_span)\n";
+            receiptText += "شركة بلاك هورس - موزع معتمد[span_4](start_span)[span_4](end_span)\n";
+            receiptText += "كود النشاط: 7761 | س.ت: 76027[span_5](start_span)[span_5](end_span)\n";
             receiptText += "------------------------\n";
             receiptText += "التاريخ: " + rec.date + "\n";
             receiptText += "فاتورة: #" + rec.invNo + "\n";
@@ -1119,18 +1130,36 @@
             const tb = document.getElementById('carStockTableBody');
             if(!tb || !currentDelegate) return;
             tb.innerHTML = '';
+            
             let targetCode = currentDelegate.code;
             const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
             if(isAdm) {
                 targetCode = document.getElementById('filterDelegateSelect') ? document.getElementById('filterDelegateSelect').value : '101';
                 if(targetCode === 'ALL') targetCode = '101';
             }
-            const carStock = isAdm ? (cloudDelegates[targetCode] ? cloudDelegates[targetCode].carStock : defaultCarStock) : (cloudDelegates[currentDelegate.code] ? cloudDelegates[currentDelegate.code].carStock : defaultCarStock);
-            
+
+            let loadedMap = {};
+            cloudCarLoads.forEach(ld => {
+                if(ld.delegateCode === targetCode) {
+                    for(let c in ld.items) { loadedMap[c] = (loadedMap[c] || 0) + ld.items[c]; }
+                }
+            });
+
+            let soldMap = {};
+            cloudSales.forEach(s => {
+                if(s.delegateCode === targetCode) {
+                    s.items.forEach(it => { soldMap[it.code] = (soldMap[it.code] || 0) + (it.qty / 50); });
+                }
+            });
+
             products.forEach(p => {
-                const qtyCartonsFloat = carStock ? (carStock[p.code] || 0) : 0;
-                let totalRibbons = Math.round(qtyCartonsFloat * 50);
-                tb.innerHTML += `<tr><td>${p.name}</td><td><b>${Math.floor(totalRibbons/50)} كرتونة و ${totalRibbons%50} رابطة</b></td></tr>`;
+                let totalLoaded = loadedMap[p.code] || 0;
+                let totalSold = soldMap[p.code] || 0;
+                let remaining = totalLoaded - totalSold;
+                if(remaining < 0) remaining = 0;
+                
+                let remRibbons = Math.round(remaining * 50);
+                tb.innerHTML += `<tr><td>${p.name}</td><td>${totalLoaded.toFixed(2)} كرتونة</td><td>${totalSold.toFixed(2)} كرتونة</td><td><b>${Math.floor(remRibbons/50)} كرتونة و ${remRibbons%50} رابطة</b></td></tr>`;
             });
         }
 
@@ -1138,38 +1167,73 @@
             const cont = document.getElementById('adminCarStockInputs');
             if(!cont) return;
             cont.innerHTML = '';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('adminStockDate').value = today;
+
             products.forEach((p, idx) => {
-                cont.innerHTML += `<div><label style="font-size:9.5px;">${p.name}</label><input type="number" id="adm_stock_${idx}" value="10" style="padding:4px; font-size:11px;" min="0" step="0.1"></div>`;
+                cont.innerHTML += `<div><label style="font-size:9.5px;">${p.name}</label><input type="number" id="adm_load_${idx}" value="0" style="padding:4px; font-size:11px;" min="0" step="0.1" placeholder="كرتونة"></div>`;
             });
         }
 
         function saveAdminCarStock() {
             const delCode = document.getElementById('selectDelegateForStock').value;
-            if(!cloudDelegates[delCode]) return;
-            let newStock = {};
-            products.forEach((p, idx) => { newStock[p.code] = parseFloat(document.getElementById(`adm_stock_${idx}`).value) || 0; });
-            cloudDelegates[delCode].carStock = newStock;
-            db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم حفظ رصيد السيارة!"));
-        }
+            const loadDate = document.getElementById('adminStockDate').value;
+            if(!delCode || !loadDate) { alert("حدد المندوب وتاريخ التحميل."); return; }
 
-        function initHandoverInputs() {
-            const cont = document.getElementById('handoverItemsInputs');
-            if(!cont) return;
-            cont.innerHTML = '';
+            let itemsLoad = {};
             products.forEach((p, idx) => {
-                cont.innerHTML += `<div style="display:flex; gap:6px; margin-bottom:5px;"><span style="flex:2; font-size:11px;">${p.name}:</span><input type="number" id="handover_q_${idx}" placeholder="0" style="flex:1; padding:4px;" min="0" step="0.1"></div>`;
+                let val = parseFloat(document.getElementById(`adm_load_${idx}`).value) || 0;
+                if(val > 0) itemsLoad[p.code] = val;
+            });
+
+            let loadRecord = {
+                id: String(Date.now()),
+                delegateCode: delCode,
+                date: loadDate,
+                items: itemsLoad
+            };
+
+            cloudCarLoads.push(loadRecord);
+            db.ref('carLoads').set(Object.assign({}, cloudCarLoads)).then(() => {
+                alert("✅ تم إضافة شحنة التحميل بنجاح للمندوب المحدد!");
+                renderAdminLoadsTable();
+                renderCarStockTable();
             });
         }
 
-        function submitCarHandover() {
-            if(!currentDelegate) return;
-            let actualHandover = {};
-            products.forEach((p, idx) => { actualHandover[p.code] = parseFloat(document.getElementById(`handover_q_${idx}`).value) || 0; });
-            db.ref('handovers/' + currentDelegate.code).set({
-                delegateCode: currentDelegate.code, delegateName: currentDelegate.name, items: actualHandover, status: 'approved'
-            }).then(() => alert("✅ تم اعتماد الجرد بنجاح!"));
+        function renderAdminLoadsTable() {
+            const tb = document.getElementById('adminLoadsTableBody');
+            if(!tb) return;
+            tb.innerHTML = '';
+            if(cloudCarLoads.length === 0) {
+                tb.innerHTML = `<tr><td colspan="4">لا توجد شحنات تحميل مسجلة.</td></tr>`;
+                return;
+            }
+            cloudCarLoads.slice().reverse().forEach((ld, i) => {
+                let delObj = cloudDelegates[ld.delegateCode];
+                let delName = delObj ? delObj.name : ld.delegateCode;
+                let itemsSummary = Object.keys(ld.items).map(code => {
+                    let p = products.find(x => x.code === code);
+                    return (p ? p.name : code) + `: ` + ld.items[code] + ` كرتونة`;
+                }).join(' | ');
+
+                tb.innerHTML += `<tr><td>${ld.date}</td><td>${delName}</td><td>${itemsSummary}</td><td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="deleteCarLoad('${ld.id}')">حذف</button></td></tr>`;
+            });
         }
 
+        function deleteCarLoad(id) {
+            if(confirm("هل تريد حذف سجل التحميل هذا؟")) {
+                cloudCarLoads = cloudCarLoads.filter(x => x.id !== id);
+                db.ref('carLoads').set(Object.assign({}, cloudCarLoads)).then(() => {
+                    alert("🗑️ تم حذف السجل.");
+                    renderAdminLoadsTable();
+                    renderCarStockTable();
+                });
+            }
+        }
+
+        function initHandoverInputs() {}
+        function submitCarHandover() {}
         function checkHandoverStatus() {}
         function renderPendingHandovers() {}
         function calcMenofTotal() {}
@@ -1188,7 +1252,7 @@
             const pass = document.getElementById('newAccPass').value.trim();
             const role = document.getElementById('newAccRole').value;
             if(!code || !name || !pass) return;
-            cloudDelegates[code] = { pass, name, role, carStock: {...defaultCarStock}, locked: false };
+            cloudDelegates[code] = { pass, name, role, locked: false };
             db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم إنشاء الحساب!"));
         }
         function changeMyPassword() {}
