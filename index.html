@@ -298,7 +298,7 @@
             </table>
         </div>
 
-        <!-- هـ) حساب النسب -->
+        <!-- هـ) حساب النسب (مع نسبة مئوية للبراون والسوبر) -->
         <div id="sectionRatios" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:</h4>
             <div class="filter-box">
@@ -307,8 +307,8 @@
                     <div class="form-group" style="flex:1;"><label>نسبة البوكس:</label><input type="number" id="ratioBox" value="1" oninput="calcRatioLoading()"></div>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <div class="form-group" style="flex:1;"><label>نسبة براون:</label><input type="number" id="ratioBrown" value="0" oninput="calcRatioLoading()"></div>
-                    <div class="form-group" style="flex:1;"><label>نسبة سوبر:</label><input type="number" id="ratioSuper" value="0" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة براون (%):</label><input type="number" id="ratioBrown" value="10" placeholder="مثال: 10%" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة سوبر (%):</label><input type="number" id="ratioSuper" value="5" placeholder="مثال: 5%" oninput="calcRatioLoading()"></div>
                 </div>
                 <div class="form-group">
                     <label>إجمالي الكرتونات المراد تحميلها:</label>
@@ -674,7 +674,6 @@
             updateDelegatesSelects();
         }
 
-        // دالة تحديث قوائم المناديب (تضمن ظهور الكل وخيار كل المناديب بوضوح)
         function updateDelegatesSelects() {
             const selFilter = document.getElementById('filterDelegateSelect');
             const selStock = document.getElementById('selectDelegateForStock');
@@ -1247,30 +1246,39 @@
             db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
         }
 
+        // حاسبة النسب (البراون والسوبر كنسبة مئوية %)
         function calcRatioLoading() {
             const rCleo = parseFloat(document.getElementById('ratioCleopatra').value) || 0;
             const rBox = parseFloat(document.getElementById('ratioBox').value) || 0;
-            const rBrown = parseFloat(document.getElementById('ratioBrown').value) || 0;
-            const rSuper = parseFloat(document.getElementById('ratioSuper').value) || 0;
+            const pBrown = parseFloat(document.getElementById('ratioBrown').value) || 0; // نسبة مئوية %
+            const pSuper = parseFloat(document.getElementById('ratioSuper').value) || 0; // نسبة مئوية %
             const target = parseFloat(document.getElementById('totalCartonsTarget').value) || 0;
 
-            const sumRatios = rCleo + rBox + rBrown + rSuper;
             const resBox = document.getElementById('ratioResultBox');
-            if(sumRatios <= 0 || target <= 0) {
-                resBox.innerHTML = "أدخل النسب وإجمالي الكرتونات لعرض الكميات الصحيحة.";
+            if(target <= 0) {
+                resBox.innerHTML = "أدخل إجمالي الكرتونات المراد تحميلها لعرض الكميات الصحيحة.";
                 return;
             }
 
-            const cCleo = (target * rCleo / sumRatios).toFixed(2);
-            const cBox = (target * rBox / sumRatios).toFixed(2);
-            const cBrown = (target * rBrown / sumRatios).toFixed(2);
-            const cSuper = (target * rSuper / sumRatios).toFixed(2);
+            // حساب كمية البراون والسوبر بناءً على النسبة المئوية من الإجمالي
+            const brownCartons = (target * (pBrown / 100));
+            const superCartons = (target * (pSuper / 100));
+            
+            // الباقي يوزع على نسب كليوباترا والبوكس
+            const remainingTarget = target - (brownCartons + superCartons);
+            const sumCleoBox = rCleo + rBox;
+
+            let cCleo = 0, cBox = 0;
+            if(sumCleoBox > 0 && remainingTarget > 0) {
+                cCleo = (remainingTarget * rCleo / sumCleoBox);
+                cBox = (remainingTarget * rBox / sumCleoBox);
+            }
 
             resBox.innerHTML = `<b>📊 نتائج حساب النسب للتحميل:</b><br>` +
-                `- كليوباترا: <b>${cCleo}</b> كرتونة<br>` +
-                `- بوكس: <b>${cBox}</b> كرتونة<br>` +
-                `- براون: <b>${cBrown}</b> كرتونة<br>` +
-                `- سوبر: <b>${cSuper}</b> كرتونة`;
+                `- كليوباترا: <b>${cCleo.toFixed(2)}</b> كرتونة<br>` +
+                `- بوكس: <b>${cBox.toFixed(2)}</b> كرتونة<br>` +
+                `- براون (${pBrown}%): <b>${brownCartons.toFixed(2)}</b> كرتونة<br>` +
+                `- سوبر (${pSuper}%): <b>${superCartons.toFixed(2)}</b> كرتونة`;
         }
 
         function createNewUserAccount() {
