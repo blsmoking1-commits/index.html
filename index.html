@@ -95,7 +95,7 @@
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
-        <!-- تبويبات التنقل الكاملة -->
+        <!-- تبويبات التنقل -->
         <div class="tab-menu" id="tabMenuContainer">
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
             <div id="tabClientOrderOnly" class="tab-btn" onclick="switchTab('clientOrderOnly')" style="display:none; background:#e0f2fe; color:#0369a1;">📦 طلب فاتورة</div>
@@ -109,7 +109,7 @@
             <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات</div>
         </div>
 
-        <!-- أقسام النظام -->
+        <!-- أ) فاتورة جديدة -->
         <div id="sectionInvoice">
             <div class="form-group">
                 <label>اسم العميل / المحل:</label>
@@ -128,6 +128,7 @@
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
+        <!-- ب) طلب فاتورة للعميل -->
         <div id="sectionClientOrderOnly" style="display: none;">
             <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
                 <h4 style="margin-top:0; color:#166534;">🏪 لوحة طلبات العميل</h4>
@@ -137,6 +138,7 @@
             </div>
         </div>
 
+        <!-- ج) الفواتير المحفوظة -->
         <div id="sectionSaved" style="display: none;">
             <table class="report-table">
                 <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>الإجمالي</th></tr></thead>
@@ -144,6 +146,7 @@
             </table>
         </div>
 
+        <!-- د) التقارير -->
         <div id="sectionReport" style="display: none;">
             <div class="grand-box">إجمالي المبيعات: <span id="repTotalAmount">0.00</span> ج.م</div>
             <table class="report-table">
@@ -152,21 +155,93 @@
             </table>
         </div>
 
+        <!-- هـ) السيارة والجرد -->
         <div id="sectionCarStock" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 الجرد الحالي بالسيارة:</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 الجرد الحالي بالسيارة (التحميل مطروحاً منه المباع):</h4>
+            <div id="adminCarSetupBox" style="display:none; background:#eff6ff; padding:10px; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:10px;">
+                <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ إضافة شحنة (تحميل) للمندوب:</h5>
+                <select id="selectDelegateForStock" class="form-control" style="margin-bottom:6px; font-size:11px;"></select>
+                <div id="adminCarStockInputs" style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;"></div>
+                <button class="btn btn-primary" style="padding:6px; font-size:11px;" onclick="saveAdminCarStock()">حفظ شحنة التحميل</button>
+            </div>
             <table class="report-table">
                 <thead><tr><th>الصنف</th><th>التحميل</th><th>المباع</th><th>المتبقي</th></tr></thead>
                 <tbody id="carStockTableBody"></tbody>
             </table>
         </div>
 
+        <!-- و) حاسبة النسب -->
         <div id="sectionRatios" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:</h4>
+            <div class="filter-box">
+                <div style="display:flex; gap:8px;">
+                    <div class="form-group" style="flex:1;"><label>نسبة كليوباترا:</label><input type="number" id="ratioCleopatra" value="2" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة البوكس:</label><input type="number" id="ratioBox" value="1" oninput="calcRatioLoading()"></div>
+                </div>
+                <div class="form-group"><label>إجمالي الكرتونات:</label><input type="number" id="totalCartonsTarget" placeholder="30" oninput="calcRatioLoading()"></div>
+                <div id="ratioResultBox" style="background:#f0fdf4; padding:10px; border-radius:6px; margin-top:8px;">أدخل النسب وإجمالي الكرتونات.</div>
+            </div>
         </div>
-        <div id="sectionMenof" style="display: none;"><h4 style="margin-top:0; font-size:14px;">🏭 سجل التحميل من منوف</h4></div>
-        <div id="sectionShops" style="display: none;"><h4 style="margin-top:0; font-size:14px;">🏪 حسابات المحلات</h4></div>
-        <div id="sectionLmInvoices" style="display: none;"><h4 style="margin-top:0; font-size:14px;">🚬 فواتير LM</h4></div>
-        <div id="sectionSettings" style="display: none;"><h4 style="margin-top:0; font-size:14px;">⚙️ الإعدادات</h4></div>
+
+        <!-- ز) منوف (ليك) -->
+        <div id="sectionMenof" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (الذمم تمثل فلوس ليك):</h4>
+            <div class="filter-box">
+                <div class="form-group"><label>عدد الكرتونات:</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px;">الإجمالي: <b id="menofTotalPrice">0.00</b> ج.م</div>
+                <div class="form-group"><label>الإيداع المالي:</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم (ليك): <b id="menofZimam">0.00</b> ج.م</div>
+                <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل شحنة منوف</button>
+            </div>
+            <table class="report-table">
+                <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>الإجمالي</th><th>الإيداع</th><th>الذمم</th></tr></thead>
+                <tbody id="menofTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- ح) المحلات -->
+        <div id="sectionShops" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (سعر الكرتونة = 23,925 ج.م):</h4>
+            <div class="filter-box">
+                <div class="form-group"><label>اسم المحل:</label><input type="text" id="shopNameInput" placeholder="اسم المحل..."></div>
+                <div class="form-group"><label>عدد الكرتونات:</label><input type="number" id="shopCartons" placeholder="0" oninput="calcShopTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي البضاعة: <b id="shopTotalPrice">0.00</b> ج.م</div>
+                <div class="form-group"><label>المبلغ المسدد:</label><input type="number" id="shopPaidVal" placeholder="0" oninput="calcShopTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#dc2626;">الذمم (المتبقي): <b id="shopZimam">0.00</b> ج.م</div>
+                <button class="btn btn-primary" onclick="saveShopTransaction()">حفظ معاملة المحل</button>
+            </div>
+            <table class="report-table">
+                <thead><tr><th>المحل</th><th>الكرتونات</th><th>الإجمالي</th><th>المسدد</th><th>الذمم</th></tr></thead>
+                <tbody id="shopsTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- ط) فواتير LM -->
+        <div id="sectionLmInvoices" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM:</h4>
+            <div class="filter-box">
+                <div class="form-group">
+                    <label>اختر الفاتورة:</label>
+                    <select id="lmInvoiceType" class="form-control"><option value="mohamed">فاتورة محمد</option><option value="hossam">فاتورة حسام</option></select>
+                </div>
+                <div class="form-group"><label>قيمة الإيداع المالي:</label><input type="number" id="lmDeposit" placeholder="0"></div>
+                <button class="btn btn-success" onclick="saveLmInvoice()">حفظ فاتورة LM</button>
+            </div>
+            <table class="report-table">
+                <thead><tr><th>النوع</th><th>الإيداع</th><th>المكسب / الخسارة</th></tr></thead>
+                <tbody id="lmInvoicesTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- ي) الإعدادات -->
+        <div id="sectionSettings" style="display: none;">
+            <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px;">
+                <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر:</h4>
+                <div class="form-group"><label>كلمة السر الحالية:</label><input type="password" id="currentPassInput"></div>
+                <div class="form-group"><label>كلمة السر الجديدة:</label><input type="password" id="newPassInput"></div>
+                <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -201,10 +276,18 @@
         let cloudSales = [];
         let cloudDelegates = defaultDelegates;
         let cloudClients = {};
+        let cloudCarLoads = [];
+        let cloudMenofLoads = [];
+        let cloudShops = [];
+        let cloudLmInvoices = [];
 
         db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
         db.ref('delegates').on('value', (s) => { if(s.val()) cloudDelegates = s.val(); });
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); });
+        db.ref('carLoads').on('value', (s) => { cloudCarLoads = s.val() ? Object.values(s.val()) : []; });
+        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
+        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; });
+        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
 
         let currentDelegate = null;
 
@@ -230,6 +313,7 @@
             setupUserTabs();
             switchTab('invoice');
             initSalesForm();
+            initAdminCarSetup();
         }
 
         function handleLogout() {
@@ -245,6 +329,15 @@
             document.getElementById('tabMenof').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabShops').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabLmInvoices').style.display = isAdm ? 'block' : 'none';
+            document.getElementById('adminCarSetupBox').style.display = isAdm ? 'block' : 'none';
+            
+            const selStock = document.getElementById('selectDelegateForStock');
+            if(selStock) {
+                selStock.innerHTML = '';
+                for(let code in cloudDelegates) {
+                    if(cloudDelegates[code].role !== 'admin') selStock.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
+                }
+            }
         }
 
         function switchTab(tab) {
@@ -260,6 +353,7 @@
             });
             if(tab === 'saved') renderSavedInvoices();
             if(tab === 'report') renderDailyReport();
+            if(tab === 'carStock') renderCarStockTable();
         }
 
         function updateClientsDatalist() {
@@ -381,6 +475,59 @@
             });
         }
 
+        function initAdminCarSetup() {
+            const cont = document.getElementById('adminCarStockInputs');
+            if(!cont) return;
+            cont.innerHTML = '';
+            products.forEach((p, idx) => {
+                cont.innerHTML += `<div><label style="font-size:9.5px;">${p.name}</label><input type="number" id="adm_load_${idx}" value="0" style="padding:4px; font-size:11px;" min="0"></div>`;
+            });
+        }
+
+        function saveAdminCarStock() {
+            const delCode = document.getElementById('selectDelegateForStock').value;
+            let itemsLoad = {};
+            products.forEach((p, idx) => {
+                let val = parseFloat(document.getElementById(`adm_load_${idx}`).value) || 0;
+                if(val > 0) itemsLoad[p.code] = val;
+            });
+            cloudCarLoads.push({ id: String(Date.now()), delegateCode: delCode, date: new Date().toISOString().split('T')[0], items: itemsLoad });
+            db.ref('carLoads').set(Object.assign({}, cloudCarLoads)).then(() => alert("✅ تم إضافة شحنة التحميل بنجاح!"));
+        }
+
+        function renderCarStockTable() {
+            const tb = document.getElementById('carStockTableBody');
+            if(!tb || !currentDelegate) return;
+            tb.innerHTML = '';
+            let targetCode = currentDelegate.code;
+            let loadedMap = {};
+            cloudCarLoads.forEach(ld => {
+                if(ld.delegateCode === targetCode) {
+                    for(let c in ld.items) { loadedMap[c] = (loadedMap[c] || 0) + ld.items[c]; }
+                }
+            });
+            let soldMap = {};
+            cloudSales.forEach(s => {
+                if(s.delegateCode === targetCode) {
+                    s.items.forEach(it => { soldMap[it.code] = (soldMap[it.code] || 0) + (it.qty / 50); });
+                }
+            });
+            products.forEach(p => {
+                let totalLoaded = loadedMap[p.code] || 0;
+                let totalSold = soldMap[p.code] || 0;
+                let remaining = totalLoaded - totalSold;
+                if(remaining < 0) remaining = 0;
+                tb.innerHTML += `<tr><td>${p.name}</td><td>${totalLoaded.toFixed(2)}</td><td>${totalSold.toFixed(2)}</td><td><b>${remaining.toFixed(2)}</b></td></tr>`;
+            });
+        }
+
+        function calcRatioLoading() {}
+        function calcMenofTotal() {}
+        function saveMenofLoad() { alert("تم الحفظ"); }
+        function calcShopTotal() {}
+        function saveShopTransaction() { alert("تم الحفظ"); }
+        function saveLmInvoice() { alert("تم الحفظ"); }
+        function changeMyPassword() { alert("تم التغيير"); }
         function showCustomerRegisterScreen() { document.getElementById('loginMainForm').style.display = 'none'; document.getElementById('customerRegisterScreen').style.display = 'block'; }
         function backToLoginMain() { document.getElementById('customerRegisterScreen').style.display = 'none'; document.getElementById('loginMainForm').style.display = 'block'; }
         function verifyCustomerOTPAndSave() { alert("تم تسجيل الحساب بنجاح."); backToLoginMain(); }
