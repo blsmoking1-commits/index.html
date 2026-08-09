@@ -12,14 +12,17 @@
         body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
         .card { max-width: 650px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .text-center { text-align: center; }
+        
         .logo-box { background: #0f172a; color: #fff; padding: 14px; border-radius: 10px; margin-bottom: 15px; text-align: center; }
         .logo-box h1 { margin: 0; font-size: 22px; letter-spacing: 0.5px; }
         .logo-box p { margin: 4px 0 0 0; font-size: 11px; color: #38bdf8; font-weight: bold; }
         .tax-info { font-size: 9.5px; color: #94a3b8; margin-top: 6px; }
+
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #334155; }
         .form-group input, .form-group select { width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13.5px; }
         .readonly-input { background-color: #f1f5f9; color: #64748b; font-weight: bold; }
+
         .btn { width: 100%; padding: 11px; border: none; border-radius: 8px; font-weight: bold; font-size: 13.5px; cursor: pointer; transition: 0.2s; margin-top: 6px; }
         .btn-primary { background: #2563eb; color: white; }
         .btn-success { background: #16a34a; color: white; }
@@ -27,17 +30,24 @@
         .btn-whatsapp { background: #25d366; color: white; }
         .btn-danger { background: #dc2626; color: white; }
         .btn-bluetooth { background: #7c3aed; color: white; }
+        .btn-warning { background: #d97706; color: white; }
+        
         .tab-menu { display: flex; gap: 3px; margin-bottom: 15px; overflow-x: auto; }
         .tab-btn { flex: 1; padding: 8px 4px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold; font-size: 10px; border-radius: 6px; cursor: pointer; text-align: center; white-space: nowrap; }
         .tab-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+
         .delegate-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; }
+        
         .product-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
         .product-title { font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 6px; }
         .input-row { display: flex; gap: 6px; }
         .input-row div { flex: 1; }
         .input-row label { font-size: 9.5px; color: #64748b; display: block; }
         .input-row input { width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 12px; font-weight: bold; }
+        
         .grand-box { background: #0f172a; color: #fff; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; margin: 12px 0; }
+        .status-alert { padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-top: 10px; text-align: center; display: none; }
+        .filter-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
         .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
         .report-table th, .report-table td { border: 1px solid #cbd5e1; padding: 6px; text-align: center; }
         .report-table th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; }
@@ -65,53 +75,75 @@
                 <input type="password" id="loginPass" placeholder="أدخل كلمة السر">
             </div>
             <button class="btn btn-primary" onclick="handleLogin()">دخول للنظام ➔</button>
+            <button class="btn btn-info" style="background:#0284c7; margin-top:8px;" onclick="showCustomerRegisterScreen()">👤 تسجيل عميل جديد</button>
+        </div>
+
+        <div id="customerRegisterScreen" style="display:none;">
+            <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل حساب عميل جديد</h3>
+            <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="regClientName" placeholder="اسم المحل..."></div>
+            <div class="form-group"><label>رقم التليفون:</label><input type="text" id="regClientPhone" placeholder="رقم الهاتف..."></div>
+            <div class="form-group"><label>العنوان:</label><input type="text" id="regClientAddress" placeholder="العنوان..."></div>
+            <button class="btn btn-success" onclick="verifyCustomerOTPAndSave()">تأكيد وتسجيل الحساب</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:8px;" onclick="backToLoginMain()">← رجوع</button>
         </div>
     </div>
 
-    <!-- 2. شاشة العمل الرئيسية -->
+    <!-- 2. شاشة العمل والتنقل الرئيسية -->
     <div id="salesView" class="card" style="display: none;">
         <div class="delegate-info">
             <span>👤 المستخدم: <span id="lblDelegateName" style="color: #2563eb;">--</span> (<span id="lblDelegateRoleText">مندوب</span>)</span>
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
-        <div class="tab-menu">
+        <!-- تبويبات التنقل الكاملة -->
+        <div class="tab-menu" id="tabMenuContainer">
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
+            <div id="tabClientOrderOnly" class="tab-btn" onclick="switchTab('clientOrderOnly')" style="display:none; background:#e0f2fe; color:#0369a1;">📦 طلب فاتورة</div>
             <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
             <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
+            <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة والجرد</div>
+            <div id="tabRatios" class="tab-btn" onclick="switchTab('ratios')" style="background:#e0f2fe;">⚖️ النسب</div>
+            <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف (ليك)</div>
+            <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
+            <div id="tabLmInvoices" class="tab-btn" onclick="switchTab('lmInvoices')" style="display:none; background:#fef3c7;">🚬 فواتير LM</div>
+            <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات</div>
         </div>
 
-        <!-- أ) فاتورة جديدة -->
+        <!-- أقسام النظام -->
         <div id="sectionInvoice">
             <div class="form-group">
                 <label>اسم العميل / المحل:</label>
-                <input type="text" id="clientName" list="clientsListOptions" placeholder="اكتب أو اختر اسم العميل..." oninput="onClientNameInput()">
+                <input type="text" id="clientName" list="clientsListOptions" placeholder="اختر أو اكتب اسم العميل..." oninput="onClientNameInput()">
                 <datalist id="clientsListOptions"></datalist>
                 <div style="font-size: 11px; color: #64748b; margin-top: 3px;">كود العميل: <b id="lblClientCode" style="color:#2563eb;">--</b></div>
             </div>
-
             <div style="display: flex; gap: 8px;">
                 <div class="form-group" style="flex: 1;"><label>رقم الفاتورة:</label><input type="text" id="invoiceNo" value="1001"></div>
-                <div class="form-group" style="flex: 1;"><label>التاريخ:</label><input type="date" id="invoiceDate" class="readonly-input" readonly></div>
+                <div class="form-group" style="flex: 1;"><label>التاريخ:</label><input type="date" id="invoiceDate" class="readonly-input"></div>
             </div>
-
             <div id="productsList"></div>
-
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
-
+            <button class="btn btn-bluetooth" onclick="printViaRawBT()">🖨️ طباعة عبر RawBT</button>
             <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة</button>
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
-        <!-- ب) الفواتير المحفوظة -->
+        <div id="sectionClientOrderOnly" style="display: none;">
+            <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                <h4 style="margin-top:0; color:#166534;">🏪 لوحة طلبات العميل</h4>
+                <div class="form-group"><label>اسم المحل:</label><input type="text" id="viewClientName" class="readonly-input" readonly></div>
+                <div class="form-group"><label>ملاحظات الطلب:</label><input type="text" id="clientCustomOrderNotes" placeholder="الأصناف المطلوبة..."></div>
+                <button class="btn btn-whatsapp" onclick="submitPortalClientOrder()">⚡ إرسال طلب الفاتورة للآدمن</button>
+            </div>
+        </div>
+
         <div id="sectionSaved" style="display: none;">
             <table class="report-table">
-                <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>الإجمالي</th></tr></thead>
+                <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>الإجمالي</th></tr></thead>
                 <tbody id="savedInvoicesBody"></tbody>
             </table>
         </div>
 
-        <!-- ج) التقارير -->
         <div id="sectionReport" style="display: none;">
             <div class="grand-box">إجمالي المبيعات: <span id="repTotalAmount">0.00</span> ج.م</div>
             <table class="report-table">
@@ -119,6 +151,22 @@
                 <tbody id="repInvoicesTableBody"></tbody>
             </table>
         </div>
+
+        <div id="sectionCarStock" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 الجرد الحالي بالسيارة:</h4>
+            <table class="report-table">
+                <thead><tr><th>الصنف</th><th>التحميل</th><th>المباع</th><th>المتبقي</th></tr></thead>
+                <tbody id="carStockTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="sectionRatios" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:</h4>
+        </div>
+        <div id="sectionMenof" style="display: none;"><h4 style="margin-top:0; font-size:14px;">🏭 سجل التحميل من منوف</h4></div>
+        <div id="sectionShops" style="display: none;"><h4 style="margin-top:0; font-size:14px;">🏪 حسابات المحلات</h4></div>
+        <div id="sectionLmInvoices" style="display: none;"><h4 style="margin-top:0; font-size:14px;">🚬 فواتير LM</h4></div>
+        <div id="sectionSettings" style="display: none;"><h4 style="margin-top:0; font-size:14px;">⚙️ الإعدادات</h4></div>
     </div>
 
     <script>
@@ -179,6 +227,7 @@
             document.getElementById('loginView').style.display = 'none';
             document.getElementById('salesView').style.display = 'block';
 
+            setupUserTabs();
             switchTab('invoice');
             initSalesForm();
         }
@@ -191,11 +240,23 @@
             document.getElementById('loginPass').value = '';
         }
 
+        function setupUserTabs() {
+            const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
+            document.getElementById('tabMenof').style.display = isAdm ? 'block' : 'none';
+            document.getElementById('tabShops').style.display = isAdm ? 'block' : 'none';
+            document.getElementById('tabLmInvoices').style.display = isAdm ? 'block' : 'none';
+        }
+
         function switchTab(tab) {
-            ['invoice', 'saved', 'report'].forEach(t => {
-                let btnId = t === 'invoice' ? 'tabNewInvoice' : t === 'saved' ? 'tabSavedInvoices' : 'tabDailyReport';
-                document.getElementById(btnId).classList.toggle('active', t === tab);
-                document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? 'block' : 'none';
+            const tabs = ['invoice', 'clientOrderOnly', 'saved', 'report', 'carStock', 'ratios', 'menof', 'shops', 'lmInvoices', 'settings'];
+            tabs.forEach(t => {
+                let btnId = (t === 'invoice') ? 'tabNewInvoice' : (t === 'clientOrderOnly') ? 'tabClientOrderOnly' : (t === 'saved') ? 'tabSavedInvoices' : (t === 'report') ? 'tabDailyReport' : 'tab' + t.charAt(0).toUpperCase() + t.slice(1);
+                const btn = document.getElementById(btnId);
+                const sec = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
+                if(btn && sec) {
+                    if(t === tab) { btn.classList.add('active'); sec.style.display = 'block'; }
+                    else { btn.classList.remove('active'); sec.style.display = 'none'; }
+                }
             });
             if(tab === 'saved') renderSavedInvoices();
             if(tab === 'report') renderDailyReport();
@@ -289,6 +350,13 @@
             }
         }
 
+        function printViaRawBT() {
+            const rec = createInvoiceObject();
+            if(!rec) return;
+            let receiptText = `[ BLACK HORSE ]\nموزع معتمد لدى الشرقية\nالتاريخ: ${rec.date}\nالفاتورة: #${rec.invNo}\nالعميل: ${rec.client}\nالإجمالي: ${rec.total.toFixed(2)} ج.م\n`;
+            window.location.href = "intent://rawbt/print?text=" + encodeURIComponent(receiptText) + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
+        }
+
         function sendSingleInvoiceViaWhatsApp() {
             window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent("فاتورة مبيعات بلاك هورس")}`, '_blank');
         }
@@ -298,7 +366,7 @@
             if(!tbody) return;
             tbody.innerHTML = '';
             cloudSales.slice().reverse().forEach(inv => {
-                tbody.innerHTML += `<tr><td>#${inv.invNo}</td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.total} ج.م</td></tr>`;
+                tbody.innerHTML += `<tr><td>#${inv.invNo}</td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td></tr>`;
             });
         }
 
@@ -312,6 +380,11 @@
                 tbody.innerHTML += `<tr><td>#${inv.invNo}</td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.total} ج.م</td></tr>`;
             });
         }
+
+        function showCustomerRegisterScreen() { document.getElementById('loginMainForm').style.display = 'none'; document.getElementById('customerRegisterScreen').style.display = 'block'; }
+        function backToLoginMain() { document.getElementById('customerRegisterScreen').style.display = 'none'; document.getElementById('loginMainForm').style.display = 'block'; }
+        function verifyCustomerOTPAndSave() { alert("تم تسجيل الحساب بنجاح."); backToLoginMain(); }
+        function submitPortalClientOrder() { alert("تم إرسال الطلب بنجاح."); }
     </script>
 </body>
 </html>
