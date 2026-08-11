@@ -65,7 +65,7 @@
 </head>
 <body>
 
-    <div id="networkStatusBanner">⚠️ لا يوجد اتصال بالإنترنت. يتم حفظ الفواتير محلياً وسيتم رفعها تلقائياً عند عودة الشبكة[span_0](start_span)[span_0](end_span).</div>
+    <div id="networkStatusBanner">⚠️ لا يوجد اتصال بالإنترنت. يتم حفظ الفواتير محلياً وسيتم رفعها تلقائياً عند عودة الشبكة.</div>
 
     <!-- 1. شاشة تسجيل الدخول الرئيسية -->
     <div id="loginView" class="card">
@@ -115,6 +115,17 @@
                 <label>عنوان المحل بالتفصيل:</label>
                 <input type="text" id="regClientAddress" placeholder="المدينة، الشارع، المعلم...">
             </div>
+            <div class="form-group">
+                <label>القرية / المركز:</label>
+                <input type="text" id="regClientVillage" placeholder="مثال: أشمون / سنتريس...">
+            </div>
+            <div class="form-group">
+                <label>نوع العميل:</label>
+                <select id="regClientType" class="form-control">
+                    <option value="retail">قطاعي (ينزل مع الفواتير العادية)</option>
+                    <option value="wholesale">جملة (ينزل في المحلات)</option>
+                </select>
+            </div>
             
             <button class="btn btn-success" onclick="registerCustomerWithEmail()">تسجيل وحفظ الحساب فوراً</button>
             <button class="btn btn-danger" style="background:#64748b; margin-top:8px;" onclick="backToLoginMain()">← رجوع لتسجيل الدخول</button>
@@ -143,26 +154,31 @@
         </div>
 
         <!-- أ) فاتورة جديدة (للمندوب والمدير) -->
-        <div id="sectionInvoice">
+        <div id="sectionInvoice" style="overflow: visible;">
             <div id="delegateTodaySummary" style="background:#e0f2fe; border:1px solid #bae6fd; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; color:#0369a1;">
                 <b>📌 ملخص مبيعاتك اليوم:</b> <span id="todaySummaryText">جاري التحميل...</span>
             </div>
 
             <input type="hidden" id="editInvoiceId" value="">
             <div class="form-group">
-                <label>اسم العميل / المحل:</label>
-                <input type="text" id="clientName" list="clientsListOptions" placeholder="اكتب أو اختر اسم العميل..." oninput="onClientNameInput()">
-                <datalist id="clientsListOptions"></datalist>
+                <label>اسم العميل / المحل (كتابة مباشرة بدون سكرول):</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="text" id="clientName" placeholder="اكتب اسم العميل مباشرة هنا..." oninput="onClientNameInput()" style="flex: 2; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13.5px;">
+                    <select id="selectExistingClient" onchange="pickExistingClient()" style="flex: 1.2; padding: 9px 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11px; background: #f8fafc; color: #334155;">
+                        <option value="">📋 عميل مسجل...</option>
+                    </select>
+                </div>
                 <div style="font-size: 11px; color: #64748b; margin-top: 3px;">كود العميل الثابت: <b id="lblClientCode" style="color:#2563eb;">--</b></div>
                 <div id="clientMonthlyHistory" class="client-history-box"></div>
             </div>
 
             <div style="display: flex; gap: 8px;">
+                <div class="form-group" style="flex: 1;"><label>القرية / المركز:</label><input type="text" id="clientVillage" placeholder="مثال: أشمون / سنتريس..."></div>
                 <div class="form-group" style="flex: 1;"><label>رقم الفاتورة:</label><input type="text" id="invoiceNo" value="1001"></div>
                 <div class="form-group" style="flex: 1;"><label>التاريخ:</label><input type="date" id="invoiceDate" class="readonly-input"></div>
             </div>
 
-            <div id="productsList"></div>
+            <div id="productsList" style="overflow: visible;"></div>
 
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
 
@@ -195,11 +211,24 @@
                     <input type="text" id="viewClientAddress" class="readonly-input" readonly>
                 </div>
                 <div class="form-group">
+                    <label>القرية / المركز:</label>
+                    <input type="text" id="viewClientVillage" class="readonly-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label>نوع العميل:</label>
+                    <input type="text" id="viewClientType" class="readonly-input" readonly>
+                </div>
+                <div class="form-group">
                     <label>ملاحظات الطلب أو الأصناف المطلوبة:</label>
                     <input type="text" id="clientCustomOrderNotes" placeholder="مثال: مطلوب كرتونتين كليوباترا بوكس...">
                 </div>
 
                 <button class="btn btn-whatsapp" onclick="submitPortalClientOrder()">⚡ إرسال طلب الفاتورة للآدمن (واتساب وإيميل)</button>
+            </div>
+            <div class="filter-box" style="background:#fff; border:1px solid #cbd5e1; margin-top:10px;">
+                <h4 style="margin-top:0; color:#1e293b; font-size:13px;">🔑 تغيير كلمة السر الخاصة بحسابك:</h4>
+                <div class="form-group"><label>كلمة السر الجديدة:</label><input type="password" id="clientNewPassInput" placeholder="أدخل كلمة السر الجديدة..."></div>
+                <button class="btn btn-primary" onclick="changeCustomerPassword()">تحديث كلمة السر</button>
             </div>
         </div>
 
@@ -227,6 +256,7 @@
                             <th>#</th>
                             <th>التاريخ</th>
                             <th>العميل</th>
+                            <th>القرية/المركز</th>
                             <th>المندوب</th>
                             <th>الإجمالي</th>
                             <th>الحالة</th>
@@ -270,7 +300,7 @@
 
             <h4 style="font-size: 12px; color: #1e293b; margin-bottom: 4px;">تفاصيل الفواتير:</h4>
             <table class="report-table">
-                <thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>الإجمالي</th></tr></thead>
+                <thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>القرية/المركز</th><th>المندوب</th><th>الإجمالي</th></tr></thead>
                 <tbody id="repInvoicesTableBody"></tbody>
             </table>
 
@@ -298,7 +328,7 @@
             </table>
         </div>
 
-        <!-- هـ) حساب النسب (مع نسبة مئوية للبراون والسوبر) -->
+        <!-- هـ) حساب النسب -->
         <div id="sectionRatios" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:</h4>
             <div class="filter-box">
@@ -307,8 +337,8 @@
                     <div class="form-group" style="flex:1;"><label>نسبة البوكس:</label><input type="number" id="ratioBox" value="1" oninput="calcRatioLoading()"></div>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <div class="form-group" style="flex:1;"><label>نسبة براون (%):</label><input type="number" id="ratioBrown" value="10" placeholder="مثال: 10%" oninput="calcRatioLoading()"></div>
-                    <div class="form-group" style="flex:1;"><label>نسبة سوبر (%):</label><input type="number" id="ratioSuper" value="5" placeholder="مثال: 5%" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة براون:</label><input type="number" id="ratioBrown" value="0" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة سوبر:</label><input type="number" id="ratioSuper" value="0" oninput="calcRatioLoading()"></div>
                 </div>
                 <div class="form-group">
                     <label>إجمالي الكرتونات المراد تحميلها:</label>
@@ -341,6 +371,12 @@
         <!-- ز) المحلات -->
         <div id="sectionShops" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (سعر الكرتونة = 23,925 ج.م):</h4>
+            
+            <div class="filter-box" style="background:#e0f2fe; border:1px solid #bae6fd;">
+                <label style="font-size:12px; font-weight:bold; color:#0369a1;">🔍 بحث باسم العميل / المحل:</label>
+                <input type="text" id="shopSearchInput" placeholder="اكتب اسم المحل أو العميل للفلترة..." oninput="renderShopsTable()" style="margin-top:4px;">
+            </div>
+
             <div class="filter-box">
                 <input type="hidden" id="editShopId" value="">
                 <div class="form-group"><label>اسم المحل:</label><input type="text" id="shopNameInput" placeholder="اكتب اسم المحل..."></div>
@@ -384,19 +420,42 @@
                 <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر</button>
             </div>
             <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px;">
-                <h4 style="margin-top:0; font-size:14px; color:#b91c1c;">🛡️ إنشاء حساب مستخدم جديد (مندوب أو مخزن):</h4>
-                <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: store1 أو 103"></div>
-                <div class="form-group"><label>اسم المستخدم:</label><input type="text" id="newAccName" placeholder="اسم العضو..."></div>
-                <div class="form-group"><label>كلمة السر:</label><input type="password" id="newAccPass"></div>
-                <div class="form-group">
-                    <label>نوع الحساب:</label>
-                    <select id="newAccRole" class="form-control">
-                        <option value="delegate">مندوب مبيعات</option>
-                        <option value="store">مسؤول المخزن</option>
-                        <option value="viewer">مشاهد فقط</option>
-                    </select>
+                <h4 style="margin-top:0; font-size:14px; color:#b91c1c;">🛡️ إدارة الحسابات (مناديب / مخزن / عملاء):</h4>
+                
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px; margin-bottom:12px;">
+                    <h5 style="margin:0 0 8px 0; color:#0f172a;">1) إنشاء حساب موظف (مندوب أو مخزن):</h5>
+                    <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: store1 أو 103"></div>
+                    <div class="form-group"><label>اسم المستخدم:</label><input type="text" id="newAccName" placeholder="اسم العضو..."></div>
+                    <div class="form-group"><label>كلمة السر:</label><input type="password" id="newAccPass"></div>
+                    <div class="form-group">
+                        <label>نوع الحساب:</label>
+                        <select id="newAccRole" class="form-control">
+                            <option value="delegate">مندوب مبيعات</option>
+                            <option value="store">مسؤول المخزن</option>
+                            <option value="viewer">مشاهد فقط</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success" onclick="createNewUserAccount()">إنشاء حساب الموظف</button>
                 </div>
-                <button class="btn btn-success" onclick="createNewUserAccount()">إنشاء الحساب</button>
+
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:6px;">
+                    <h5 style="margin:0 0 8px 0; color:#166534;">2) إنشاء حساب عميل جديد (من المدير):</h5>
+                    <div class="form-group"><label>اسم العميل / المحل:</label><input type="text" id="adminRegClientName" placeholder="أدخل اسم العميل..."></div>
+                    <div class="form-group"><label>البريد الإلكتروني للعميل:</label><input type="email" id="adminRegClientEmail" placeholder="client@domain.com"></div>
+                    <div class="form-group"><label>كلمة السر لحساب العميل:</label><input type="password" id="adminRegClientPass" placeholder="كلمة السر..."></div>
+                    <div class="form-group"><label>رقم التليفون:</label><input type="text" id="adminRegClientPhone" placeholder="1012345678"></div>
+                    <div class="form-group"><label>عنوان المحل:</label><input type="text" id="adminRegClientAddress" placeholder="المدينة، الشارع..."></div>
+                    <div class="form-group"><label>القرية / المركز:</label><input type="text" id="adminRegClientVillage" placeholder="مثال: أشمون..."></div>
+                    <div class="form-group">
+                        <label>نوع العميل:</label>
+                        <select id="adminRegClientType" class="form-control">
+                            <option value="retail">قطاعي (تنزل فاتورته مع الفواتير العادية)</option>
+                            <option value="wholesale">جملة (تنزل فاتورته في المحلات)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="adminCreateCustomerAccount()">إنشاء حساب العميل</button>
+                </div>
+
             </div>
         </div>
     </div>
@@ -407,6 +466,28 @@
             <h3 style="margin-top:0; color:#1e293b;">📄 محتوى الفاتورة</h3>
             <div id="modalInvoiceContent" style="font-size:13px; line-height:1.6; margin-bottom:15px;"></div>
             <button class="btn btn-primary" onclick="closeInvoiceModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- نافذة منبثقة لدفع مديونية المحل -->
+    <div id="shopPayModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center;">
+        <div style="background:#fff; padding:20px; border-radius:10px; width:90%; max-width:380px;">
+            <h3 style="margin-top:0; color:#1e293b; font-size:16px;">💳 سداد مديونية المحل</h3>
+            <input type="hidden" id="payShopId">
+            <div class="form-group">
+                <label>اسم المحل:</label>
+                <input type="text" id="payShopName" class="readonly-input" readonly>
+            </div>
+            <div class="form-group">
+                <label>المديونية الحالية (الذمم):</label>
+                <input type="text" id="payShopCurrentZimam" class="readonly-input" readonly style="color:#dc2626; font-size:15px;">
+            </div>
+            <div class="form-group">
+                <label>المبلغ المراد دفعه (خصمه من المديونية):</label>
+                <input type="number" id="payAmountInput" placeholder="أدخل المبلغ المدفوع..." step="0.01" min="0">
+            </div>
+            <button class="btn btn-success" onclick="submitShopPayment()">تأكيد خصم المبلغ من المديونية</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeShopPayModal()">إلغاء</button>
         </div>
     </div>
 
@@ -470,7 +551,7 @@
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); updateReportClientsSelect(); });
         db.ref('portalCustomers').on('value', (s) => { portalCustomersDB = s.val() || {}; });
         db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
-        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; });
+        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; renderShopsTable(); });
         db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
 
         let currentDelegate = null;
@@ -504,6 +585,8 @@
             const password = document.getElementById('regClientPass').value.trim();
             const phoneInput = document.getElementById('regClientPhone').value.trim();
             const address = document.getElementById('regClientAddress').value.trim();
+            const village = document.getElementById('regClientVillage').value.trim();
+            const customerType = document.getElementById('regClientType').value;
 
             if(!name || !email || !password || !phoneInput || !address) {
                 alert("❌ يرجى إدخال كافة بيانات العميل (الاسم، الإيميل، الباسورد، التليفون، والعنوان).");
@@ -520,7 +603,7 @@
                     cloudClients[name] = clientCode;
                     db.ref('clients').set(cloudClients).catch(err => {});
 
-                    const custData = { uid: user.uid, name, email, phone: fullPhone, address, clientCode };
+                    const custData = { uid: user.uid, name, email, phone: fullPhone, address, village, customerType, clientCode };
                     db.ref('portalCustomers/' + user.uid).set(custData).then(() => {
                         alert("🎉 تم تسجيل حساب العميل بنجاح!");
                         currentPortalCustomer = custData;
@@ -530,6 +613,39 @@
                 .catch((error) => {
                     alert("❌ خطأ في التسجيل: " + error.message);
                 });
+        }
+
+        function adminCreateCustomerAccount() {
+            const name = document.getElementById('adminRegClientName').value.trim();
+            const email = document.getElementById('adminRegClientEmail').value.trim();
+            const password = document.getElementById('adminRegClientPass').value.trim();
+            const phoneInput = document.getElementById('adminRegClientPhone').value.trim();
+            const address = document.getElementById('adminRegClientAddress').value.trim();
+            const village = document.getElementById('adminRegClientVillage').value.trim();
+            const customerType = document.getElementById('adminRegClientType').value;
+
+            if(!name || !email || !password || !phoneInput) {
+                alert("❌ يرجى مأل بيانات العميل الأساسية (الاسم، البريد الإلكتروني، كلمة السر، ورقم التليفون).");
+                return;
+            }
+
+            const fullPhone = "+20" + phoneInput.replace(/^0+/, '');
+            const clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
+            const uid = "cust_" + Date.now();
+
+            cloudClients[name] = clientCode;
+            db.ref('clients').set(cloudClients).catch(err => {});
+
+            const custData = { uid, name, email, pass: password, phone: fullPhone, address, village, customerType, clientCode };
+            db.ref('portalCustomers/' + uid).set(custData).then(() => {
+                alert(`✅ تم إنشاء حساب العميل (${name}) بنجاح كـ [${customerType === 'wholesale' ? 'جملة' : 'قطاعي'}]!`);
+                document.getElementById('adminRegClientName').value = '';
+                document.getElementById('adminRegClientEmail').value = '';
+                document.getElementById('adminRegClientPass').value = '';
+                document.getElementById('adminRegClientPhone').value = '';
+                document.getElementById('adminRegClientAddress').value = '';
+                document.getElementById('adminRegClientVillage').value = '';
+            }).catch(err => alert("خطأ: " + err.message));
         }
 
         function handleLogin() {
@@ -546,6 +662,11 @@
             }
 
             if(foundCustomer) {
+                if(foundCustomer.pass && foundCustomer.pass === pass) {
+                    currentPortalCustomer = foundCustomer;
+                    enterPortalCustomerDashboard();
+                    return;
+                }
                 auth.signInWithEmailAndPassword(code, pass).then(() => {
                     currentPortalCustomer = foundCustomer;
                     enterPortalCustomerDashboard();
@@ -588,46 +709,95 @@
             document.getElementById('loginView').style.display = 'none';
             document.getElementById('salesView').style.display = 'block';
 
+            let typeLabel = currentPortalCustomer.customerType === 'wholesale' ? 'جملة (محلات)' : 'قطاعي';
             document.getElementById('lblDelegateName').innerText = currentPortalCustomer.name;
-            document.getElementById('lblDelegateRoleText').innerText = 'عميل (طلب فواتير)';
+            document.getElementById('lblDelegateRoleText').innerText = `عميل (${typeLabel})`;
 
-            document.getElementById('tabNewInvoice').style.display = 'none';
+            // إخفاء كل التبويبات المخصصة للموظفين وإظهار تبويب العميل فقط
+            const allTabBtns = document.querySelectorAll('.tab-btn');
+            allTabBtns.forEach(btn => btn.style.display = 'none');
+
             document.getElementById('tabClientOrderOnly').style.display = 'block';
 
-            document.getElementById('viewClientName').value = currentPortalCustomer.name;
-            document.getElementById('viewClientEmail').value = currentPortalCustomer.email;
-            document.getElementById('viewClientPhone').value = currentPortalCustomer.phone;
-            document.getElementById('viewClientAddress').value = currentPortalCustomer.address;
+            document.getElementById('viewClientName').value = currentPortalCustomer.name || '';
+            document.getElementById('viewClientEmail').value = currentPortalCustomer.email || '';
+            document.getElementById('viewClientPhone').value = currentPortalCustomer.phone || '';
+            document.getElementById('viewClientAddress').value = currentPortalCustomer.address || '';
+            document.getElementById('viewClientVillage').value = currentPortalCustomer.village || 'غير محدد';
+            document.getElementById('viewClientType').value = typeLabel;
 
             switchTab('clientOrderOnly');
+        }
+
+        function changeCustomerPassword() {
+            const newPass = document.getElementById('clientNewPassInput').value.trim();
+            if(!newPass) { alert("أدخل كلمة السر الجديدة."); return; }
+            if(!currentPortalCustomer) return;
+
+            if(auth.currentUser) {
+                auth.currentUser.updatePassword(newPass).then(() => {
+                    alert("✅ تم تغيير كلمة السر بنجاح!");
+                    document.getElementById('clientNewPassInput').value = '';
+                }).catch(err => alert("خطأ في تغيير كلمة السر: " + err.message));
+            } else if(currentPortalCustomer.uid) {
+                currentPortalCustomer.pass = newPass;
+                db.ref('portalCustomers/' + currentPortalCustomer.uid + '/pass').set(newPass).then(() => {
+                    alert("✅ تم تحديث كلمة السر بنجاح!");
+                    document.getElementById('clientNewPassInput').value = '';
+                }).catch(err => alert("خطأ: " + err.message));
+            }
         }
 
         function submitPortalClientOrder() {
             const notes = document.getElementById('clientCustomOrderNotes').value.trim() || "طلب فاتورة جديدة من العميل";
             const todayStr = new Date().toISOString().split('T')[0];
+            const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
 
-            let newInv = {
-                id: String(Date.now()),
-                invNo: Math.floor(1000 + Math.random() * 9000),
-                date: todayStr,
-                delegateCode: "portal_client",
-                delegateName: "طلب عبر بوابة العميل",
-                client: currentPortalCustomer.name,
-                clientCode: currentPortalCustomer.clientCode,
-                total: 0,
-                totalQty: 1,
-                status: 'active',
-                items: [{ name: notes, qty: 1, price: 0, total: 0 }],
-                lat: tempLat,
-                lng: tempLng
-            };
+            if(isWholesale) {
+                // عميل جملة -> ينزل المعاملة في المحلات
+                let newShopObj = {
+                    id: String(Date.now()),
+                    name: currentPortalCustomer.name,
+                    cartons: 1,
+                    totalPrice: 23925,
+                    paid: 0,
+                    zimam: 23925,
+                    notes: notes,
+                    village: currentPortalCustomer.village || '',
+                    date: todayStr
+                };
+                cloudShops.push(newShopObj);
+                db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
+                    alert("✅ تم إرسال طلب الفاتورة وتنـزيلها في حسابات المحلات (جملة) بنجاح!");
+                    let waText = `طلب فاتورة جملة (محلات) من العميل: ${currentPortalCustomer.name}%0Aالقرية/المركز: ${currentPortalCustomer.village || ''}%0Aالعنوان: ${currentPortalCustomer.address}%0Aالهاتف: ${currentPortalCustomer.phone}%0Aالطلب: ${notes}%0Aالتاريخ: ${todayStr}`;
+                    window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
+                }).catch(err => alert("خطأ: " + err.message));
+            } else {
+                // عميل قطاعي -> تنزل مع الفواتير العادية
+                let newInv = {
+                    id: String(Date.now()),
+                    invNo: Math.floor(1000 + Math.random() * 9000),
+                    date: todayStr,
+                    delegateCode: "portal_client",
+                    delegateName: "طلب عبر بوابة العميل (قطاعي)",
+                    client: currentPortalCustomer.name,
+                    clientCode: currentPortalCustomer.clientCode,
+                    village: currentPortalCustomer.village || '',
+                    total: 0,
+                    totalQty: 1,
+                    status: 'active',
+                    items: [{ name: notes, qty: 1, price: 0, total: 0 }],
+                    lat: tempLat,
+                    lng: tempLng
+                };
 
-            cloudSales.push(newInv);
-            db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
-                alert("✅ تم إرسال طلب الفاتورة للآدمن بنجاح!");
-                let waText = `طلب فاتورة جديد من المحل: ${currentPortalCustomer.name}%0Aالإيميل: ${currentPortalCustomer.email}%0Aالعنوان: ${currentPortalCustomer.address}%0Aالهاتف: ${currentPortalCustomer.phone}%0Aالطلب: ${notes}%0Aالتاريخ: ${todayStr}`;
-                window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
-            }).catch(err => alert("خطأ في الإرسال: " + err.message));
+                cloudSales.push(newInv);
+                db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
+                    alert("✅ تم إرسال طلب الفاتورة وتنـزيلها مع الفواتير العادية (قطاعي) بنجاح!");
+                    let waText = `طلب فاتورة قطاعي من المحل: ${currentPortalCustomer.name}%0Aالقرية/المركز: ${currentPortalCustomer.village || ''}%0Aالإيميل: ${currentPortalCustomer.email}%0Aالعنوان: ${currentPortalCustomer.address}%0Aالهاتف: ${currentPortalCustomer.phone}%0Aالطلب: ${notes}%0Aالتاريخ: ${todayStr}`;
+                    window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
+                }).catch(err => alert("خطأ في الإرسال: " + err.message));
+            }
         }
 
         function handleLogout() {
@@ -652,6 +822,14 @@
 
         function setupUserTabs() {
             if(currentPortalCustomer) return;
+
+            // إظهار تبويبات النظام العادية
+            const allTabBtns = document.querySelectorAll('.tab-btn');
+            allTabBtns.forEach(btn => {
+                if(btn.id !== 'tabClientOrderOnly') btn.style.display = 'block';
+                else btn.style.display = 'none';
+            });
+
             const isAdm = (currentDelegate.code === 'admin' || currentDelegate.role === 'admin');
             const isStore = (currentDelegate.role === 'store');
             const isViewer = (currentDelegate.role === 'viewer');
@@ -727,11 +905,21 @@
             if(tab === 'lmInvoices') renderLmTable();
         }
 
+        function pickExistingClient() {
+            const selVal = document.getElementById('selectExistingClient').value;
+            if(selVal) {
+                document.getElementById('clientName').value = selVal;
+                onClientNameInput();
+            }
+        }
+
         function updateClientsDatalist() {
-            const datalist = document.getElementById('clientsListOptions');
-            if(!datalist) return;
-            datalist.innerHTML = '';
-            for(let cName in cloudClients) datalist.innerHTML += `<option value="${cName}">كود: ${cloudClients[cName]}</option>`;
+            const sel = document.getElementById('selectExistingClient');
+            if(!sel) return;
+            sel.innerHTML = '<option value="">📋 عميل مسجل...</option>';
+            for(let cName in cloudClients) {
+                sel.innerHTML += `<option value="${cName}">${cName} (${cloudClients[cName]})</option>`;
+            }
             updateReportClientsSelect();
         }
 
@@ -787,31 +975,80 @@
             document.getElementById('editInvoiceId').value = '';
             document.getElementById('invoiceNo').value = Math.floor(1000 + Math.random() * 9000);
             document.getElementById('clientName').value = '';
+            document.getElementById('clientVillage').value = '';
             document.getElementById('lblClientCode').innerText = '--';
             document.getElementById('clientMonthlyHistory').style.display = 'none';
             
             const list = document.getElementById('productsList');
-            list.innerHTML = '';
             const carStock = (cloudDelegates[currentDelegate.code]) ? cloudDelegates[currentDelegate.code].carStock : defaultCarStock;
 
+            let tableRowsHtml = '';
             products.forEach((p, idx) => {
                 const stockRibbons = carStock ? Math.round((carStock[p.code] || 0) * 50) : 0;
                 let cartonsVal = Math.floor(stockRibbons / 50);
                 let ribbonsVal = stockRibbons % 50;
-                list.innerHTML += `
-                    <div class="product-item">
-                        <div class="product-title">
-                            <span>${p.name}</span>
-                            <span style="font-size:11px; color:#64748b;">المتبقي بالسيارة: <b style="color:${stockRibbons > 0 ? '#16a34a':'#dc2626'}">${cartonsVal} كرتونة و ${ribbonsVal} رابطة (${stockRibbons} رابطة إجمالية)</b></span>
-                        </div>
-                        <div class="input-row">
-                            <div><label>الكمية المطلوبة (بالرابطة)</label><input type="number" id="qty_${idx}" min="0" placeholder="0" oninput="calcTotals()"></div>
-                            <div><label>سعر الرابطة</label><input type="number" id="price_${idx}" value="480" oninput="calcTotals()"></div>
-                            <div><label>الإجمالي</label><input type="text" id="total_${idx}" value="0.00" readonly style="background:#eee;"></div>
-                        </div>
-                    </div>`;
+                let stockText = `${cartonsVal} كرتونة و ${ribbonsVal} ر`;
+
+                tableRowsHtml += `
+                    <tr>
+                        <td style="text-align: right; font-weight: bold; padding: 6px 4px; font-size: 12px; color: #0f172a;">${p.name}</td>
+                        <td style="padding: 4px; font-size: 10px; color: ${stockRibbons > 0 ? '#16a34a':'#dc2626'}; font-weight: bold;">${stockText}</td>
+                        <td style="padding: 4px;"><input type="number" id="qty_${idx}" min="0" placeholder="0" oninput="calcTotals()" style="width: 100%; padding: 5px; text-align: center; font-weight: bold; border: 1px solid #0284c7; border-radius: 4px; font-size: 13px; background: #fff;"></td>
+                        <td style="padding: 4px;"><input type="number" id="price_${idx}" value="480" oninput="calcTotals()" style="width: 100%; padding: 5px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;"></td>
+                        <td style="padding: 4px;"><input type="text" id="total_${idx}" value="0.00" readonly style="width: 100%; padding: 5px; text-align: center; font-weight: bold; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #166534;"></td>
+                    </tr>`;
             });
+
+            list.innerHTML = `
+                <!-- شريط الإضافة المباشرة السريعة بالبحث -->
+                <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 8px; border-radius: 8px; margin-bottom: 10px; display: flex; gap: 6px; align-items: center;">
+                    <select id="quickSelectProduct" style="flex: 2; padding: 6px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                        <option value="">⚡ اختر صنفاً للإدخال السريع...</option>
+                        ${products.map((p, idx) => `<option value="${idx}">${p.name}</option>`).join('')}
+                    </select>
+                    <input type="number" id="quickQtyInput" placeholder="الكمية" style="width: 75px; padding: 6px; font-size: 12px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px;">
+                    <button type="button" class="btn btn-primary" onclick="addQuickProductItem()" style="width: auto; padding: 6px 12px; margin-top: 0; font-size: 12px; white-space: nowrap;">➕ إضافة</button>
+                </div>
+
+                <!-- جدول الكتابة المباشرة المدمج بدون سكرول -->
+                <div style="overflow-x: auto; margin-bottom: 10px;">
+                    <table class="report-table" style="width: 100%; border-collapse: collapse; margin-top: 0; background: #fff;">
+                        <thead>
+                            <tr style="background: #0f172a; color: #fff;">
+                                <th style="padding: 6px; text-align: right; font-size: 11px;">الصنف</th>
+                                <th style="padding: 6px; font-size: 10px;">المتبقي</th>
+                                <th style="padding: 6px; width: 85px; font-size: 11px;">الكمية (رابطة)</th>
+                                <th style="padding: 6px; width: 75px; font-size: 11px;">السعر</th>
+                                <th style="padding: 6px; width: 85px; font-size: 11px;">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+                </div>`;
+
             calcTotals();
+        }
+
+        
+        function addQuickProductItem() {
+            const idxVal = document.getElementById('quickSelectProduct').value;
+            const qtyVal = parseFloat(document.getElementById('quickQtyInput').value) || 0;
+            if(idxVal === "" || qtyVal <= 0) {
+                alert("يرجى اختيار صنف وإدخال كمية أكبر من صفر.");
+                return;
+            }
+            const targetQtyInput = document.getElementById(`qty_${idxVal}`);
+            if(targetQtyInput) {
+                let currentVal = parseFloat(targetQtyInput.value) || 0;
+                targetQtyInput.value = currentVal + qtyVal;
+                calcTotals();
+                document.getElementById('quickQtyInput').value = '';
+                targetQtyInput.focus();
+                targetQtyInput.style.backgroundColor = '#fef08a';
+                setTimeout(() => { targetQtyInput.style.backgroundColor = '#fff'; }, 1000);
+            }
         }
 
         function calcTotals() {
@@ -829,6 +1066,7 @@
         function createInvoiceObject() {
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return null;
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
+            const village = document.getElementById('clientVillage').value.trim() || "";
             const clientCode = document.getElementById('lblClientCode').innerText;
             const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
             const invDate = document.getElementById('invoiceDate').value;
@@ -876,7 +1114,7 @@
             const salesRecord = {
                 id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
                 delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
-                client: client, clientCode: clientCode,
+                client: client, village: village, clientCode: clientCode,
                 total: grand, totalQty: totalRibbonsCount, status: 'active', items: itemsSoldList, lat: tempLat, lng: tempLng
             };
 
@@ -925,6 +1163,7 @@
             receiptText += "التاريخ: " + rec.date + "\n";
             receiptText += "فاتورة: #" + rec.invNo + "\n";
             receiptText += "العميل: " + rec.client + "\n";
+            if(rec.village) receiptText += "القرية/المركز: " + rec.village + "\n";
             receiptText += "------------------------\n";
             receiptText += "المنتج    سعر/كمية  إجمالي\n";
             receiptText += "------------------------\n";
@@ -999,7 +1238,7 @@
                 return true;
             });
 
-            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="7">لا توجد فواتير مطابقة.</td></tr>`; return; }
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="8">لا توجد فواتير مطابقة.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
                 let isCancelled = (inv.status === 'cancelled');
@@ -1011,7 +1250,7 @@
                     actionButtons += `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" onclick="cancelInvoice('${inv.id}')">❌ إلغاء</button>`;
                 }
 
-                tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
+                tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.village || '-'}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
             });
         }
 
@@ -1020,7 +1259,7 @@
             const inv = allCombinedSales.find(s => String(s.id) === String(id));
             if(!inv) return;
             let itemsHtml = inv.items.map(it => `- ${it.name} | كمية: ${it.qty} رابطة | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>');
-            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client}<br><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
+            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client}<br><b>القرية/المركز:</b> ${inv.village || 'غير محدد'}<br><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
             document.getElementById('invoiceModal').style.display = 'flex';
         }
 
@@ -1054,7 +1293,7 @@
             filtered.forEach(s => {
                 total += s.total;
                 s.items.forEach(it => { if(qMap[it.code] !== undefined) qMap[it.code] += it.qty; });
-                invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td>${s.delegateName}</td><td><b>${s.total}</b> ج.م</td></tr>`;
+                invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td>${s.village || '-'}</td><td>${s.delegateName}</td><td><b>${s.total}</b> ج.م</td></tr>`;
             });
 
             document.getElementById('repTotalAmount').innerText = total.toFixed(2);
@@ -1185,12 +1424,70 @@
             const tb = document.getElementById('shopsTableBody');
             if(!tb) return;
             tb.innerHTML = '';
-            cloudShops.forEach(s => {
-                tb.innerHTML += `<tr><td>${s.name}</td><td>${s.cartons}</td><td>${s.totalPrice}</td><td>${s.paid}</td><td style="color:#dc2626; font-weight:bold;">${s.zimam}</td><td><button class="btn btn-danger" style="padding:2px 4px; font-size:9px;" onclick="deleteShop('${s.id}')">حذف</button></td></tr>`;
+
+            const query = (document.getElementById('shopSearchInput')?.value || '').trim().toLowerCase();
+
+            let filteredShops = cloudShops;
+            if(query) {
+                filteredShops = cloudShops.filter(s => s.name && s.name.toLowerCase().includes(query));
+            }
+
+            if(filteredShops.length === 0) {
+                tb.innerHTML = `<tr><td colspan="6">لا توجد نتائج مطابقة للبحث.</td></tr>`;
+                return;
+            }
+
+            filteredShops.forEach(s => {
+                let zimamVal = (s.zimam !== undefined) ? s.zimam : (s.totalPrice - s.paid);
+                tb.innerHTML += `<tr>
+                    <td><b>${s.name}</b></td>
+                    <td>${s.cartons}</td>
+                    <td>${s.totalPrice} ج.م</td>
+                    <td>${s.paid} ج.م</td>
+                    <td style="color:#dc2626; font-weight:bold;">${zimamVal} ج.م</td>
+                    <td>
+                        <button class="btn btn-success" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openShopPayModal('${s.id}')">💳 دفع</button>
+                        <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="deleteShop('${s.id}')">حذف</button>
+                    </td>
+                </tr>`;
             });
         }
 
+        function openShopPayModal(id) {
+            const shop = cloudShops.find(s => String(s.id) === String(id));
+            if(!shop) return;
+            let zimamVal = (shop.zimam !== undefined) ? shop.zimam : (shop.totalPrice - shop.paid);
+            document.getElementById('payShopId').value = shop.id;
+            document.getElementById('payShopName').value = shop.name;
+            document.getElementById('payShopCurrentZimam').value = `${zimamVal} ج.م`;
+            document.getElementById('payAmountInput').value = '';
+            document.getElementById('shopPayModal').style.display = 'flex';
+        }
+
+        function closeShopPayModal() {
+            document.getElementById('shopPayModal').style.display = 'none';
+        }
+
+        function submitShopPayment() {
+            const id = document.getElementById('payShopId').value;
+            const payVal = parseFloat(document.getElementById('payAmountInput').value) || 0;
+            if(payVal <= 0) { alert("يرجى إدخال مبلغ دفع صحيح أكبر من صفر."); return; }
+
+            const shop = cloudShops.find(s => String(s.id) === String(id));
+            if(!shop) return;
+
+            shop.paid = (parseFloat(shop.paid) || 0) + payVal;
+            shop.zimam = (parseFloat(shop.totalPrice) || 0) - shop.paid;
+
+            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
+                alert(`✅ تم تسجيل دفعة بمبلغ ${payVal} ج.م لمحل (${shop.name}). المديونية المتبقية: ${shop.zimam} ج.م`);
+                closeShopPayModal();
+                renderShopsTable();
+            }).catch(err => alert("خطأ: " + err.message));
+        }
+
         function deleteShop(id) {
+            if(!confirm("هل أنت متأكد من حذف حساب هذا المحل؟")) return;
             cloudShops = cloudShops.filter(x => String(x.id) !== String(id));
             db.ref('shops').set(Object.assign({}, cloudShops)).then(() => renderShopsTable());
         }
@@ -1246,39 +1543,30 @@
             db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
         }
 
-        // حاسبة النسب (البراون والسوبر كنسبة مئوية %)
         function calcRatioLoading() {
             const rCleo = parseFloat(document.getElementById('ratioCleopatra').value) || 0;
             const rBox = parseFloat(document.getElementById('ratioBox').value) || 0;
-            const pBrown = parseFloat(document.getElementById('ratioBrown').value) || 0; // نسبة مئوية %
-            const pSuper = parseFloat(document.getElementById('ratioSuper').value) || 0; // نسبة مئوية %
+            const rBrown = parseFloat(document.getElementById('ratioBrown').value) || 0;
+            const rSuper = parseFloat(document.getElementById('ratioSuper').value) || 0;
             const target = parseFloat(document.getElementById('totalCartonsTarget').value) || 0;
 
+            const sumRatios = rCleo + rBox + rBrown + rSuper;
             const resBox = document.getElementById('ratioResultBox');
-            if(target <= 0) {
-                resBox.innerHTML = "أدخل إجمالي الكرتونات المراد تحميلها لعرض الكميات الصحيحة.";
+            if(sumRatios <= 0 || target <= 0) {
+                resBox.innerHTML = "أدخل النسب وإجمالي الكرتونات لعرض الكميات الصحيحة.";
                 return;
             }
 
-            // حساب كمية البراون والسوبر بناءً على النسبة المئوية من الإجمالي
-            const brownCartons = (target * (pBrown / 100));
-            const superCartons = (target * (pSuper / 100));
-            
-            // الباقي يوزع على نسب كليوباترا والبوكس
-            const remainingTarget = target - (brownCartons + superCartons);
-            const sumCleoBox = rCleo + rBox;
-
-            let cCleo = 0, cBox = 0;
-            if(sumCleoBox > 0 && remainingTarget > 0) {
-                cCleo = (remainingTarget * rCleo / sumCleoBox);
-                cBox = (remainingTarget * rBox / sumCleoBox);
-            }
+            const cCleo = (target * rCleo / sumRatios).toFixed(2);
+            const cBox = (target * rBox / sumRatios).toFixed(2);
+            const cBrown = (target * rBrown / sumRatios).toFixed(2);
+            const cSuper = (target * rSuper / sumRatios).toFixed(2);
 
             resBox.innerHTML = `<b>📊 نتائج حساب النسب للتحميل:</b><br>` +
-                `- كليوباترا: <b>${cCleo.toFixed(2)}</b> كرتونة<br>` +
-                `- بوكس: <b>${cBox.toFixed(2)}</b> كرتونة<br>` +
-                `- براون (${pBrown}%): <b>${brownCartons.toFixed(2)}</b> كرتونة<br>` +
-                `- سوبر (${pSuper}%): <b>${superCartons.toFixed(2)}</b> كرتونة`;
+                `- كليوباترا: <b>${cCleo}</b> كرتونة<br>` +
+                `- بوكس: <b>${cBox}</b> كرتونة<br>` +
+                `- براون: <b>${cBrown}</b> كرتونة<br>` +
+                `- سوبر: <b>${cSuper}</b> كرتونة`;
         }
 
         function createNewUserAccount() {
@@ -1309,3 +1597,4 @@
     </script>
 </body>
 </html>
+
