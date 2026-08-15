@@ -161,7 +161,7 @@
 
             <input type="hidden" id="editInvoiceId" value="">
             <div class="form-group">
-                <label>اسم العميل / المحل (كتابة مباشرة بدون سكرول):</label>
+                <label>اسم العميل / المحل (كتابة مباشرة):</label>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <input type="text" id="clientName" placeholder="اكتب اسم العميل مباشرة هنا..." oninput="onClientNameInput()" style="flex: 2; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13.5px;">
                     <select id="selectExistingClient" onchange="pickExistingClient()" style="flex: 1.2; padding: 9px 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11px; background: #f8fafc; color: #334155;">
@@ -188,7 +188,7 @@
             <div id="statusAlert" class="status-alert"></div>
         </div>
 
-        <!-- واجهة العميل المسجل (طلب فاتورة لمحله فقط بالبيانات المسجلة) -->
+        <!-- واجهة العميل المسجل -->
         <div id="sectionClientOrderOnly" style="display: none;">
             <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
                 <h4 style="margin-top:0; color:#166534;">🏪 لوحة طلبات العميل</h4>
@@ -232,7 +232,7 @@
             </div>
         </div>
 
-        <!-- ب) الفواتير المحفوظة مع إمكانية التصفية وإلغاء الفاتورة -->
+        <!-- ب) الفواتير المحفوظة -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box">
                 <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:</h4>
@@ -248,7 +248,7 @@
                 </div>
             </div>
 
-            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير (مع إمكانية الإلغاء أو التعديل):</h4>
+            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير:</h4>
             <div style="overflow-x: auto;">
                 <table class="report-table">
                     <thead>
@@ -268,7 +268,7 @@
             </div>
         </div>
 
-        <!-- ج) التقارير (من تاريخ إلى تاريخ) -->
+        <!-- ج) التقارير -->
         <div id="sectionReport" style="display: none;">
             <div class="filter-box" id="reportFilterBoxContainer">
                 <h4>📊 تقارير المبيعات من تاريخ إلى تاريخ:</h4>
@@ -352,7 +352,7 @@
 
         <!-- و) التحميل من منوف -->
         <div id="sectionMenof" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (الذمم تمثل فلوس ليك):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف:</h4>
             <div class="filter-box">
                 <input type="hidden" id="editMenofId" value="">
                 <div class="form-group"><label>تاريخ التحميل:</label><input type="date" id="menofDate"></div>
@@ -420,7 +420,7 @@
                 <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر</button>
             </div>
             <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px;">
-                <h4 style="margin-top:0; font-size:14px; color:#b91c1c;">🛡️ إدارة الحسابات (مناديب / مخزن / عملاء):</h4>
+                <h4 style="margin-top:0; font-size:14px; color:#b91c1c;">🛡️ إدارة الحسابات:</h4>
                 
                 <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px; margin-bottom:12px;">
                     <h5 style="margin:0 0 8px 0; color:#0f172a;">1) إنشاء حساب موظف (مندوب أو مخزن):</h5>
@@ -469,7 +469,7 @@
         </div>
     </div>
 
-    <!-- نافذة منبثقة لدفع مديونية المحل -->
+    <!-- نافذة سداد مديونية المحل -->
     <div id="shopPayModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center;">
         <div style="background:#fff; padding:20px; border-radius:10px; width:90%; max-width:380px;">
             <h3 style="margin-top:0; color:#1e293b; font-size:16px;">💳 سداد مديونية المحل</h3>
@@ -483,11 +483,38 @@
                 <input type="text" id="payShopCurrentZimam" class="readonly-input" readonly style="color:#dc2626; font-size:15px;">
             </div>
             <div class="form-group">
-                <label>المبلغ المراد دفعه (خصمه من المديونية):</label>
+                <label>تاريخ السداد:</label>
+                <input type="date" id="payDateInput">
+            </div>
+            <div class="form-group">
+                <label>المبلغ المراد دفعه:</label>
                 <input type="number" id="payAmountInput" placeholder="أدخل المبلغ المدفوع..." step="0.01" min="0">
             </div>
-            <button class="btn btn-success" onclick="submitShopPayment()">تأكيد خصم المبلغ من المديونية</button>
+            <button class="btn btn-success" onclick="submitShopPayment()">تأكيد خصم المبلغ وحفظه بالسجل</button>
             <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeShopPayModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة عرض تفاصيل وسجل مدفوعات المحل -->
+    <div id="shopDetailsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center;">
+        <div style="background:#fff; padding:20px; border-radius:10px; width:90%; max-width:480px; max-height:85vh; overflow-y:auto;">
+            <h3 style="margin-top:0; color:#0f172a; font-size:16px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">📋 تفاصيل وسجل دفعات المحل</h3>
+            <div id="shopDetailsHeader" style="margin-bottom:12px; font-size:13px; line-height:1.7;"></div>
+            
+            <h4 style="margin:12px 0 6px 0; font-size:13px; color:#1e293b;">📜 سجل الدفعات المسددة بالتاريخ:</h4>
+            <div style="overflow-x:auto;">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>تاريخ الدفع</th>
+                            <th>المبلغ المدفوع</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shopPaymentsLogBody"></tbody>
+                </table>
+            </div>
+            <button class="btn btn-primary" style="margin-top:14px;" onclick="closeShopDetailsModal()">إغلاق</button>
         </div>
     </div>
 
@@ -546,12 +573,15 @@
             document.getElementById('networkStatusBanner').style.display = 'block';
         }
 
-        db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
+        db.ref('sales').on('value', (s) => { 
+            cloudSales = s.val() ? (Array.isArray(s.val()) ? s.val().filter(Boolean) : Object.values(s.val())) : []; 
+            updateDelegateTodaySummary();
+        });
         db.ref('delegates').on('value', (s) => { if(s.val()) { cloudDelegates = s.val(); updateDelegatesSelects(); } });
-        db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); updateReportClientsSelect(); });
+        db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); });
         db.ref('portalCustomers').on('value', (s) => { portalCustomersDB = s.val() || {}; });
         db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
-        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; renderShopsTable(); });
+        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; });
         db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
 
         let currentDelegate = null;
@@ -601,7 +631,7 @@
                     const clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
 
                     cloudClients[name] = clientCode;
-                    db.ref('clients').set(cloudClients).catch(err => {});
+                    db.ref('clients/' + name).set(clientCode).catch(err => {});
 
                     const custData = { uid: user.uid, name, email, phone: fullPhone, address, village, customerType, clientCode };
                     db.ref('portalCustomers/' + user.uid).set(custData).then(() => {
@@ -625,7 +655,7 @@
             const customerType = document.getElementById('adminRegClientType').value;
 
             if(!name || !email || !password || !phoneInput) {
-                alert("❌ يرجى مأل بيانات العميل الأساسية (الاسم، البريد الإلكتروني، كلمة السر، ورقم التليفون).");
+                alert("❌ يرجى ملء بيانات العميل الأساسية.");
                 return;
             }
 
@@ -634,11 +664,11 @@
             const uid = "cust_" + Date.now();
 
             cloudClients[name] = clientCode;
-            db.ref('clients').set(cloudClients).catch(err => {});
+            db.ref('clients/' + name).set(clientCode).catch(err => {});
 
             const custData = { uid, name, email, pass: password, phone: fullPhone, address, village, customerType, clientCode };
             db.ref('portalCustomers/' + uid).set(custData).then(() => {
-                alert(`✅ تم إنشاء حساب العميل (${name}) بنجاح كـ [${customerType === 'wholesale' ? 'جملة' : 'قطاعي'}]!`);
+                alert(`✅ تم إنشاء حساب العميل (${name}) بنجاح!`);
                 document.getElementById('adminRegClientName').value = '';
                 document.getElementById('adminRegClientEmail').value = '';
                 document.getElementById('adminRegClientPass').value = '';
@@ -713,7 +743,6 @@
             document.getElementById('lblDelegateName').innerText = currentPortalCustomer.name;
             document.getElementById('lblDelegateRoleText').innerText = `عميل (${typeLabel})`;
 
-            // إخفاء كل التبويبات المخصصة للموظفين وإظهار تبويب العميل فقط
             const allTabBtns = document.querySelectorAll('.tab-btn');
             allTabBtns.forEach(btn => btn.style.display = 'none');
 
@@ -754,9 +783,9 @@
             const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
 
             if(isWholesale) {
-                // عميل جملة -> ينزل المعاملة في المحلات
+                let shopId = String(Date.now());
                 let newShopObj = {
-                    id: String(Date.now()),
+                    id: shopId,
                     name: currentPortalCustomer.name,
                     cartons: 1,
                     totalPrice: 23925,
@@ -764,18 +793,19 @@
                     zimam: 23925,
                     notes: notes,
                     village: currentPortalCustomer.village || '',
-                    date: todayStr
+                    date: todayStr,
+                    payments: []
                 };
                 cloudShops.push(newShopObj);
-                db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
-                    alert("✅ تم إرسال طلب الفاتورة وتنـزيلها في حسابات المحلات (جملة) بنجاح!");
+                db.ref('shops/' + shopId).set(newShopObj).then(() => {
+                    alert("✅ تم إرسال طلب الفاتورة بنجاح!");
                     let waText = `طلب فاتورة جملة (محلات) من العميل: ${currentPortalCustomer.name}%0Aالقرية/المركز: ${currentPortalCustomer.village || ''}%0Aالعنوان: ${currentPortalCustomer.address}%0Aالهاتف: ${currentPortalCustomer.phone}%0Aالطلب: ${notes}%0Aالتاريخ: ${todayStr}`;
                     window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
                 }).catch(err => alert("خطأ: " + err.message));
             } else {
-                // عميل قطاعي -> تنزل مع الفواتير العادية
+                let invId = String(Date.now());
                 let newInv = {
-                    id: String(Date.now()),
+                    id: invId,
                     invNo: Math.floor(1000 + Math.random() * 9000),
                     date: todayStr,
                     delegateCode: "portal_client",
@@ -792,8 +822,8 @@
                 };
 
                 cloudSales.push(newInv);
-                db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
-                    alert("✅ تم إرسال طلب الفاتورة وتنـزيلها مع الفواتير العادية (قطاعي) بنجاح!");
+                db.ref('sales/' + invId).set(newInv).then(() => {
+                    alert("✅ تم إرسال طلب الفاتورة بنجاح!");
                     let waText = `طلب فاتورة قطاعي من المحل: ${currentPortalCustomer.name}%0Aالقرية/المركز: ${currentPortalCustomer.village || ''}%0Aالإيميل: ${currentPortalCustomer.email}%0Aالعنوان: ${currentPortalCustomer.address}%0Aالهاتف: ${currentPortalCustomer.phone}%0Aالطلب: ${notes}%0Aالتاريخ: ${todayStr}`;
                     window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
                 }).catch(err => alert("خطأ في الإرسال: " + err.message));
@@ -815,15 +845,14 @@
             const summaryText = document.getElementById('todaySummaryText');
             if(!summaryText || !currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return;
             const todayStr = new Date().toISOString().split('T')[0];
-            let mySales = cloudSales.filter(s => s.delegateCode === currentDelegate.code && s.date === todayStr && s.status !== 'cancelled');
-            let totalAmount = mySales.reduce((acc, cur) => acc + cur.total, 0);
+            let mySales = cloudSales.filter(s => s && s.delegateCode === currentDelegate.code && s.date === todayStr && s.status !== 'cancelled');
+            let totalAmount = mySales.reduce((acc, cur) => acc + (parseFloat(cur.total) || 0), 0);
             summaryText.innerHTML = `عدد فواتير اليوم: <b>${mySales.length}</b> | إجمالي المبيعات النشطة: <b style="color:#15803d;">${totalAmount.toFixed(2)} ج.م</b>`;
         }
 
         function setupUserTabs() {
             if(currentPortalCustomer) return;
 
-            // إظهار تبويبات النظام العادية
             const allTabBtns = document.querySelectorAll('.tab-btn');
             allTabBtns.forEach(btn => {
                 if(btn.id !== 'tabClientOrderOnly') btn.style.display = 'block';
@@ -920,7 +949,6 @@
             for(let cName in cloudClients) {
                 sel.innerHTML += `<option value="${cName}">${cName} (${cloudClients[cName]})</option>`;
             }
-            updateReportClientsSelect();
         }
 
         function onClientNameInput() {
@@ -928,26 +956,16 @@
             const lblCode = document.getElementById('lblClientCode');
             const historyBox = document.getElementById('clientMonthlyHistory');
             
-            if(!val) { lblCode.innerText = "--"; historyBox.style.display = 'none'; return; }
+            if(!val) { 
+                lblCode.innerText = "--"; 
+                historyBox.style.display = 'none'; 
+                return; 
+            }
             
             if(cloudClients[val]) {
                 lblCode.innerText = cloudClients[val];
             } else {
-                const newCode = "C-" + Math.floor(1000 + Math.random() * 9000);
-                cloudClients[val] = newCode;
-                if(navigator.onLine) db.ref('clients').set(cloudClients).catch(err => {});
-                lblCode.innerText = newCode;
-            }
-
-            let clientSales = cloudSales.filter(s => s.client && s.client.toLowerCase() === val.toLowerCase() && s.status !== 'cancelled');
-            if(clientSales.length > 0) {
-                let totalMonth = clientSales.reduce((sum, item) => sum + item.total, 0);
-                let details = clientSales.map(i => `فاتورة #${i.invNo}: ${i.total} ج.م (${i.date})`).join(' | ');
-                historyBox.style.display = 'block';
-                historyBox.innerHTML = `<b>📊 مبيعات العميل النشطة هذا الشهر:</b> إجمالي الصافي = ${totalMonth} ج.م<br><span style="font-size:10px;">${details}</span>`;
-            } else {
-                historyBox.style.display = 'block';
-                historyBox.innerHTML = `<b>📊 مبيعات العميل هذا الشهر:</b> لا توجد فواتير نشطة مسجلة لهذا العميل.`;
+                lblCode.innerText = "عميل جديد";
             }
         }
 
@@ -1000,7 +1018,6 @@
             });
 
             list.innerHTML = `
-                <!-- شريط الإضافة المباشرة السريعة بالبحث -->
                 <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 8px; border-radius: 8px; margin-bottom: 10px; display: flex; gap: 6px; align-items: center;">
                     <select id="quickSelectProduct" style="flex: 2; padding: 6px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px;">
                         <option value="">⚡ اختر صنفاً للإدخال السريع...</option>
@@ -1010,7 +1027,6 @@
                     <button type="button" class="btn btn-primary" onclick="addQuickProductItem()" style="width: auto; padding: 6px 12px; margin-top: 0; font-size: 12px; white-space: nowrap;">➕ إضافة</button>
                 </div>
 
-                <!-- جدول الكتابة المباشرة المدمج بدون سكرول -->
                 <div style="overflow-x: auto; margin-bottom: 10px;">
                     <table class="report-table" style="width: 100%; border-collapse: collapse; margin-top: 0; background: #fff;">
                         <thead>
@@ -1031,7 +1047,6 @@
             calcTotals();
         }
 
-        
         function addQuickProductItem() {
             const idxVal = document.getElementById('quickSelectProduct').value;
             const qtyVal = parseFloat(document.getElementById('quickQtyInput').value) || 0;
@@ -1047,7 +1062,7 @@
                 document.getElementById('quickQtyInput').value = '';
                 targetQtyInput.focus();
                 targetQtyInput.style.backgroundColor = '#fef08a';
-                setTimeout(() => { targetQtyInput.style.backgroundColor = '#fff'; }, 1000);
+                setTimeout(() => { targetQtyInput.style.backgroundColor = '#fff'; }, 800);
             }
         }
 
@@ -1067,7 +1082,13 @@
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return null;
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const village = document.getElementById('clientVillage').value.trim() || "";
-            const clientCode = document.getElementById('lblClientCode').innerText;
+            let clientCode = cloudClients[client] || ("C-" + Math.floor(1000 + Math.random() * 9000));
+            
+            if(!cloudClients[client] && client !== "عميل نقدي") {
+                cloudClients[client] = clientCode;
+                if(navigator.onLine) db.ref('clients/' + client).set(clientCode).catch(err => {});
+            }
+
             const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
             const invDate = document.getElementById('invoiceDate').value;
             const editId = document.getElementById('editInvoiceId').value;
@@ -1107,7 +1128,7 @@
 
             if(!editId && cloudDelegates[targetDelCode]) {
                 cloudDelegates[targetDelCode].carStock = carStock;
-                if(navigator.onLine) db.ref('delegates').set(cloudDelegates).catch(err => {});
+                if(navigator.onLine) db.ref('delegates/' + targetDelCode + '/carStock').set(carStock).catch(err => {});
             }
 
             let recordId = editId ? String(editId) : String(Date.now());
@@ -1120,9 +1141,7 @@
 
             saveInvoiceLocally(salesRecord);
             if(navigator.onLine) {
-                let salesArr = cloudSales.filter(s => String(s.id) !== recordId);
-                salesArr.push(salesRecord);
-                db.ref('sales').set(Object.assign({}, salesArr)).then(() => removeOfflineInvoiceLocally(recordId)).catch(err => {});
+                db.ref('sales/' + recordId).set(salesRecord).then(() => removeOfflineInvoiceLocally(recordId)).catch(err => {});
             }
             return salesRecord;
         }
@@ -1144,11 +1163,9 @@
             if(!navigator.onLine) return;
             let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
             if(offlineInvs.length === 0) return;
-            let salesArr = [...cloudSales];
             offlineInvs.forEach(inv => {
-                if(!salesArr.some(s => String(s.id) === String(inv.id))) salesArr.push(inv);
+                db.ref('sales/' + inv.id).set(inv).then(() => removeOfflineInvoiceLocally(inv.id)).catch(err => {});
             });
-            db.ref('sales').set(Object.assign({}, salesArr)).then(() => localStorage.removeItem('blackhorse_offline_invoices')).catch(err => {});
         }
 
         function printViaRawBT(specificInv = null) {
@@ -1177,10 +1194,17 @@
 
             const encodedText = encodeURIComponent(receiptText);
             const intentUrl = `intent://rawbt/print?text=${encodedText}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-            window.location.href = intentUrl;
+            const rawBtUrl = `rawbt://print?text=${encodedText}`;
+
+            try { window.location.href = intentUrl; } catch (e) {}
+
+            setTimeout(() => {
+                if (document.visibilityState === 'visible') {
+                    try { window.location.href = rawBtUrl; } catch (e) {}
+                }
+            }, 700);
 
             if(!specificInv && currentDelegate) {
-                alert("✅ تم حفظ الفاتورة وخصم الكمية وجاري إرسالها للطابعة!");
                 initSalesForm();
                 updateDelegateTodaySummary();
             }
@@ -1188,7 +1212,11 @@
 
         function saveAndEmailOnly() { 
             const rec = createInvoiceObject();
-            if(rec) { alert("✅ تم حفظ الفاتورة بنجاح وخصمها من رصيد السيارة!"); initSalesForm(); updateDelegateTodaySummary(); }
+            if(rec) { 
+                alert("✅ تم حفظ الفاتورة بنجاح وخصمها من رصيد السيارة!"); 
+                initSalesForm(); 
+                updateDelegateTodaySummary(); 
+            }
         }
 
         function sendSingleInvoiceViaWhatsApp() {
@@ -1202,7 +1230,7 @@
             if(targetInv) {
                 targetInv.status = 'cancelled';
                 targetInv.total = 0;
-                db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
+                db.ref('sales/' + id).update({ status: 'cancelled', total: 0 }).then(() => {
                     alert("✅ تم إلغاء الفاتورة واستبعادها بنجاح.");
                     renderSavedInvoices();
                     renderDailyReport();
@@ -1227,6 +1255,7 @@
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
             
             filtered = allCombinedSales.filter(s => {
+                if(!s) return false;
                 if(currentDelegate) {
                     if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
                     if(isAdm && selectedDel && selectedDel !== 'ALL' && s.delegateCode !== selectedDel) return false;
@@ -1242,7 +1271,7 @@
             
             filtered.slice().reverse().forEach(inv => {
                 let isCancelled = (inv.status === 'cancelled');
-                let statusBadge = isCancelled ? `<span style="color:#dc2626; font-weight:bold;">ملغاة (لا تحتسب)</span>` : `<span style="color:#16a34a; font-weight:bold;">نشطة</span>`;
+                let statusBadge = isCancelled ? `<span style="color:#dc2626; font-weight:bold;">ملغاة</span>` : `<span style="color:#16a34a; font-weight:bold;">نشطة</span>`;
                 
                 let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ طباعة</button> `;
                 actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewInvoiceDetails('${inv.id}')">👁️ عرض</button> `;
@@ -1277,7 +1306,7 @@
             products.forEach(p => qMap[p.code] = 0);
 
             let filtered = allCombinedSales.filter(s => {
-                if(s.status === 'cancelled') return false;
+                if(!s || s.status === 'cancelled') return false;
                 if(currentDelegate && !isAdm && s.delegateCode !== currentDelegate.code) return false;
                 if(isAdm && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
                 if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
@@ -1291,8 +1320,8 @@
             const invTb = document.getElementById('repInvoicesTableBody');
             invTb.innerHTML = '';
             filtered.forEach(s => {
-                total += s.total;
-                s.items.forEach(it => { if(qMap[it.code] !== undefined) qMap[it.code] += it.qty; });
+                total += parseFloat(s.total) || 0;
+                s.items.forEach(it => { if(qMap[it.code] !== undefined) qMap[it.code] += (parseFloat(it.qty) || 0); });
                 invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td>${s.village || '-'}</td><td>${s.delegateName}</td><td><b>${s.total}</b> ج.م</td></tr>`;
             });
 
@@ -1346,7 +1375,7 @@
             let newStock = {};
             products.forEach((p, idx) => { newStock[p.code] = parseFloat(document.getElementById(`adm_stock_${idx}`).value) || 0; });
             cloudDelegates[delCode].carStock = newStock;
-            db.ref('delegates').set(cloudDelegates).then(() => {
+            db.ref('delegates/' + delCode + '/carStock').set(newStock).then(() => {
                 alert("✅ تم تحديث رصيد السيارة بواسطة المخزن/المدير بنجاح!");
                 renderCarStockTable();
             });
@@ -1370,9 +1399,7 @@
             const id = document.getElementById('editMenofId').value || String(Date.now());
 
             const loadObj = { id, date, cartons, totalPrice, deposit, zimam };
-            cloudMenofLoads = cloudMenofLoads.filter(x => String(x.id) !== String(id));
-            cloudMenofLoads.push(loadObj);
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
+            db.ref('menofLoads/' + id).set(loadObj).then(() => {
                 alert("✅ تم حفظ شحنة منوف بنجاح!");
                 renderMenofTable();
             });
@@ -1388,8 +1415,7 @@
         }
 
         function deleteMenof(id) {
-            cloudMenofLoads = cloudMenofLoads.filter(x => String(x.id) !== String(id));
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => renderMenofTable());
+            db.ref('menofLoads/' + id).remove().then(() => renderMenofTable());
         }
 
         function calcShopTotal() {
@@ -1408,14 +1434,29 @@
             const totalPrice = cartons * 23925;
             const zimam = totalPrice - paid;
             const id = document.getElementById('editShopId').value || String(Date.now());
+            const todayStr = new Date().toISOString().split('T')[0];
 
             if(!name) { alert("أدخل اسم المحل."); return; }
 
-            const shopObj = { id, name, cartons, totalPrice, paid, zimam };
-            cloudShops = cloudShops.filter(x => String(x.id) !== String(id));
-            cloudShops.push(shopObj);
-            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
+            const existingShop = cloudShops.find(x => String(x.id) === String(id));
+            let payments = existingShop && existingShop.payments ? [...existingShop.payments] : [];
+
+            if (!existingShop && paid > 0) {
+                payments.push({
+                    id: String(Date.now()),
+                    date: todayStr,
+                    amount: paid
+                });
+            }
+
+            const shopObj = { id, name, cartons, totalPrice, paid, zimam, payments, date: (existingShop ? existingShop.date : todayStr) };
+            db.ref('shops/' + id).set(shopObj).then(() => {
                 alert("✅ تم حفظ معاملة المحل بنجاح!");
+                document.getElementById('editShopId').value = '';
+                document.getElementById('shopNameInput').value = '';
+                document.getElementById('shopCartons').value = '';
+                document.getElementById('shopPaidVal').value = '';
+                calcShopTotal();
                 renderShopsTable();
             });
         }
@@ -1445,9 +1486,10 @@
                     <td>${s.totalPrice} ج.م</td>
                     <td>${s.paid} ج.م</td>
                     <td style="color:#dc2626; font-weight:bold;">${zimamVal} ج.م</td>
-                    <td>
-                        <button class="btn btn-success" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openShopPayModal('${s.id}')">💳 دفع</button>
-                        <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="deleteShop('${s.id}')">حذف</button>
+                    <td style="white-space: nowrap;">
+                        <button class="btn btn-success" style="padding:3px 7px; font-size:10px; width:auto; display:inline-block;" onclick="openShopPayModal('${s.id}')">💳 دفع</button>
+                        <button class="btn btn-info" style="padding:3px 7px; font-size:10px; width:auto; display:inline-block;" onclick="openShopDetailsModal('${s.id}')">📋 عرض التفاصيل</button>
+                        <button class="btn btn-danger" style="padding:3px 7px; font-size:10px; width:auto; display:inline-block;" onclick="deleteShop('${s.id}')">حذف</button>
                     </td>
                 </tr>`;
             });
@@ -1460,6 +1502,7 @@
             document.getElementById('payShopId').value = shop.id;
             document.getElementById('payShopName').value = shop.name;
             document.getElementById('payShopCurrentZimam').value = `${zimamVal} ج.م`;
+            document.getElementById('payDateInput').value = new Date().toISOString().split('T')[0];
             document.getElementById('payAmountInput').value = '';
             document.getElementById('shopPayModal').style.display = 'flex';
         }
@@ -1471,25 +1514,77 @@
         function submitShopPayment() {
             const id = document.getElementById('payShopId').value;
             const payVal = parseFloat(document.getElementById('payAmountInput').value) || 0;
+            const payDate = document.getElementById('payDateInput').value || new Date().toISOString().split('T')[0];
+
             if(payVal <= 0) { alert("يرجى إدخال مبلغ دفع صحيح أكبر من صفر."); return; }
 
             const shop = cloudShops.find(s => String(s.id) === String(id));
             if(!shop) return;
 
+            if(!shop.payments) shop.payments = [];
+            
+            shop.payments.push({
+                id: String(Date.now()),
+                date: payDate,
+                amount: payVal
+            });
+
             shop.paid = (parseFloat(shop.paid) || 0) + payVal;
             shop.zimam = (parseFloat(shop.totalPrice) || 0) - shop.paid;
 
-            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
-                alert(`✅ تم تسجيل دفعة بمبلغ ${payVal} ج.م لمحل (${shop.name}). المديونية المتبقية: ${shop.zimam} ج.م`);
+            db.ref('shops/' + id).set(shop).then(() => {
+                alert(`✅ تم تسجيل دفعة بمبلغ ${payVal} ج.م لمحل (${shop.name}). المتبقي: ${shop.zimam} ج.م`);
                 closeShopPayModal();
                 renderShopsTable();
             }).catch(err => alert("خطأ: " + err.message));
         }
 
+        function openShopDetailsModal(id) {
+            const shop = cloudShops.find(s => String(s.id) === String(id));
+            if(!shop) return;
+
+            let zimamVal = (shop.zimam !== undefined) ? shop.zimam : (shop.totalPrice - shop.paid);
+            let payments = shop.payments || [];
+
+            document.getElementById('shopDetailsHeader').innerHTML = `
+                <div>🏢 <b>اسم المحل:</b> ${shop.name}</div>
+                <div>📦 <b>عدد الكراتين:</b> ${shop.cartons} كرتونة</div>
+                <div>💰 <b>إجمالي قيمة البضاعة:</b> ${shop.totalPrice} ج.م</div>
+                <div>✅ <b>إجمالي المسدد حتى الآن:</b> <span style="color:#16a34a; font-weight:bold;">${shop.paid} ج.م</span></div>
+                <div>⚠️ <b>المديونية المتبقية (الذمم):</b> <span style="color:#dc2626; font-weight:bold;">${zimamVal} ج.م</span></div>
+            `;
+
+            const logBody = document.getElementById('shopPaymentsLogBody');
+            logBody.innerHTML = '';
+
+            if (payments.length === 0) {
+                if (shop.paid > 0) {
+                    logBody.innerHTML = `<tr><td>1</td><td>دفعة أولى عند التسجيل</td><td style="color:#16a34a; font-weight:bold;">${shop.paid} ج.م</td></tr>`;
+                } else {
+                    logBody.innerHTML = `<tr><td colspan="3" style="color:#64748b;">لا توجد دفعات مسددة حتى الآن.</td></tr>`;
+                }
+            } else {
+                payments.slice().reverse().forEach((p, idx) => {
+                    logBody.innerHTML += `
+                        <tr>
+                            <td>${payments.length - idx}</td>
+                            <td><b>${p.date || '-'}</b></td>
+                            <td style="color:#16a34a; font-weight:bold;">${p.amount} ج.م</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('shopDetailsModal').style.display = 'flex';
+        }
+
+        function closeShopDetailsModal() {
+            document.getElementById('shopDetailsModal').style.display = 'none';
+        }
+
         function deleteShop(id) {
-            if(!confirm("هل أنت متأكد من حذف حساب هذا المحل؟")) return;
-            cloudShops = cloudShops.filter(x => String(x.id) !== String(id));
-            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => renderShopsTable());
+            if(!confirm("هل أنت متأكد من حذف حساب هذا المحل وسجل مدفوعاته؟")) return;
+            db.ref('shops/' + id).remove().then(() => renderShopsTable());
         }
 
         function initLmFormInputs() {
@@ -1521,9 +1616,7 @@
             const id = document.getElementById('editLmId').value || String(Date.now());
             const lmObj = { id, type, deposit, totalCost, totalSell, profit, items };
 
-            cloudLmInvoices = cloudLmInvoices.filter(x => String(x.id) !== String(id));
-            cloudLmInvoices.push(lmObj);
-            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => {
+            db.ref('lmInvoices/' + id).set(lmObj).then(() => {
                 alert("✅ تم حفظ فاتورة LM بنجاح!");
                 renderLmTable();
             });
@@ -1539,8 +1632,7 @@
         }
 
         function deleteLm(id) {
-            cloudLmInvoices = cloudLmInvoices.filter(x => String(x.id) !== String(id));
-            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
+            db.ref('lmInvoices/' + id).remove().then(() => renderLmTable());
         }
 
         function calcRatioLoading() {
@@ -1576,7 +1668,7 @@
             const role = document.getElementById('newAccRole').value;
             if(!code || !name || !pass) return;
             cloudDelegates[code] = { pass, name, role, carStock: {...defaultCarStock}, locked: false };
-            db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم إنشاء الحساب بنجاح!"));
+            db.ref('delegates/' + code).set(cloudDelegates[code]).then(() => alert("✅ تم إنشاء الحساب بنجاح!"));
         }
 
         function changeMyPassword() {
@@ -1591,10 +1683,9 @@
             } else {
                 if(cloudDelegates[currentDelegate.code].pass !== currentPass) { alert("كلمة السر الحالية غير صحيحة."); return; }
                 cloudDelegates[currentDelegate.code].pass = newPass;
-                db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم تغيير كلمة السر بنجاح!"));
+                db.ref('delegates/' + currentDelegate.code + '/pass').set(newPass).then(() => alert("✅ تم تغيير كلمة السر بنجاح!"));
             }
         }
     </script>
 </body>
 </html>
-
