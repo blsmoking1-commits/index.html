@@ -153,7 +153,7 @@
             <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات</div>
         </div>
 
-        <!-- أ) فاتورة جديدة (للمندوب والمدير) -->
+        <!-- أ) فاتورة جديدة -->
         <div id="sectionInvoice" style="overflow: visible;">
             <div id="delegateTodaySummary" style="background:#e0f2fe; border:1px solid #bae6fd; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; color:#0369a1;">
                 <b>📌 ملخص مبيعاتك اليوم:</b> <span id="todaySummaryText">جاري التحميل...</span>
@@ -806,7 +806,7 @@
                 let invId = String(Date.now());
                 let newInv = {
                     id: invId,
-                    invNo: Math.floor(1000 + Math.random() * 9000),
+                    invNo: generateUniqueInvoiceNo(),
                     date: todayStr,
                     delegateCode: "portal_client",
                     delegateName: "طلب عبر بوابة العميل (قطاعي)",
@@ -976,6 +976,53 @@
             { name: "منديال سيلفر", code: "1500000010" }, { name: "شعر موتسيان", code: "1500000146" }
         ];
 
+        // دالة توليد رقم فاتورة غير مكرر
+        function generateUniqueInvoiceNo() {
+            let uniqueFound = false;
+            let finalNo = Math.floor(1000 + Math.random() * 9000);
+            let attempts = 0;
+            
+            while (!uniqueFound && attempts < 100) {
+                attempts++;
+                let exists = cloudSales.some(s => s && s.status !== 'cancelled' && String(s.invNo) === String(finalNo));
+                if (!exists) {
+                    uniqueFound = true;
+                } else {
+                    finalNo = Math.floor(1000 + Math.random() * 9000);
+                }
+            }
+            return finalNo;
+        }
+
+        // دالة التحقق من تكرار الفاتورة ورقمها
+        function validateInvoiceDuplicates(invNo, client, invDate, editId) {
+            let allCombinedSales = [...cloudSales];
+            let offlineInvs = JSON.parse(localStorage.getItem('blackhorse_offline_invoices') || '[]');
+            offlineInvs.forEach(off => {
+                if(!allCombinedSales.some(s => String(s.id) === String(off.id))) allCombinedSales.push(off);
+            });
+
+            // 1. التحقق من تكرار رقم الفاتورة
+            const duplicateInv = allCombinedSales.find(s => s && s.status !== 'cancelled' && String(s.id) !== String(editId) && String(s.invNo) === String(invNo));
+            if (duplicateInv) {
+                let autoNo = generateUniqueInvoiceNo();
+                alert(`⚠️ تنبيه تكرار: رقم الفاتورة (#${invNo}) مسجل مسبقاً للعميل (${duplicateInv.client}) بتاريخ (${duplicateInv.date})!\n\n✅ تم تغيير رقم الفاتورة تلقائياً إلى (#${autoNo}) لمنع التكرار.`);
+                document.getElementById('invoiceNo').value = autoNo;
+                return false;
+            }
+
+            // 2. التحقق من تكرار عمل فاتورة لنفس العميل في نفس اليوم
+            if (client && client !== "عميل نقدي") {
+                const sameDayInv = allCombinedSales.find(s => s && s.status !== 'cancelled' && String(s.id) !== String(editId) && s.client && s.client.trim().toLowerCase() === client.trim().toLowerCase() && s.date === invDate);
+                if (sameDayInv) {
+                    const confirmSave = confirm(`⚠️ تنبيه: تم إصدار فاتورة للعميل (${client}) اليوم بالفعل برقم (#${sameDayInv.invNo}) بمبلغ (${sameDayInv.total} ج.م).\n\nهل تريد بالتأكيد الاستمرار وإصدار فاتورة أخرى جديدة له؟`);
+                    if (!confirmSave) return false;
+                }
+            }
+
+            return true;
+        }
+
         function initSalesForm() {
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return;
             const today = new Date().toISOString().split('T')[0];
@@ -991,7 +1038,7 @@
             }
 
             document.getElementById('editInvoiceId').value = '';
-            document.getElementById('invoiceNo').value = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('invoiceNo').value = generateUniqueInvoiceNo();
             document.getElementById('clientName').value = '';
             document.getElementById('clientVillage').value = '';
             document.getElementById('lblClientCode').innerText = '--';
@@ -1082,16 +1129,20 @@
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return null;
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const village = document.getElementById('clientVillage').value.trim() || "";
+            const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
+            const invDate = document.getElementById('invoiceDate').value;
+            const editId = document.getElementById('editInvoiceId').value;
+
+            // تنفيذ فحص التكرار قبل الحفظ
+            if (!validateInvoiceDuplicates(invNo, client, invDate, editId)) {
+                return null;
+            }
+
             let clientCode = cloudClients[client] || ("C-" + Math.floor(1000 + Math.random() * 9000));
-            
             if(!cloudClients[client] && client !== "عميل نقدي") {
                 cloudClients[client] = clientCode;
                 if(navigator.onLine) db.ref('clients/' + client).set(clientCode).catch(err => {});
             }
-
-            const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
-            const invDate = document.getElementById('invoiceDate').value;
-            const editId = document.getElementById('editInvoiceId').value;
 
             let targetDelCode = currentDelegate.code;
             let grand = 0, hasItems = false, itemsSoldList = [];
