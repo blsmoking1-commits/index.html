@@ -72,8 +72,8 @@
         <div id="loginMainForm">
             <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل الدخول للنظام</h3>
             <div class="form-group">
-                <label>كود المستخدم / أو البريد الإلكتروني للعميل:</label>
-                <input type="text" id="loginCode" placeholder="أدخل كود المندوب/المخزن أو إيميلك...">
+                <label>كود المستخدم / الإيميل / رقم الهاتف / اسم المحل:</label>
+                <input type="text" id="loginCode" placeholder="أدخل الكود، الإيميل، رقم الموبايل، أو اسم المحل...">
             </div>
             <div class="form-group">
                 <label>كلمة السر:</label>
@@ -103,7 +103,7 @@
             <div class="form-group"><label>القرية / المركز:</label><input type="text" id="regClientVillage" placeholder="مثال: أشمون / سنتريس..."></div>
             
             <div style="font-size: 11px; color: #475569; margin-bottom: 10px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
-                ℹ️ بعد التسجيل، يقوم المدير بمراجعة حسابك وتحديد فئتك (قطاعي أو جملة) وتعيين الكود الثابت لمحلك.
+                ℹ️ بعد التسجيل، يقوم المدير باعتماد وتفعيل حسابك وتحديد فئتك (قطاعي أو جملة) وتعيين الكود الثابت لمحلك.
             </div>
             
             <button class="btn btn-success" onclick="registerCustomerWithEmail()">إتمام التسجيل والحفظ</button>
@@ -158,7 +158,7 @@
 
             <input type="hidden" id="editInvoiceId" value="">
             <div class="form-group">
-                <label>اسم العميل / المحل (كتابة مباشرة أو اختيار):</label>
+                <label>اسم العميل / المحل:</label>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <input type="text" id="clientName" placeholder="اكتب اسم العميل مباشرة هنا..." oninput="onClientNameInput()" style="flex: 2; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
                     <select id="selectExistingClient" onchange="pickExistingClient()" style="flex: 1.2; padding: 9px 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11px; background: #f8fafc; color: #334155;">
@@ -191,7 +191,7 @@
                 <div id="clientApprovalBanner" style="display:none; padding:8px; border-radius:6px; margin-bottom:10px; font-weight:bold; font-size:12px;"></div>
                 
                 <div class="form-group"><label>اسم المحل:</label><input type="text" id="viewClientName" class="readonly-input" readonly></div>
-                <div class="form-group"><label>كود المحل الثابت:</label><input type="text" id="viewClientCode" class="readonly-input" readonly style="color:#2563eb;"></div>
+                <div class="form-group"><label>كود المحل الثابت:</label><input type="text" id="viewClientCode" class="readonly-input" readonly style="color:#2563eb; font-weight:bold;"></div>
                 <div class="form-group"><label>البريد الإلكتروني:</label><input type="text" id="viewClientEmail" class="readonly-input" readonly></div>
                 <div class="form-group"><label>رقم التليفون:</label><input type="text" id="viewClientPhone" class="readonly-input" readonly></div>
                 <div class="form-group"><label>عنوان المحل:</label><input type="text" id="viewClientAddress" class="readonly-input" readonly></div>
@@ -212,7 +212,7 @@
             </div>
         </div>
 
-        <!-- ب) الفواتير المحفوظة (مع إمكانية التصفية وإلغاء الفاتورة) -->
+        <!-- ب) الفواتير المحفوظة -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box">
                 <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:</h4>
@@ -406,21 +406,22 @@
             </div>
 
             <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px;">
-                <h4 style="margin-top:0; font-size:14px; color:#b91c1c;">🛡️ إدارة الحسابات وتعيين الأكواد وتحديد فئات العملاء:</h4>
+                <h4 style="margin-top:0; font-size:14px; color:#b91c1c;">🛡️ إدارة واعتماد حسابات العملاء وتعيين الأكواد الثابتة:</h4>
                 
                 <!-- لوحة تحكم المدير لإدارة فئات وأكواد العملاء المسجلين -->
                 <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:10px; border-radius:6px; margin-bottom:12px;">
-                    <h5 style="margin:0 0 6px 0; color:#1e40af;">👑 قائمة العملاء المسجلين (تحديد قطاعي/جملة وتعيين الكود الثابت):</h5>
+                    <h5 style="margin:0 0 6px 0; color:#1e40af;">👑 قائمة العملاء (تحديد الفئة، الكود الثابت، وكلمة السر بضغطة واحدة):</h5>
                     <div style="overflow-x:auto;">
                         <table class="report-table" style="background:#fff;">
                             <thead>
                                 <tr>
-                                    <th>العميل</th>
+                                    <th>اسم العميل / المحل</th>
+                                    <th>بيانات الدخول</th>
                                     <th>الكود الثابت</th>
                                     <th>الفئة الحالية</th>
                                     <th>تحديد الفئة</th>
                                     <th>كلمة السر</th>
-                                    <th>تعديل كلمة السر</th>
+                                    <th>إجراء الاعتماد</th>
                                 </tr>
                             </thead>
                             <tbody id="adminPortalCustomersBody"></tbody>
@@ -428,9 +429,33 @@
                     </div>
                 </div>
 
+                <!-- إنشاء حساب عميل مباشرة من المدير -->
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:6px; margin-bottom:12px;">
+                    <h5 style="margin:0 0 8px 0; color:#166534;">➕ إضافة عميل وتفعيله مباشرة من المدير:</h5>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="adminDirectName" placeholder="اسم المحل..."></div>
+                        <div class="form-group"><label>الكود الثابت:</label><input type="text" id="adminDirectCode" placeholder="مثال: C-101"></div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <div class="form-group"><label>رقم التليفون / الإيميل:</label><input type="text" id="adminDirectPhone" placeholder="1012345678"></div>
+                        <div class="form-group"><label>كلمة السر:</label><input type="text" id="adminDirectPass" placeholder="كلمة السر..."></div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <div class="form-group"><label>القرية / المركز:</label><input type="text" id="adminDirectVillage" placeholder="أشمون / سنتريس..."></div>
+                        <div class="form-group">
+                            <label>الفئة:</label>
+                            <select id="adminDirectType" class="form-control">
+                                <option value="retail">قطاعي (فواتير عادية)</option>
+                                <option value="wholesale">جملة (محلات)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-success" onclick="adminDirectAddCustomer()">✅ حفظ وتفعيل حساب العميل فوراً</button>
+                </div>
+
                 <!-- إنشاء موظف جديد -->
-                <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px; margin-bottom:12px;">
-                    <h5 style="margin:0 0 8px 0; color:#0f172a;">1) إنشاء حساب موظف (مندوب أو مخزن):</h5>
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px;">
+                    <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف (مندوب أو مخزن):</h5>
                     <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: 103 أو store1"></div>
                     <div class="form-group"><label>اسم المستخدم:</label><input type="text" id="newAccName" placeholder="اسم العضو..."></div>
                     <div class="form-group"><label>كلمة السر:</label><input type="password" id="newAccPass"></div>
@@ -442,13 +467,13 @@
                             <option value="viewer">مشاهد فقط</option>
                         </select>
                     </div>
-                    <button class="btn btn-success" onclick="createNewUserAccount()">إنشاء حساب الموظف</button>
+                    <button class="btn btn-primary" onclick="createNewUserAccount()">إنشاء حساب الموظف</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- نافذة منبثقة لمراجعة محتوى الفاتورة -->
+    <!-- نافذة تفاصيل الفاتورة -->
     <div id="invoiceModal" class="modal-bg">
         <div class="modal-content">
             <h3 style="margin-top:0; color:#1e293b;">📄 محتوى الفاتورة</h3>
@@ -457,7 +482,7 @@
         </div>
     </div>
 
-    <!-- نافذة منبثقة لدفع مديونية المحل -->
+    <!-- نافذة دفع مديونية المحل -->
     <div id="shopPayModal" class="modal-bg">
         <div class="modal-content">
             <h3 style="margin-top:0; color:#1e293b; font-size:16px;">💳 سداد مديونية المحل</h3>
@@ -523,6 +548,11 @@
         let currentDelegate = null;
         let currentPortalCustomer = null;
 
+        function cleanPhoneStr(p) {
+            if(!p) return "";
+            return String(p).replace(/\D/g, '').replace(/^20/, '').replace(/^0+/, '');
+        }
+
         db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
         db.ref('delegates').on('value', (s) => { if(s.val()) { cloudDelegates = s.val(); updateDelegatesSelects(); renderCarStockTable(); } });
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); updateReportClientsSelect(); });
@@ -538,7 +568,7 @@
             }
         });
 
-        // 1. تسجيل عميل جديد (بدون اختيار فئة)
+        // 1. تسجيل عميل جديد من شاشة الدخول
         function showCustomerRegisterScreen() {
             document.getElementById('loginMainForm').style.display = 'none';
             document.getElementById('customerRegisterScreen').style.display = 'block';
@@ -557,17 +587,16 @@
             const address = document.getElementById('regClientAddress').value.trim();
             const village = document.getElementById('regClientVillage').value.trim();
 
-            if(!name || !email || !password || !phoneInput || !address) {
-                alert("❌ يرجى إدخال كافة بيانات العميل المطلوبة.");
+            if(!name || !password || !phoneInput) {
+                alert("❌ يرجى إدخال اسم المحل، كلمة السر، ورقم التليفون.");
                 return;
             }
 
             const fullPhone = "+20" + phoneInput.replace(/^0+/, '');
             const clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
+            const uid = "cust_" + Date.now();
 
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => saveCustomerRecord(userCredential.user.uid, name, email, password, fullPhone, address, village, clientCode))
-                .catch((error) => saveCustomerRecord("cust_" + Date.now(), name, email, password, fullPhone, address, village, clientCode));
+            saveCustomerRecord(uid, name, email || (phoneInput+"@blackhorse.com"), password, fullPhone, address, village, clientCode);
         }
 
         function saveCustomerRecord(uid, name, email, pass, phone, address, village, clientCode) {
@@ -587,7 +616,7 @@
             };
 
             db.ref('portalCustomers/' + uid).set(custData).then(() => {
-                alert("🎉 تم تسجيل حسابك بنجاح!\nسيقوم المدير الآن بمراجعة الحساب وتحديد فئتك (قطاعي أو جملة) لتتمكن من إرسال الطلبات.");
+                alert("🎉 تم تسجيل حسابك بنجاح!\nكود محلك هو: [" + clientCode + "]\nسيقوم المدير الآن باعتماد الحساب لتتمكن من إرسال الطلبات.");
                 currentPortalCustomer = custData;
                 enterPortalCustomerDashboard();
             });
@@ -612,43 +641,60 @@
             window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // 3. تسجيل الدخول
+        // 3. تسجيل الدخول الشامل (بالكود الثابت، الإيميل، رقم التليفون، أو اسم المحل)
         function handleLogin() {
-            const code = document.getElementById('loginCode').value.trim().toLowerCase();
+            const rawInput = document.getElementById('loginCode').value.trim();
+            const codeLower = rawInput.toLowerCase();
+            const cleanInputPhone = cleanPhoneStr(rawInput);
             const pass = document.getElementById('loginPass').value.trim();
 
+            if(!rawInput || !pass) {
+                alert("يرجى كتابة كود المستخدم / رقم الهاتف وكلمة السر.");
+                return;
+            }
+
+            // فحص حسابات العملاء المسجلين بكل المرادفات الممكنة
             let foundCustomer = null;
             for(let uid in portalCustomersDB) {
                 let cust = portalCustomersDB[uid];
-                if((cust.email && cust.email.trim().toLowerCase() === code) || cust.phone === code) {
+                let custPhoneClean = cleanPhoneStr(cust.phone);
+
+                let isMatch = false;
+                if(cust.clientCode && cust.clientCode.toLowerCase() === codeLower) isMatch = true;
+                if(cust.email && cust.email.toLowerCase() === codeLower) isMatch = true;
+                if(cust.name && cust.name.toLowerCase() === codeLower) isMatch = true;
+                if(cleanInputPhone && custPhoneClean && custPhoneClean === cleanInputPhone) isMatch = true;
+
+                if(isMatch) {
                     foundCustomer = cust;
                     break;
                 }
             }
 
             if(foundCustomer) {
-                if(foundCustomer.pass && foundCustomer.pass === pass) {
+                if(foundCustomer.pass && String(foundCustomer.pass).trim() === pass) {
                     currentPortalCustomer = foundCustomer;
                     enterPortalCustomerDashboard();
                     return;
+                } else {
+                    alert("❌ كلمة السر غير صحيحة لحساب العميل.");
+                    return;
                 }
-                auth.signInWithEmailAndPassword(code, pass).then(() => {
-                    currentPortalCustomer = foundCustomer;
-                    enterPortalCustomerDashboard();
-                }).catch(() => alert("❌ كلمة السر غير صحيحة للبريد الإلكتروني."));
-                return;
             }
 
-            const originalCode = document.getElementById('loginCode').value.trim();
+            // فحص حسابات الموظفين والمدير
             const dDB = cloudDelegates;
-            if (originalCode === "admin" && pass === ADMIN_PASS) {
+            if (rawInput === "admin" && pass === ADMIN_PASS) {
                 currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin" };
-            } else if (dDB[originalCode]) {
-                if (dDB[originalCode].locked) { alert("❌ الحساب مقفل!"); return; }
-                if (dDB[originalCode].pass === pass) {
-                    currentDelegate = { code: originalCode, name: dDB[originalCode].name, role: dDB[originalCode].role || 'delegate' };
+            } else if (dDB[rawInput]) {
+                if (dDB[rawInput].locked) { alert("❌ الحساب مقفل!"); return; }
+                if (dDB[rawInput].pass === pass) {
+                    currentDelegate = { code: rawInput, name: dDB[rawInput].name, role: dDB[rawInput].role || 'delegate' };
                 } else { alert("❌ كلمة السر غير صحيحة!"); return; }
-            } else { alert("❌ بيانات تسجيل الدخول غير مسجلة لدينا!"); return; }
+            } else { 
+                alert("❌ بيانات تسجيل الدخول غير مسجلة لدينا! تأكد من كتابة الكود أو رقم الموبايل أو اسم المحل بشكل صحيح."); 
+                return; 
+            }
 
             document.getElementById('lblDelegateName').innerText = currentDelegate.name;
             let roleText = currentDelegate.role === 'admin' ? 'مدير النظام' : (currentDelegate.role === 'store' ? 'مسؤول المخزن' : 'مندوب مبيعات');
@@ -731,7 +777,7 @@
 
         function submitPortalClientOrder() {
             if(!currentPortalCustomer.customerType || currentPortalCustomer.customerType === 'pending') {
-                alert("⚠️ لم يقم المدير بتحديد فئة حسابك بعد. يرجى التواصل مع المدير لتحديد نوع الحساب.");
+                alert("⚠️ لم يقم المدير بتحديد فئة حسابك بعد. يرجى التواصل مع المدير لتفعيل الحساب.");
                 return;
             }
 
@@ -1128,13 +1174,13 @@
             });
         }
 
-        // 9. لوحة المدير للأكواد الثابتة والعملاء
+        // 9. لوحة المدير: اعتماد الحساب، الكود الثابت، الفئة، والباسورد
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
             tbody.innerHTML = '';
             let uids = Object.keys(portalCustomersDB);
-            if(uids.length === 0) { tbody.innerHTML = `<tr><td colspan="6">لا يوجد عملاء مسجلين.</td></tr>`; return; }
+            if(uids.length === 0) { tbody.innerHTML = `<tr><td colspan="7">لا يوجد عملاء مسجلين حالياً.</td></tr>`; return; }
 
             uids.forEach(uid => {
                 let c = portalCustomersDB[uid];
@@ -1142,9 +1188,9 @@
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${c.name}</b><br><small style="color:#64748b;">${c.village || '-'}</small></td>
+                        <td style="font-size:10px;">${c.phone || '-'}<br>${c.email || '-'}</td>
                         <td>
                             <input type="text" id="adm_code_${uid}" value="${c.clientCode || ''}" placeholder="كود ثابت" style="width:75px; padding:3px; font-size:11px; text-align:center; font-weight:bold;">
-                            <button class="btn btn-primary" style="padding:2px 4px; font-size:9px; margin-top:2px;" onclick="adminSaveClientCode('${uid}')">حفظ الكود</button>
                         </td>
                         <td>${typeBadge}</td>
                         <td>
@@ -1152,42 +1198,85 @@
                                 <option value="retail" ${c.customerType==='retail'?'selected':''}>قطاعي</option>
                                 <option value="wholesale" ${c.customerType==='wholesale'?'selected':''}>جملة</option>
                             </select>
-                            <button class="btn btn-primary" style="padding:2px 5px; font-size:9px; margin-top:2px;" onclick="adminUpdateClientType('${uid}')">اعتماد الفئة</button>
                         </td>
-                        <td style="font-size:11px; font-family:monospace; color:#b91c1c;">${c.pass || 'مخفي'}</td>
                         <td>
-                            <input type="text" id="adm_new_pass_${uid}" placeholder="جديد" style="padding:3px; font-size:10px; width:70px;">
-                            <button class="btn btn-warning" style="padding:2px 5px; font-size:9px; margin-top:2px;" onclick="adminChangeClientPassword('${uid}')">تعديل</button>
+                            <input type="text" id="adm_pass_${uid}" value="${c.pass || ''}" placeholder="الباسورد" style="padding:3px; font-size:10px; width:75px; text-align:center;">
+                        </td>
+                        <td>
+                            <button class="btn btn-success" style="padding:4px 8px; font-size:10px; margin:0;" onclick="adminSaveFullCustomerApproval('${uid}')">💾 اعتماد وتفعيل</button>
                         </td>
                     </tr>
                 `;
             });
         }
 
-        function adminSaveClientCode(uid) {
+        // دالة الاعتماد الشامل للعميل بضغطة زر واحدة
+        function adminSaveFullCustomerApproval(uid) {
             let newCode = document.getElementById(`adm_code_${uid}`).value.trim();
-            if(!newCode) { alert("أدخل كوداً صحيحاً."); return; }
-            let custName = portalCustomersDB[uid] ? portalCustomersDB[uid].name : null;
-            if(custName) {
-                cloudClients[custName] = newCode;
-                db.ref('clients').set(cloudClients);
+            let newType = document.getElementById(`adm_type_${uid}`).value;
+            let newPass = document.getElementById(`adm_pass_${uid}`).value.trim();
+
+            if(!newCode || !newPass) {
+                alert("يرجى التأكد من كتابة الكود الثابت وكلمة السر.");
+                return;
             }
-            db.ref('portalCustomers/' + uid + '/clientCode').set(newCode).then(() => {
-                alert(`✅ تم تعيين الكود الثابت [${newCode}] للعميل بنجاح!`);
-            });
+
+            let cust = portalCustomersDB[uid];
+            if(!cust) return;
+
+            cust.clientCode = newCode;
+            cust.customerType = newType;
+            cust.pass = newPass;
+
+            // تحديث جدول العملاء العام
+            cloudClients[cust.name] = newCode;
+            db.ref('clients').set(cloudClients);
+
+            // تحديث سجل العميل في Firebase
+            db.ref('portalCustomers/' + uid).set(cust).then(() => {
+                alert(`✅ تم اعتماد وتفعيل حساب العميل (${cust.name}) بنجاح!\n- الكود: [${newCode}]\n- الفئة: [${newType === 'wholesale' ? 'جملة' : 'قطاعي'}]\n- كلمة السر: [${newPass}]`);
+            }).catch(err => alert("خطأ: " + err.message));
         }
 
-        function adminUpdateClientType(uid) {
-            let chosen = document.getElementById(`adm_type_${uid}`).value;
-            db.ref('portalCustomers/' + uid + '/customerType').set(chosen).then(() => alert("✅ تم تحديث فئة العميل بنجاح!"));
-        }
+        // إضافة عميل وتفعيله مباشرة من المدير
+        function adminDirectAddCustomer() {
+            let name = document.getElementById('adminDirectName').value.trim();
+            let code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
+            let phone = document.getElementById('adminDirectPhone').value.trim();
+            let pass = document.getElementById('adminDirectPass').value.trim();
+            let village = document.getElementById('adminDirectVillage').value.trim();
+            let type = document.getElementById('adminDirectType').value;
 
-        function adminChangeClientPassword(uid) {
-            let newPass = document.getElementById(`adm_new_pass_${uid}`).value.trim();
-            if(!newPass) { alert("أدخل كلمة السر الجديدة."); return; }
-            db.ref('portalCustomers/' + uid + '/pass').set(newPass).then(() => {
-                alert("✅ تم تعديل كلمة سر العميل بنجاح!");
-                document.getElementById(`adm_new_pass_${uid}`).value = '';
+            if(!name || !pass) {
+                alert("❌ يرجى إدخال اسم المحل وكلمة السر على الأقل.");
+                return;
+            }
+
+            let uid = "cust_" + Date.now();
+            let fullPhone = phone ? ("+20" + phone.replace(/^0+/, '')) : "";
+
+            let custData = {
+                uid: uid,
+                name: name,
+                email: phone ? (phone + "@blackhorse.com") : (name + "@blackhorse.com"),
+                pass: pass,
+                phone: fullPhone,
+                address: village || "المنوفية",
+                village: village,
+                customerType: type,
+                clientCode: code
+            };
+
+            cloudClients[name] = code;
+            db.ref('clients').set(cloudClients);
+
+            db.ref('portalCustomers/' + uid).set(custData).then(() => {
+                alert(`🎉 تم إضافة وتفعيل حساب العميل (${name}) بنجاح!\nكود الدخول: [${code}]\nكلمة السر: [${pass}]`);
+                document.getElementById('adminDirectName').value = '';
+                document.getElementById('adminDirectCode').value = '';
+                document.getElementById('adminDirectPhone').value = '';
+                document.getElementById('adminDirectPass').value = '';
+                document.getElementById('adminDirectVillage').value = '';
             });
         }
 
