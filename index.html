@@ -52,6 +52,7 @@
         .filter-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
         .client-history-box { background: #fef08a; padding: 8px; border-radius: 6px; font-size: 11px; margin-top: 6px; display: none; color: #713f12; }
 
+        .badge-notify { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 9px; margin-right: 4px; }
         .modal-bg { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
         .modal-content { background:#fff; padding:18px; border-radius:10px; width:90%; max-width:440px; max-height:85vh; overflow-y:auto; }
         #networkStatusBanner { background: #ef4444; color: white; text-align: center; font-size: 11px; padding: 4px; display: none; font-weight: bold; }
@@ -73,7 +74,7 @@
             <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل الدخول للنظام</h3>
             <div class="form-group">
                 <label>كود المستخدم / الإيميل / رقم الهاتف / اسم المحل:</label>
-                <input type="text" id="loginCode" placeholder="أدخل الكود، الإيميل، رقم الموبايل، أو اسم المحل...">
+                <input type="text" id="loginCode" placeholder="أدخل الكود، الإيميل، الموبايل، أو اسم المحل...">
             </div>
             <div class="form-group">
                 <label>كلمة السر:</label>
@@ -139,6 +140,7 @@
         <!-- أزرار التبويبات -->
         <div class="tab-menu" id="tabMenuContainer">
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
+            <div id="tabPendingOrders" class="tab-btn" onclick="switchTab('pendingOrders')" style="display:none; background:#fef3c7; color:#92400e;">🔔 طلبات العملاء <span id="badgePendingCount" class="badge-notify" style="display:none;">0</span></div>
             <div id="tabClientOrderOnly" class="tab-btn" onclick="switchTab('clientOrderOnly')" style="display:none; background:#e0f2fe; color:#0369a1;">📦 طلب فاتورة</div>
             <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
             <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
@@ -184,27 +186,75 @@
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
-        <!-- واجهة العميل المسجل (طلب فاتورة لمحله بالبيانات المسجلة) -->
+        <!-- ب) شاشة المدير: مراجعة واعتماد طلبات العملاء المعلقة -->
+        <div id="sectionPendingOrders" style="display: none;">
+            <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
+                <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:</h4>
+                <p style="font-size:11px; color:#b45309; margin:0 0 10px 0;">عند الضغط على "موافقة واعتماد"، يتم تنزيل الفاتورة فوراً في مكانها الصحيح (حسابات المحلات للجملة، أو الفواتير العادية للقطاعي):</p>
+                
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>اسم العميل</th>
+                                <th>النوع</th>
+                                <th>الأصناف المطلوبة</th>
+                                <th>الإجمالي</th>
+                                <th>المديونية</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminPendingOrdersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ج) واجهة العميل المسجل (طلب الفاتورة + تتبع حالة الطلبات) -->
         <div id="sectionClientOrderOnly" style="display: none;">
             <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
-                <h4 style="margin-top:0; color:#166534;">🏪 لوحة طلبات العميل</h4>
+                <h4 style="margin-top:0; color:#166534;" id="portalClientHeaderTitle">🏪 لوحة طلبات العميل</h4>
                 <div id="clientApprovalBanner" style="display:none; padding:8px; border-radius:6px; margin-bottom:10px; font-weight:bold; font-size:12px;"></div>
                 
-                <div class="form-group"><label>اسم المحل:</label><input type="text" id="viewClientName" class="readonly-input" readonly></div>
-                <div class="form-group"><label>كود المحل الثابت:</label><input type="text" id="viewClientCode" class="readonly-input" readonly style="color:#2563eb; font-weight:bold;"></div>
-                <div class="form-group"><label>البريد الإلكتروني:</label><input type="text" id="viewClientEmail" class="readonly-input" readonly></div>
-                <div class="form-group"><label>رقم التليفون:</label><input type="text" id="viewClientPhone" class="readonly-input" readonly></div>
-                <div class="form-group"><label>عنوان المحل:</label><input type="text" id="viewClientAddress" class="readonly-input" readonly></div>
-                <div class="form-group"><label>القرية / المركز:</label><input type="text" id="viewClientVillage" class="readonly-input" readonly></div>
-                <div class="form-group"><label>نوع العميل (المعتمد من المدير):</label><input type="text" id="viewClientType" class="readonly-input" readonly></div>
-                
-                <div class="form-group">
-                    <label>ملاحظات الطلب أو الأصناف والكميات المطلوبة:</label>
-                    <input type="text" id="clientCustomOrderNotes" placeholder="مثال: مطلوب كرتونتين كليوباترا بوكس...">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+                    <div><label style="font-size:11px; font-weight:bold;">اسم المحل:</label><input type="text" id="viewClientName" class="readonly-input" readonly></div>
+                    <div><label style="font-size:11px; font-weight:bold;">كود المحل الثابت:</label><input type="text" id="viewClientCode" class="readonly-input" readonly style="color:#2563eb; font-weight:bold;"></div>
                 </div>
 
-                <button id="btnSubmitPortalOrder" class="btn btn-whatsapp" onclick="submitPortalClientOrder()">⚡ إرسال طلب الفاتورة للآدمن (واتساب وقاعدة البيانات)</button>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+                    <div><label style="font-size:11px; font-weight:bold;">القرية / المركز:</label><input type="text" id="viewClientVillage" class="readonly-input" readonly></div>
+                    <div><label style="font-size:11px; font-weight:bold;">نوع الحساب المعتمد:</label><input type="text" id="viewClientType" class="readonly-input" readonly style="color:#16a34a; font-weight:bold;"></div>
+                </div>
+
+                <!-- جدول اختيار الأصناف الخاص بالعميل -->
+                <div id="portalProductsContainer" style="margin-top:10px;"></div>
+
+                <!-- صندوق الحسابات الإجمالية للعميل -->
+                <div id="portalTotalsContainer" style="margin-top:10px;"></div>
+
+                <button id="btnSubmitPortalOrder" class="btn btn-whatsapp" onclick="submitPortalClientOrder()" style="margin-top:10px;">⚡ إرسال طلب الفاتورة للمدير للموافقة عليها</button>
             </div>
+
+            <!-- سجل طلبات العميل لمتابعة موافقة المدير -->
+            <div class="filter-box" style="background:#fff; border:1px solid #cbd5e1; margin-top:10px;">
+                <h4 style="margin-top:0; color:#1e293b; font-size:13px;">📋 سجل طلباتك المرسلة وحالتها:</h4>
+                <div style="overflow-x:auto;">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>النوع</th>
+                                <th>الأصناف المطلوبة</th>
+                                <th>الإجمالي</th>
+                                <th>حالة موافقة المدير</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientOrdersStatusTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="filter-box" style="background:#fff; border:1px solid #cbd5e1; margin-top:10px;">
                 <h4 style="margin-top:0; color:#1e293b; font-size:13px;">🔑 تغيير كلمة السر الخاصة بحسابك:</h4>
                 <div class="form-group"><label>كلمة السر الجديدة:</label><input type="password" id="clientNewPassInput" placeholder="أدخل كلمة السر الجديدة..."></div>
@@ -212,7 +262,7 @@
             </div>
         </div>
 
-        <!-- ب) الفواتير المحفوظة -->
+        <!-- د) الفواتير المحفوظة -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box">
                 <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:</h4>
@@ -248,7 +298,7 @@
             </div>
         </div>
 
-        <!-- ج) التقارير الشاملة -->
+        <!-- هـ) التقارير الشاملة -->
         <div id="sectionReport" style="display: none;">
             <div class="filter-box" id="reportFilterBoxContainer">
                 <h4 style="margin-top:0;">📊 تقارير المبيعات من تاريخ إلى تاريخ:</h4>
@@ -295,7 +345,7 @@
             </div>
         </div>
 
-        <!-- د) رصيد السيارة وجرد كل مندوب على حدة -->
+        <!-- و) رصيد السيارة وجرد كل مندوب على حدة -->
         <div id="sectionCarStock" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد سيارة المندوب الحالي (الكرتونة = 50 رابطة):</h4>
             
@@ -313,7 +363,7 @@
             </table>
         </div>
 
-        <!-- هـ) حساب النسب -->
+        <!-- ز) حساب النسب -->
         <div id="sectionRatios" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:</h4>
             <div class="filter-box">
@@ -335,7 +385,7 @@
             </div>
         </div>
 
-        <!-- و) التحميل من منوف -->
+        <!-- ح) التحميل من منوف -->
         <div id="sectionMenof" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (الذمم تمثل فلوس ليك):</h4>
             <div class="filter-box">
@@ -353,7 +403,7 @@
             </table>
         </div>
 
-        <!-- ز) المحلات -->
+        <!-- ط) المحلات -->
         <div id="sectionShops" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (سعر الكرتونة = 23,925 ج.م):</h4>
             
@@ -377,7 +427,7 @@
             </table>
         </div>
 
-        <!-- ح) فواتير LM -->
+        <!-- ي) فواتير LM -->
         <div id="sectionLmInvoices" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM:</h4>
             <div class="filter-box">
@@ -396,7 +446,7 @@
             </table>
         </div>
 
-        <!-- ط) الإعدادات -->
+        <!-- ك) الإعدادات -->
         <div id="sectionSettings" style="display: none;">
             <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px; margin-bottom:12px;">
                 <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر:</h4>
@@ -408,7 +458,6 @@
             <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px;">
                 <h4 style="margin-top:0; font-size:14px; color:#b91c1c;">🛡️ إدارة واعتماد حسابات العملاء وتعيين الأكواد الثابتة:</h4>
                 
-                <!-- لوحة تحكم المدير لإدارة فئات وأكواد العملاء المسجلين -->
                 <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:10px; border-radius:6px; margin-bottom:12px;">
                     <h5 style="margin:0 0 6px 0; color:#1e40af;">👑 قائمة العملاء (تحديد الفئة، الكود الثابت، وكلمة السر بضغطة واحدة):</h5>
                     <div style="overflow-x:auto;">
@@ -429,7 +478,6 @@
                     </div>
                 </div>
 
-                <!-- إنشاء حساب عميل مباشرة من المدير -->
                 <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:6px; margin-bottom:12px;">
                     <h5 style="margin:0 0 8px 0; color:#166534;">➕ إضافة عميل وتفعيله مباشرة من المدير:</h5>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
@@ -453,7 +501,6 @@
                     <button class="btn btn-success" onclick="adminDirectAddCustomer()">✅ حفظ وتفعيل حساب العميل فوراً</button>
                 </div>
 
-                <!-- إنشاء موظف جديد -->
                 <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px;">
                     <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف (مندوب أو مخزن):</h5>
                     <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: 103 أو store1"></div>
@@ -541,6 +588,7 @@
         let cloudDelegates = defaultDelegates;
         let cloudClients = {};
         let portalCustomersDB = {};
+        let cloudPendingOrders = [];
         let cloudMenofLoads = [];
         let cloudShops = [];
         let cloudLmInvoices = [];
@@ -559,6 +607,14 @@
         db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
         db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; renderShopsTable(); });
         db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
+        
+        db.ref('pendingOrders').on('value', (s) => { 
+            cloudPendingOrders = s.val() ? Object.values(s.val()) : [];
+            updatePendingOrdersBadge();
+            renderAdminPendingOrdersTable();
+            renderClientOrdersStatusTable();
+        });
+
         db.ref('portalCustomers').on('value', (s) => { 
             portalCustomersDB = s.val() || {}; 
             renderAdminPortalCustomersTable();
@@ -568,7 +624,7 @@
             }
         });
 
-        // 1. تسجيل عميل جديد من شاشة الدخول
+        // 1. تسجيل عميل جديد
         function showCustomerRegisterScreen() {
             document.getElementById('loginMainForm').style.display = 'none';
             document.getElementById('customerRegisterScreen').style.display = 'block';
@@ -641,7 +697,7 @@
             window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // 3. تسجيل الدخول الشامل (بالكود الثابت، الإيميل، رقم التليفون، أو اسم المحل)
+        // 3. تسجيل الدخول
         function handleLogin() {
             const rawInput = document.getElementById('loginCode').value.trim();
             const codeLower = rawInput.toLowerCase();
@@ -653,7 +709,6 @@
                 return;
             }
 
-            // فحص حسابات العملاء المسجلين بكل المرادفات الممكنة
             let foundCustomer = null;
             for(let uid in portalCustomersDB) {
                 let cust = portalCustomersDB[uid];
@@ -682,7 +737,6 @@
                 }
             }
 
-            // فحص حسابات الموظفين والمدير
             const dDB = cloudDelegates;
             if (rawInput === "admin" && pass === ADMIN_PASS) {
                 currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin" };
@@ -711,7 +765,7 @@
             initAdminCarSetup();
         }
 
-        // 4. واجهة العميل المسجل
+        // 4. واجهة العميل المسجل (طلب الفاتورة + إرسالها لموافقة المدير)
         function enterPortalCustomerDashboard() {
             document.getElementById('loginView').style.display = 'none';
             document.getElementById('salesView').style.display = 'block';
@@ -719,34 +773,35 @@
             let typeLabel = "قيد انتظار مراجعة وتحديد المدير";
             let banner = document.getElementById('clientApprovalBanner');
             let btnSubmit = document.getElementById('btnSubmitPortalOrder');
+            let isApproved = (currentPortalCustomer.customerType === 'wholesale' || currentPortalCustomer.customerType === 'retail');
 
             if(currentPortalCustomer.customerType === 'wholesale') {
-                typeLabel = 'جملة (محلات)';
+                typeLabel = 'جملة (محلات - الحساب بالكرتونة)';
                 banner.style.display = 'block';
                 banner.style.background = '#dcfce7';
                 banner.style.color = '#15803d';
-                banner.innerText = '✅ نوع حسابك: جملة - تنزل طلباتك مباشرة في حسابات المحلات.';
+                banner.innerText = '✅ فئة حسابك: جملة - اطلب أصنافك بالكرتونة (سعر الكرتونة = 23,925 ج.م) وسيتم تنزيل الفاتورة في المحلات فور موافقة المدير.';
                 btnSubmit.disabled = false;
                 btnSubmit.style.opacity = '1';
             } else if(currentPortalCustomer.customerType === 'retail') {
-                typeLabel = 'قطاعي (فواتير عادية)';
+                typeLabel = 'قطاعي (فواتير عادية - الحساب بالرابطة)';
                 banner.style.display = 'block';
                 banner.style.background = '#e0f2fe';
                 banner.style.color = '#0369a1';
-                banner.innerText = '✅ نوع حسابك: قطاعي - تنزل طلباتك مع الفواتير العادية.';
+                banner.innerText = '✅ فئة حسابك: قطاعي - اطلب أصنافك بالرابطة (سعر الرابطة = 480 ج.م) وسيتم تنزيل الفاتورة مع الفواتير العادية فور موافقة المدير.';
                 btnSubmit.disabled = false;
                 btnSubmit.style.opacity = '1';
             } else {
                 banner.style.display = 'block';
                 banner.style.background = '#fef3c7';
                 banner.style.color = '#b45309';
-                banner.innerText = '⏳ حسابك قيد المراجعة: بانتظار تحديد المدير لفئة حسابك (قطاعي أم جملة) لتتمكن من إرسال الطلبات.';
+                banner.innerText = '⏳ حسابك قيد المراجعة: بانتظار تحديد المدير لفئة حسابك (قطاعي أم جملة) لتتمكن من إنشاء وطلب الفواتير.';
                 btnSubmit.disabled = true;
                 btnSubmit.style.opacity = '0.5';
             }
 
             document.getElementById('lblDelegateName').innerText = currentPortalCustomer.name;
-            document.getElementById('lblDelegateRoleText').innerText = `عميل (${typeLabel})`;
+            document.getElementById('lblDelegateRoleText').innerText = `عميل (${currentPortalCustomer.customerType === 'wholesale' ? 'جملة' : (currentPortalCustomer.customerType === 'retail' ? 'قطاعي' : 'جديد')})`;
 
             const allTabBtns = document.querySelectorAll('.tab-btn');
             allTabBtns.forEach(btn => btn.style.display = 'none');
@@ -754,13 +809,331 @@
 
             document.getElementById('viewClientName').value = currentPortalCustomer.name || '';
             document.getElementById('viewClientCode').value = currentPortalCustomer.clientCode || 'C-Auto';
-            document.getElementById('viewClientEmail').value = currentPortalCustomer.email || '';
-            document.getElementById('viewClientPhone').value = currentPortalCustomer.phone || '';
-            document.getElementById('viewClientAddress').value = currentPortalCustomer.address || '';
             document.getElementById('viewClientVillage').value = currentPortalCustomer.village || 'غير محدد';
             document.getElementById('viewClientType').value = typeLabel;
 
+            renderPortalProductsForm(isApproved);
+            renderClientOrdersStatusTable();
             switchTab('clientOrderOnly');
+        }
+
+        function renderPortalProductsForm(isApproved) {
+            const container = document.getElementById('portalProductsContainer');
+            const totalsContainer = document.getElementById('portalTotalsContainer');
+            if(!container || !totalsContainer) return;
+
+            if(!isApproved) {
+                container.innerHTML = `<div style="text-align:center; color:#94a3b8; font-size:12px; padding:15px; border:1px dashed #cbd5e1; border-radius:8px;">جدول الأصناف مغلق حتى يتم اعتماد فئة الحساب من المدير.</div>`;
+                totalsContainer.innerHTML = '';
+                return;
+            }
+
+            const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
+            const unitName = isWholesale ? "كرتونة" : "رابطة";
+            const defaultPrice = isWholesale ? 23925 : 480;
+
+            let tableRows = '';
+            products.forEach((p, idx) => {
+                tableRows += `
+                    <tr>
+                        <td style="text-align: right; font-weight: bold; padding: 6px; font-size: 12px; color: #0f172a;">${p.name}</td>
+                        <td style="padding: 4px;"><input type="number" id="portal_qty_${idx}" min="0" placeholder="0" oninput="calcPortalOrderTotals()" style="width: 100%; padding: 5px; text-align: center; font-weight: bold; border: 1px solid #0284c7; border-radius: 4px; font-size: 13px;"></td>
+                        <td style="padding: 4px;"><input type="number" id="portal_price_${idx}" value="${defaultPrice}" oninput="calcPortalOrderTotals()" style="width: 100%; padding: 5px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;"></td>
+                        <td style="padding: 4px;"><input type="text" id="portal_total_${idx}" value="0.00" readonly style="width: 100%; padding: 5px; text-align: center; font-weight: bold; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #166534;"></td>
+                    </tr>`;
+            });
+
+            container.innerHTML = `
+                <div style="overflow-x: auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr style="background:#0f172a; color:#fff;">
+                                <th style="padding:6px; text-align:right;">الصنف</th>
+                                <th style="padding:6px; width:90px;">الكمية (${unitName})</th>
+                                <th style="padding:6px; width:80px;">سعر الـ ${unitName}</th>
+                                <th style="padding:6px; width:90px;">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                </div>`;
+
+            if(isWholesale) {
+                totalsContainer.innerHTML = `
+                    <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px; margin-top:8px;">
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+                            <span>إجمالي عدد الكراتين المطلوبة:</span>
+                            <b id="portalTotalUnitsCount" style="color:#0284c7;">0 كرتونة</b>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+                            <span>إجمالي قيمة البضاعة:</span>
+                            <b id="portalOrderGrandTotal" style="color:#16a34a; font-size:15px;">0.00 ج.م</b>
+                        </div>
+                        <div class="form-group" style="margin-bottom:6px;">
+                            <label style="font-size:11px;">المبلغ المسدد مقدماً (الإيداع إن وجد):</label>
+                            <input type="number" id="portalWholesalePaidInput" value="0" min="0" placeholder="0" oninput="calcPortalOrderTotals()" style="padding:6px; font-size:12px;">
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:13px; color:#dc2626; border-top:1px dashed #cbd5e1; padding-top:6px;">
+                            <span>المديونية المتبقية (الذمم):</span>
+                            <b id="portalWholesaleZimam" style="font-size:15px;">0.00 ج.م</b>
+                        </div>
+                    </div>`;
+            } else {
+                totalsContainer.innerHTML = `
+                    <div class="grand-box" style="margin:8px 0;">
+                        إجمالي الفاتورة: <span id="portalOrderGrandTotal">0.00</span> ج.م
+                        <div style="font-size:11px; font-weight:normal; margin-top:3px;">إجمالي الروابط: <b id="portalTotalUnitsCount">0</b> رابطة</div>
+                    </div>`;
+            }
+
+            calcPortalOrderTotals();
+        }
+
+        function calcPortalOrderTotals() {
+            if(!currentPortalCustomer || currentPortalCustomer.customerType === 'pending') return;
+            const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
+            let grand = 0;
+            let totalUnits = 0;
+
+            products.forEach((p, idx) => {
+                const q = parseFloat(document.getElementById(`portal_qty_${idx}`)?.value) || 0;
+                const pr = parseFloat(document.getElementById(`portal_price_${idx}`)?.value) || 0;
+                const tot = q * pr;
+                if(document.getElementById(`portal_total_${idx}`)) {
+                    document.getElementById(`portal_total_${idx}`).value = tot.toFixed(2);
+                }
+                grand += tot;
+                totalUnits += q;
+            });
+
+            if(document.getElementById('portalOrderGrandTotal')) {
+                document.getElementById('portalOrderGrandTotal').innerText = grand.toFixed(2) + " ج.م";
+            }
+            if(document.getElementById('portalTotalUnitsCount')) {
+                document.getElementById('portalTotalUnitsCount').innerText = `${totalUnits} ${isWholesale ? 'كرتونة' : 'رابطة'}`;
+            }
+
+            if(isWholesale) {
+                const paid = parseFloat(document.getElementById('portalWholesalePaidInput')?.value) || 0;
+                const zimam = grand - paid;
+                if(document.getElementById('portalWholesaleZimam')) {
+                    document.getElementById('portalWholesaleZimam').innerText = zimam.toFixed(2) + " ج.م";
+                }
+            }
+        }
+
+        // إرسال الطلب ليكون قيد موافقة المدير (في pendingOrders)
+        function submitPortalClientOrder() {
+            if(!currentPortalCustomer || currentPortalCustomer.customerType === 'pending') {
+                alert("⚠️ لم يقم المدير بتحديد فئة حسابك بعد.");
+                return;
+            }
+
+            const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
+            const todayStr = new Date().toISOString().split('T')[0];
+            let itemsList = [];
+            let totalUnits = 0;
+            let grandTotal = 0;
+
+            products.forEach((p, idx) => {
+                const q = parseFloat(document.getElementById(`portal_qty_${idx}`)?.value) || 0;
+                const pr = parseFloat(document.getElementById(`portal_price_${idx}`)?.value) || 0;
+                if(q > 0) {
+                    const tot = q * pr;
+                    itemsList.push({
+                        name: p.name,
+                        code: p.code,
+                        qty: q,
+                        price: pr,
+                        total: tot,
+                        unit: isWholesale ? 'كرتونة' : 'رابطة'
+                    });
+                    totalUnits += q;
+                    grandTotal += tot;
+                }
+            });
+
+            if(itemsList.length === 0) {
+                alert(`❌ يرجى إدخال كمية (${isWholesale ? 'كرتونة' : 'رابطة'}) لصنف واحد على الأقل.`);
+                return;
+            }
+
+            let paid = isWholesale ? (parseFloat(document.getElementById('portalWholesalePaidInput')?.value) || 0) : 0;
+            let zimam = isWholesale ? (grandTotal - paid) : 0;
+
+            let orderObj = {
+                id: String(Date.now()),
+                clientId: currentPortalCustomer.uid,
+                clientName: currentPortalCustomer.name,
+                clientCode: currentPortalCustomer.clientCode || '',
+                village: currentPortalCustomer.village || '',
+                phone: currentPortalCustomer.phone || '',
+                orderType: isWholesale ? 'wholesale' : 'retail',
+                items: itemsList,
+                totalUnits: totalUnits,
+                grandTotal: grandTotal,
+                paid: paid,
+                zimam: zimam,
+                date: todayStr,
+                status: 'pending' // قيد مراجعة وموافقة المدير
+            };
+
+            cloudPendingOrders.push(orderObj);
+            db.ref('pendingOrders').set(Object.assign({}, cloudPendingOrders)).then(() => {
+                alert("🎉 تم إرسال طلب الفاتورة بنجاح!\nالطلب الآن بانتظار موافقة المدير وسيتم تنزيله في الحسابات فور اعتماده.");
+                
+                let waItemsDetails = itemsList.map(it => `• ${it.name}: ${it.qty} ${it.unit} بسعر ${it.price} (إجمالي: ${it.total} ج.م)`).join('%0A');
+                let waText = `طلب فاتورة جديد بانتظار موافقة المدير:%0A----------------------------%0A🏪 المحل: ${currentPortalCustomer.name}%0A🏷️ الكود: ${currentPortalCustomer.clientCode}%0A📍 القرية: ${currentPortalCustomer.village || ''}%0A📅 التاريخ: ${todayStr}%0A📂 النوع: ${isWholesale ? 'جملة (بالكرتونة)' : 'قطاعي (بالرابطة)'}%0A----------------------------%0Aالأصناف المطلوبة:%0A${waItemsDetails}%0A----------------------------%0A📦 إجمالي الكمية: ${totalUnits} ${isWholesale ? 'كرتونة' : 'رابطة'}%0A💰 الإجمالي الكلي: ${grandTotal} ج.م%0A💵 المسدد: ${paid} ج.م%0A🔴 الذمم: ${zimam} ج.م`;
+                window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
+
+                renderPortalProductsForm(true);
+                renderClientOrdersStatusTable();
+            }).catch(err => alert("خطأ في الإرسال: " + err.message));
+        }
+
+        // جدول متابعة حالة طلبات العميل
+        function renderClientOrdersStatusTable() {
+            const tbody = document.getElementById('clientOrdersStatusTableBody');
+            if(!tbody || !currentPortalCustomer) return;
+            tbody.innerHTML = '';
+
+            let myOrders = cloudPendingOrders.filter(o => o.clientId === currentPortalCustomer.uid || (o.clientName === currentPortalCustomer.name));
+            if(myOrders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5">لا توجد طلبات مرسلة حالياً.</td></tr>`;
+                return;
+            }
+
+            myOrders.slice().reverse().forEach(o => {
+                let statusBadge = '<span style="color:#d97706; font-weight:bold;">⏳ قيد مراجعة المدير</span>';
+                if(o.status === 'approved') statusBadge = '<span style="color:#16a34a; font-weight:bold;">✅ تمت الموافقة وتنزيل الفاتورة</span>';
+                if(o.status === 'rejected') statusBadge = '<span style="color:#dc2626; font-weight:bold;">❌ تم الرفض</span>';
+
+                let itemsStr = o.items ? o.items.map(it => `${it.name} (${it.qty} ${it.unit || (o.orderType==='wholesale'?'كرتونة':'رابطة')})`).join(' + ') : 'طلب مبيعات';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${o.date}</td>
+                        <td>${o.orderType === 'wholesale' ? 'جملة' : 'قطاعي'}</td>
+                        <td style="font-size:10px;">${itemsStr}</td>
+                        <td><b>${o.grandTotal} ج.م</b></td>
+                        <td>${statusBadge}</td>
+                    </tr>`;
+            });
+        }
+
+        // 5. شاشة المدير لمراجعة واعتماد وتنزيل طلبات العملاء
+        function updatePendingOrdersBadge() {
+            const badge = document.getElementById('badgePendingCount');
+            if(!badge) return;
+            let pendingCount = cloudPendingOrders.filter(o => o.status === 'pending').length;
+            if(pendingCount > 0) {
+                badge.style.display = 'inline-block';
+                badge.innerText = pendingCount;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function renderAdminPendingOrdersTable() {
+            const tbody = document.getElementById('adminPendingOrdersTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            let pendingList = cloudPendingOrders.filter(o => o.status === 'pending');
+            if(pendingList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">🎉 لا توجد طلبات معلقة حالياً، جميع الطلبات تمت مراجعتها.</td></tr>`;
+                return;
+            }
+
+            pendingList.slice().reverse().forEach(order => {
+                let itemsSummary = order.items ? order.items.map(it => `• ${it.name}: <b>${it.qty}</b> ${it.unit||(order.orderType==='wholesale'?'كرتونة':'رابطة')}`).join('<br>') : '-';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${order.date}</td>
+                        <td><b>${order.clientName}</b><br><small style="color:#2563eb;">${order.clientCode || ''}</small><br><small>${order.village || '-'}</small></td>
+                        <td><span style="font-weight:bold; color:${order.orderType === 'wholesale' ? '#16a34a' : '#2563eb'};">${order.orderType === 'wholesale' ? '🏪 جملة (بالكرتونة)' : '📝 قطاعي (بالرابطة)'}</span></td>
+                        <td style="text-align:right; font-size:10px;">${itemsSummary}</td>
+                        <td><b>${order.grandTotal} ج.م</b></td>
+                        <td style="color:#dc2626; font-weight:bold;">${order.orderType === 'wholesale' ? (order.zimam + ' ج.م') : '-'}</td>
+                        <td>
+                            <button class="btn btn-success" style="padding:4px 8px; font-size:10px; margin:0 0 4px 0;" onclick="approveClientOrder('${order.id}')">✅ موافقة وتنزيل الفاتورة</button>
+                            <button class="btn btn-danger" style="padding:4px 8px; font-size:10px; margin:0;" onclick="rejectClientOrder('${order.id}')">❌ رفض الطلب</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        // دالة موافقة المدير وتنزيل الفاتورة في مكانها الصحيح
+        function approveClientOrder(orderId) {
+            let order = cloudPendingOrders.find(o => String(o.id) === String(orderId));
+            if(!order) return;
+
+            if(!confirm(`هل تريد بالتأكيد الموافقة على طلب العميل (${order.clientName}) وتنزيل الفاتورة في الحسابات؟`)) return;
+
+            order.status = 'approved';
+
+            if(order.orderType === 'wholesale') {
+                // تنزيل في حسابات المحلات (shops)
+                let itemsSummaryStr = order.items ? order.items.map(it => `${it.name} (${it.qty} كرتونة)`).join(' + ') : 'بضاعة محلات';
+                let newShopObj = {
+                    id: String(Date.now()),
+                    name: order.clientName,
+                    clientCode: order.clientCode || '',
+                    cartons: order.totalUnits || 1,
+                    totalPrice: order.grandTotal,
+                    paid: order.paid || 0,
+                    zimam: order.zimam || 0,
+                    notes: itemsSummaryStr,
+                    village: order.village || '',
+                    date: order.date,
+                    items: order.items || []
+                };
+
+                cloudShops.push(newShopObj);
+                db.ref('shops').set(Object.assign({}, cloudShops));
+            } else {
+                // تنزيل مع الفواتير العادية (sales)
+                let newInv = {
+                    id: String(Date.now()),
+                    invNo: Math.floor(1000 + Math.random() * 9000),
+                    date: order.date,
+                    delegateCode: "portal_client",
+                    delegateName: "طلب معتمد من بوابة العميل (قطاعي)",
+                    client: order.clientName,
+                    clientCode: order.clientCode || '',
+                    village: order.village || '',
+                    total: order.grandTotal,
+                    totalQty: order.totalUnits || 1,
+                    status: 'active',
+                    items: order.items || []
+                };
+
+                cloudSales.push(newInv);
+                db.ref('sales').set(Object.assign({}, cloudSales));
+            }
+
+            // تحديث حالة الطلب في قاعدة البيانات
+            db.ref('pendingOrders').set(Object.assign({}, cloudPendingOrders)).then(() => {
+                alert(`✅ تمت الموافقة بنجاح!\nتم تنزيل الفاتورة الخاصة بالعميل (${order.clientName}) في [${order.orderType === 'wholesale' ? 'حسابات المحلات' : 'الفواتير العادية'}].`);
+                renderAdminPendingOrdersTable();
+                updatePendingOrdersBadge();
+            });
+        }
+
+        // دالة رفض طلب العميل
+        function rejectClientOrder(orderId) {
+            let order = cloudPendingOrders.find(o => String(o.id) === String(orderId));
+            if(!order) return;
+
+            if(!confirm(`هل أنت متأكد من رفض طلب العميل (${order.clientName})؟`)) return;
+
+            order.status = 'rejected';
+            db.ref('pendingOrders').set(Object.assign({}, cloudPendingOrders)).then(() => {
+                alert("❌ تم رفض الطلب وإبلاغ العميل في شاشته.");
+                renderAdminPendingOrdersTable();
+                updatePendingOrdersBadge();
+            });
         }
 
         function changeCustomerPassword() {
@@ -775,60 +1148,7 @@
             }).catch(err => alert("خطأ: " + err.message));
         }
 
-        function submitPortalClientOrder() {
-            if(!currentPortalCustomer.customerType || currentPortalCustomer.customerType === 'pending') {
-                alert("⚠️ لم يقم المدير بتحديد فئة حسابك بعد. يرجى التواصل مع المدير لتفعيل الحساب.");
-                return;
-            }
-
-            const notes = document.getElementById('clientCustomOrderNotes').value.trim() || "طلب فاتورة جديدة من العميل";
-            const todayStr = new Date().toISOString().split('T')[0];
-            const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
-
-            if(isWholesale) {
-                let newShopObj = {
-                    id: String(Date.now()),
-                    name: currentPortalCustomer.name,
-                    cartons: 1,
-                    totalPrice: 23925,
-                    paid: 0,
-                    zimam: 23925,
-                    notes: notes,
-                    village: currentPortalCustomer.village || '',
-                    date: todayStr
-                };
-                cloudShops.push(newShopObj);
-                db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
-                    alert("✅ تم إرسال طلب الفاتورة وتنـزيلها في حسابات المحلات (جملة) بنجاح!");
-                    let waText = `طلب فاتورة جملة (محلات) من العميل: ${currentPortalCustomer.name}%0Aالكود: ${currentPortalCustomer.clientCode}%0Aالقرية/المركز: ${currentPortalCustomer.village || ''}%0Aالعنوان: ${currentPortalCustomer.address}%0Aالهاتف: ${currentPortalCustomer.phone}%0Aالطلب: ${notes}%0Aالتاريخ: ${todayStr}`;
-                    window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
-                }).catch(err => alert("خطأ: " + err.message));
-            } else {
-                let newInv = {
-                    id: String(Date.now()),
-                    invNo: Math.floor(1000 + Math.random() * 9000),
-                    date: todayStr,
-                    delegateCode: "portal_client",
-                    delegateName: "طلب عبر بوابة العميل (قطاعي)",
-                    client: currentPortalCustomer.name,
-                    clientCode: currentPortalCustomer.clientCode,
-                    village: currentPortalCustomer.village || '',
-                    total: 0,
-                    totalQty: 1,
-                    status: 'active',
-                    items: [{ name: notes, qty: 1, price: 0, total: 0 }]
-                };
-
-                cloudSales.push(newInv);
-                db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
-                    alert("✅ تم إرسال طلب الفاتورة وتنـزيلها مع الفواتير العادية (قطاعي) بنجاح!");
-                    let waText = `طلب فاتورة قطاعي من المحل: ${currentPortalCustomer.name}%0Aالكود: ${currentPortalCustomer.clientCode}%0Aالقرية/المركز: ${currentPortalCustomer.village || ''}%0Aالإيميل: ${currentPortalCustomer.email}%0Aالعنوان: ${currentPortalCustomer.address}%0Aالهاتف: ${currentPortalCustomer.phone}%0Aالطلب: ${notes}%0Aالتاريخ: ${todayStr}`;
-                    window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
-                }).catch(err => alert("خطأ في الإرسال: " + err.message));
-            }
-        }
-
-        // 5. إنشاء فاتورة المندوب والمدير والخصم من سيارة المندوب
+        // 6. إنشاء فاتورة المندوب والمدير والخصم من سيارة المندوب
         function initSalesForm() {
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return;
             const today = new Date().toISOString().split('T')[0];
@@ -916,7 +1236,9 @@
                 const q = parseFloat(document.getElementById(`qty_${idx}`)?.value) || 0;
                 const pr = parseFloat(document.getElementById(`price_${idx}`)?.value) || 0;
                 const tot = q * pr;
-                if(document.getElementById(`total_${idx}`)) document.getElementById(`total_${idx}`).value = tot.toFixed(2);
+                if(document.getElementById(`total_${idx}`)) {
+                    document.getElementById(`total_${idx}`).value = tot.toFixed(2);
+                }
                 grand += tot;
             });
             document.getElementById('grandTotal').innerText = grand.toFixed(2);
@@ -1020,7 +1342,7 @@
             window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent("فاتورة مبيعات بلاك هورس")}`, '_blank');
         }
 
-        // 6. الفواتير المحفوظة
+        // 7. الفواتير المحفوظة
         function cancelInvoice(id) {
             if(!confirm("⚠️ هل أنت متأكد من إلغاء هذه الفاتورة؟ سيتم استبعادها تماماً من المبيعات والتقارير.")) return;
             let targetInv = cloudSales.find(s => String(s.id) === String(id));
@@ -1073,14 +1395,14 @@
         function viewInvoiceDetails(id) {
             const inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
-            let itemsHtml = inv.items.map(it => `- ${it.name} | كمية: ${it.qty} رابطة | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>');
+            let itemsHtml = inv.items.map(it => `- ${it.name} | كمية: ${it.qty} (${it.unit||'رابطة'}) | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>');
             document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br><hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
             document.getElementById('invoiceModal').style.display = 'flex';
         }
 
         function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
 
-        // 7. التقارير
+        // 8. التقارير
         function renderDailyReport() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
             const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
@@ -1106,7 +1428,7 @@
                 invTb.innerHTML = '';
                 filtered.forEach(s => {
                     total += s.total;
-                    s.items.forEach(it => { if(qMap[it.code] !== undefined) qMap[it.code] += it.qty; });
+                    s.items.forEach(it => { if(qMap[it.code] !== undefined) qMap[it.code] += (it.unit === 'كرتونة' ? it.qty * 50 : it.qty); });
                     invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td>${s.village || '-'}</td><td>${s.delegateName}</td><td><b>${s.total}</b> ج.م</td></tr>`;
                 });
             }
@@ -1126,7 +1448,7 @@
             }
         }
 
-        // 8. جرد السيارات المستقل
+        // 9. جرد السيارات المستقل
         function initAdminCarSetup() {
             const cont = document.getElementById('adminCarStockInputs');
             if(!cont) return;
@@ -1174,7 +1496,7 @@
             });
         }
 
-        // 9. لوحة المدير: اعتماد الحساب، الكود الثابت، الفئة، والباسورد
+        // 10. لوحة المدير: اعتماد الحساب، الكود الثابت، الفئة، والباسورد
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
@@ -1210,7 +1532,6 @@
             });
         }
 
-        // دالة الاعتماد الشامل للعميل بضغطة زر واحدة
         function adminSaveFullCustomerApproval(uid) {
             let newCode = document.getElementById(`adm_code_${uid}`).value.trim();
             let newType = document.getElementById(`adm_type_${uid}`).value;
@@ -1228,17 +1549,14 @@
             cust.customerType = newType;
             cust.pass = newPass;
 
-            // تحديث جدول العملاء العام
             cloudClients[cust.name] = newCode;
             db.ref('clients').set(cloudClients);
 
-            // تحديث سجل العميل في Firebase
             db.ref('portalCustomers/' + uid).set(cust).then(() => {
-                alert(`✅ تم اعتماد وتفعيل حساب العميل (${cust.name}) بنجاح!\n- الكود: [${newCode}]\n- الفئة: [${newType === 'wholesale' ? 'جملة' : 'قطاعي'}]\n- كلمة السر: [${newPass}]`);
+                alert(`✅ تم اعتماد وتفعيل حساب العميل (${cust.name}) بنجاح!\n- الكود: [${newCode}]\n- الفئة: [${newType === 'wholesale' ? 'جملة (بالكرتونة)' : 'قطاعي (بالرابطة)'}]\n- كلمة السر: [${newPass}]`);
             }).catch(err => alert("خطأ: " + err.message));
         }
 
-        // إضافة عميل وتفعيله مباشرة من المدير
         function adminDirectAddCustomer() {
             let name = document.getElementById('adminDirectName').value.trim();
             let code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
@@ -1293,7 +1611,7 @@
             });
         }
 
-        // 10. حسابات منوف، المحلات، و LM
+        // 11. حسابات منوف، المحلات، و LM
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
@@ -1482,7 +1800,7 @@
             resBox.innerHTML = `<b>📊 نتائج حساب النسب:</b><br>- كليوباترا: <b>${(target*rCleo/sumRatios).toFixed(2)}</b> كرتونة<br>- بوكس: <b>${(target*rBox/sumRatios).toFixed(2)}</b> كرتونة<br>- براون: <b>${(target*rBrown/sumRatios).toFixed(2)}</b> كرتونة<br>- سوبر: <b>${(target*rSuper/sumRatios).toFixed(2)}</b> كرتونة`;
         }
 
-        // 11. تبديل التبويبات وإظهارها حسب الصلاحية
+        // 12. تبديل التبويبات والتحكم في ظهورها للمدير والمندوب
         function setupUserTabs() {
             if(currentPortalCustomer) return;
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
@@ -1495,6 +1813,7 @@
             });
 
             document.getElementById('tabNewInvoice').style.display = (isViewer || isStore) ? 'none' : 'block';
+            document.getElementById('tabPendingOrders').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabRatios').style.display = isViewer ? 'none' : 'block';
             document.getElementById('tabMenof').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabShops').style.display = isAdm ? 'block' : 'none';
@@ -1509,20 +1828,23 @@
             if(isAdm) {
                 document.getElementById('adminUserManagement').style.display = 'block';
                 renderAdminPortalCustomersTable();
+                updatePendingOrdersBadge();
+                renderAdminPendingOrdersTable();
             }
             updateDelegatesSelects();
         }
 
         function switchTab(tab) {
-            const tabs = ['invoice', 'clientOrderOnly', 'saved', 'report', 'carStock', 'ratios', 'menof', 'shops', 'lmInvoices', 'settings'];
+            const tabs = ['invoice', 'pendingOrders', 'clientOrderOnly', 'saved', 'report', 'carStock', 'ratios', 'menof', 'shops', 'lmInvoices', 'settings'];
             tabs.forEach(t => {
-                let btn = document.getElementById(t === 'invoice' ? 'tabNewInvoice' : (t === 'clientOrderOnly' ? 'tabClientOrderOnly' : (t === 'saved' ? 'tabSavedInvoices' : (t === 'report' ? 'tabDailyReport' : 'tab' + t.charAt(0).toUpperCase() + t.slice(1)))));
+                let btn = document.getElementById(t === 'invoice' ? 'tabNewInvoice' : (t === 'pendingOrders' ? 'tabPendingOrders' : (t === 'clientOrderOnly' ? 'tabClientOrderOnly' : (t === 'saved' ? 'tabSavedInvoices' : (t === 'report' ? 'tabDailyReport' : 'tab' + t.charAt(0).toUpperCase() + t.slice(1))))));
                 let sec = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
                 if(btn && sec) {
                     if(t === tab) { btn.classList.add('active'); sec.style.display = 'block'; }
                     else { btn.classList.remove('active'); sec.style.display = 'none'; }
                 }
             });
+            if(tab === 'pendingOrders') renderAdminPendingOrdersTable();
             if(tab === 'saved') renderSavedInvoices();
             if(tab === 'report') renderDailyReport();
             if(tab === 'carStock') renderCarStockTable();
