@@ -388,19 +388,38 @@
         <!-- ح) التحميل من منوف -->
         <div id="sectionMenof" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (الذمم تمثل فلوس ليك):</h4>
+            
+            <!-- كروت الإجماليات التراكمية لشحنات منوف -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:12px; text-align:center;">
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:8px; border-radius:8px;">
+                    <div style="font-size:10px; color:#1e40af; font-weight:bold;">إجمالي الكراتين</div>
+                    <div id="menofSummaryCartons" style="font-size:14px; font-weight:bold; color:#1d4ed8; margin-top:2px;">0</div>
+                </div>
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:8px; border-radius:8px;">
+                    <div style="font-size:10px; color:#166534; font-weight:bold;">إجمالي الإيداعات</div>
+                    <div id="menofSummaryDeposit" style="font-size:14px; font-weight:bold; color:#15803d; margin-top:2px;">0.00 ج.م</div>
+                </div>
+                <div style="background:#fef3c7; border:1px solid #fde68a; padding:8px; border-radius:8px;">
+                    <div style="font-size:10px; color:#92400e; font-weight:bold;">إجمالي الذمم (ليك)</div>
+                    <div id="menofSummaryZimam" style="font-size:14px; font-weight:bold; color:#b45309; margin-top:2px;">0.00 ج.م</div>
+                </div>
+            </div>
+
             <div class="filter-box">
                 <input type="hidden" id="editMenofId" value="">
                 <div class="form-group"><label>تاريخ التحميل:</label><input type="date" id="menofDate"></div>
                 <div class="form-group"><label>عدد الكرتونات المحملة:</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
                 <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات: <b id="menofTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
                 <div class="form-group"><label>قيمة الإيداع المالي:</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم (فلوس ليك): <b id="menofZimam">0.00</b> ج.م</div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم (فلوس ليك في الشحنة دي): <b id="menofZimam">0.00</b> ج.م</div>
                 <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل / تحديث شحنة منوف</button>
             </div>
-            <table class="report-table">
-                <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>الإجمالي</th><th>الإيداع</th><th>الذمم (ليك)</th><th>الإجراءات</th></tr></thead>
-                <tbody id="menofTableBody"></tbody>
-            </table>
+            <div style="overflow-x:auto;">
+                <table class="report-table">
+                    <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>الإجمالي</th><th>الإيداع</th><th>الذمم (ليك)</th><th>الإجراءات</th></tr></thead>
+                    <tbody id="menofTableBody"></tbody>
+                </table>
+            </div>
         </div>
 
         <!-- ط) المحلات -->
@@ -604,7 +623,7 @@
         db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
         db.ref('delegates').on('value', (s) => { if(s.val()) { cloudDelegates = s.val(); updateDelegatesSelects(); renderCarStockTable(); } });
         db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); updateReportClientsSelect(); });
-        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
+        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; renderMenofTable(); });
         db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; renderShopsTable(); });
         db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
         
@@ -1074,7 +1093,6 @@
             order.status = 'approved';
 
             if(order.orderType === 'wholesale') {
-                // تنزيل في حسابات المحلات (shops)
                 let itemsSummaryStr = order.items ? order.items.map(it => `${it.name} (${it.qty} كرتونة)`).join(' + ') : 'بضاعة محلات';
                 let newShopObj = {
                     id: String(Date.now()),
@@ -1093,7 +1111,6 @@
                 cloudShops.push(newShopObj);
                 db.ref('shops').set(Object.assign({}, cloudShops));
             } else {
-                // تنزيل مع الفواتير العادية (sales)
                 let newInv = {
                     id: String(Date.now()),
                     invNo: Math.floor(1000 + Math.random() * 9000),
@@ -1113,7 +1130,6 @@
                 db.ref('sales').set(Object.assign({}, cloudSales));
             }
 
-            // تحديث حالة الطلب في قاعدة البيانات
             db.ref('pendingOrders').set(Object.assign({}, cloudPendingOrders)).then(() => {
                 alert(`✅ تمت الموافقة بنجاح!\nتم تنزيل الفاتورة الخاصة بالعميل (${order.clientName}) في [${order.orderType === 'wholesale' ? 'حسابات المحلات' : 'الفواتير العادية'}].`);
                 renderAdminPendingOrdersTable();
@@ -1632,6 +1648,11 @@
             cloudMenofLoads.push({ id, date, cartons, totalPrice, deposit, zimam });
             db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
                 alert("✅ تم حفظ شحنة منوف بنجاح!");
+                document.getElementById('menofCartons').value = '';
+                document.getElementById('menofDeposit').value = '';
+                document.getElementById('menofTotalPrice').innerText = '0.00';
+                document.getElementById('menofZimam').innerText = '0.00';
+                document.getElementById('editMenofId').value = '';
                 renderMenofTable();
             });
         }
@@ -1640,9 +1661,56 @@
             const tb = document.getElementById('menofTableBody');
             if(!tb) return;
             tb.innerHTML = '';
-            cloudMenofLoads.forEach(m => {
-                tb.innerHTML += `<tr><td>${m.date}</td><td>${m.cartons}</td><td>${m.totalPrice}</td><td>${m.deposit}</td><td style="color:#16a34a; font-weight:bold;">${m.zimam}</td><td><button class="btn btn-danger" style="padding:2px 4px; font-size:9px; width:auto;" onclick="deleteMenof('${m.id}')">حذف</button></td></tr>`;
-            });
+
+            let totalCartons = 0;
+            let grandTotal = 0;
+            let totalDeposit = 0;
+            let totalZimam = 0;
+
+            if(cloudMenofLoads.length === 0) {
+                tb.innerHTML = `<tr><td colspan="6">لا توجد شحنات مسجلة حالياً.</td></tr>`;
+            } else {
+                cloudMenofLoads.forEach(m => {
+                    const c = parseFloat(m.cartons) || 0;
+                    const tot = parseFloat(m.totalPrice) || 0;
+                    const dep = parseFloat(m.deposit) || 0;
+                    const zim = (m.zimam !== undefined) ? parseFloat(m.zimam) : (tot - dep);
+
+                    totalCartons += c;
+                    grandTotal += tot;
+                    totalDeposit += dep;
+                    totalZimam += zim;
+
+                    tb.innerHTML += `<tr>
+                        <td>${m.date}</td>
+                        <td><b>${c}</b></td>
+                        <td>${tot.toFixed(2)}</td>
+                        <td>${dep.toFixed(2)}</td>
+                        <td style="color:#16a34a; font-weight:bold;">${zim.toFixed(2)} ج.م</td>
+                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:9px; width:auto; display:inline-block;" onclick="deleteMenof('${m.id}')">حذف</button></td>
+                    </tr>`;
+                });
+
+                tb.innerHTML += `
+                    <tr style="background:#f1f5f9; font-weight:bold; border-top:2px solid #cbd5e1;">
+                        <td>الإجمالي الكلي</td>
+                        <td style="color:#1d4ed8;">${totalCartons} كرتونة</td>
+                        <td>${grandTotal.toFixed(2)} ج.م</td>
+                        <td style="color:#16a34a;">${totalDeposit.toFixed(2)} ج.م</td>
+                        <td style="color:#b45309;">${totalZimam.toFixed(2)} ج.م</td>
+                        <td>-</td>
+                    </tr>`;
+            }
+
+            if(document.getElementById('menofSummaryCartons')) {
+                document.getElementById('menofSummaryCartons').innerText = `${totalCartons} كرتونة`;
+            }
+            if(document.getElementById('menofSummaryDeposit')) {
+                document.getElementById('menofSummaryDeposit').innerText = `${totalDeposit.toFixed(2)} ج.م`;
+            }
+            if(document.getElementById('menofSummaryZimam')) {
+                document.getElementById('menofSummaryZimam').innerText = `${totalZimam.toFixed(2)} ج.م`;
+            }
         }
 
         function deleteMenof(id) {
