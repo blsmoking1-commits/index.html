@@ -615,6 +615,7 @@
         let currentDelegate = null;
         let currentPortalCustomer = null;
         let watchPositionId = null;
+        let clientInputTimer = null;
 
         function cleanPhoneStr(p) {
             if(!p) return "";
@@ -1320,9 +1321,15 @@
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return null;
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const village = document.getElementById('clientVillage').value.trim() || "";
-            const clientCode = document.getElementById('lblClientCode').innerText;
             const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
             const invDate = document.getElementById('invoiceDate').value;
+
+            let clientCode = cloudClients[client];
+            if (!clientCode) {
+                clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
+                cloudClients[client] = clientCode;
+                db.ref('clients/' + client).set(clientCode).catch(e => {});
+            }
 
             let targetDelCode = currentDelegate.code;
             let grand = 0, hasItems = false, itemsSoldList = [], totalRibbonsCount = 0;
@@ -1649,7 +1656,6 @@
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             const totalPrice = cartons * 23925;
-            // الذمم = قيمة الإيداع - سعر البضاعة (الرصيد الفائض ليك)
             const zimam = totalPrice - deposit;
             
             document.getElementById('menofTotalPrice').innerText = totalPrice.toFixed(2);
@@ -1661,7 +1667,7 @@
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             const totalPrice = cartons * 23925;
-            const zimam = totalPrice -deposit;
+            const zimam = totalPrice - deposit;
             const id = document.getElementById('editMenofId').value || String(Date.now());
 
             cloudMenofLoads = cloudMenofLoads.filter(x => String(x.id) !== String(id));
@@ -1706,13 +1712,11 @@
                 </tr>`;
             });
 
-            // تحديث بطاقات إجماليات منوف التراكمية
             if(document.getElementById('menofTotalCartonsCount')) document.getElementById('menofTotalCartonsCount').innerText = totalCartons;
             if(document.getElementById('menofTotalDepositsSum')) document.getElementById('menofTotalDepositsSum').innerText = totalDeposits.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             if(document.getElementById('menofTotalGoodsSum')) document.getElementById('menofTotalGoodsSum').innerText = totalGoodsValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             if(document.getElementById('menofNetZimamTotal')) document.getElementById('menofNetZimamTotal').innerText = netZimamTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-            // حساب المعادل ككراتين مستحقة متبقية
             let totalCartonsEquiv = Math.floor(netZimamTotal / 23925);
             let remainingMoney = netZimamTotal % 23925;
 
@@ -2012,31 +2016,35 @@
         }
 
         function onClientNameInput() {
+            clearTimeout(clientInputTimer);
+            
             const val = document.getElementById('clientName').value.trim();
             const lblCode = document.getElementById('lblClientCode');
             const historyBox = document.getElementById('clientMonthlyHistory');
             
-            if(!val) { lblCode.innerText = "--"; historyBox.style.display = 'none'; return; }
-            
+            if(!val) { 
+                lblCode.innerText = "--"; 
+                historyBox.style.display = 'none'; 
+                return; 
+            }
+
             if(cloudClients[val]) {
                 lblCode.innerText = cloudClients[val];
             } else {
-                const newCode = "C-" + Math.floor(1000 + Math.random() * 9000);
-                cloudClients[val] = newCode;
-                db.ref('clients').set(cloudClients).catch(err => {});
-                lblCode.innerText = newCode;
+                lblCode.innerText = "عميل جديد (تلقائي)";
             }
 
-            let clientSales = cloudSales.filter(s => s.client && s.client.toLowerCase() === val.toLowerCase() && s.status !== 'cancelled');
-            if(clientSales.length > 0) {
-                let totalMonth = clientSales.reduce((sum, item) => sum + item.total, 0);
-                let details = clientSales.map(i => `فاتورة #${i.invNo}: ${i.total} ج.م (${i.date})`).join(' | ');
-                historyBox.style.display = 'block';
-                historyBox.innerHTML = `<b>📊 مبيعات العميل النشطة هذا الشهر:</b> إجمالي الصافي = ${totalMonth} ج.م<br><span style="font-size:10px;">${details}</span>`;
-            } else {
-                historyBox.style.display = 'block';
-                historyBox.innerHTML = `<b>📊 مبيعات العميل هذا الشهر:</b> لا توجد فواتير نشطة لهذا العميل.`;
-            }
+            clientInputTimer = setTimeout(() => {
+                let clientSales = cloudSales.filter(s => s.client && s.client.toLowerCase() === val.toLowerCase() && s.status !== 'cancelled');
+                if(clientSales.length > 0) {
+                    let totalMonth = clientSales.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+                    let details = clientSales.map(i => `فاتورة #${i.invNo}: ${i.total} ج.م (${i.date})`).join(' | ');
+                    historyBox.style.display = 'block';
+                    historyBox.innerHTML = `<b>📊 مبيعات العميل النشطة:</b> إجمالي الصافي = ${totalMonth.toFixed(2)} ج.م<br><span style="font-size:10px;">${details}</span>`;
+                } else {
+                    historyBox.style.display = 'none';
+                }
+            }, 300);
         }
 
         function changeMyPassword() {
