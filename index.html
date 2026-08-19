@@ -2028,25 +2028,7 @@
                 db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم تغيير كلمة السر بنجاح!"));
             }
         }
-function sendPositionToFirebase(position, repCode) {
- const lat = position.coords.latitude;
- const lon = position.coords.longitude;
- const timestamp = position.timestamp;
 
-  Use the dynamic repCode in the Firebase path
- set(ref(db, 'deliveries/' + repCode + '/liveLocation'), {
- latitude: lat,
- longitude: lon,
- lastUpdated: timestamp
- })
- .then(() => {
- console.log(`Location updated in Firebase for rep ${repCode} successfully.`);
- })
- .catch((error) => {
- console.error("Error updating location in Firebase:", error);
-     );
- }
-}
     </script>
 </body>
 </html>
