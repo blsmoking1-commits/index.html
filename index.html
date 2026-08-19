@@ -1650,7 +1650,7 @@
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             const totalPrice = cartons * 23925;
             // الذمم = قيمة الإيداع - سعر البضاعة (الرصيد الفائض ليك)
-            const zimam = deposit - totalPrice;
+            const zimam = totalPrice - deposit;
             
             document.getElementById('menofTotalPrice').innerText = totalPrice.toFixed(2);
             document.getElementById('menofZimam').innerText = zimam.toFixed(2);
@@ -1661,7 +1661,7 @@
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             const totalPrice = cartons * 23925;
-            const zimam = deposit - totalPrice;
+            const zimam = totalPrice -deposit;
             const id = document.getElementById('editMenofId').value || String(Date.now());
 
             cloudMenofLoads = cloudMenofLoads.filter(x => String(x.id) !== String(id));
