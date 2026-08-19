@@ -115,8 +115,11 @@
             <div class="form-group"><label>عنوان المحل بالتفصيل:</label><input type="text" id="regClientAddress" placeholder="المدينة، الشارع..."></div>
             <div class="form-group"><label>القرية / المركز:</label><input type="text" id="regClientVillage" placeholder="مثال: أشمون / سنتريس..."></div>
             
+            <button type="button" class="btn btn-info" style="margin-bottom:8px; font-size:11px;" onclick="captureCustomerGpsLocation()">📍 تحديد موقع المحل الحالي بالـ GPS</button>
+            <div id="regGpsStatus" style="font-size:10.5px; color:#0284c7; margin-bottom:8px; font-weight:bold;">لم يتم تحديد موقع GPS للمحل بعد</div>
+            
             <div style="font-size: 11px; color: #475569; margin-bottom: 10px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
-                ℹ️ بعد التسجيل، يقوم المدير باعتماد وتفعيل حسابك وتحديد فئتك (قطاعي أو جملة) وتعيين الكود الثابت لمحلك.
+                ℹ️ بعد التسجيل، يقوم المدير باعتماد وتفعيل حسابك وتحديد فئتك وتعيين الكود الثابت لمحلك.
             </div>
             
             <button class="btn btn-success" onclick="registerCustomerWithEmail()">إتمام التسجيل والحفظ</button>
@@ -161,7 +164,7 @@
             <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
             <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
             <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة والجرد</div>
-            <div id="tabTracking" class="tab-btn" onclick="switchTab('tracking')" style="display:none; background:#ecfdf5; color:#065f46;">📍 تتبع المناديب</div>
+            <div id="tabTracking" class="tab-btn" onclick="switchTab('tracking')" style="display:none; background:#ecfdf5; color:#065f46;">📍 تتبع المناديب والمحلات</div>
             <div id="tabRatios" class="tab-btn" onclick="switchTab('ratios')" style="background:#e0f2fe;">⚖️ النسب</div>
             <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف (التحميل والذمم)</div>
             <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
@@ -203,11 +206,10 @@
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
-        <!-- ب) شاشة تتبع المناديب للمدير فقط -->
+        <!-- ب) شاشة تتبع المناديب والمحلات للمدير فقط -->
         <div id="sectionTracking" style="display: none;">
-            <div class="filter-box" style="background:#ecfdf5; border-color:#a7f3d0;">
+            <div class="filter-box" style="background:#ecfdf5; border-color:#a7f3d0; margin-bottom:12px;">
                 <h4 style="margin:0 0 6px 0; color:#065f46;">📍 مواقع المناديب الحالية (Live Tracking للمدير):</h4>
-                <p style="font-size:11px; color:#047857; margin:0 0 10px 0;">يتم تحديث إحداثيات GPS تلقائياً أثناء حركة المندوب وتسجيله للفواتير على النظام:</p>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
@@ -222,13 +224,30 @@
                     </table>
                 </div>
             </div>
+
+            <div class="filter-box" style="background:#eff6ff; border-color:#bfdbfe;">
+                <h4 style="margin:0 0 6px 0; color:#1e40af;">🏪 مواقع محلات العملاء المسجلة على الخريطة:</h4>
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr>
+                                <th>اسم المحل</th>
+                                <th>الكود</th>
+                                <th>القرية / العنوان</th>
+                                <th>موقع المحل على الخريطة</th>
+                                <th>تحديث الموقع</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsMapTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- ج) شاشة مراجعة واعتماد طلبات العملاء -->
         <div id="sectionPendingOrders" style="display: none;">
             <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
                 <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:</h4>
-                <p style="font-size:11px; color:#b45309; margin:0 0 10px 0;">عند الضغط على "موافقة واعتماد"، يتم تنزيل الفاتورة فوراً في مكانها الصحيح:</p>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
@@ -604,6 +623,7 @@
         let cloudSales = [];
         let cloudDelegates = defaultDelegates;
         let cloudClients = {};
+        let cloudClientsLocations = {};
         let portalCustomersDB = {};
         let cloudPendingOrders = [];
         let cloudMenofLoads = [];
@@ -616,6 +636,7 @@
         let watchPositionId = null;
         let clientInputTimer = null;
         let latestCoords = null;
+        let tempRegCoords = null;
 
         function cleanPhoneStr(p) {
             if(!p) return "";
@@ -638,7 +659,8 @@
                 }
             } 
         });
-        db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); updateReportClientsSelect(); });
+        db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); updateReportClientsSelect(); renderClientsMapTable(); });
+        db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; renderClientsMapTable(); });
         db.ref('menofLoads').on('value', (s) => { 
             cloudMenofLoads = s.val() ? Object.values(s.val()) : [];
             renderMenofTable();
@@ -656,6 +678,7 @@
         db.ref('portalCustomers').on('value', (s) => { 
             portalCustomersDB = s.val() || {}; 
             renderAdminPortalCustomersTable();
+            renderClientsMapTable();
             if(currentPortalCustomer && portalCustomersDB[currentPortalCustomer.uid]) {
                 currentPortalCustomer = portalCustomersDB[currentPortalCustomer.uid];
                 enterPortalCustomerDashboard();
@@ -831,7 +854,88 @@
             }
         }
 
+        function renderClientsMapTable() {
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
+            if (!isAdm) return;
+
+            const tbody = document.getElementById('clientsMapTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let hasClients = false;
+            for (let cName in cloudClients) {
+                hasClients = true;
+                let cCode = cloudClients[cName];
+                let cLoc = cloudClientsLocations[cName] || null;
+                let cVillage = '-';
+
+                for (let uid in portalCustomersDB) {
+                    if (portalCustomersDB[uid].name === cName || portalCustomersDB[uid].clientCode === cCode) {
+                        cVillage = portalCustomersDB[uid].village || portalCustomersDB[uid].address || '-';
+                        if (!cLoc && portalCustomersDB[uid].location) cLoc = portalCustomersDB[uid].location;
+                        break;
+                    }
+                }
+
+                let mapBtn = (cLoc && cLoc.lat && cLoc.lng) 
+                    ? `<a href="https://maps.google.com/?q=${cLoc.lat},${cLoc.lng}" target="_blank" class="btn btn-primary" style="padding:3px 8px; font-size:10px; text-decoration:none; display:inline-block; width:auto; margin:0;">📍 موقع المحل</a>` 
+                    : '<span style="color:#94a3b8; font-size:10px;">غير محدد</span>';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${cName}</b></td>
+                        <td><small style="color:#2563eb; font-weight:bold;">${cCode}</small></td>
+                        <td>${cVillage}</td>
+                        <td>${mapBtn}</td>
+                        <td><button class="btn btn-info" style="padding:3px 6px; font-size:10px; margin:0; width:auto;" onclick="adminSetClientLocation('${cName}')">🛰️ تعيين الموقع</button></td>
+                    </tr>`;
+            }
+
+            if (!hasClients) {
+                tbody.innerHTML = `<tr><td colspan="5">لا يوجد عملاء مسجلين حالياً.</td></tr>`;
+            }
+        }
+
+        function adminSetClientLocation(clientName) {
+            if (!navigator.geolocation) { alert("المتصفح لا يدعم تحديد الموقع."); return; }
+            navigator.geolocation.getCurrentPosition((pos) => {
+                let lat = pos.coords.latitude;
+                let lng = pos.coords.longitude;
+                let locObj = { lat, lng, mapUrl: `https://maps.google.com/?q=${lat},${lng}` };
+
+                cloudClientsLocations[clientName] = locObj;
+                db.ref('clientsLocations/' + clientName).set(locObj).then(() => {
+                    alert(`✅ تم تثبيت موقع المحل (${clientName}) بنجاح!`);
+                    renderClientsMapTable();
+                });
+            }, (err) => {
+                alert("تعذر جلب موقع GPS: " + err.message);
+            }, { enableHighAccuracy: true });
+        }
+
         // 2. تسجيل عميل جديد
+        function captureCustomerGpsLocation() {
+            if (!navigator.geolocation) {
+                alert("المتصفح لا يدعم خدمة الـ GPS");
+                return;
+            }
+            const statusElem = document.getElementById('regGpsStatus');
+            statusElem.innerText = "جاري استقبال إشارة GPS بدقة...";
+            
+            navigator.geolocation.getCurrentPosition((pos) => {
+                tempRegCoords = {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    mapUrl: `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`
+                };
+                statusElem.style.color = "#16a34a";
+                statusElem.innerText = `✅ تم التقاط موقع المحل بنجاح: (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+            }, (err) => {
+                statusElem.style.color = "#dc2626";
+                statusElem.innerText = "⚠️ تعذر استقبال GPS، تأكد من تفعيل إذن الموقع.";
+            }, { enableHighAccuracy: true, timeout: 10000 });
+        }
+
         function showCustomerRegisterScreen() {
             document.getElementById('loginMainForm').style.display = 'none';
             document.getElementById('customerRegisterScreen').style.display = 'block';
@@ -859,12 +963,17 @@
             const clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
             const uid = "cust_" + Date.now();
 
-            saveCustomerRecord(uid, name, email || (phoneInput+"@blackhorse.com"), password, fullPhone, address, village, clientCode);
+            saveCustomerRecord(uid, name, email || (phoneInput+"@blackhorse.com"), password, fullPhone, address, village, clientCode, tempRegCoords);
         }
 
-        function saveCustomerRecord(uid, name, email, pass, phone, address, village, clientCode) {
+        function saveCustomerRecord(uid, name, email, pass, phone, address, village, clientCode, locationObj = null) {
             cloudClients[name] = clientCode;
             db.ref('clients').set(cloudClients).catch(e => {});
+
+            if (locationObj) {
+                cloudClientsLocations[name] = locationObj;
+                db.ref('clientsLocations/' + name).set(locationObj).catch(e => {});
+            }
 
             const custData = {
                 uid: uid,
@@ -875,7 +984,8 @@
                 address: address,
                 village: village,
                 customerType: 'pending',
-                clientCode: clientCode
+                clientCode: clientCode,
+                location: locationObj
             };
 
             db.ref('portalCustomers/' + uid).set(custData).then(() => {
@@ -1172,7 +1282,8 @@
                 paid: paid,
                 zimam: zimam,
                 date: todayStr,
-                status: 'pending'
+                status: 'pending',
+                location: currentPortalCustomer.location || null
             };
 
             cloudPendingOrders.push(orderObj);
@@ -1250,7 +1361,7 @@
                     id: String(Date.now()), name: order.clientName, clientCode: order.clientCode || '',
                     cartons: order.totalUnits || 1, totalPrice: order.grandTotal, paid: order.paid || 0,
                     zimam: order.zimam || 0, notes: itemsSummaryStr, village: order.village || '',
-                    date: order.date, items: order.items || []
+                    date: order.date, items: order.items || [], location: order.location || null
                 });
                 db.ref('shops').set(Object.assign({}, cloudShops));
             } else {
@@ -1258,7 +1369,8 @@
                     id: String(Date.now()), invNo: Math.floor(1000 + Math.random() * 9000), date: order.date,
                     delegateCode: "portal_client", delegateName: "طلب معتمد من بوابة العميل (قطاعي)",
                     client: order.clientName, clientCode: order.clientCode || '', village: order.village || '',
-                    total: order.grandTotal, totalQty: order.totalUnits || 1, status: 'active', items: order.items || []
+                    total: order.grandTotal, totalQty: order.totalUnits || 1, status: 'active', items: order.items || [],
+                    clientLocation: order.location || null
                 });
                 db.ref('sales').set(Object.assign({}, cloudSales));
             }
@@ -1415,7 +1527,7 @@
 
             if (!hasItems) { alert("أدخل كمية لصنف واحد على الأقل!"); return null; }
 
-            // جلب الإحداثيات اللحظية بهدوء في الخلفية
+            // جلب الإحداثيات اللحظية للمندوب
             let activeLoc = await getCurrentAccurateLocation();
 
             let locObj = null;
@@ -1425,6 +1537,14 @@
                     lng: activeLoc.lng,
                     mapUrl: `https://maps.google.com/?q=${activeLoc.lat},${activeLoc.lng}`
                 };
+            }
+
+            // ربط موقع العميل المسجل إذا وجد أو حفظ موقع المندوب كموقع لمحل العميل
+            let clientLoc = cloudClientsLocations[client] || null;
+            if (!clientLoc && locObj) {
+                clientLoc = locObj;
+                cloudClientsLocations[client] = clientLoc;
+                db.ref('clientsLocations/' + client).set(clientLoc).catch(e => {});
             }
 
             if(cloudDelegates[targetDelCode]) {
@@ -1438,7 +1558,8 @@
                 delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
                 client: client, village: village, clientCode: clientCode,
                 total: grand, totalQty: totalRibbonsCount, status: 'active', items: itemsSoldList,
-                location: locObj
+                location: locObj,
+                clientLocation: clientLoc
             };
 
             cloudSales.push(salesRecord);
@@ -1542,11 +1663,16 @@
             let mapHtml = '';
             // يظهر الموقع في تفاصيل الفاتورة للمدير فقط
             if (isAdm) {
-                if (inv.location && inv.location.lat && inv.location.lng) {
-                    mapHtml = `<div style="background:#eff6ff; border:1px solid #bfdbfe; padding:8px; border-radius:6px; margin:8px 0; font-size:12px;"><b>📍 مكان تسجيل الفاتورة للمدير:</b> <a href="${inv.location.mapUrl || ('https://maps.google.com/?q=' + inv.location.lat + ',' + inv.location.lng)}" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:underline;">عرض موقع المندوب على الخريطة 🗺️</a></div>`;
-                } else {
-                    mapHtml = `<div style="background:#f8fafc; border:1px solid #e2e8f0; padding:6px; border-radius:6px; color:#94a3b8; font-size:11px; margin:6px 0;">📍 الموقع الجغرافي: لم يتم التقاط إحداثيات GPS لهذه الفاتورة.</div>`;
-                }
+                let cLoc = inv.clientLocation || cloudClientsLocations[inv.client] || null;
+                let clientMapBtn = (cLoc && cLoc.lat && cLoc.lng) ? `<a href="${cLoc.mapUrl || ('https://maps.google.com/?q=' + cLoc.lat + ',' + cLoc.lng)}" target="_blank" style="color:#16a34a; font-weight:bold; text-decoration:underline;">📍 فتح موقع محل العميل على الخريطة</a>` : '<span style="color:#64748b;">غير مسجل للعميل</span>';
+                let delegateMapBtn = (inv.location && inv.location.lat && inv.location.lng) ? `<a href="${inv.location.mapUrl || ('https://maps.google.com/?q=' + inv.location.lat + ',' + inv.location.lng)}" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:underline;">🚚 فتح موقع المندوب لحظة تسجيل الفاتورة</a>` : '<span style="color:#64748b;">لم يسجل المندوب إحداثيات</span>';
+
+                mapHtml = `
+                    <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:8px; border-radius:6px; margin:8px 0; font-size:11.5px; line-height:1.8;">
+                        <b>🗺️ مواقع GPS (للمدير فقط):</b><br>
+                        • ${clientMapBtn}<br>
+                        • ${delegateMapBtn}
+                    </div>`;
             }
 
             document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
@@ -2001,6 +2127,7 @@
                 updatePendingOrdersBadge();
                 renderAdminPendingOrdersTable();
                 renderDelegatesTrackingTable();
+                renderClientsMapTable();
             }
             updateDelegatesSelects();
         }
@@ -2019,7 +2146,7 @@
             if(tab === 'saved') renderSavedInvoices();
             if(tab === 'report') renderDailyReport();
             if(tab === 'carStock') renderCarStockTable();
-            if(tab === 'tracking') renderDelegatesTrackingTable();
+            if(tab === 'tracking') { renderDelegatesTrackingTable(); renderClientsMapTable(); }
             if(tab === 'menof') renderMenofTable();
             if(tab === 'shops') renderShopsTable();
             if(tab === 'lmInvoices') renderLmTable();
@@ -2069,6 +2196,7 @@
             currentDelegate = null;
             currentPortalCustomer = null;
             latestCoords = null;
+            tempRegCoords = null;
             document.getElementById('salesView').style.display = 'none';
             document.getElementById('loginView').style.display = 'block';
             document.getElementById('loginCode').value = '';
