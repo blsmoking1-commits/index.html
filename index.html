@@ -59,6 +59,11 @@
         .filter-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
         .client-history-box { background: #fef08a; padding: 8px; border-radius: 6px; font-size: 11px; margin-top: 6px; display: none; color: #713f12; }
 
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .stat-card { background: #fff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center; }
+        .stat-card .title { font-size: 10.5px; color: #64748b; margin-bottom: 2px; }
+        .stat-card .val { font-size: 13px; font-weight: bold; color: #0f172a; }
+
         .badge-notify { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 9px; margin-right: 4px; }
         .modal-bg { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
         .modal-content { background:#fff; padding:18px; border-radius:10px; width:90%; max-width:440px; max-height:85vh; overflow-y:auto; }
@@ -158,7 +163,7 @@
             <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة والجرد</div>
             <div id="tabTracking" class="tab-btn" onclick="switchTab('tracking')" style="display:none; background:#ecfdf5; color:#065f46;">📍 تتبع المناديب</div>
             <div id="tabRatios" class="tab-btn" onclick="switchTab('ratios')" style="background:#e0f2fe;">⚖️ النسب</div>
-            <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف (ليك)</div>
+            <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف (التحميل والذمم)</div>
             <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
             <div id="tabLmInvoices" class="tab-btn" onclick="switchTab('lmInvoices')" style="display:none; background:#fef3c7;">🚬 فواتير LM</div>
             <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات</div>
@@ -385,28 +390,52 @@
             </div>
         </div>
 
-        <!-- ط) التحميل من منوف (تعديل الذمم والتراكمي) -->
+        <!-- ط) التحميل من منوف (حساب الذمم وإجمالي الكراتين والإيداعات) -->
         <div id="sectionMenof" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل التحميل من منوف (الذمم تمثل فلوس ليك):</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل تحميلات منوف والذمم التراكمية (الذمم تمثل فلوس ليك):</h4>
             
-            <div id="menofZimamSummaryBox" style="background:#ecfdf5; border:1px solid #a7f3d0; padding:12px; border-radius:8px; margin-bottom:12px; font-size:13px; color:#065f46;">
-                <div><b>💰 صافي رصيد الذمم التراكمي (فلوس ليك):</b> <span id="menofNetZimamTotal" style="font-weight:bold; font-size:15px; color:#15803d;">0.00</span> ج.م</div>
-                <div style="font-size:11px; margin-top:4px; color:#047857;">📦 ما يعادل كراتين متبقية مستحقة: <b id="menofCartonsEquivalent">0 كرتونة و 0.00 ج.م</b></div>
+            <!-- كروت إجماليات منوف التراكمية والشهرية -->
+            <div class="stat-grid">
+                <div class="stat-card" style="border-color:#bae6fd; background:#f0f9ff;">
+                    <div class="title">📦 إجمالي عدد الكراتين المحملة:</div>
+                    <div class="val" style="color:#0284c7;"><span id="menofTotalCartonsCount">0</span> كرتونة</div>
+                </div>
+                <div class="stat-card" style="border-color:#bbf7d0; background:#f0fdf4;">
+                    <div class="title">💵 إجمالي مبالغ الإيداعات:</div>
+                    <div class="val" style="color:#16a34a;"><span id="menofTotalDepositsSum">0.00</span> ج.م</div>
+                </div>
+                <div class="stat-card" style="border-color:#fde68a; background:#fffbeb;">
+                    <div class="title">🛒 إجمالي قيمة البضاعة المستلمة:</div>
+                    <div class="val" style="color:#b45309;"><span id="menofTotalGoodsSum">0.00</span> ج.م</div>
+                </div>
+                <div class="stat-card" style="border-color:#a7f3d0; background:#ecfdf5;">
+                    <div class="title">💰 صافي الذمم التراكمي (فلوس ليك):</div>
+                    <div class="val" style="color:#15803d;"><span id="menofNetZimamTotal">0.00</span> ج.م</div>
+                </div>
+            </div>
+
+            <div id="menofZimamSummaryBox" style="background:#ecfdf5; border:1px solid #a7f3d0; padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; color:#065f46;">
+                <div>📦 <b>ما يعادل كراتين متبقية مستحقة ليك:</b> <span id="menofCartonsEquivalent" style="font-weight:bold;">0 كرتونة و 0.00 ج.م</span></div>
             </div>
 
             <div class="filter-box">
+                <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ تسجيل شحنة تحميل جديدة من منوف:</h5>
                 <input type="hidden" id="editMenofId" value="">
                 <div class="form-group"><label>تاريخ التحميل:</label><input type="date" id="menofDate"></div>
                 <div class="form-group"><label>عدد الكرتونات المحملة:</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات: <b id="menofTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
-                <div class="form-group"><label>قيمة الإيداع المالي:</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم لهذه الشحنة (قيمة الإيداع - سعر البضاعة): <b id="menofZimam">0.00</b> ج.م</div>
+                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات (سعر الكرتونة = 23,925 ج.م): <b id="menofTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
+                <div class="form-group"><label>قيمة الإيداع المالي المدفوع:</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم لهذه الشحنة (الإيداع - سعر البضاعة): <b id="menofZimam">0.00</b> ج.م</div>
                 <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل / تحديث شحنة منوف</button>
             </div>
-            <table class="report-table">
-                <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>إجمالي البضاعة</th><th>الإيداع</th><th>الذمم (ليك)</th><th>الإجراءات</th></tr></thead>
-                <tbody id="menofTableBody"></tbody>
-            </table>
+            
+            <h4 style="font-size:12.5px; margin: 10px 0 4px 0;">📋 سجل الشحنات بالتفصيل:</h4>
+            <div style="overflow-x:auto;">
+                <table class="report-table">
+                    <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>إجمالي البضاعة</th><th>الإيداع</th><th>الذمم (ليك)</th><th>الإجراءات</th></tr></thead>
+                    <tbody id="menofTableBody"></tbody>
+                </table>
+            </div>
         </div>
 
         <!-- ي) المحلات -->
@@ -624,10 +653,9 @@
             checkSosAlerts();
         });
 
-        // 1. نظام الـ GPS وتتبع مكان المندوب وSOS[span_1](start_span)[span_1](end_span)
+        // 1. نظام الـ GPS وتتبع مكان المندوب وSOS
         function startTrackingDelegateLocation() {
             if (!navigator.geolocation || !currentDelegate || currentDelegate.role !== 'delegate') return;
-            
             if (watchPositionId) navigator.geolocation.clearWatch(watchPositionId);
 
             watchPositionId = navigator.geolocation.watchPosition((pos) => {
@@ -755,7 +783,7 @@
             }
         }
 
-        // 2. تسجيل عميل جديد[span_2](start_span)[span_2](end_span)
+        // 2. تسجيل عميل جديد
         function showCustomerRegisterScreen() {
             document.getElementById('loginMainForm').style.display = 'none';
             document.getElementById('customerRegisterScreen').style.display = 'block';
@@ -809,7 +837,7 @@
             });
         }
 
-        // 3. نسيت كلمة السر[span_3](start_span)[span_3](end_span)
+        // 3. نسيت كلمة السر
         function openForgotPasswordModal() { document.getElementById('forgotPassModal').style.display = 'flex'; }
         function closeForgotPasswordModal() { document.getElementById('forgotPassModal').style.display = 'none'; }
 
@@ -828,7 +856,7 @@
             window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // 4. تسجيل الدخول[span_4](start_span)[span_4](end_span)
+        // 4. تسجيل الدخول
         function handleLogin() {
             const rawInput = document.getElementById('loginCode').value.trim();
             const codeLower = rawInput.toLowerCase();
@@ -903,7 +931,7 @@
             initAdminCarSetup();
         }
 
-        // 5. واجهة العميل المسجل[span_5](start_span)[span_5](end_span)
+        // 5. واجهة العميل المسجل
         function enterPortalCustomerDashboard() {
             document.getElementById('loginView').style.display = 'none';
             document.getElementById('salesView').style.display = 'block';
@@ -1216,7 +1244,7 @@
             });
         }
 
-        // 6. إنشاء فاتورة المندوب والخصم من السيارة[span_6](start_span)[span_6](end_span)
+        // 6. إنشاء فاتورة المندوب والخصم من السيارة
         function initSalesForm() {
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return;
             const today = new Date().toISOString().split('T')[0];
@@ -1382,7 +1410,7 @@
             window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent("فاتورة مبيعات بلاك هورس")}`, '_blank');
         }
 
-        // 7. الفواتير المحفوظة والتقارير[span_7](start_span)[span_7](end_span)
+        // 7. الفواتير المحفوظة والتقارير
         function cancelInvoice(id) {
             if(!confirm("⚠️ هل أنت متأكد من إلغاء هذه الفاتورة؟")) return;
             let targetInv = cloudSales.find(s => String(s.id) === String(id));
@@ -1487,7 +1515,7 @@
             }
         }
 
-        // 8. جرد السيارات والتحميل[span_8](start_span)[span_8](end_span)
+        // 8. جرد السيارات والتحميل
         function initAdminCarSetup() {
             const cont = document.getElementById('adminCarStockInputs');
             if(!cont) return;
@@ -1535,7 +1563,7 @@
             });
         }
 
-        // 9. لوحة المدير: العملاء والمستخدمين[span_9](start_span)[span_9](end_span)
+        // 9. لوحة المدير: العملاء والمستخدمين
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
@@ -1616,12 +1644,12 @@
             });
         }
 
-        // 10. حسابات منوف (تطبيق معادلة الذمم التراكمية الصحيحة)[span_10](start_span)[span_10](end_span)
+        // 10. حسابات منوف (تجميعة الكراتين والإيداعات ورصيد الذمم التراكمي المستحق)
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             const totalPrice = cartons * 23925;
-            // الذمم = الإيداع المسدد - إجمالي قيمة البضاعة
+            // الذمم = قيمة الإيداع - سعر البضاعة (الرصيد الفائض ليك)
             const zimam = deposit - totalPrice;
             
             document.getElementById('menofTotalPrice').innerText = totalPrice.toFixed(2);
@@ -1633,13 +1661,13 @@
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             const totalPrice = cartons * 23925;
-            const zimam = deposit - totalPrice; // الذمم = الإيداع - البضاعة
+            const zimam = deposit - totalPrice;
             const id = document.getElementById('editMenofId').value || String(Date.now());
 
             cloudMenofLoads = cloudMenofLoads.filter(x => String(x.id) !== String(id));
             cloudMenofLoads.push({ id, date, cartons, totalPrice, deposit, zimam });
             db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
-                alert("✅ تم حفظ شحنة منوف وتحديث رصيد الذمم بنجاح!");
+                alert("✅ تم حفظ شحنة منوف وتحديث الرصيد بنجاح!");
                 document.getElementById('editMenofId').value = '';
                 document.getElementById('menofCartons').value = '';
                 document.getElementById('menofDeposit').value = '';
@@ -1652,37 +1680,52 @@
             if(!tb) return;
             tb.innerHTML = '';
             
+            let totalCartons = 0;
+            let totalDeposits = 0;
+            let totalGoodsValue = 0;
             let netZimamTotal = 0;
+
             cloudMenofLoads.forEach(m => {
-                let currentZimam = (m.zimam !== undefined) ? m.zimam : (m.deposit - m.totalPrice);
+                let c = parseFloat(m.cartons) || 0;
+                let dep = parseFloat(m.deposit) || 0;
+                let tp = parseFloat(m.totalPrice) || (c * 23925);
+                let currentZimam = (m.zimam !== undefined) ? m.zimam : (dep - tp);
+
+                totalCartons += c;
+                totalDeposits += dep;
+                totalGoodsValue += tp;
                 netZimamTotal += currentZimam;
 
                 tb.innerHTML += `<tr>
                     <td>${m.date}</td>
-                    <td>${m.cartons}</td>
-                    <td>${m.totalPrice.toFixed(2)}</td>
-                    <td>${m.deposit.toFixed(2)}</td>
+                    <td><b>${c}</b></td>
+                    <td>${tp.toFixed(2)}</td>
+                    <td>${dep.toFixed(2)}</td>
                     <td style="color:${currentZimam >= 0 ? '#16a34a' : '#dc2626'}; font-weight:bold;">${currentZimam.toFixed(2)}</td>
                     <td><button class="btn btn-danger" style="padding:2px 4px; font-size:9px; width:auto;" onclick="deleteMenof('${m.id}')">حذف</button></td>
                 </tr>`;
             });
 
-            // حساب التراكمي وما يعادله ككراتين مستحقة
+            // تحديث بطاقات إجماليات منوف التراكمية
+            if(document.getElementById('menofTotalCartonsCount')) document.getElementById('menofTotalCartonsCount').innerText = totalCartons;
+            if(document.getElementById('menofTotalDepositsSum')) document.getElementById('menofTotalDepositsSum').innerText = totalDeposits.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if(document.getElementById('menofTotalGoodsSum')) document.getElementById('menofTotalGoodsSum').innerText = totalGoodsValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if(document.getElementById('menofNetZimamTotal')) document.getElementById('menofNetZimamTotal').innerText = netZimamTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            // حساب المعادل ككراتين مستحقة متبقية
             let totalCartonsEquiv = Math.floor(netZimamTotal / 23925);
             let remainingMoney = netZimamTotal % 23925;
 
-            const netElem = document.getElementById('menofNetZimamTotal');
             const equivElem = document.getElementById('menofCartonsEquivalent');
-            if(netElem) netElem.innerText = netZimamTotal.toFixed(2);
             if(equivElem) {
                 if(netZimamTotal >= 23925) {
-                    equivElem.innerHTML = `<span style="color:#15803d; font-weight:bold;">${totalCartonsEquiv} كرتونة</span> متبقية ليك + <span style="color:#0284c7;">${remainingMoney.toFixed(2)} ج.م</span> رصيد فائض`;
+                    equivElem.innerHTML = `<span style="color:#15803d; font-weight:bold;">${totalCartonsEquiv} كرتونة</span> متبقية ومستحقة ليك + <span style="color:#0284c7;">${remainingMoney.toFixed(2)} ج.م</span> رصيد إضافي`;
                 } else if(netZimamTotal > 0) {
-                    equivElem.innerHTML = `<span style="color:#15803d; font-weight:bold;">${netZimamTotal.toFixed(2)} ج.م</span> (أقل من كرتونة كاملة)`;
+                    equivElem.innerHTML = `<span style="color:#15803d; font-weight:bold;">${netZimamTotal.toFixed(2)} ج.م</span> (رصيد مالي فائض - أقل من كرتونة كاملة)`;
                 } else if(netZimamTotal === 0) {
                     equivElem.innerHTML = `<span style="color:#64748b;">الذمم مصفّرة بالكامل (0.00 ج.م)</span>`;
                 } else {
-                    equivElem.innerHTML = `<span style="color:#dc2626; font-weight:bold;">عليك فرق سداد: ${Math.abs(netZimamTotal).toFixed(2)} ج.م</span>`;
+                    equivElem.innerHTML = `<span style="color:#dc2626; font-weight:bold;">عليك فرق سداد مستحق: ${Math.abs(netZimamTotal).toFixed(2)} ج.م</span>`;
                 }
             }
         }
@@ -1693,7 +1736,7 @@
             db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => renderMenofTable());
         }
 
-        // 11. المحلات وفواتير LM وحساب النسب[span_11](start_span)[span_11](end_span)
+        // 11. المحلات وفواتير LM وحساب النسب
         function calcShopTotal() {
             const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
             const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
@@ -1844,7 +1887,7 @@
             resBox.innerHTML = `<b>📊 نتائج حساب النسب:</b><br>- كليوباترا: <b>${(target*rCleo/sumRatios).toFixed(2)}</b> كرتونة<br>- بوكس: <b>${(target*rBox/sumRatios).toFixed(2)}</b> كرتونة<br>- براون: <b>${(target*rBrown/sumRatios).toFixed(2)}</b> كرتونة<br>- سوبر: <b>${(target*rSuper/sumRatios).toFixed(2)}</b> كرتونة`;
         }
 
-        // 12. تبديل التبويبات وإدارة الجلسات[span_12](start_span)[span_12](end_span)
+        // 12. تبديل التبويبات وإدارة الجلسات
         function setupUserTabs() {
             if(currentPortalCustomer) return;
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
