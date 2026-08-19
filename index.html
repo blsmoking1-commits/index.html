@@ -616,6 +616,7 @@
         let currentPortalCustomer = null;
         let watchPositionId = null;
         let clientInputTimer = null;
+        let latestCoords = null;
 
         function cleanPhoneStr(p) {
             if(!p) return "";
@@ -657,11 +658,11 @@
         // 1. نظام الـ GPS وتتبع مكان المندوب وSOS
         function startTrackingDelegateLocation() {
             if (!navigator.geolocation || !currentDelegate || currentDelegate.role !== 'delegate') return;
-            if (watchPositionId) navigator.geolocation.clearWatch(watchPositionId);
-
-            watchPositionId = navigator.geolocation.watchPosition((pos) => {
+            
+            const updateLoc = (pos) => {
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
+                latestCoords = { lat, lng };
                 const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
                 
                 db.ref('locations/' + currentDelegate.code).update({
@@ -671,8 +672,16 @@
                     updatedAt: timeStr,
                     timestamp: Date.now()
                 });
-            }, (err) => {
-                console.log("GPS Location notice:", err.message);
+            };
+
+            navigator.geolocation.getCurrentPosition(updateLoc, (err) => {
+                console.log("GPS Initial notice:", err.message);
+            }, { enableHighAccuracy: true, timeout: 10000 });
+
+            if (watchPositionId) navigator.geolocation.clearWatch(watchPositionId);
+
+            watchPositionId = navigator.geolocation.watchPosition(updateLoc, (err) => {
+                console.log("GPS Location watch notice:", err.message);
             }, {
                 enableHighAccuracy: true,
                 maximumAge: 10000,
@@ -687,6 +696,7 @@
                 navigator.geolocation.getCurrentPosition((pos) => {
                     const lat = pos.coords.latitude;
                     const lng = pos.coords.longitude;
+                    latestCoords = { lat, lng };
                     const mapUrl = `https://maps.google.com/?q=${lat},${lng}`;
                     const timeStr = new Date().toLocaleTimeString('ar-EG');
 
@@ -765,9 +775,22 @@
                     hasRows = true;
                     let del = cloudDelegates[code];
                     let loc = cloudLocations[code];
+                    
+                    let lat = loc ? loc.lat : null;
+                    let lng = loc ? loc.lng : null;
                     let lastTime = loc ? (loc.updatedAt || 'اليوم') : 'غير متصل';
+
+                    if (!lat || !lng) {
+                        let lastDelInvoice = cloudSales.slice().reverse().find(s => s.delegateCode === code && s.location && s.location.lat);
+                        if (lastDelInvoice && lastDelInvoice.location) {
+                            lat = lastDelInvoice.location.lat;
+                            lng = lastDelInvoice.location.lng;
+                            lastTime = `آخر فاتورة (${lastDelInvoice.date})`;
+                        }
+                    }
+
                     let sosBadge = (loc && loc.sos) ? '<span style="color:#e11d48; font-weight:bold;">🚨 استغاثة SOS!</span>' : '<span style="color:#16a34a;">متصل وطبيعي</span>';
-                    let mapLink = (loc && loc.lat && loc.lng) ? `<a href="https://maps.google.com/?q=${loc.lat},${loc.lng}" target="_blank" class="btn btn-primary" style="padding:3px 8px; font-size:10px; text-decoration:none; display:inline-block; width:auto; margin:0;">🗺️ فتح الموقع</a>` : '<span style="color:#94a3b8; font-size:10px;">بانتظار GPS</span>';
+                    let mapLink = (lat && lng) ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" class="btn btn-primary" style="padding:3px 8px; font-size:10px; text-decoration:none; display:inline-block; width:auto; margin:0;">🗺️ فتح الموقع</a>` : '<span style="color:#94a3b8; font-size:10px;">بانتظار GPS</span>';
 
                     tbody.innerHTML += `
                         <tr>
@@ -1248,6 +1271,13 @@
         // 6. إنشاء فاتورة المندوب والخصم من السيارة
         function initSalesForm() {
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return;
+            
+            if (currentDelegate.role === 'delegate' && navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    latestCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                }, null, { enableHighAccuracy: true, timeout: 5000 });
+            }
+
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('invoiceDate');
             dateInput.value = today;
@@ -1368,12 +1398,22 @@
                 db.ref('delegates').set(cloudDelegates).catch(e => {});
             }
 
+            let locObj = null;
+            if (latestCoords && latestCoords.lat) {
+                locObj = {
+                    lat: latestCoords.lat,
+                    lng: latestCoords.lng,
+                    mapUrl: `https://maps.google.com/?q=${latestCoords.lat},${latestCoords.lng}`
+                };
+            }
+
             let recordId = String(Date.now());
             const salesRecord = {
                 id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
                 delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
                 client: client, village: village, clientCode: clientCode,
-                total: grand, totalQty: totalRibbonsCount, status: 'active', items: itemsSoldList
+                total: grand, totalQty: totalRibbonsCount, status: 'active', items: itemsSoldList,
+                location: locObj
             };
 
             cloudSales.push(salesRecord);
@@ -1471,7 +1511,11 @@
             const inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
             let itemsHtml = inv.items.map(it => `- ${it.name} | كمية: ${it.qty} (${it.unit||'رابطة'}) | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>');
-            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br><hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
+            let mapHtml = '';
+            if (inv.location && inv.location.lat && inv.location.lng) {
+                mapHtml = `<br><b>📍 موقع تسجيل الفاتورة:</b> <a href="${inv.location.mapUrl || ('https://maps.google.com/?q=' + inv.location.lat + ',' + inv.location.lng)}" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:underline;">فتح الموقع على الخريطة 🗺️</a><br>`;
+            }
+            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
             document.getElementById('invoiceModal').style.display = 'flex';
         }
 
@@ -1990,6 +2034,7 @@
             }
             currentDelegate = null;
             currentPortalCustomer = null;
+            latestCoords = null;
             document.getElementById('salesView').style.display = 'none';
             document.getElementById('loginView').style.display = 'block';
             document.getElementById('loginCode').value = '';
