@@ -2028,13 +2028,13 @@
                 db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم تغيير كلمة السر بنجاح!"));
             }
         }
-        // Function to send position to Firebase using the representative's code
+         Function to send position to Firebase using the representative's code
 function sendPositionToFirebase(position, repCode) {
  const lat = position.coords.latitude;
  const lon = position.coords.longitude;
  const timestamp = position.timestamp;
 
- // Use the dynamic repCode in the Firebase path
+  Use the dynamic repCode in the Firebase path
  set(ref(db, 'deliveries/' + repCode + '/liveLocation'), {
  latitude: lat,
  longitude: lon,
