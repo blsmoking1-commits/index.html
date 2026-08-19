@@ -978,7 +978,7 @@
             }
 
             let paid = isWholesale ? (parseFloat(document.getElementById('portalWholesalePaidInput')?.value) || 0) : 0;
-            let zimam = isWholesale ? (grandTotal - paid) : 0;
+            let zimam = isWholesale ? (totalunit×23925 - paid) : 0;
 
             let orderObj = {
                 id: String(Date.now()),
