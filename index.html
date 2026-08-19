@@ -248,6 +248,7 @@
         <div id="sectionPendingOrders" style="display: none;">
             <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
                 <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:</h4>
+                <p style="font-size:11px; color:#b45309; margin:0 0 10px 0;">عند الضغط على "موافقة واعتماد"، يتم تنزيل الفاتورة فوراً في مكانها الصحيح:</p>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
@@ -346,25 +347,41 @@
                 </div>
             </div>
             
-            <div class="summary-card" style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-bottom:12px; text-align:center;">
-                <h4 style="margin:0; color:#166534; font-size:13px;">إجمالي مبيعات الفترة المحددة</h4>
-                <div class="val" style="font-size:20px; font-weight:bold; color:#15803d; margin-top:4px;"><span id="repTotalAmount">0.00</span> ج.م</div>
-                <div style="font-size: 11px; color: #475569; margin-top: 2px;">عدد الفواتير النشطة: <b id="repInvoiceCount">0</b></div>
+            <!-- ملخص الإجماليات للمدير -->
+            <div class="stat-grid" style="margin-bottom:12px;">
+                <div class="stat-card" style="background:#f0fdf4; border-color:#bbf7d0;">
+                    <div class="title" style="color:#166534;">💰 إجمالي مبيعات الفترة:</div>
+                    <div class="val" style="color:#15803d; font-size:16px;"><span id="repTotalAmount">0.00</span> ج.م</div>
+                    <div style="font-size:10px; color:#475569; margin-top:2px;">عدد الفواتير: <b id="repInvoiceCount">0</b></div>
+                </div>
+                <div class="stat-card" style="background:#eff6ff; border-color:#bfdbfe;">
+                    <div class="title" style="color:#1e40af;">📦 إجمالي الكميات المباعة:</div>
+                    <div class="val" style="color:#2563eb; font-size:14px;"><span id="repTotalCartonsSum">0 كرتونة و 0 رابطة</span></div>
+                    <div style="font-size:10px; color:#475569; margin-top:2px;">إجمالي الروابط: <b id="repTotalRibbonsSum">0</b> رابطة</div>
+                </div>
             </div>
 
-            <h4 style="font-size: 12px; color: #1e293b; margin-bottom: 4px;">تفاصيل الفواتير:</h4>
+            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">📦 تفصيل الأصناف المباعة (بالكرتونة والرابطة):</h4>
+            <div style="overflow-x:auto;">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>الصنف</th>
+                            <th>كود الصنف</th>
+                            <th>المباع بالكرتونة والرابطة</th>
+                            <th>إجمالي الروابط</th>
+                            <th>ما يعادل كراتين</th>
+                        </tr>
+                    </thead>
+                    <tbody id="repProductsBody"></tbody>
+                </table>
+            </div>
+
+            <h4 style="font-size: 12px; color: #1e293b; margin-top: 15px; margin-bottom: 4px;">📋 تفاصيل الفواتير:</h4>
             <div style="overflow-x:auto;">
                 <table class="report-table">
                     <thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>القرية/المركز</th><th>المندوب</th><th>الإجمالي</th></tr></thead>
                     <tbody id="repInvoicesTableBody"></tbody>
-                </table>
-            </div>
-
-            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">إجمالي الأصناف المباعة:</h4>
-            <div style="overflow-x:auto;">
-                <table class="report-table">
-                    <thead><tr><th>الصنف</th><th>الكود</th><th>إجمالي الروابط</th><th>الكمية (كرتونة + روابط)</th></tr></thead>
-                    <tbody id="repProductsBody"></tbody>
                 </table>
             </div>
         </div>
@@ -913,7 +930,6 @@
             }, { enableHighAccuracy: true });
         }
 
-        // 2. تسجيل عميل جديد
         function captureCustomerGpsLocation() {
             if (!navigator.geolocation) {
                 alert("المتصفح لا يدعم خدمة الـ GPS");
@@ -995,7 +1011,6 @@
             });
         }
 
-        // 3. نسيت كلمة السر
         function openForgotPasswordModal() { document.getElementById('forgotPassModal').style.display = 'flex'; }
         function closeForgotPasswordModal() { document.getElementById('forgotPassModal').style.display = 'none'; }
 
@@ -1014,7 +1029,6 @@
             window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // 4. تسجيل الدخول
         function handleLogin() {
             const rawInput = document.getElementById('loginCode').value.trim();
             const codeLower = rawInput.toLowerCase();
@@ -1089,7 +1103,6 @@
             initAdminCarSetup();
         }
 
-        // 5. واجهة العميل المسجل
         function enterPortalCustomerDashboard() {
             document.getElementById('loginView').style.display = 'none';
             document.getElementById('salesView').style.display = 'block';
@@ -1404,7 +1417,6 @@
             });
         }
 
-        // 6. إنشاء فاتورة المندوب والخصم من السيارة
         function initSalesForm() {
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return;
             
@@ -1527,7 +1539,6 @@
 
             if (!hasItems) { alert("أدخل كمية لصنف واحد على الأقل!"); return null; }
 
-            // جلب الإحداثيات اللحظية للمندوب
             let activeLoc = await getCurrentAccurateLocation();
 
             let locObj = null;
@@ -1539,7 +1550,6 @@
                 };
             }
 
-            // ربط موقع العميل المسجل إذا وجد أو حفظ موقع المندوب كموقع لمحل العميل
             let clientLoc = cloudClientsLocations[client] || null;
             if (!clientLoc && locObj) {
                 clientLoc = locObj;
@@ -1603,7 +1613,6 @@
             window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent("فاتورة مبيعات بلاك هورس")}`, '_blank');
         }
 
-        // 7. الفواتير المحفوظة والتقارير
         function cancelInvoice(id) {
             if(!confirm("⚠️ هل أنت متأكد من إلغاء هذه الفاتورة؟")) return;
             let targetInv = cloudSales.find(s => String(s.id) === String(id));
@@ -1661,7 +1670,6 @@
             let itemsHtml = inv.items.map(it => `- ${it.name} | كمية: ${it.qty} (${it.unit||'رابطة'}) | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>');
             
             let mapHtml = '';
-            // يظهر الموقع في تفاصيل الفاتورة للمدير فقط
             if (isAdm) {
                 let cLoc = inv.clientLocation || cloudClientsLocations[inv.client] || null;
                 let clientMapBtn = (cLoc && cLoc.lat && cLoc.lng) ? `<a href="${cLoc.mapUrl || ('https://maps.google.com/?q=' + cLoc.lat + ',' + cLoc.lng)}" target="_blank" style="color:#16a34a; font-weight:bold; text-decoration:underline;">📍 فتح موقع محل العميل على الخريطة</a>` : '<span style="color:#64748b;">غير مسجل للعميل</span>';
@@ -1681,6 +1689,7 @@
 
         function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
 
+        // تقارير المبيعات مع تفصيل الكراتين والروابط للمدير
         function renderDailyReport() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
             const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
@@ -1688,7 +1697,8 @@
             const fromDate = document.getElementById('filterFromDate')?.value;
             const toDate = document.getElementById('filterToDate')?.value;
 
-            let total = 0, qMap = {};
+            let totalMoney = 0;
+            let qMap = {};
             products.forEach(p => qMap[p.code] = 0);
 
             let filtered = cloudSales.filter(s => {
@@ -1705,24 +1715,48 @@
             if(invTb) {
                 invTb.innerHTML = '';
                 filtered.forEach(s => {
-                    total += s.total;
-                    s.items.forEach(it => { if(qMap[it.code] !== undefined) qMap[it.code] += (it.unit === 'كرتونة' ? it.qty * 50 : it.qty); });
+                    totalMoney += s.total;
+                    s.items.forEach(it => { 
+                        if(qMap[it.code] !== undefined) {
+                            qMap[it.code] += (it.unit === 'كرتونة' ? it.qty * 50 : it.qty); 
+                        }
+                    });
                     invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td>${s.village || '-'}</td><td>${s.delegateName}</td><td><b>${s.total}</b> ج.م</td></tr>`;
                 });
             }
 
-            document.getElementById('repTotalAmount').innerText = total.toFixed(2);
+            document.getElementById('repTotalAmount').innerText = totalMoney.toFixed(2);
             document.getElementById('repInvoiceCount').innerText = filtered.length;
             
+            let totalAllRibbons = 0;
             const prodTb = document.getElementById('repProductsBody');
             if(prodTb) {
                 prodTb.innerHTML = '';
                 products.forEach(p => {
                     let totalRibbons = qMap[p.code] || 0;
+                    totalAllRibbons += totalRibbons;
                     let cartons = Math.floor(totalRibbons / 50);
                     let rem = totalRibbons % 50;
-                    prodTb.innerHTML += `<tr><td>${p.name}</td><td>${p.code}</td><td>${totalRibbons} رابطة</td><td><b>${cartons} كرتونة و ${rem} رابطة</b></td></tr>`;
+                    let floatCartons = (totalRibbons / 50).toFixed(2);
+                    
+                    prodTb.innerHTML += `
+                        <tr>
+                            <td><b>${p.name}</b></td>
+                            <td><small style="color:#64748b;">${p.code}</small></td>
+                            <td style="color:#15803d; font-weight:bold; font-size:12px;">${cartons} كرتونة و ${rem} رابطة</td>
+                            <td><b>${totalRibbons}</b> رابطة</td>
+                            <td style="color:#0284c7;"><b>${floatCartons}</b> كرتونة</td>
+                        </tr>`;
                 });
+            }
+
+            let overallCartons = Math.floor(totalAllRibbons / 50);
+            let overallRemRibbons = totalAllRibbons % 50;
+            if(document.getElementById('repTotalCartonsSum')) {
+                document.getElementById('repTotalCartonsSum').innerText = `${overallCartons} كرتونة و ${overallRemRibbons} رابطة`;
+            }
+            if(document.getElementById('repTotalRibbonsSum')) {
+                document.getElementById('repTotalRibbonsSum').innerText = totalAllRibbons;
             }
         }
 
