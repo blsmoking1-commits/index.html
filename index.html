@@ -7,6 +7,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <!-- مكتبة معالجة وتصدير واستيراد ملفات الإكسيل -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
         body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
@@ -347,7 +349,6 @@
                 </div>
             </div>
             
-            <!-- ملخص الإجماليات للمدير -->
             <div class="stat-grid" style="margin-bottom:12px;">
                 <div class="stat-card" style="background:#f0fdf4; border-color:#bbf7d0;">
                     <div class="title" style="color:#166534;">💰 إجمالي مبيعات الفترة:</div>
@@ -426,7 +427,7 @@
             </div>
         </div>
 
-        <!-- ط) التحميل من منوف (حساب الذمم وإجمالي الكراتين والإيداعات) -->
+        <!-- ط) التحميل من منوف -->
         <div id="sectionMenof" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل تحميلات منوف والذمم التراكمية (الذمم تمثل فلوس ليك):</h4>
             
@@ -516,7 +517,7 @@
             </table>
         </div>
 
-        <!-- ل) الإعدادات -->
+        <!-- ل) الإعدادات وإدارة العملاء بالكامل واستيراد/تصدير إكسيل -->
         <div id="sectionSettings" style="display: none;">
             <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px; margin-bottom:12px;">
                 <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر:</h4>
@@ -526,19 +527,43 @@
             </div>
 
             <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px;">
-                <h4 style="margin-top:0; font-size:14px; color:#b91c1c;">🛡️ إدارة واعتماد حسابات العملاء وتعيين الأكواد الثابتة:</h4>
+                
+                <!-- أدوات تصدير واستيراد الإكسيل -->
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
+                    <h4 style="margin:0 0 8px 0; color:#0f172a; font-size:13.5px;">📊 استيراد وتصدير بيانات العملاء (Excel):</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-success" style="flex:1; margin-top:0; font-size:12px;" onclick="exportClientsToExcel()">📥 تصدير العملاء لشيت Excel</button>
+                        <button class="btn btn-info" style="flex:1; margin-top:0; font-size:12px;" onclick="document.getElementById('excelFileInput').click()">📤 رفع عملاء من شيت Excel</button>
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="importClientsFromExcel(event)">
+                    </div>
+                    <div style="font-size:10px; color:#64748b; margin-top:6px;">
+                        💡 <b>تلميح لشيت الإكسيل:</b> يجب أن يتضمن الأعمدة بالأسماء: (اسم العميل أو المحل / الكود الثابت / التليفون / القرية / الفئة).
+                    </div>
+                </div>
+
+                <!-- جدول العملاء والتحكم بالأكواد والحذف -->
                 <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:10px; border-radius:6px; margin-bottom:12px;">
-                    <h5 style="margin:0 0 6px 0; color:#1e40af;">👑 قائمة العملاء:</h5>
+                    <h5 style="margin:0 0 6px 0; color:#1e40af; font-size:13px;">👑 قائمة العملاء المسجلين والتحكم بالأكواد الثابتة:</h5>
                     <div style="overflow-x:auto;">
                         <table class="report-table" style="background:#fff;">
-                            <thead><tr><th>اسم العميل</th><th>بيانات الدخول</th><th>الكود الثابت</th><th>الفئة الحالية</th><th>تحديد الفئة</th><th>كلمة السر</th><th>إجراء الاعتماد</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>اسم العميل</th>
+                                    <th>الكود الثابت</th>
+                                    <th>بيانات الاتصال</th>
+                                    <th>الفئة</th>
+                                    <th>كلمة السر</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
                             <tbody id="adminPortalCustomersBody"></tbody>
                         </table>
                     </div>
                 </div>
 
+                <!-- إضافة عميل مباشر -->
                 <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:6px; margin-bottom:12px;">
-                    <h5 style="margin:0 0 8px 0; color:#166534;">➕ إضافة عميل وتفعيله مباشرة من المدير:</h5>
+                    <h5 style="margin:0 0 8px 0; color:#166534;">➕ إضافة عميل وتفعيله مباشرة وتعيين كوده الثابت:</h5>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
                         <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="adminDirectName" placeholder="اسم المحل..."></div>
                         <div class="form-group"><label>الكود الثابت:</label><input type="text" id="adminDirectCode" placeholder="مثال: C-101"></div>
@@ -554,6 +579,7 @@
                     <button class="btn btn-success" onclick="adminDirectAddCustomer()">✅ حفظ وتفعيل حساب العميل فوراً</button>
                 </div>
 
+                <!-- إضافة حساب موظف -->
                 <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px;">
                     <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف:</h5>
                     <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: 103 أو store1"></div>
@@ -676,7 +702,15 @@
                 }
             } 
         });
-        db.ref('clients').on('value', (s) => { cloudClients = s.val() || {}; updateClientsDatalist(); updateReportClientsSelect(); renderClientsMapTable(); });
+        db.ref('clients').on('value', (s) => { 
+            cloudClients = s.val() || {}; 
+            updateClientsDatalist(); 
+            updateReportClientsSelect(); 
+            renderClientsMapTable(); 
+            if(currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin')) {
+                renderAdminPortalCustomersTable();
+            }
+        });
         db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; renderClientsMapTable(); });
         db.ref('menofLoads').on('value', (s) => { 
             cloudMenofLoads = s.val() ? Object.values(s.val()) : [];
@@ -1689,7 +1723,6 @@
 
         function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
 
-        // تقارير المبيعات مع تفصيل الكراتين والروابط للمدير
         function renderDailyReport() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
             const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
@@ -1760,7 +1793,6 @@
             }
         }
 
-        // 8. جرد السيارات والتحميل
         function initAdminCarSetup() {
             const cont = document.getElementById('adminCarStockInputs');
             if(!cont) return;
@@ -1808,71 +1840,234 @@
             });
         }
 
-        // 9. لوحة المدير: العملاء والمستخدمين
+        // 9. لوحة المدير: التحكم في العملاء (تعديل الأكواد - الحذف - التصدير والاستيراد)
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
             tbody.innerHTML = '';
-            let uids = Object.keys(portalCustomersDB);
-            if(uids.length === 0) { tbody.innerHTML = `<tr><td colspan="7">لا يوجد عملاء مسجلين حالياً.</td></tr>`; return; }
 
-            uids.forEach(uid => {
-                let c = portalCustomersDB[uid];
-                let typeBadge = c.customerType === 'wholesale' ? '<b style="color:#16a34a;">جملة</b>' : (c.customerType === 'retail' ? '<b style="color:#2563eb;">قطاعي</b>' : '<b style="color:#d97706;">قيد المراجعة</b>');
+            let allClientNames = new Set([...Object.keys(cloudClients)]);
+            for (let uid in portalCustomersDB) {
+                if(portalCustomersDB[uid].name) allClientNames.add(portalCustomersDB[uid].name);
+            }
+
+            if(allClientNames.size === 0) { tbody.innerHTML = `<tr><td colspan="6">لا يوجد عملاء مسجلين حالياً.</td></tr>`; return; }
+
+            allClientNames.forEach(clientName => {
+                let foundUid = Object.keys(portalCustomersDB).find(u => portalCustomersDB[u].name === clientName);
+                let cust = foundUid ? portalCustomersDB[foundUid] : null;
+                let safeKey = foundUid || ("c_" + encodeURIComponent(clientName).replace(/[^a-zA-Z0-9]/g, '_'));
+                let clientCode = (cust && cust.clientCode) ? cust.clientCode : (cloudClients[clientName] || '');
+                let phoneDisplay = cust ? (cust.phone || '-') : '-';
+                let currentType = cust ? cust.customerType : 'retail';
+                let currentPass = cust ? (cust.pass || '123456') : '123456';
+
                 tbody.innerHTML += `
                     <tr>
-                        <td><b>${c.name}</b></td>
-                        <td style="font-size:10px;">${c.phone || '-'}<br>${c.email || '-'}</td>
-                        <td><input type="text" id="adm_code_${uid}" value="${c.clientCode || ''}" style="width:75px; padding:3px; text-align:center; font-weight:bold;"></td>
-                        <td>${typeBadge}</td>
+                        <td><input type="text" id="adm_name_${safeKey}" value="${clientName}" style="width:110px; padding:3px; font-size:11px; font-weight:bold;"></td>
+                        <td><input type="text" id="adm_code_${safeKey}" value="${clientCode}" style="width:80px; padding:3px; text-align:center; font-weight:bold; color:#2563eb;"></td>
+                        <td style="font-size:10px;">${phoneDisplay}</td>
                         <td>
-                            <select id="adm_type_${uid}" style="font-size:10px; padding:3px;">
-                                <option value="retail" ${c.customerType==='retail'?'selected':''}>قطاعي</option>
-                                <option value="wholesale" ${c.customerType==='wholesale'?'selected':''}>جملة</option>
+                            <select id="adm_type_${safeKey}" style="font-size:10px; padding:3px;">
+                                <option value="retail" ${currentType==='retail'?'selected':''}>قطاعي</option>
+                                <option value="wholesale" ${currentType==='wholesale'?'selected':''}>جملة</option>
+                                <option value="pending" ${currentType==='pending'?'selected':''}>قيد المراجعة</option>
                             </select>
                         </td>
-                        <td><input type="text" id="adm_pass_${uid}" value="${c.pass || ''}" style="padding:3px; font-size:10px; width:75px; text-align:center;"></td>
-                        <td><button class="btn btn-success" style="padding:4px 8px; font-size:10px; margin:0;" onclick="adminSaveFullCustomerApproval('${uid}')">💾 اعتماد</button></td>
+                        <td><input type="text" id="adm_pass_${safeKey}" value="${currentPass}" style="padding:3px; font-size:10px; width:70px; text-align:center;"></td>
+                        <td>
+                            <button class="btn btn-success" style="padding:3px 6px; font-size:10px; margin:0 0 3px 0; width:auto;" onclick="adminSaveFullCustomerApproval('${safeKey}', '${encodeURIComponent(clientName)}', '${foundUid || ''}')">💾 حفظ</button>
+                            <button class="btn btn-danger" style="padding:3px 6px; font-size:10px; margin:0; width:auto;" onclick="adminDeleteCustomer('${encodeURIComponent(clientName)}', '${foundUid || ''}')">🗑️ حذف</button>
+                        </td>
                     </tr>`;
             });
         }
 
-        function adminSaveFullCustomerApproval(uid) {
-            let newCode = document.getElementById(`adm_code_${uid}`).value.trim();
-            let newType = document.getElementById(`adm_type_${uid}`).value;
-            let newPass = document.getElementById(`adm_pass_${uid}`).value.trim();
-            let cust = portalCustomersDB[uid];
-            if(!cust || !newCode || !newPass) return;
+        function adminSaveFullCustomerApproval(safeKey, rawOldName, uid) {
+            const oldName = decodeURIComponent(rawOldName);
+            const newName = document.getElementById(`adm_name_${safeKey}`).value.trim();
+            const newCode = document.getElementById(`adm_code_${safeKey}`).value.trim();
+            const newType = document.getElementById(`adm_type_${safeKey}`).value;
+            const newPass = document.getElementById(`adm_pass_${safeKey}`).value.trim();
 
-            cust.clientCode = newCode;
-            cust.customerType = newType;
-            cust.pass = newPass;
+            if(!newName || !newCode) {
+                alert("❌ يرجى إدخال اسم العميل والكود الثابت.");
+                return;
+            }
 
-            cloudClients[cust.name] = newCode;
+            if(oldName !== newName) {
+                delete cloudClients[oldName];
+                if(cloudClientsLocations[oldName]) {
+                    cloudClientsLocations[newName] = cloudClientsLocations[oldName];
+                    delete cloudClientsLocations[oldName];
+                    db.ref('clientsLocations/' + oldName).remove();
+                    db.ref('clientsLocations/' + newName).set(cloudClientsLocations[newName]);
+                }
+            }
+
+            cloudClients[newName] = newCode;
+
+            let actualUid = uid || ("cust_" + Date.now());
+            let existingCust = portalCustomersDB[actualUid] || {};
+
+            let updatedCustData = {
+                ...existingCust,
+                uid: actualUid,
+                name: newName,
+                clientCode: newCode,
+                customerType: newType,
+                pass: newPass,
+                phone: existingCust.phone || '',
+                address: existingCust.address || '',
+                village: existingCust.village || ''
+            };
+
             db.ref('clients').set(cloudClients);
-            db.ref('portalCustomers/' + uid).set(cust).then(() => {
-                alert(`✅ تم اعتماد حساب (${cust.name}) بنجاح!`);
+            db.ref('portalCustomers/' + actualUid).set(updatedCustData).then(() => {
+                alert(`✅ تم حفظ وتحديث بيانات وكود العميل (${newName}) بنجاح!`);
+                updateClientsDatalist();
             });
+        }
+
+        function adminDeleteCustomer(rawClientName, uid) {
+            const clientName = decodeURIComponent(rawClientName);
+            if(!confirm(`⚠️ هل أنت متأكد من حذف العميل (${clientName}) نهائياً من قاعدة البيانات؟`)) return;
+
+            delete cloudClients[clientName];
+            delete cloudClientsLocations[clientName];
+            db.ref('clients/' + clientName).remove();
+            db.ref('clientsLocations/' + clientName).remove();
+
+            if(uid && portalCustomersDB[uid]) {
+                delete portalCustomersDB[uid];
+                db.ref('portalCustomers/' + uid).remove();
+            }
+
+            alert(`✅ تم حذف العميل (${clientName}) بنجاح!`);
+            updateClientsDatalist();
+            renderAdminPortalCustomersTable();
+        }
+
+        function exportClientsToExcel() {
+            let exportData = [];
+            let allClientNames = new Set([...Object.keys(cloudClients)]);
+            for (let uid in portalCustomersDB) {
+                if(portalCustomersDB[uid].name) allClientNames.add(portalCustomersDB[uid].name);
+            }
+
+            allClientNames.forEach(name => {
+                let foundUid = Object.keys(portalCustomersDB).find(u => portalCustomersDB[u].name === name);
+                let cust = foundUid ? portalCustomersDB[foundUid] : null;
+                exportData.push({
+                    "اسم المحل / العميل": name,
+                    "الكود الثابت": (cust && cust.clientCode) ? cust.clientCode : (cloudClients[name] || ''),
+                    "رقم التليفون": cust ? (cust.phone || '') : '',
+                    "القرية / المركز": cust ? (cust.village || cust.address || '') : '',
+                    "الفئة": cust ? (cust.customerType === 'wholesale' ? 'جملة' : (cust.customerType === 'retail' ? 'قطاعي' : 'جديد')) : 'قطاعي',
+                    "كلمة السر": cust ? (cust.pass || '123456') : '123456'
+                });
+            });
+
+            if(exportData.length === 0) {
+                alert("لا توجد بيانات عملاء لتصديرها.");
+                return;
+            }
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "العملاء");
+            XLSX.writeFile(workbook, `عملاء_شركة_بلاك_هورس_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        function importClientsFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    if(!jsonData || jsonData.length === 0) {
+                        alert("❌ الملف المرفوع فارغ أو تنسيقه غير صالح.");
+                        return;
+                    }
+
+                    let addedCount = 0;
+                    jsonData.forEach((row, idx) => {
+                        let name = row["اسم المحل / العميل"] || row["اسم العميل"] || row["الاسم"] || row["Name"] || row["name"];
+                        if(name) {
+                            name = String(name).trim();
+                            let code = row["الكود الثابت"] || row["الكود"] || row["كود"] || row["Code"] || row["code"] || ("C-" + (1000 + idx));
+                            let phone = row["رقم التليفون"] || row["الموبايل"] || row["Phone"] || "";
+                            let village = row["القرية / المركز"] || row["القرية"] || row["العنوان"] || "";
+                            let rawType = String(row["الفئة"] || row["نوع الفئة"] || "قطاعي").trim();
+                            let pass = String(row["كلمة السر"] || row["الباسورد"] || "123456").trim();
+
+                            let type = (rawType.includes('جملة') || rawType === 'wholesale') ? 'wholesale' : 'retail';
+
+                            cloudClients[name] = String(code).trim();
+                            let uid = "cust_imp_" + Date.now() + "_" + idx;
+                            let fullPhone = phone ? ("+20" + String(phone).replace(/\D/g, '').replace(/^20/, '').replace(/^0+/, '')) : "";
+
+                            portalCustomersDB[uid] = {
+                                uid: uid,
+                                name: name,
+                                email: (phone ? phone : uid) + "@blackhorse.com",
+                                pass: pass,
+                                phone: fullPhone,
+                                address: village,
+                                village: village,
+                                customerType: type,
+                                clientCode: String(code).trim()
+                            };
+                            addedCount++;
+                        }
+                    });
+
+                    db.ref('clients').set(cloudClients);
+                    db.ref('portalCustomers').set(portalCustomersDB).then(() => {
+                        alert(`🎉 تم استيراد واعتماد (${addedCount}) عميل بنجاح وربطهم بالأكواد الثابتة!`);
+                        updateClientsDatalist();
+                        renderAdminPortalCustomersTable();
+                    });
+
+                } catch(err) {
+                    alert("❌ حدث خطأ أثناء قراءة ملف الإكسيل: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            e.target.value = '';
         }
 
         function adminDirectAddCustomer() {
             let name = document.getElementById('adminDirectName').value.trim();
             let code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
             let phone = document.getElementById('adminDirectPhone').value.trim();
-            let pass = document.getElementById('adminDirectPass').value.trim();
+            let pass = document.getElementById('adminDirectPass').value.trim() || "123456";
             let village = document.getElementById('adminDirectVillage').value.trim();
             let type = document.getElementById('adminDirectType').value;
 
-            if(!name || !pass) return;
+            if(!name) { alert("❌ أدخل اسم المحل أو العميل."); return; }
 
             let uid = "cust_" + Date.now();
             let fullPhone = phone ? ("+20" + phone.replace(/^0+/, '')) : "";
             let custData = { uid, name, email: phone ? (phone + "@blackhorse.com") : (name + "@blackhorse.com"), pass, phone: fullPhone, address: village, village, customerType: type, clientCode: code };
 
             cloudClients[name] = code;
+            portalCustomersDB[uid] = custData;
             db.ref('clients').set(cloudClients);
             db.ref('portalCustomers/' + uid).set(custData).then(() => {
-                alert(`🎉 تم إضافة وتفعيل حساب (${name}) بنجاح!`);
+                alert(`🎉 تم إضافة وتفعيل حساب (${name}) بكود ثابت [${code}] بنجاح!`);
+                document.getElementById('adminDirectName').value = '';
+                document.getElementById('adminDirectCode').value = '';
+                document.getElementById('adminDirectPhone').value = '';
+                document.getElementById('adminDirectPass').value = '';
+                document.getElementById('adminDirectVillage').value = '';
+                updateClientsDatalist();
             });
         }
 
@@ -1889,7 +2084,7 @@
             });
         }
 
-        // 10. حسابات منوف (تجميعة الكراتين والإيداعات ورصيد الذمم التراكمي المستحق)
+        // 10. حسابات منوف
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
