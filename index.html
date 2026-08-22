@@ -160,12 +160,12 @@
         <!-- أزرار التبويبات -->
         <div class="tab-menu" id="tabMenuContainer">
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
+            <div id="tabClientsManage" class="tab-btn" onclick="switchTab('clientsManage')" style="display:none; background:#ecfdf5; color:#065f46;">👥 إدارة العملاء</div>
             <div id="tabPendingOrders" class="tab-btn" onclick="switchTab('pendingOrders')" style="display:none; background:#fef3c7; color:#92400e;">🔔 طلبات العملاء <span id="badgePendingCount" class="badge-notify" style="display:none;">0</span></div>
             <div id="tabClientOrderOnly" class="tab-btn" onclick="switchTab('clientOrderOnly')" style="display:none; background:#e0f2fe; color:#0369a1;">📦 طلب فاتورة</div>
             <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
             <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
             <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة والجرد</div>
-            <div id="tabClientsManage" class="tab-btn" onclick="switchTab('clientsManage')" style="display:none; background:#ecfdf5; color:#065f46;">👥 إدارة العملاء</div>
             <div id="tabTracking" class="tab-btn" onclick="switchTab('tracking')" style="display:none; background:#ecfdf5; color:#065f46;">📍 تتبع المناديب والمحلات</div>
             <div id="tabRatios" class="tab-btn" onclick="switchTab('ratios')" style="background:#e0f2fe;">⚖️ النسب</div>
             <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف (التحميل والذمم)</div>
@@ -208,7 +208,7 @@
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
-        <!-- ب) تبويب إدارة العملاء الجديد والمستقل للمدير -->
+        <!-- ب) تبويب إدارة العملاء (مستقل) -->
         <div id="sectionClientsManage" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">👥 لوحة إدارة بيانات العملاء والأكواد الثابتة:</h4>
 
@@ -1766,7 +1766,7 @@
             });
         }
 
-        // 9. لوحة إدارة العملاء (تبويب مستقل)
+        // 9. لوحة إدارة العملاء
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
@@ -2251,7 +2251,7 @@
             resBox.innerHTML = `<b>📊 نتائج حساب النسب:</b><br>- كليوباترا: <b>${(target*rCleo/sumRatios).toFixed(2)}</b> كرتونة<br>- بوكس: <b>${(target*rBox/sumRatios).toFixed(2)}</b> كرتونة<br>- براون: <b>${(target*rBrown/sumRatios).toFixed(2)}</b> كرتونة<br>- سوبر: <b>${(target*rSuper/sumRatios).toFixed(2)}</b> كرتونة`;
         }
 
-        // 12. تبديل التبويبات
+        // 12. تبديل التبويبات بعد تصحيح أسماء الـ IDs
         function setupUserTabs() {
             if(currentPortalCustomer) return;
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
@@ -2285,25 +2285,46 @@
             updateDelegatesSelects();
         }
 
-        function switchTab(tab) {
-            const tabs = ['invoice', 'pendingOrders', 'clientOrderOnly', 'saved', 'report', 'carStock', 'clientsManage', 'tracking', 'ratios', 'menof', 'shops', 'lmInvoices', 'settings'];
-            tabs.forEach(t => {
-                let btn = document.getElementById(t === 'invoice' ? 'tabNewInvoice' : (t === 'pendingOrders' ? 'tabPendingOrders' : (t === 'clientOrderOnly' ? 'tabClientOrderOnly' : (t === 'saved' ? 'tabSavedInvoices' : (t === 'report' ? 'tabDailyReport' : 'tab' + t.charAt(0).toUpperCase() + t.slice(1))))));
-                let sec = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
-                if(btn && sec) {
-                    if(t === tab) { btn.classList.add('active'); sec.style.display = 'block'; }
-                    else { btn.classList.remove('active'); sec.style.display = 'none'; }
-                }
-            });
-            if(tab === 'pendingOrders') renderAdminPendingOrdersTable();
-            if(tab === 'clientsManage' && currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin')) renderAdminPortalCustomersTable();
-            if(tab === 'saved') renderSavedInvoices();
-            if(tab === 'report') renderDailyReport();
-            if(tab === 'carStock') { initAdminCarSetup(); renderCarStockTable(); }
-            if(tab === 'tracking') { renderDelegatesTrackingTable(); renderClientsMapTable(); }
-            if(tab === 'menof') renderMenofTable();
-            if(tab === 'shops') renderShopsTable();
-            if(tab === 'lmInvoices') { initLmFormInputs(); renderLmTable(); }
+        function switchTab(tabKey) {
+            const tabsMap = {
+                'invoice': { btn: 'tabNewInvoice', sec: 'sectionInvoice' },
+                'clientsManage': { btn: 'tabClientsManage', sec: 'sectionClientsManage' },
+                'pendingOrders': { btn: 'tabPendingOrders', sec: 'sectionPendingOrders' },
+                'clientOrderOnly': { btn: 'tabClientOrderOnly', sec: 'sectionClientOrderOnly' },
+                'saved': { btn: 'tabSavedInvoices', sec: 'sectionSaved' },
+                'report': { btn: 'tabDailyReport', sec: 'sectionReport' },
+                'carStock': { btn: 'tabCarStock', sec: 'sectionCarStock' },
+                'tracking': { btn: 'tabTracking', sec: 'sectionTracking' },
+                'ratios': { btn: 'tabRatios', sec: 'sectionRatios' },
+                'menof': { btn: 'tabMenof', sec: 'sectionMenof' },
+                'shops': { btn: 'tabShops', sec: 'sectionShops' },
+                'lmInvoices': { btn: 'tabLmInvoices', sec: 'sectionLmInvoices' },
+                'settings': { btn: 'tabSettings', sec: 'sectionSettings' }
+            };
+
+            for(let k in tabsMap) {
+                let btnElem = document.getElementById(tabsMap[k].btn);
+                let secElem = document.getElementById(tabsMap[k].sec);
+                if(btnElem) btnElem.classList.remove('active');
+                if(secElem) secElem.style.display = 'none';
+            }
+
+            if(tabsMap[tabKey]) {
+                let targetBtn = document.getElementById(tabsMap[tabKey].btn);
+                let targetSec = document.getElementById(tabsMap[tabKey].sec);
+                if(targetBtn) targetBtn.classList.add('active');
+                if(targetSec) targetSec.style.display = 'block';
+            }
+
+            if(tabKey === 'clientsManage') renderAdminPortalCustomersTable();
+            if(tabKey === 'pendingOrders') renderAdminPendingOrdersTable();
+            if(tabKey === 'saved') renderSavedInvoices();
+            if(tabKey === 'report') renderDailyReport();
+            if(tabKey === 'carStock') { initAdminCarSetup(); renderCarStockTable(); }
+            if(tabKey === 'tracking') { renderDelegatesTrackingTable(); renderClientsMapTable(); }
+            if(tabKey === 'menof') renderMenofTable();
+            if(tabKey === 'shops') renderShopsTable();
+            if(tabKey === 'lmInvoices') { initLmFormInputs(); renderLmTable(); }
         }
 
         function updateDelegatesSelects() {
