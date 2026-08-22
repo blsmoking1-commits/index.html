@@ -77,7 +77,7 @@
 
     <div id="sosAlertBanner"></div>
 
-    <!-- 1. شاشة تسجيل الدخول -->
+    <!-- 1. تسجيل الدخول -->
     <div id="loginView" class="card">
         <div class="logo-box">
             <h1>BLACK HORSE[span_0](start_span)[span_0](end_span)</h1>
@@ -213,7 +213,7 @@
         <div id="sectionClientsManage" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">👥 لوحة إدارة بيانات العملاء والأكواد الثابتة:[span_37](start_span)[span_37](end_span)</h4>
 
-            <!-- أدوات تصدير واستيراد الإكسيل -->
+            <!-- استيراد وتصدير الإكسيل -->
             <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
                 <h5 style="margin:0 0 8px 0; color:#0f172a; font-size:13px;">📊 استيراد وتصدير شيت Excel:[span_38](start_span)[span_38](end_span)</h5>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -221,12 +221,9 @@
                     <button class="btn btn-info" style="flex:1; margin-top:0; font-size:12px;" onclick="document.getElementById('excelFileInput').click()">📤 رفع عملاء من شيت Excel[span_40](start_span)[span_40](end_span)</button>
                     <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="importClientsFromExcel(event)">
                 </div>
-                <div style="font-size:10.5px; color:#475569; margin-top:6px;">
-                    💡 <b>ملاحظة:</b> عند رفع شيت جديد، سيسألك النظام إذا كنت ترغب بمسح القديم بالكامل واعتماد الجديد فقط.
-                </div>
             </div>
 
-            <!-- إضافة عميل جديد مباشرة -->
+            <!-- إضافة عميل جديد -->
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:6px; margin-bottom:12px;">
                 <h5 style="margin:0 0 8px 0; color:#166534; font-size:13px;">➕ إضافة عميل جديد وتعيين كوده الثابت:[span_41](start_span)[span_41](end_span)</h5>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
@@ -244,13 +241,13 @@
                 <button class="btn btn-success" onclick="adminDirectAddCustomer()">✅ حفظ وتفعيل حساب العميل فوراً[span_48](start_span)[span_48](end_span)</button>
             </div>
 
-            <!-- شريط الحذف الجماعي -->
+            <!-- تحكم متعدد -->
             <div class="bulk-actions-bar">
                 <span style="font-size:12px; font-weight:bold; color:#9f1239; flex:1;">🗑️ التحكم المتعدد بالعملاء:</span>
                 <button class="btn btn-danger" style="margin:0; width:auto; padding:5px 12px; font-size:11px;" onclick="deleteSelectedClients()">مسح العملاء المحددين معاً</button>
             </div>
 
-            <!-- جدول العملاء المسجلين -->
+            <!-- جدول العملاء -->
             <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:10px; border-radius:6px; margin-bottom:12px;">
                 <h5 style="margin:0 0 6px 0; color:#1e40af; font-size:13px;">👑 قائمة العملاء المسجلين:</h5>
                 <div style="overflow-x:auto;">
@@ -272,7 +269,7 @@
             </div>
         </div>
 
-        <!-- ج) تتبع المناديب والمحلات للمدير -->
+        <!-- ج) تتبع المناديب والمحلات -->
         <div id="sectionTracking" style="display: none;">
             <div class="filter-box" style="background:#ecfdf5; border-color:#a7f3d0; margin-bottom:12px;">
                 <h4 style="margin:0 0 6px 0; color:#065f46;">📍 مواقع المناديب الحالية (Live Tracking للمدير):[span_55](start_span)[span_55](end_span)</h4>
@@ -310,15 +307,14 @@
             </div>
         </div>
 
-        <!-- د) مراجعة واعتماد طلبات العملاء -->
+        <!-- د) طلبات العملاء المعلقة -->
         <div id="sectionPendingOrders" style="display: none;">
             <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
                 <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:[span_66](start_span)[span_66](end_span)</h4>
-                <p style="font-size:11px; color:#b45309; margin:0 0 10px 0;">عند الضغط على "موافقة واعتماد"، يتم تنزيل الفاتورة فوراً في مكانها الصحيح:[span_67](start_span)[span_67](end_span)</p>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
-                            <tr><th>التاريخ[span_68](start_span)[span_68](end_span)</th><th>اسم العميل[span_69](start_span)[span_69](end_span)</th><th>النوع[span_70](start_span)[span_70](end_span)</th><th>الأصناف المطلوبة[span_71](start_span)[span_71](end_span)</th><th>الإجمالي[span_72](start_span)[span_72](end_span)</th><th>المديونية[span_73](start_span)[span_73](end_span)</th><th>الإجراءات[span_74](start_span)[span_74](end_span)</th></tr>
+                            <tr><th>التاريخ[span_67](start_span)[span_67](end_span)</th><th>اسم العميل[span_68](start_span)[span_68](end_span)</th><th>النوع[span_69](start_span)[span_69](end_span)</th><th>الأصناف المطلوبة[span_70](start_span)[span_70](end_span)</th><th>الإجمالي[span_71](start_span)[span_71](end_span)</th><th>المديونية[span_72](start_span)[span_72](end_span)</th><th>الإجراءات[span_73](start_span)[span_73](end_span)</th></tr>
                         </thead>
                         <tbody id="adminPendingOrdersTableBody"></tbody>
                     </table>
@@ -326,64 +322,64 @@
             </div>
         </div>
 
-        <!-- هـ) واجهة العميل المسجل -->
+        <!-- هـ) لوحة طلبات العميل -->
         <div id="sectionClientOrderOnly" style="display: none;">
             <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
-                <h4 style="margin-top:0; color:#166534;" id="portalClientHeaderTitle">🏪 لوحة طلبات العميل[span_75](start_span)[span_75](end_span)</h4>
+                <h4 style="margin-top:0; color:#166534;" id="portalClientHeaderTitle">🏪 لوحة طلبات العميل[span_74](start_span)[span_74](end_span)</h4>
                 <div id="clientApprovalBanner" style="display:none; padding:8px; border-radius:6px; margin-bottom:10px; font-weight:bold; font-size:12px;"></div>
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
-                    <div><label style="font-size:11px; font-weight:bold;">اسم المحل:[span_76](start_span)[span_76](end_span)</label><input type="text" id="viewClientName" class="readonly-input" readonly></div>
-                    <div><label style="font-size:11px; font-weight:bold;">كود المحل الثابت:[span_77](start_span)[span_77](end_span)</label><input type="text" id="viewClientCode" class="readonly-input" readonly style="color:#2563eb; font-weight:bold;"></div>
+                    <div><label style="font-size:11px; font-weight:bold;">اسم المحل:[span_75](start_span)[span_75](end_span)</label><input type="text" id="viewClientName" class="readonly-input" readonly></div>
+                    <div><label style="font-size:11px; font-weight:bold;">كود المحل الثابت:[span_76](start_span)[span_76](end_span)</label><input type="text" id="viewClientCode" class="readonly-input" readonly style="color:#2563eb; font-weight:bold;"></div>
                 </div>
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
-                    <div><label style="font-size:11px; font-weight:bold;">القرية / المركز:[span_78](start_span)[span_78](end_span)</label><input type="text" id="viewClientVillage" class="readonly-input" readonly></div>
-                    <div><label style="font-size:11px; font-weight:bold;">نوع الحساب المعتمد:[span_79](start_span)[span_79](end_span)</label><input type="text" id="viewClientType" class="readonly-input" readonly style="color:#16a34a; font-weight:bold;"></div>
+                    <div><label style="font-size:11px; font-weight:bold;">القرية / المركز:[span_77](start_span)[span_77](end_span)</label><input type="text" id="viewClientVillage" class="readonly-input" readonly></div>
+                    <div><label style="font-size:11px; font-weight:bold;">نوع الحساب المعتمد:[span_78](start_span)[span_78](end_span)</label><input type="text" id="viewClientType" class="readonly-input" readonly style="color:#16a34a; font-weight:bold;"></div>
                 </div>
 
                 <div id="portalProductsContainer" style="margin-top:10px;"></div>
                 <div id="portalTotalsContainer" style="margin-top:10px;"></div>
-                <button id="btnSubmitPortalOrder" class="btn btn-whatsapp" onclick="submitPortalClientOrder()" style="margin-top:10px;">⚡ إرسال طلب الفاتورة للمدير للموافقة عليها[span_80](start_span)[span_80](end_span)</button>
+                <button id="btnSubmitPortalOrder" class="btn btn-whatsapp" onclick="submitPortalClientOrder()" style="margin-top:10px;">⚡ إرسال طلب الفاتورة للمدير للموافقة عليها[span_79](start_span)[span_79](end_span)</button>
             </div>
 
             <div class="filter-box" style="background:#fff; border:1px solid #cbd5e1; margin-top:10px;">
-                <h4 style="margin-top:0; color:#1e293b; font-size:13px;">📋 سجل طلباتك المرسلة وحالتها:[span_81](start_span)[span_81](end_span)</h4>
+                <h4 style="margin-top:0; color:#1e293b; font-size:13px;">📋 سجل طلباتك المرسلة وحالتها:[span_80](start_span)[span_80](end_span)</h4>
                 <div style="overflow-x:auto;">
                     <table class="report-table">
-                        <thead><tr><th>التاريخ[span_82](start_span)[span_82](end_span)</th><th>النوع[span_83](start_span)[span_83](end_span)</th><th>الأصناف المطلوبة[span_84](start_span)[span_84](end_span)</th><th>الإجمالي[span_85](start_span)[span_85](end_span)</th><th>حالة موافقة المدير[span_86](start_span)[span_86](end_span)</th></tr></thead>
+                        <thead><tr><th>التاريخ[span_81](start_span)[span_81](end_span)</th><th>النوع[span_82](start_span)[span_82](end_span)</th><th>الأصناف المطلوبة[span_83](start_span)[span_83](end_span)</th><th>الإجمالي[span_84](start_span)[span_84](end_span)</th><th>حالة موافقة المدير[span_85](start_span)[span_85](end_span)</th></tr></thead>
                         <tbody id="clientOrdersStatusTableBody"></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="filter-box" style="background:#fff; border:1px solid #cbd5e1; margin-top:10px;">
-                <h4 style="margin-top:0; color:#1e293b; font-size:13px;">🔑 تغيير كلمة السر الخاصة بحسابك:[span_87](start_span)[span_87](end_span)</h4>
-                <div class="form-group"><label>كلمة السر الجديدة:[span_88](start_span)[span_88](end_span)</label><input type="password" id="clientNewPassInput" placeholder="أدخل كلمة السر الجديدة..."></div>
-                <button class="btn btn-primary" onclick="changeCustomerPassword()">تحديث كلمة السر[span_89](start_span)[span_89](end_span)</button>
+                <h4 style="margin-top:0; color:#1e293b; font-size:13px;">🔑 تغيير كلمة السر الخاصة بحسابك:[span_86](start_span)[span_86](end_span)</h4>
+                <div class="form-group"><label>كلمة السر الجديدة:[span_87](start_span)[span_87](end_span)</label><input type="password" id="clientNewPassInput" placeholder="أدخل كلمة السر الجديدة..."></div>
+                <button class="btn btn-primary" onclick="changeCustomerPassword()">تحديث كلمة السر[span_88](start_span)[span_88](end_span)</button>
             </div>
         </div>
 
         <!-- و) الفواتير المحفوظة -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box">
-                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:[span_90](start_span)[span_90](end_span)</h4>
+                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:[span_89](start_span)[span_89](end_span)</h4>
                 <div id="adminDelegateFilterBox" style="display:none; margin-bottom:8px;">
-                    <label style="font-size:11px;">المندوب:[span_91](start_span)[span_91](end_span)</label>
+                    <label style="font-size:11px;">المندوب:[span_90](start_span)[span_90](end_span)</label>
                     <select id="filterDelegateSelect" class="form-control" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
                         <option value="ALL">📋 عرض كل المناديب</option>
                     </select>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <div class="form-group" style="flex:1; margin-bottom:0;"><label style="font-size:10px;">من تاريخ:[span_92](start_span)[span_92](end_span)</label><input type="date" id="savedFilterFrom" style="padding:6px; font-size:11px;" onchange="renderSavedInvoices()"></div>
-                    <div class="form-group" style="flex:1; margin-bottom:0;"><label style="font-size:10px;">إلى تاريخ:[span_93](start_span)[span_93](end_span)</label><input type="date" id="savedFilterTo" style="padding:6px; font-size:11px;" onchange="renderSavedInvoices()"></div>
+                    <div class="form-group" style="flex:1; margin-bottom:0;"><label style="font-size:10px;">من تاريخ:[span_91](start_span)[span_91](end_span)</label><input type="date" id="savedFilterFrom" style="padding:6px; font-size:11px;" onchange="renderSavedInvoices()"></div>
+                    <div class="form-group" style="flex:1; margin-bottom:0;"><label style="font-size:10px;">إلى تاريخ:[span_92](start_span)[span_92](end_span)</label><input type="date" id="savedFilterTo" style="padding:6px; font-size:11px;" onchange="renderSavedInvoices()"></div>
                 </div>
             </div>
 
-            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير:[span_94](start_span)[span_94](end_span)</h4>
+            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير:[span_93](start_span)[span_93](end_span)</h4>
             <div style="overflow-x: auto;">
                 <table class="report-table">
-                    <thead><tr><th>#</th><th>التاريخ[span_95](start_span)[span_95](end_span)</th><th>العميل[span_96](start_span)[span_96](end_span)</th><th>القرية/المركز[span_97](start_span)[span_97](end_span)</th><th>المندوب[span_98](start_span)[span_98](end_span)</th><th>الإجمالي[span_99](start_span)[span_99](end_span)</th><th>الحالة[span_100](start_span)[span_100](end_span)</th><th>الإجراءات[span_101](start_span)[span_101](end_span)</th></tr></thead>
+                    <thead><tr><th>#</th><th>التاريخ[span_94](start_span)[span_94](end_span)</th><th>العميل[span_95](start_span)[span_95](end_span)</th><th>القرية/المركز[span_96](start_span)[span_96](end_span)</th><th>المندوب[span_97](start_span)[span_97](end_span)</th><th>الإجمالي[span_98](start_span)[span_98](end_span)</th><th>الحالة[span_99](start_span)[span_99](end_span)</th><th>الإجراءات[span_100](start_span)[span_100](end_span)</th></tr></thead>
                     <tbody id="savedInvoicesBody"></tbody>
                 </table>
             </div>
@@ -392,101 +388,101 @@
         <!-- ز) التقارير الشاملة -->
         <div id="sectionReport" style="display: none;">
             <div class="filter-box" id="reportFilterBoxContainer">
-                <h4 style="margin-top:0;">📊 تقارير المبيعات من تاريخ إلى تاريخ:[span_102](start_span)[span_102](end_span)</h4>
+                <h4 style="margin-top:0;">📊 تقارير المبيعات من تاريخ إلى تاريخ:[span_101](start_span)[span_101](end_span)</h4>
                 <div style="display: flex; gap: 8px; margin-bottom: 8px;" id="adminReportSelectWrapper">
                     <div class="form-group" style="flex:1;">
-                        <label>اختر المندوب (للمدير فقط):[span_103](start_span)[span_103](end_span)</label>
+                        <label>اختر المندوب (للمدير فقط):[span_102](start_span)[span_102](end_span)</label>
                         <select id="reportDelegateSelect" class="form-control" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
                             <option value="ALL">📋 كل المناديب</option>
                         </select>
                     </div>
                     <div class="form-group" style="flex:1;">
-                        <label>اختر العميل:[span_104](start_span)[span_104](end_span)</label>
+                        <label>اختر العميل:[span_103](start_span)[span_103](end_span)</label>
                         <select id="reportClientSelect" class="form-control" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
                             <option value="ALL">🏪 كل العملاء</option>
                         </select>
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <div class="form-group" style="flex:1;"><label>من تاريخ:[span_105](start_span)[span_105](end_span)</label><input type="date" id="filterFromDate" onchange="renderDailyReport()"></div>
-                    <div class="form-group" style="flex:1;"><label>إلى تاريخ:[span_106](start_span)[span_106](end_span)</label><input type="date" id="filterToDate" onchange="renderDailyReport()"></div>
+                    <div class="form-group" style="flex:1;"><label>من تاريخ:[span_104](start_span)[span_104](end_span)</label><input type="date" id="filterFromDate" onchange="renderDailyReport()"></div>
+                    <div class="form-group" style="flex:1;"><label>إلى تاريخ:[span_105](start_span)[span_105](end_span)</label><input type="date" id="filterToDate" onchange="renderDailyReport()"></div>
                 </div>
             </div>
             
             <div class="stat-grid" style="margin-bottom:12px;">
                 <div class="stat-card" style="background:#f0fdf4; border-color:#bbf7d0;">
-                    <div class="title" style="color:#166534;">💰 إجمالي مبيعات الفترة:[span_107](start_span)[span_107](end_span)</div>
-                    <div class="val" style="color:#15803d; font-size:16px;"><span id="repTotalAmount">0.00</span> ج.م[span_108](start_span)[span_108](end_span)</div>
-                    <div style="font-size:10px; color:#475569; margin-top:2px;">عدد الفواتير: <b id="repInvoiceCount">0[span_109](start_span)[span_109](end_span)</b></div>
+                    <div class="title" style="color:#166534;">💰 إجمالي مبيعات الفترة:[span_106](start_span)[span_106](end_span)</div>
+                    <div class="val" style="color:#15803d; font-size:16px;"><span id="repTotalAmount">0.00</span> ج.م[span_107](start_span)[span_107](end_span)</div>
+                    <div style="font-size:10px; color:#475569; margin-top:2px;">عدد الفواتير: <b id="repInvoiceCount">0[span_108](start_span)[span_108](end_span)</b></div>
                 </div>
                 <div class="stat-card" style="background:#eff6ff; border-color:#bfdbfe;">
-                    <div class="title" style="color:#1e40af;">📦 إجمالي الكميات المباعة:[span_110](start_span)[span_110](end_span)</div>
-                    <div class="val" style="color:#2563eb; font-size:14px;"><span id="repTotalCartonsSum">0 كرتونة و 0 رابطة[span_111](start_span)[span_111](end_span)</span></div>
-                    <div style="font-size:10px; color:#475569; margin-top:2px;">إجمالي الروابط: <b id="repTotalRibbonsSum">0[span_112](start_span)[span_112](end_span)</b> رابطة[span_113](start_span)[span_113](end_span)</div>
+                    <div class="title" style="color:#1e40af;">📦 إجمالي الكميات المباعة:[span_109](start_span)[span_109](end_span)</div>
+                    <div class="val" style="color:#2563eb; font-size:14px;"><span id="repTotalCartonsSum">0 كرتونة و 0 رابطة[span_110](start_span)[span_110](end_span)</span></div>
+                    <div style="font-size:10px; color:#475569; margin-top:2px;">إجمالي الروابط: <b id="repTotalRibbonsSum">0[span_111](start_span)[span_111](end_span)</b> رابطة[span_112](start_span)[span_112](end_span)</div>
                 </div>
             </div>
 
-            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">📦 تفصيل الأصناف المباعة (بالكرتونة والرابطة):[span_114](start_span)[span_114](end_span)</h4>
+            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">📦 تفصيل الأصناف المباعة (بالكرتونة والرابطة):[span_113](start_span)[span_113](end_span)</h4>
             <div style="overflow-x:auto;">
                 <table class="report-table">
                     <thead>
                         <tr>
-                            <th>الصنف[span_115](start_span)[span_115](end_span)</th>
-                            <th>كود الصنف[span_116](start_span)[span_116](end_span)</th>
-                            <th>المباع بالكرتونة والرابطة[span_117](start_span)[span_117](end_span)</th>
-                            <th>إجمالي الروابط[span_118](start_span)[span_118](end_span)</th>
-                            <th>ما يعادل كراتين[span_119](start_span)[span_119](end_span)</th>
+                            <th>الصنف[span_114](start_span)[span_114](end_span)</th>
+                            <th>كود الصنف[span_115](start_span)[span_115](end_span)</th>
+                            <th>المباع بالكرتونة والرابطة[span_116](start_span)[span_116](end_span)</th>
+                            <th>إجمالي الروابط[span_117](start_span)[span_117](end_span)</th>
+                            <th>ما يعادل كراتين[span_118](start_span)[span_118](end_span)</th>
                         </tr>
                     </thead>
                     <tbody id="repProductsBody"></tbody>
                 </table>
             </div>
 
-            <h4 style="font-size: 12px; color: #1e293b; margin-top: 15px; margin-bottom: 4px;">📋 تفاصيل الفواتير:[span_120](start_span)[span_120](end_span)</h4>
+            <h4 style="font-size: 12px; color: #1e293b; margin-top: 15px; margin-bottom: 4px;">📋 تفاصيل الفواتير:[span_119](start_span)[span_119](end_span)</h4>
             <div style="overflow-x:auto;">
                 <table class="report-table">
-                    <thead><tr><th>رقم الفاتورة[span_121](start_span)[span_121](end_span)</th><th>التاريخ[span_122](start_span)[span_122](end_span)</th><th>العميل[span_123](start_span)[span_123](end_span)</th><th>القرية/المركز[span_124](start_span)[span_124](end_span)</th><th>المندوب[span_125](start_span)[span_125](end_span)</th><th>الإجمالي[span_126](start_span)[span_126](end_span)</th></tr></thead>
+                    <thead><tr><th>رقم الفاتورة[span_120](start_span)[span_120](end_span)</th><th>التاريخ[span_121](start_span)[span_121](end_span)</th><th>العميل[span_122](start_span)[span_122](end_span)</th><th>القرية/المركز[span_123](start_span)[span_123](end_span)</th><th>المندوب[span_124](start_span)[span_124](end_span)</th><th>الإجمالي[span_125](start_span)[span_125](end_span)</th></tr></thead>
                     <tbody id="repInvoicesTableBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- ح) رصيد السيارة وجرد كل مندوب -->
+        <!-- ح) رصيد السيارة -->
         <div id="sectionCarStock" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد سيارة المندوب الحالي:[span_127](start_span)[span_127](end_span)</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد سيارة المندوب الحالي:[span_126](start_span)[span_126](end_span)</h4>
             
             <div id="adminCarSetupBox" style="display:none; background:#eff6ff; padding:10px; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:10px;">
-                <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ تعيين وتعديل رصيد سيارة مندوب معين:[span_128](start_span)[span_128](end_span)</h5>
-                <label style="font-size:11px; font-weight:bold;">اختر المندوب لتحميل سيارته:[span_129](start_span)[span_129](end_span)</label>
+                <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ تعيين وتعديل رصيد سيارة مندوب معين:[span_127](start_span)[span_127](end_span)</h5>
+                <label style="font-size:11px; font-weight:bold;">اختر المندوب لتحميل سيارته:[span_128](start_span)[span_128](end_span)</label>
                 <select id="selectDelegateForStock" class="form-control" style="margin-bottom:8px; font-size:12px;" onchange="renderCarStockTable()"></select>
                 <div id="adminCarStockInputs" style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;"></div>
-                <button class="btn btn-primary" style="padding:7px; font-size:11px;" onclick="saveAdminCarStock()">💾 حفظ وتحديث رصيد سيارة المندوب[span_130](start_span)[span_130](end_span)</button>
+                <button class="btn btn-primary" style="padding:7px; font-size:11px;" onclick="saveAdminCarStock()">💾 حفظ وتحديث رصيد سيارة المندوب[span_129](start_span)[span_129](end_span)</button>
             </div>
 
             <table class="report-table">
-                <thead><tr><th>الصنف[span_131](start_span)[span_131](end_span)</th><th>الرصيد المتبقي بالسيارة[span_132](start_span)[span_132](end_span)</th></tr></thead>
+                <thead><tr><th>الصنف[span_130](start_span)[span_130](end_span)</th><th>الرصيد المتبقي بالسيارة[span_131](start_span)[span_131](end_span)</th></tr></thead>
                 <tbody id="carStockTableBody"></tbody>
             </table>
         </div>
 
         <!-- ط) حساب النسب -->
         <div id="sectionRatios" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:[span_133](start_span)[span_133](end_span)</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:[span_132](start_span)[span_132](end_span)</h4>
             <div class="filter-box">
                 <div style="display:flex; gap:8px;">
-                    <div class="form-group" style="flex:1;"><label>نسبة كليوباترا:[span_134](start_span)[span_134](end_span)</label><input type="number" id="ratioCleopatra" value="2" oninput="calcRatioLoading()"></div>
-                    <div class="form-group" style="flex:1;"><label>نسبة البوكس:[span_135](start_span)[span_135](end_span)</label><input type="number" id="ratioBox" value="1" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة كليوباترا:[span_133](start_span)[span_133](end_span)</label><input type="number" id="ratioCleopatra" value="2" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة البوكس:[span_134](start_span)[span_134](end_span)</label><input type="number" id="ratioBox" value="1" oninput="calcRatioLoading()"></div>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <div class="form-group" style="flex:1;"><label>نسبة براون:[span_136](start_span)[span_136](end_span)</label><input type="number" id="ratioBrown" value="0" oninput="calcRatioLoading()"></div>
-                    <div class="form-group" style="flex:1;"><label>نسبة سوبر:[span_137](start_span)[span_137](end_span)</label><input type="number" id="ratioSuper" value="0" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة براون:[span_135](start_span)[span_135](end_span)</label><input type="number" id="ratioBrown" value="0" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة سوبر:[span_136](start_span)[span_136](end_span)</label><input type="number" id="ratioSuper" value="0" oninput="calcRatioLoading()"></div>
                 </div>
                 <div class="form-group">
-                    <label>إجمالي الكرتونات المراد تحميلها:[span_138](start_span)[span_138](end_span)</label>
+                    <label>إجمالي الكرتونات المراد تحميلها:[span_137](start_span)[span_137](end_span)</label>
                     <input type="number" id="totalCartonsTarget" placeholder="مثال: 30" oninput="calcRatioLoading()">
                 </div>
                 <div id="ratioResultBox" style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-top:10px; font-size:13px; color:#166534;">
-                    أدخل النسب وإجمالي الكرتونات لعرض الكميات.[span_139](start_span)[span_139](end_span)
+                    أدخل النسب وإجمالي الكرتونات لعرض الكميات.[span_138](start_span)[span_138](end_span)
                 </div>
             </div>
         </div>
@@ -497,42 +493,42 @@
             
             <div class="stat-grid">
                 <div class="stat-card" style="border-color:#bae6fd; background:#f0f9ff;">
-                    <div class="title">📦 إجمالي عدد الكراتين المحملة:[span_140](start_span)[span_140](end_span)</div>
-                    <div class="val" style="color:#0284c7;"><span id="menofTotalCartonsCount">0</span> كرتونة[span_141](start_span)[span_141](end_span)</div>
+                    <div class="title">📦 إجمالي عدد الكراتين المحملة:[span_139](start_span)[span_139](end_span)</div>
+                    <div class="val" style="color:#0284c7;"><span id="menofTotalCartonsCount">0</span> كرتونة[span_140](start_span)[span_140](end_span)</div>
                 </div>
                 <div class="stat-card" style="border-color:#bbf7d0; background:#f0fdf4;">
-                    <div class="title">💵 إجمالي مبالغ الإيداعات:[span_142](start_span)[span_142](end_span)</div>
-                    <div class="val" style="color:#16a34a;"><span id="menofTotalDepositsSum">0.00</span> ج.م[span_143](start_span)[span_143](end_span)</div>
+                    <div class="title">💵 إجمالي مبالغ الإيداعات:[span_141](start_span)[span_141](end_span)</div>
+                    <div class="val" style="color:#16a34a;"><span id="menofTotalDepositsSum">0.00</span> ج.م[span_142](start_span)[span_142](end_span)</div>
                 </div>
                 <div class="stat-card" style="border-color:#fde68a; background:#fffbeb;">
-                    <div class="title">🛒 إجمالي قيمة البضاعة المستلمة:[span_144](start_span)[span_144](end_span)</div>
-                    <div class="val" style="color:#b45309;"><span id="menofTotalGoodsSum">0.00</span> ج.م[span_145](start_span)[span_145](end_span)</div>
+                    <div class="title">🛒 إجمالي قيمة البضاعة المستلمة:[span_143](start_span)[span_143](end_span)</div>
+                    <div class="val" style="color:#b45309;"><span id="menofTotalGoodsSum">0.00</span> ج.م[span_144](start_span)[span_144](end_span)</div>
                 </div>
                 <div class="stat-card" style="border-color:#a7f3d0; background:#ecfdf5;">
-                    <div class="title">💰 صافي الذمم التراكمي:[span_146](start_span)[span_146](end_span)</div>
-                    <div class="val" style="color:#15803d;"><span id="menofNetZimamTotal">0.00</span> ج.م[span_147](start_span)[span_147](end_span)</div>
+                    <div class="title">💰 صافي الذمم التراكمي (فلوس ليك):</div>
+                    <div class="val" style="color:#15803d;"><span id="menofNetZimamTotal">0.00</span> ج.م[span_145](start_span)[span_145](end_span)</div>
                 </div>
             </div>
 
             <div id="menofZimamSummaryBox" style="background:#ecfdf5; border:1px solid #a7f3d0; padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; color:#065f46;">
-                <div>📦 <b>ما يعادل كراتين متبقية مستحقة ليك:[span_148](start_span)[span_148](end_span)</b> <span id="menofCartonsEquivalent" style="font-weight:bold;">0 كرتونة و 0.00 ج.م[span_149](start_span)[span_149](end_span)</span></div>
+                <div>📦 <b>ما يعادل كراتين متبقية مستحقة ليك:[span_146](start_span)[span_146](end_span)</b> <span id="menofCartonsEquivalent" style="font-weight:bold;">0 كرتونة و 0.00 ج.م[span_147](start_span)[span_147](end_span)</span></div>
             </div>
 
             <div class="filter-box">
-                <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ تسجيل شحنة تحميل جديدة من منوف:[span_150](start_span)[span_150](end_span)</h5>
+                <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ تسجيل شحنة تحميل جديدة من منوف:[span_148](start_span)[span_148](end_span)</h5>
                 <input type="hidden" id="editMenofId" value="">
-                <div class="form-group"><label>تاريخ التحميل:[span_151](start_span)[span_151](end_span)</label><input type="date" id="menofDate"></div>
-                <div class="form-group"><label>عدد الكرتونات المحملة:[span_152](start_span)[span_152](end_span)</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات (سعر الكرتونة = 23,925 ج.م): <b id="menofTotalPrice" style="color:#16a34a;">0.00[span_153](start_span)[span_153](end_span)</b> ج.م[span_154](start_span)[span_154](end_span)</div>
-                <div class="form-group"><label>قيمة الإيداع المالي المدفوع:[span_155](start_span)[span_155](end_span)</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم لهذه الشحنة (الإيداع - سعر البضاعة): <b id="menofZimam">0.00[span_156](start_span)[span_156](end_span)</b> ج.م[span_157](start_span)[span_157](end_span)</div>
-                <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل / تحديث شحنة منوف[span_158](start_span)[span_158](end_span)</button>
+                <div class="form-group"><label>تاريخ التحميل:[span_149](start_span)[span_149](end_span)</label><input type="date" id="menofDate"></div>
+                <div class="form-group"><label>عدد الكرتونات المحملة:[span_150](start_span)[span_150](end_span)</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات (سعر الكرتونة = 23,925 ج.م): <b id="menofTotalPrice" style="color:#16a34a;">0.00[span_151](start_span)[span_151](end_span)</b> ج.م[span_152](start_span)[span_152](end_span)</div>
+                <div class="form-group"><label>قيمة الإيداع المالي المدفوع:[span_153](start_span)[span_153](end_span)</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم لهذه الشحنة (الإيداع - سعر البضاعة): <b id="menofZimam">0.00[span_154](start_span)[span_154](end_span)</b> ج.م[span_155](start_span)[span_155](end_span)</div>
+                <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل / تحديث شحنة منوف[span_156](start_span)[span_156](end_span)</button>
             </div>
             
-            <h4 style="font-size:12.5px; margin: 10px 0 4px 0;">📋 سجل الشحنات بالتفصيل:[span_159](start_span)[span_159](end_span)</h4>
+            <h4 style="font-size:12.5px; margin: 10px 0 4px 0;">📋 سجل الشحنات بالتفصيل:[span_157](start_span)[span_157](end_span)</h4>
             <div style="overflow-x:auto;">
                 <table class="report-table">
-                    <thead><tr><th>التاريخ[span_160](start_span)[span_160](end_span)</th><th>الكرتونات[span_161](start_span)[span_161](end_span)</th><th>إجمالي البضاعة[span_162](start_span)[span_162](end_span)</th><th>الإيداع[span_163](start_span)[span_163](end_span)</th><th>الذمم (ليك)[span_164](start_span)[span_164](end_span)</th><th>الإجراءات[span_165](start_span)[span_165](end_span)</th></tr></thead>
+                    <thead><tr><th>التاريخ[span_158](start_span)[span_158](end_span)</th><th>الكرتونات[span_159](start_span)[span_159](end_span)</th><th>إجمالي البضاعة[span_160](start_span)[span_160](end_span)</th><th>الإيداع[span_161](start_span)[span_161](end_span)</th><th>الذمم (ليك)[span_162](start_span)[span_162](end_span)</th><th>الإجراءات[span_163](start_span)[span_163](end_span)</th></tr></thead>
                     <tbody id="menofTableBody"></tbody>
                 </table>
             </div>
@@ -540,43 +536,43 @@
 
         <!-- ك) المحلات -->
         <div id="sectionShops" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (سعر الكرتونة = 23,925 ج.م):[span_166](start_span)[span_166](end_span)</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (سعر الكرتونة = 23,925 ج.م):[span_164](start_span)[span_164](end_span)</h4>
             
             <div class="filter-box" style="background:#e0f2fe; border:1px solid #bae6fd;">
-                <label style="font-size:12px; font-weight:bold; color:#0369a1;">🔍 بحث باسم العميل / المحل:[span_167](start_span)[span_167](end_span)</label>
+                <label style="font-size:12px; font-weight:bold; color:#0369a1;">🔍 بحث باسم العميل / المحل:[span_165](start_span)[span_165](end_span)</label>
                 <input type="text" id="shopSearchInput" placeholder="اكتب اسم المحل أو العميل للفلترة..." oninput="renderShopsTable()" style="margin-top:4px;">
             </div>
 
             <div class="filter-box">
                 <input type="hidden" id="editShopId" value="">
-                <div class="form-group"><label>اسم المحل:[span_168](start_span)[span_168](end_span)</label><input type="text" id="shopNameInput" placeholder="اكتب اسم المحل..."></div>
-                <div class="form-group"><label>عدد كرتونات البضاعة للمحل:[span_169](start_span)[span_169](end_span)</label><input type="number" id="shopCartons" placeholder="0" oninput="calcShopTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي قيمة البضاعة: <b id="shopTotalPrice" style="color:#16a34a;">0.00[span_170](start_span)[span_170](end_span)</b> ج.م[span_171](start_span)[span_171](end_span)</div>
-                <div class="form-group"><label>المبلغ المسدد (الإيداع):[span_172](start_span)[span_172](end_span)</label><input type="number" id="shopPaidVal" placeholder="0" oninput="calcShopTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px; color:#dc2626;">المديونية (الذمم المتبقية على المحل): <b id="shopZimam">0.00[span_173](start_span)[span_173](end_span)</b> ج.م[span_174](start_span)[span_174](end_span)</div>
-                <button class="btn btn-primary" onclick="saveShopTransaction()">حفظ / تحديث معاملة المحل[span_175](start_span)[span_175](end_span)</button>
+                <div class="form-group"><label>اسم المحل:[span_166](start_span)[span_166](end_span)</label><input type="text" id="shopNameInput" placeholder="اكتب اسم المحل..."></div>
+                <div class="form-group"><label>عدد كرتونات البضاعة للمحل:[span_167](start_span)[span_167](end_span)</label><input type="number" id="shopCartons" placeholder="0" oninput="calcShopTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي قيمة البضاعة: <b id="shopTotalPrice" style="color:#16a34a;">0.00[span_168](start_span)[span_168](end_span)</b> ج.م[span_169](start_span)[span_169](end_span)</div>
+                <div class="form-group"><label>المبلغ المسدد (الإيداع):[span_170](start_span)[span_170](end_span)</label><input type="number" id="shopPaidVal" placeholder="0" oninput="calcShopTotal()"></div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#dc2626;">المديونية (الذمم المتبقية على المحل): <b id="shopZimam">0.00[span_171](start_span)[span_171](end_span)</b> ج.م[span_172](start_span)[span_172](end_span)</div>
+                <button class="btn btn-primary" onclick="saveShopTransaction()">حفظ / تحديث معاملة المحل[span_173](start_span)[span_173](end_span)</button>
             </div>
             <table class="report-table">
-                <thead><tr><th>المحل[span_176](start_span)[span_176](end_span)</th><th>الكرتونات[span_177](start_span)[span_177](end_span)</th><th>إجمالي البضاعة[span_178](start_span)[span_178](end_span)</th><th>المسدد[span_179](start_span)[span_179](end_span)</th><th>المديونية[span_180](start_span)[span_180](end_span)</th><th>الإجراءات[span_181](start_span)[span_181](end_span)</th></tr></thead>
+                <thead><tr><th>المحل[span_174](start_span)[span_174](end_span)</th><th>الكرتونات[span_175](start_span)[span_175](end_span)</th><th>إجمالي البضاعة[span_176](start_span)[span_176](end_span)</th><th>المسدد[span_177](start_span)[span_177](end_span)</th><th>المديونية[span_178](start_span)[span_178](end_span)</th><th>الإجراءات[span_179](start_span)[span_179](end_span)</th></tr></thead>
                 <tbody id="shopsTableBody"></tbody>
             </table>
         </div>
 
         <!-- ل) فواتير LM -->
         <div id="sectionLmInvoices" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM:[span_182](start_span)[span_182](end_span)</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM:[span_180](start_span)[span_180](end_span)</h4>
             <div class="filter-box">
                 <input type="hidden" id="editLmId" value="">
                 <div class="form-group">
-                    <label>اختر الفاتورة:[span_183](start_span)[span_183](end_span)</label>
-                    <select id="lmInvoiceType" class="form-control"><option value="mohamed">فاتورة محمد[span_184](start_span)[span_184](end_span)</option><option value="hossam">فاتورة حسام[span_185](start_span)[span_185](end_span)</option></select>
+                    <label>اختر الفاتورة:[span_181](start_span)[span_181](end_span)</label>
+                    <select id="lmInvoiceType" class="form-control"><option value="mohamed">فاتورة محمد[span_182](start_span)[span_182](end_span)</option><option value="hossam">فاتورة حسام[span_183](start_span)[span_183](end_span)</option></select>
                 </div>
-                <div class="form-group"><label>قيمة الإيداع المالي:[span_186](start_span)[span_186](end_span)</label><input type="number" id="lmDeposit" placeholder="0"></div>
+                <div class="form-group"><label>قيمة الإيداع المالي:[span_184](start_span)[span_184](end_span)</label><input type="number" id="lmDeposit" placeholder="0"></div>
                 <div id="lmItemsContainer"></div>
-                <button class="btn btn-success" style="margin-top:10px;" onclick="saveLmInvoice()">حفظ / تحديث فاتورة LM[span_187](start_span)[span_187](end_span)</button>
+                <button class="btn btn-success" style="margin-top:10px;" onclick="saveLmInvoice()">حفظ / تحديث فاتورة LM[span_185](start_span)[span_185](end_span)</button>
             </div>
             <table class="report-table">
-                <thead><tr><th>النوع[span_188](start_span)[span_188](end_span)</th><th>الإيداع[span_189](start_span)[span_189](end_span)</th><th>التكلفة[span_190](start_span)[span_190](end_span)</th><th>البيع[span_191](start_span)[span_191](end_span)</th><th>المكسب / الخسارة[span_192](start_span)[span_192](end_span)</th><th>الإجراءات[span_193](start_span)[span_193](end_span)</th></tr></thead>
+                <thead><tr><th>النوع[span_186](start_span)[span_186](end_span)</th><th>الإيداع[span_187](start_span)[span_187](end_span)</th><th>التكلفة[span_188](start_span)[span_188](end_span)</th><th>البيع[span_189](start_span)[span_189](end_span)</th><th>المكسب / الخسارة[span_190](start_span)[span_190](end_span)</th><th>الإجراءات[span_191](start_span)[span_191](end_span)</th></tr></thead>
                 <tbody id="lmInvoicesTableBody"></tbody>
             </table>
         </div>
@@ -584,27 +580,27 @@
         <!-- م) الإعدادات -->
         <div id="sectionSettings" style="display: none;">
             <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px; margin-bottom:12px;">
-                <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر:[span_194](start_span)[span_194](end_span)</h4>
-                <div class="form-group"><label>كلمة السر الحالية:[span_195](start_span)[span_195](end_span)</label><input type="password" id="currentPassInput"></div>
-                <div class="form-group"><label>كلمة السر الجديدة:[span_196](start_span)[span_196](end_span)</label><input type="password" id="newPassInput"></div>
-                <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر[span_197](start_span)[span_197](end_span)</button>
+                <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر:[span_192](start_span)[span_192](end_span)</h4>
+                <div class="form-group"><label>كلمة السر الحالية:[span_193](start_span)[span_193](end_span)</label><input type="password" id="currentPassInput"></div>
+                <div class="form-group"><label>كلمة السر الجديدة:[span_194](start_span)[span_194](end_span)</label><input type="password" id="newPassInput"></div>
+                <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر[span_195](start_span)[span_195](end_span)</button>
             </div>
 
             <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px;">
                 <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px;">
-                    <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف (مندوب / مخزن / مشاهد):[span_198](start_span)[span_198](end_span)</h5>
-                    <div class="form-group"><label>كود المستخدم:[span_199](start_span)[span_199](end_span)</label><input type="text" id="newAccCode" placeholder="مثال: 103 أو store1"></div>
-                    <div class="form-group"><label>اسم المستخدم:[span_200](start_span)[span_200](end_span)</label><input type="text" id="newAccName" placeholder="اسم العضو..."></div>
-                    <div class="form-group"><label>كلمة السر:[span_201](start_span)[span_201](end_span)</label><input type="password" id="newAccPass"></div>
+                    <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف (مندوب / مخزن / مشاهد):[span_196](start_span)[span_196](end_span)</h5>
+                    <div class="form-group"><label>كود المستخدم:[span_197](start_span)[span_197](end_span)</label><input type="text" id="newAccCode" placeholder="مثال: 103 أو store1"></div>
+                    <div class="form-group"><label>اسم المستخدم:[span_198](start_span)[span_198](end_span)</label><input type="text" id="newAccName" placeholder="اسم العضو..."></div>
+                    <div class="form-group"><label>كلمة السر:[span_199](start_span)[span_199](end_span)</label><input type="password" id="newAccPass"></div>
                     <div class="form-group">
-                        <label>نوع الحساب:[span_202](start_span)[span_202](end_span)</label>
+                        <label>نوع الحساب:[span_200](start_span)[span_200](end_span)</label>
                         <select id="newAccRole" class="form-control">
-                            <option value="delegate">مندوب مبيعات[span_203](start_span)[span_203](end_span)</option>
-                            <option value="store">مسؤول المخزن[span_204](start_span)[span_204](end_span)</option>
-                            <option value="viewer">مشاهد فقط[span_205](start_span)[span_205](end_span)</option>
+                            <option value="delegate">مندوب مبيعات[span_201](start_span)[span_201](end_span)</option>
+                            <option value="store">مسؤول المخزن[span_202](start_span)[span_202](end_span)</option>
+                            <option value="viewer">مشاهد فقط[span_203](start_span)[span_203](end_span)</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary" onclick="createNewUserAccount()">إنشاء حساب الموظف[span_206](start_span)[span_206](end_span)</button>
+                    <button class="btn btn-primary" onclick="createNewUserAccount()">إنشاء حساب الموظف[span_204](start_span)[span_204](end_span)</button>
                 </div>
             </div>
         </div>
@@ -613,22 +609,22 @@
     <!-- نافذة تفاصيل الفاتورة -->
     <div id="invoiceModal" class="modal-bg">
         <div class="modal-content">
-            <h3 style="margin-top:0; color:#1e293b;">📄 محتوى الفاتورة[span_207](start_span)[span_207](end_span)</h3>
+            <h3 style="margin-top:0; color:#1e293b;">📄 محتوى الفاتورة[span_205](start_span)[span_205](end_span)</h3>
             <div id="modalInvoiceContent" style="font-size:13px; line-height:1.6; margin-bottom:15px;"></div>
-            <button class="btn btn-primary" onclick="closeInvoiceModal()">إغلاق[span_208](start_span)[span_208](end_span)</button>
+            <button class="btn btn-primary" onclick="closeInvoiceModal()">إغلاق[span_206](start_span)[span_206](end_span)</button>
         </div>
     </div>
 
     <!-- نافذة سداد المديونية -->
     <div id="shopPayModal" class="modal-bg">
         <div class="modal-content">
-            <h3 style="margin-top:0; color:#1e293b; font-size:16px;">💳 سداد مديونية المحل[span_209](start_span)[span_209](end_span)</h3>
+            <h3 style="margin-top:0; color:#1e293b; font-size:16px;">💳 سداد مديونية المحل[span_207](start_span)[span_207](end_span)</h3>
             <input type="hidden" id="payShopId">
-            <div class="form-group"><label>اسم المحل:[span_210](start_span)[span_210](end_span)</label><input type="text" id="payShopName" class="readonly-input" readonly></div>
-            <div class="form-group"><label>المديونية الحالية:[span_211](start_span)[span_211](end_span)</label><input type="text" id="payShopCurrentZimam" class="readonly-input" readonly style="color:#dc2626; font-weight:bold;"></div>
-            <div class="form-group"><label>المبلغ المراد دفعه:[span_212](start_span)[span_212](end_span)</label><input type="number" id="payAmountInput" placeholder="أدخل المبلغ المدفوع..." min="0"></div>
-            <button class="btn btn-success" onclick="submitShopPayment()">تأكيد خصم المبلغ من المديونية[span_213](start_span)[span_213](end_span)</button>
-            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeShopPayModal()">إلغاء[span_214](start_span)[span_214](end_span)</button>
+            <div class="form-group"><label>اسم المحل:[span_208](start_span)[span_208](end_span)</label><input type="text" id="payShopName" class="readonly-input" readonly></div>
+            <div class="form-group"><label>المديونية الحالية:[span_209](start_span)[span_209](end_span)</label><input type="text" id="payShopCurrentZimam" class="readonly-input" readonly style="color:#dc2626; font-weight:bold;"></div>
+            <div class="form-group"><label>المبلغ المراد دفعه:[span_210](start_span)[span_210](end_span)</label><input type="number" id="payAmountInput" placeholder="أدخل المبلغ المدفوع..." min="0"></div>
+            <button class="btn btn-success" onclick="submitShopPayment()">تأكيد خصم المبلغ من المديونية[span_211](start_span)[span_211](end_span)</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeShopPayModal()">إلغاء[span_212](start_span)[span_212](end_span)</button>
         </div>
     </div>
 
@@ -661,7 +657,7 @@
             { name: "ال ام احمر", code: "lm_red", buyPricePerCarton: 40788 },
             { name: "ال ام ازرق", code: "lm_blue", buyPricePerCarton: 40788 },
             { name: "مارل احمر", code: "marl_red", buyPricePerCarton: 50736 },
-            { name: "مارل ابيض", code: "marl_white", buyPricePerCarton: 5073 },
+            { name: "مارل ابيض", code: "marl_white", buyPricePerCarton: 50736 },
             { name: "ميريت", code: "merit", buyPricePerCarton: 55210 },
             { name: "ال ام ابيض", code: "lm_white", buyPricePerCarton: 40788 },
             { name: "مارل كرفت", code: "marl_craft", buyPricePerCarton: 39128 }
@@ -691,13 +687,13 @@
         let clientInputTimer = null;
         let latestCoords = null;
         let tempRegCoords = null;
+        let adminCustomerRegistry = [];
 
         function cleanPhoneStr(p) {
             if(!p) return "";
             return String(p).replace(/\D/g, '').replace(/^20/, '').replace(/^0+/, '');
         }
 
-        // مزامنة قواعد البيانات
         db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
         db.ref('delegates').on('value', (s) => { if(s.val()) cloudDelegates = s.val(); });
         db.ref('clients').on('value', (s) => { 
@@ -715,7 +711,10 @@
             updatePendingOrdersBadge();
         });
 
-        db.ref('portalCustomers').on('value', (s) => { portalCustomersDB = s.val() || {}; });
+        db.ref('portalCustomers').on('value', (s) => { 
+            portalCustomersDB = s.val() || {}; 
+            updateClientsDatalist(); 
+        });
 
         db.ref('locations').on('value', (s) => {
             cloudLocations = s.val() || {};
@@ -866,7 +865,7 @@
             }
 
             if (!hasRows) {
-                tbody.innerHTML = `<tr><td colspan="4">لا يوجد مناديب مسجلين حالياً.[span_215](start_span)[span_215](end_span)</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4">لا يوجد مناديب مسجلين حالياً.[span_213](start_span)[span_213](end_span)</td></tr>`;
             }
         }
 
@@ -895,7 +894,7 @@
 
                 let mapBtn = (cLoc && cLoc.lat && cLoc.lng) 
                     ? `<a href="https://maps.google.com/?q=${cLoc.lat},${cLoc.lng}" target="_blank" class="btn btn-primary" style="padding:3px 8px; font-size:10px; text-decoration:none; display:inline-block; width:auto; margin:0;">📍 موقع المحل</a>` 
-                    : '<span style="color:#94a3b8; font-size:10px;">غير محدد[span_216](start_span)[span_216](end_span)</span>';
+                    : '<span style="color:#94a3b8; font-size:10px;">غير محدد[span_214](start_span)[span_214](end_span)</span>';
 
                 tbody.innerHTML += `
                     <tr>
@@ -903,12 +902,12 @@
                         <td><small style="color:#2563eb; font-weight:bold;">${cCode}</small></td>
                         <td>${cVillage}</td>
                         <td>${mapBtn}</td>
-                        <td><button class="btn btn-info" style="padding:3px 6px; font-size:10px; margin:0; width:auto;" onclick="adminSetClientLocation('${cName}')">🛰️ تعيين الموقع[span_217](start_span)[span_217](end_span)</button></td>
+                        <td><button class="btn btn-info" style="padding:3px 6px; font-size:10px; margin:0; width:auto;" onclick="adminSetClientLocation('${cName}')">🛰️ تعيين الموقع[span_215](start_span)[span_215](end_span)</button></td>
                     </tr>`;
             }
 
             if (!hasClients) {
-                tbody.innerHTML = `<tr><td colspan="5">لا يوجد عملاء مسجلين حالياً.[span_218](start_span)[span_218](end_span)</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5">لا يوجد عملاء مسجلين حالياً.[span_216](start_span)[span_216](end_span)</td></tr>`;
             }
         }
 
@@ -931,7 +930,7 @@
 
         function captureCustomerGpsLocation() {
             if (!navigator.geolocation) {
-                alert("المتصفح لا يدعم خدمة الـ GPS[span_219](start_span)[span_219](end_span)");
+                alert("المتصفح لا يدعم خدمة الـ GPS[span_217](start_span)[span_217](end_span)");
                 return;
             }
             const statusElem = document.getElementById('regGpsStatus');
@@ -1305,7 +1304,7 @@
             tbody.innerHTML = '';
 
             let myOrders = cloudPendingOrders.filter(o => o.clientId === currentPortalCustomer.uid || (o.clientName === currentPortalCustomer.name));
-            if(myOrders.length === 0) { tbody.innerHTML = `<tr><td colspan="5">لا توجد طلبات مرسلة حالياً.[span_220](start_span)[span_220](end_span)</td></tr>`; return; }
+            if(myOrders.length === 0) { tbody.innerHTML = `<tr><td colspan="5">لا توجد طلبات مرسلة حالياً.[span_218](start_span)[span_218](end_span)</td></tr>`; return; }
 
             myOrders.slice().reverse().forEach(o => {
                 let statusBadge = '<span style="color:#d97706; font-weight:bold;">⏳ قيد مراجعة المدير</span>';
@@ -1331,7 +1330,7 @@
             tbody.innerHTML = '';
 
             let pendingList = cloudPendingOrders.filter(o => o.status === 'pending');
-            if(pendingList.length === 0) { tbody.innerHTML = `<tr><td colspan="7">🎉 لا توجد طلبات معلقة حالياً.[span_221](start_span)[span_221](end_span)</td></tr>`; return; }
+            if(pendingList.length === 0) { tbody.innerHTML = `<tr><td colspan="7">🎉 لا توجد طلبات معلقة حالياً.[span_219](start_span)[span_219](end_span)</td></tr>`; return; }
 
             pendingList.slice().reverse().forEach(order => {
                 let itemsSummary = order.items ? order.items.map(it => `• ${it.name}: <b>${it.qty}</b> ${it.unit||'وحدة'}`).join('<br>') : '-';
@@ -1479,7 +1478,7 @@
             document.getElementById('grandTotal').innerText = grand.toFixed(2);
         }
 
-        // إنشاء الفاتورة مع فحص اللوكيشن للعميل القديم
+        // إنشاء الفاتورة مع التثبيت الذكي لموقع العميل
         async function createInvoiceObject() {
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return null;
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
@@ -1526,7 +1525,7 @@
 
             if (!hasItems) { alert("أدخل كمية لصنف واحد على الأقل!"); return null; }
 
-            // التحقق أولاً إذا كان العميل مسجلاً ولديه لوكيشن ثابت سابق
+            // التحقق من الموقع المسجل للعميل مسبقاً
             let clientLoc = cloudClientsLocations[client] || null;
             if (!clientLoc) {
                 for (let uid in portalCustomersDB) {
@@ -1537,7 +1536,7 @@
                 }
             }
 
-            // التقاط موقع المندوب الحالي
+            // سحب الموقع الفوري للمندوب
             let activeLoc = await getCurrentPreciseLocation();
             let delegateLocObj = null;
             if (activeLoc && activeLoc.lat) {
@@ -1548,15 +1547,13 @@
                 };
             }
 
-            // لو العميل قديم وموقعه مسجل مسبقاً -> لا نسحب أو نغير موقع العميل
-            // لو عميل جديد وغير مسجل له موقع -> يتم حفظ موقعه لأول مرة
+            // إذا كان العميل جديداً فقط يتم توثيق موقعه الثابت
             if (!clientLoc && delegateLocObj) {
                 clientLoc = delegateLocObj;
                 cloudClientsLocations[client] = clientLoc;
                 db.ref('clientsLocations/' + client).set(clientLoc).catch(e => {});
             }
 
-            // تحديث موقع المندوب الحي لدى المدير
             if (delegateLocObj && currentDelegate.role === 'delegate') {
                 const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
                 db.ref('locations/' + currentDelegate.code).update({
@@ -1610,6 +1607,11 @@
             }
         }
 
+        function printSavedInvoice(id) {
+            const inv = cloudSales.find(x => String(x.id) === String(id));
+            if(inv) printViaRawBT(inv);
+        }
+
         async function saveAndEmailOnly() {
             const rec = await createInvoiceObject();
             if(rec) {
@@ -1656,12 +1658,12 @@
                 return true;
             });
 
-            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="8">لا توجد فواتير مطابقة.[span_222](start_span)[span_222](end_span)</td></tr>`; return; }
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="8">لا توجد فواتير مطابقة.[span_220](start_span)[span_220](end_span)</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
                 let isCancelled = (inv.status === 'cancelled');
                 let statusBadge = isCancelled ? `<span style="color:#dc2626; font-weight:bold;">ملغاة</span>` : `<span style="color:#16a34a; font-weight:bold;">نشطة</span>`;
-                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️</button> `;
+                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printSavedInvoice('${inv.id}')">🖨️</button> `;
                 actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="viewInvoiceDetails('${inv.id}')">👁️</button> `;
                 if(!isCancelled && (isAdm || (currentDelegate && inv.delegateCode === currentDelegate.code))) {
                     actionButtons += `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="cancelInvoice('${inv.id}')">❌</button>`;
@@ -1681,12 +1683,12 @@
             let mapHtml = '';
             if (isAdm) {
                 let cLoc = inv.clientLocation || cloudClientsLocations[inv.client] || null;
-                let clientMapBtn = (cLoc && cLoc.lat && cLoc.lng) ? `<a href="${cLoc.mapUrl || ('https://maps.google.com/?q=' + cLoc.lat + ',' + cLoc.lng)}" target="_blank" style="color:#16a34a; font-weight:bold; text-decoration:underline;">📍 فتح موقع محل العميل على الخريطة[span_223](start_span)[span_223](end_span)</a>` : '<span style="color:#64748b;">غير مسجل للعميل[span_224](start_span)[span_224](end_span)</span>';
-                let delegateMapBtn = (inv.location && inv.location.lat && inv.location.lng) ? `<a href="${inv.location.mapUrl || ('https://maps.google.com/?q=' + inv.location.lat + ',' + inv.location.lng)}" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:underline;">🚚 فتح موقع المندوب لحظة تسجيل الفاتورة[span_225](start_span)[span_225](end_span)</a>` : '<span style="color:#64748b;">لم يسجل المندوب إحداثيات[span_226](start_span)[span_226](end_span)</span>';
+                let clientMapBtn = (cLoc && cLoc.lat && cLoc.lng) ? `<a href="${cLoc.mapUrl || ('https://maps.google.com/?q=' + cLoc.lat + ',' + cLoc.lng)}" target="_blank" style="color:#16a34a; font-weight:bold; text-decoration:underline;">📍 فتح موقع محل العميل على الخريطة[span_221](start_span)[span_221](end_span)</a>` : '<span style="color:#64748b;">غير مسجل للعميل[span_222](start_span)[span_222](end_span)</span>';
+                let delegateMapBtn = (inv.location && inv.location.lat && inv.location.lng) ? `<a href="${inv.location.mapUrl || ('https://maps.google.com/?q=' + inv.location.lat + ',' + inv.location.lng)}" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:underline;">🚚 فتح موقع المندوب لحظة تسجيل الفاتورة[span_223](start_span)[span_223](end_span)</a>` : '<span style="color:#64748b;">لم يسجل المندوب إحداثيات[span_224](start_span)[span_224](end_span)</span>';
 
                 mapHtml = `
                     <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:8px; border-radius:6px; margin:8px 0; font-size:11.5px; line-height:1.8;">
-                        <b>🗺️ مواقع GPS (للمدير فقط):[span_227](start_span)[span_227](end_span)</b><br>
+                        <b>🗺️ مواقع GPS (للمدير فقط):[span_225](start_span)[span_225](end_span)</b><br>
                         • ${clientMapBtn}<br>
                         • ${delegateMapBtn}
                     </div>`;
@@ -1837,6 +1839,8 @@
                 if (name && cloudClients[name]) {
                     delete cloudClients[name];
                     db.ref('clients/' + name).remove();
+                    delete cloudClientsLocations[name];
+                    db.ref('clientsLocations/' + name).remove();
                 }
                 if (uid && portalCustomersDB[uid]) {
                     delete portalCustomersDB[uid];
@@ -1860,47 +1864,54 @@
                 if(portalCustomersDB[uid].name) allClientNames.add(portalCustomersDB[uid].name);
             }
 
-            if(allClientNames.size === 0) { tbody.innerHTML = `<tr><td colspan="7">لا يوجد عملاء مسجلين حالياً.</td></tr>`; return; }
+            adminCustomerRegistry = [];
+            if(allClientNames.size === 0) { tbody.innerHTML = `<tr><td colspan="7">لا يوجد عملاء مسجلين حالياً.[span_226](start_span)[span_226](end_span)</td></tr>`; return; }
 
             let htmlBuffer = '';
+            let index = 0;
             allClientNames.forEach(clientName => {
                 let foundUid = Object.keys(portalCustomersDB).find(u => portalCustomersDB[u].name === clientName);
                 let cust = foundUid ? portalCustomersDB[foundUid] : null;
-                let safeKey = foundUid || ("c_" + encodeURIComponent(clientName).replace(/[^a-zA-Z0-9]/g, '_'));
                 let clientCode = (cust && cust.clientCode) ? cust.clientCode : (cloudClients[clientName] || '');
                 let phoneDisplay = cust ? (cust.phone || '-') : '-';
                 let currentType = cust ? cust.customerType : 'retail';
                 let currentPass = cust ? (cust.pass || '123456') : '123456';
 
+                adminCustomerRegistry.push({ originalName: clientName, uid: foundUid || '' });
+
                 htmlBuffer += `
                     <tr>
                         <td><input type="checkbox" class="client-bulk-chk" data-name="${clientName}" data-uid="${foundUid || ''}"></td>
-                        <td><input type="text" id="adm_name_${safeKey}" value="${clientName}" style="width:110px; padding:3px; font-size:11px; font-weight:bold;"></td>
-                        <td><input type="text" id="adm_code_${safeKey}" value="${clientCode}" style="width:80px; padding:3px; text-align:center; font-weight:bold; color:#2563eb;"></td>
+                        <td><input type="text" id="adm_name_${index}" value="${clientName}" style="width:110px; padding:3px; font-size:11px; font-weight:bold;"></td>
+                        <td><input type="text" id="adm_code_${index}" value="${clientCode}" style="width:80px; padding:3px; text-align:center; font-weight:bold; color:#2563eb;"></td>
                         <td style="font-size:10px;">${phoneDisplay}</td>
                         <td>
-                            <select id="adm_type_${safeKey}" style="font-size:10px; padding:3px;">
+                            <select id="adm_type_${index}" style="font-size:10px; padding:3px;">
                                 <option value="retail" ${currentType==='retail'?'selected':''}>قطاعي</option>
                                 <option value="wholesale" ${currentType==='wholesale'?'selected':''}>جملة</option>
                                 <option value="pending" ${currentType==='pending'?'selected':''}>قيد المراجعة</option>
                             </select>
                         </td>
-                        <td><input type="text" id="adm_pass_${safeKey}" value="${currentPass}" style="padding:3px; font-size:10px; width:70px; text-align:center;"></td>
+                        <td><input type="text" id="adm_pass_${index}" value="${currentPass}" style="padding:3px; font-size:10px; width:70px; text-align:center;"></td>
                         <td>
-                            <button class="btn btn-success" style="padding:3px 6px; font-size:10px; margin:0 0 3px 0; width:auto;" onclick="adminSaveFullCustomerApproval('${safeKey}', '${encodeURIComponent(clientName)}', '${foundUid || ''}')">💾 حفظ</button>
-                            <button class="btn btn-danger" style="padding:3px 6px; font-size:10px; margin:0; width:auto;" onclick="adminDeleteCustomer('${encodeURIComponent(clientName)}', '${foundUid || ''}')">🗑️ حذف</button>
+                            <button class="btn btn-success" style="padding:3px 6px; font-size:10px; margin:0 0 3px 0; width:auto;" onclick="adminSaveCustomerByIndex(${index})">💾 حفظ</button>
+                            <button class="btn btn-danger" style="padding:3px 6px; font-size:10px; margin:0; width:auto;" onclick="adminDeleteCustomerByIndex(${index})">🗑️ حذف</button>
                         </td>
                     </tr>`;
+                index++;
             });
             tbody.innerHTML = htmlBuffer;
         }
 
-        function adminSaveFullCustomerApproval(safeKey, rawOldName, uid) {
-            const oldName = decodeURIComponent(rawOldName);
-            const newName = document.getElementById(`adm_name_${safeKey}`).value.trim();
-            const newCode = document.getElementById(`adm_code_${safeKey}`).value.trim();
-            const newType = document.getElementById(`adm_type_${safeKey}`).value;
-            const newPass = document.getElementById(`adm_pass_${safeKey}`).value.trim();
+        function adminSaveCustomerByIndex(index) {
+            const reg = adminCustomerRegistry[index];
+            if(!reg) return;
+
+            const oldName = reg.originalName;
+            const newName = document.getElementById(`adm_name_${index}`).value.trim();
+            const newCode = document.getElementById(`adm_code_${index}`).value.trim();
+            const newType = document.getElementById(`adm_type_${index}`).value;
+            const newPass = document.getElementById(`adm_pass_${index}`).value.trim();
 
             if(!newName || !newCode) {
                 alert("❌ يرجى إدخال اسم العميل والكود الثابت.");
@@ -1909,11 +1920,12 @@
 
             if(oldName !== newName) {
                 delete cloudClients[oldName];
+                db.ref('clients/' + oldName).remove();
             }
 
             cloudClients[newName] = newCode;
 
-            let actualUid = uid || ("cust_" + Date.now());
+            let actualUid = reg.uid || ("cust_" + Date.now());
             let existingCust = portalCustomersDB[actualUid] || {};
 
             let updatedCustData = {
@@ -1933,19 +1945,25 @@
             db.ref('portalCustomers/' + actualUid).set(updatedCustData).then(() => {
                 alert(`✅ تم حفظ وتحديث بيانات وكود العميل (${newName}) بنجاح!`);
                 updateClientsDatalist();
+                renderAdminPortalCustomersTable();
             });
         }
 
-        function adminDeleteCustomer(rawClientName, uid) {
-            const clientName = decodeURIComponent(rawClientName);
+        function adminDeleteCustomerByIndex(index) {
+            const reg = adminCustomerRegistry[index];
+            if(!reg) return;
+
+            const clientName = reg.originalName;
             if(!confirm(`⚠️ هل أنت متأكد من حذف العميل (${clientName}) نهائياً من قاعدة البيانات؟`)) return;
 
             delete cloudClients[clientName];
             db.ref('clients/' + clientName).remove();
+            delete cloudClientsLocations[clientName];
+            db.ref('clientsLocations/' + clientName).remove();
 
-            if(uid && portalCustomersDB[uid]) {
-                delete portalCustomersDB[uid];
-                db.ref('portalCustomers/' + uid).remove();
+            if(reg.uid && portalCustomersDB[reg.uid]) {
+                delete portalCustomersDB[reg.uid];
+                db.ref('portalCustomers/' + reg.uid).remove();
             }
 
             alert(`✅ تم حذف العميل (${clientName}) بنجاح!`);
@@ -1960,7 +1978,7 @@
             }
 
             if(allClientNames.size === 0) {
-                alert("لا توجد بيانات عملاء لتصديرها.[span_228](start_span)[span_228](end_span)");
+                alert("لا توجد بيانات عملاء لتصديرها.[span_227](start_span)[span_227](end_span)");
                 return;
             }
 
@@ -1976,7 +1994,7 @@
                 let type = cust ? (cust.customerType === 'wholesale' ? 'جملة' : 'قطاعي') : 'قطاعي';
                 let pass = cust ? (cust.pass || '123456') : '123456';
 
-                let row = `"${name}","${cCode}","${phone}","${village}","${type}","${pass}"`;
+                let row = `"${(name||'').replace(/"/g, '""')}","${cCode}","${phone}","${village}","${type}","${pass}"`;
                 csvContent += row + "\n";
             });
 
@@ -2005,7 +2023,7 @@
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
                     if(!jsonData || jsonData.length === 0) {
-                        alert("❌ الملف المرفوع فارغ.[span_229](start_span)[span_229](end_span)");
+                        alert("❌ الملف المرفوع فارغ.[span_228](start_span)[span_228](end_span)");
                         return;
                     }
 
@@ -2071,7 +2089,7 @@
             let village = document.getElementById('adminDirectVillage').value.trim();
             let type = document.getElementById('adminDirectType').value;
 
-            if(!name) { alert("❌ أدخل اسم المحل أو العميل.[span_230](start_span)[span_230](end_span)"); return; }
+            if(!name) { alert("❌ أدخل اسم المحل أو العميل.[span_229](start_span)[span_229](end_span)"); return; }
 
             let uid = "cust_" + Date.now();
             let fullPhone = phone ? ("+20" + phone.replace(/^0+/, '')) : "";
@@ -2100,7 +2118,7 @@
             if(!code || !name || !pass) return;
             cloudDelegates[code] = { pass, name, role, carStock: {...defaultCarStock}, locked: false };
             db.ref('delegates').set(cloudDelegates).then(() => {
-                alert("✅ تم إنشاء الحساب بنجاح[span_231](start_span)[span_231](end_span)!");
+                alert("✅ تم إنشاء الحساب بنجاح[span_230](start_span)[span_230](end_span)!");
                 updateDelegatesSelects();
             });
         }
@@ -2110,7 +2128,7 @@
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             const totalPrice = cartons * 23925;
-            const zimam = totalPrice - deposit;
+            const zimam = deposit - totalPrice;
             
             document.getElementById('menofTotalPrice').innerText = totalPrice.toFixed(2);
             document.getElementById('menofZimam').innerText = zimam.toFixed(2);
@@ -2121,18 +2139,29 @@
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             const totalPrice = cartons * 23925;
-            const zimam = totalPrice - deposit;
+            const zimam = deposit - totalPrice;
             const id = document.getElementById('editMenofId').value || String(Date.now());
 
             cloudMenofLoads = cloudMenofLoads.filter(x => String(x.id) !== String(id));
             cloudMenofLoads.push({ id, date, cartons, totalPrice, deposit, zimam });
             db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
-                alert("✅ تم حفظ شحنة منوف وتحديث الرصيد بنجاح[span_232](start_span)[span_232](end_span)!");
+                alert("✅ تم حفظ شحنة منوف وتحديث الرصيد بنجاح[span_231](start_span)[span_231](end_span)!");
                 document.getElementById('editMenofId').value = '';
                 document.getElementById('menofCartons').value = '';
                 document.getElementById('menofDeposit').value = '';
                 renderMenofTable();
             });
+        }
+
+        function editMenof(id) {
+            const m = cloudMenofLoads.find(x => String(x.id) === String(id));
+            if(!m) return;
+            document.getElementById('editMenofId').value = m.id;
+            document.getElementById('menofDate').value = m.date;
+            document.getElementById('menofCartons').value = m.cartons;
+            document.getElementById('menofDeposit').value = m.deposit;
+            calcMenofTotal();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function renderMenofTable() {
@@ -2162,7 +2191,10 @@
                     <td>${tp.toFixed(2)}</td>
                     <td>${dep.toFixed(2)}</td>
                     <td style="color:${currentZimam >= 0 ? '#16a34a' : '#dc2626'}; font-weight:bold;">${currentZimam.toFixed(2)}</td>
-                    <td><button class="btn btn-danger" style="padding:2px 4px; font-size:9px; width:auto;" onclick="deleteMenof('${m.id}')">حذف</button></td>
+                    <td>
+                        <button class="btn btn-info" style="padding:2px 4px; font-size:9px; width:auto;" onclick="editMenof('${m.id}')">✏️ تعديل</button>
+                        <button class="btn btn-danger" style="padding:2px 4px; font-size:9px; width:auto;" onclick="deleteMenof('${m.id}')">حذف</button>
+                    </td>
                 </tr>`;
             });
 
@@ -2215,9 +2247,24 @@
             cloudShops = cloudShops.filter(x => String(x.id) !== String(id));
             cloudShops.push({ id, name, cartons, totalPrice, paid, zimam });
             db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
-                alert("✅ تم حفظ معاملة المحل بنجاح[span_233](start_span)[span_233](end_span)!");
+                alert("✅ تم حفظ معاملة المحل بنجاح[span_232](start_span)[span_232](end_span)!");
+                document.getElementById('editShopId').value = '';
+                document.getElementById('shopNameInput').value = '';
+                document.getElementById('shopCartons').value = '';
+                document.getElementById('shopPaidVal').value = '';
                 renderShopsTable();
             });
+        }
+
+        function editShop(id) {
+            const s = cloudShops.find(x => String(x.id) === String(id));
+            if(!s) return;
+            document.getElementById('editShopId').value = s.id;
+            document.getElementById('shopNameInput').value = s.name;
+            document.getElementById('shopCartons').value = s.cartons;
+            document.getElementById('shopPaidVal').value = s.paid;
+            calcShopTotal();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function renderShopsTable() {
@@ -2227,7 +2274,7 @@
             const query = (document.getElementById('shopSearchInput')?.value || '').trim().toLowerCase();
             let filteredShops = query ? cloudShops.filter(s => s.name && s.name.toLowerCase().includes(query)) : cloudShops;
 
-            if(filteredShops.length === 0) { tb.innerHTML = `<tr><td colspan="6">لا توجد نتائج مطابقة.[span_234](start_span)[span_234](end_span)</td></tr>`; return; }
+            if(filteredShops.length === 0) { tb.innerHTML = `<tr><td colspan="6">لا توجد نتائج مطابقة.[span_233](start_span)[span_233](end_span)</td></tr>`; return; }
 
             filteredShops.forEach(s => {
                 let zimamVal = (s.zimam !== undefined) ? s.zimam : (s.totalPrice - s.paid);
@@ -2239,6 +2286,7 @@
                     <td style="color:#dc2626; font-weight:bold;">${zimamVal} ج.م</td>
                     <td>
                         <button class="btn btn-success" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openShopPayModal('${s.id}')">💳 دفع</button>
+                        <button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="editShop('${s.id}')">✏️</button>
                         <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="deleteShop('${s.id}')">حذف</button>
                     </td>
                 </tr>`;
@@ -2312,7 +2360,7 @@
             cloudLmInvoices = cloudLmInvoices.filter(x => String(x.id) !== String(id));
             cloudLmInvoices.push({ id, type, deposit, totalCost, totalSell, profit, items });
             db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => {
-                alert("✅ تم حفظ فاتورة LM بنجاح[span_235](start_span)[span_235](end_span)!");
+                alert("✅ تم حفظ فاتورة LM بنجاح[span_234](start_span)[span_234](end_span)!");
                 renderLmTable();
             });
         }
@@ -2453,7 +2501,7 @@
             const todayStr = new Date().toISOString().split('T')[0];
             let mySales = cloudSales.filter(s => s.delegateCode === currentDelegate.code && s.date === todayStr && s.status !== 'cancelled');
             let totalAmount = mySales.reduce((acc, cur) => acc + cur.total, 0);
-            summaryText.innerHTML = `عدد فواتير اليوم: <b>${mySales.length}</b> | إجمالي المبيعات: <b style="color:#15803d;">${totalAmount.toFixed(2)} ج.م[span_236](start_span)[span_236](end_span)</b>`;
+            summaryText.innerHTML = `عدد فواتير اليوم: <b>${mySales.length}</b> | إجمالي المبيعات: <b style="color:#15803d;">${totalAmount.toFixed(2)} ج.م[span_235](start_span)[span_235](end_span)</b>`;
         }
 
         function handleLogout() {
@@ -2476,6 +2524,12 @@
             const selVal = document.getElementById('selectExistingClient').value;
             if(selVal) {
                 document.getElementById('clientName').value = selVal;
+                for (let uid in portalCustomersDB) {
+                    if(portalCustomersDB[uid].name === selVal && portalCustomersDB[uid].village) {
+                        document.getElementById('clientVillage').value = portalCustomersDB[uid].village;
+                        break;
+                    }
+                }
                 onClientNameInput();
             }
         }
@@ -2484,9 +2538,20 @@
             const sel = document.getElementById('selectExistingClient');
             if(!sel) return;
             sel.innerHTML = '<option value="">📋 عميل مسجل...</option>';
-            for(let cName in cloudClients) {
-                sel.innerHTML += `<option value="${cName}">${cName} (${cloudClients[cName]})</option>`;
+            
+            let clientSet = new Set([...Object.keys(cloudClients)]);
+            for(let uid in portalCustomersDB) {
+                if(portalCustomersDB[uid].name) clientSet.add(portalCustomersDB[uid].name);
             }
+
+            clientSet.forEach(cName => {
+                let code = cloudClients[cName] || '';
+                if(!code) {
+                    let u = Object.keys(portalCustomersDB).find(k => portalCustomersDB[k].name === cName);
+                    if(u) code = portalCustomersDB[u].clientCode || '';
+                }
+                sel.innerHTML += `<option value="${cName}">${cName} ${code ? `(${code})` : ''}</option>`;
+            });
             updateReportClientsSelect();
         }
 
@@ -2506,7 +2571,8 @@
             if(cloudClients[val]) {
                 lblCode.innerText = cloudClients[val];
             } else {
-                lblCode.innerText = "عميل جديد (تلقائي)";
+                let foundCust = Object.values(portalCustomersDB).find(c => c.name === val);
+                lblCode.innerText = foundCust ? foundCust.clientCode : "عميل جديد (تلقائي)";
             }
 
             clientInputTimer = setTimeout(() => {
@@ -2528,12 +2594,12 @@
             if(!currentPass || !newPass || !currentDelegate) return;
 
             if(currentDelegate.code === 'admin') {
-                if(currentPass !== ADMIN_PASS) { alert("كلمة السر الحالية غير صحيحة.[span_237](start_span)[span_237](end_span)"); return; }
+                if(currentPass !== ADMIN_PASS) { alert("كلمة السر الحالية غير صحيحة.[span_236](start_span)[span_236](end_span)"); return; }
                 alert("تم تحديث كلمة سر المدير بنجاح!");
             } else {
-                if(cloudDelegates[currentDelegate.code].pass !== currentPass) { alert("كلمة السر الحالية غير صحيحة.[span_238](start_span)[span_238](end_span)"); return; }
+                if(cloudDelegates[currentDelegate.code].pass !== currentPass) { alert("كلمة السر الحالية غير صحيحة.[span_237](start_span)[span_237](end_span)"); return; }
                 cloudDelegates[currentDelegate.code].pass = newPass;
-                db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم تغيير كلمة السر بنجاح[span_239](start_span)[span_239](end_span)!"));
+                db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم تغيير كلمة السر بنجاح[span_238](start_span)[span_238](end_span)!"));
             }
         }
     </script>
