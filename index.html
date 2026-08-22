@@ -7,7 +7,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-    <!-- مكتبة معالجة وتصدير واستيراد ملفات الإكسيل -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
@@ -208,7 +207,7 @@
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
-        <!-- ب) شاشة تتبع المناديب والمحلات للمدير فقط -->
+        <!-- ب) تتبع المناديب والمحلات للمدير -->
         <div id="sectionTracking" style="display: none;">
             <div class="filter-box" style="background:#ecfdf5; border-color:#a7f3d0; margin-bottom:12px;">
                 <h4 style="margin:0 0 6px 0; color:#065f46;">📍 مواقع المناديب الحالية (Live Tracking للمدير):</h4>
@@ -246,7 +245,7 @@
             </div>
         </div>
 
-        <!-- ج) شاشة مراجعة واعتماد طلبات العملاء -->
+        <!-- ج) مراجعة واعتماد طلبات العملاء -->
         <div id="sectionPendingOrders" style="display: none;">
             <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
                 <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:</h4>
@@ -517,7 +516,7 @@
             </table>
         </div>
 
-        <!-- ل) الإعدادات وإدارة العملاء بالكامل واستيراد/تصدير إكسيل -->
+        <!-- ل) الإعدادات -->
         <div id="sectionSettings" style="display: none;">
             <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px; margin-bottom:12px;">
                 <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر:</h4>
@@ -537,7 +536,7 @@
                         <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="importClientsFromExcel(event)">
                     </div>
                     <div style="font-size:10px; color:#64748b; margin-top:6px;">
-                        💡 <b>تلميح لشيت الإكسيل:</b> يجب أن يتضمن الأعمدة بالأسماء: (اسم العميل أو المحل / الكود الثابت / التليفون / القرية / الفئة).
+                        💡 <b>تلميح لشيت الإكسيل:</b> يجب أن يتضمن الأعمدة: (اسم العميل / الكود الثابت / التليفون / القرية / الفئة).
                     </div>
                 </div>
 
@@ -686,50 +685,25 @@
             return String(p).replace(/\D/g, '').replace(/^20/, '').replace(/^0+/, '');
         }
 
-        db.ref('sales').on('value', (s) => { 
-            cloudSales = s.val() ? Object.values(s.val()) : []; 
-            if (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin')) {
-                renderDelegatesTrackingTable();
-            }
-        });
-        db.ref('delegates').on('value', (s) => { 
-            if(s.val()) { 
-                cloudDelegates = s.val(); 
-                updateDelegatesSelects(); 
-                renderCarStockTable(); 
-                if (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin')) {
-                    renderDelegatesTrackingTable();
-                }
-            } 
-        });
+        db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
+        db.ref('delegates').on('value', (s) => { if(s.val()) cloudDelegates = s.val(); });
         db.ref('clients').on('value', (s) => { 
             cloudClients = s.val() || {}; 
             updateClientsDatalist(); 
             updateReportClientsSelect(); 
-            renderClientsMapTable(); 
-            if(currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin')) {
-                renderAdminPortalCustomersTable();
-            }
         });
-        db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; renderClientsMapTable(); });
-        db.ref('menofLoads').on('value', (s) => { 
-            cloudMenofLoads = s.val() ? Object.values(s.val()) : [];
-            renderMenofTable();
-        });
-        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; renderShopsTable(); });
+        db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
+        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
+        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; });
         db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
         
         db.ref('pendingOrders').on('value', (s) => { 
             cloudPendingOrders = s.val() ? Object.values(s.val()) : [];
             updatePendingOrdersBadge();
-            renderAdminPendingOrdersTable();
-            renderClientOrdersStatusTable();
         });
 
         db.ref('portalCustomers').on('value', (s) => { 
             portalCustomersDB = s.val() || {}; 
-            renderAdminPortalCustomersTable();
-            renderClientsMapTable();
             if(currentPortalCustomer && portalCustomersDB[currentPortalCustomer.uid]) {
                 currentPortalCustomer = portalCustomersDB[currentPortalCustomer.uid];
                 enterPortalCustomerDashboard();
@@ -739,12 +713,11 @@
         db.ref('locations').on('value', (s) => {
             cloudLocations = s.val() || {};
             if (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin')) {
-                renderDelegatesTrackingTable();
                 checkSosAlerts();
             }
         });
 
-        // 1. نظام الـ GPS وتتبع مكان المندوب وSOS
+        // 1. نظام الـ GPS
         function getCurrentAccurateLocation() {
             return new Promise((resolve) => {
                 if (!navigator.geolocation) {
@@ -770,7 +743,7 @@
                     (err) => {
                         resolve(latestCoords);
                     },
-                    { enableHighAccuracy: true, timeout: 6000, maximumAge: 10000 }
+                    { enableHighAccuracy: false, timeout: 3000, maximumAge: 60000 }
                 );
             });
         }
@@ -798,7 +771,7 @@
                     }).catch(() => {});
                 },
                 (err) => {},
-                { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+                { enableHighAccuracy: false, maximumAge: 15000, timeout: 10000 }
             );
         }
 
@@ -1063,6 +1036,7 @@
             window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent(msg)}`, '_blank');
         }
 
+        // تسجيل دخول فائق السرعة وبدون تهنيج
         function handleLogin() {
             const rawInput = document.getElementById('loginCode').value.trim();
             const codeLower = rawInput.toLowerCase();
@@ -1074,18 +1048,16 @@
                 return;
             }
 
+            // فحص العملاء
             let foundCustomer = null;
             for(let uid in portalCustomersDB) {
                 let cust = portalCustomersDB[uid];
                 let custPhoneClean = cleanPhoneStr(cust.phone);
 
-                let isMatch = false;
-                if(cust.clientCode && cust.clientCode.toLowerCase() === codeLower) isMatch = true;
-                if(cust.email && cust.email.toLowerCase() === codeLower) isMatch = true;
-                if(cust.name && cust.name.toLowerCase() === codeLower) isMatch = true;
-                if(cleanInputPhone && custPhoneClean && custPhoneClean === cleanInputPhone) isMatch = true;
-
-                if(isMatch) {
+                if((cust.clientCode && cust.clientCode.toLowerCase() === codeLower) ||
+                   (cust.email && cust.email.toLowerCase() === codeLower) ||
+                   (cust.name && cust.name.toLowerCase() === codeLower) ||
+                   (cleanInputPhone && custPhoneClean && custPhoneClean === cleanInputPhone)) {
                     foundCustomer = cust;
                     break;
                 }
@@ -1102,6 +1074,7 @@
                 }
             }
 
+            // فحص المناديب والمدير
             const dDB = cloudDelegates;
             if (rawInput === "admin" && pass === ADMIN_PASS) {
                 currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin" };
@@ -1122,19 +1095,16 @@
             document.getElementById('loginView').style.display = 'none';
             document.getElementById('salesView').style.display = 'block';
 
-            if(currentDelegate.role === 'delegate') {
-                document.getElementById('sosButtonContainer').style.display = 'block';
-                startTrackingDelegateLocation();
-            } else {
-                document.getElementById('sosButtonContainer').style.display = 'none';
-            }
-
             setupUserTabs();
             switchTab('invoice');
             initSalesForm();
-            updateDelegateTodaySummary();
-            initLmFormInputs();
-            initAdminCarSetup();
+
+            if(currentDelegate.role === 'delegate') {
+                document.getElementById('sosButtonContainer').style.display = 'block';
+                setTimeout(() => { startTrackingDelegateLocation(); }, 200);
+            } else {
+                document.getElementById('sosButtonContainer').style.display = 'none';
+            }
         }
 
         function enterPortalCustomerDashboard() {
@@ -1453,10 +1423,6 @@
 
         function initSalesForm() {
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return;
-            
-            if (currentDelegate.role === 'delegate') {
-                getCurrentAccurateLocation();
-            }
 
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('invoiceDate');
@@ -1513,6 +1479,7 @@
                     </table>
                 </div>`;
             calcTotals();
+            updateDelegateTodaySummary();
         }
 
         function calcTotals() {
@@ -1573,7 +1540,7 @@
 
             if (!hasItems) { alert("أدخل كمية لصنف واحد على الأقل!"); return null; }
 
-            let activeLoc = await getCurrentAccurateLocation();
+            let activeLoc = latestCoords;
 
             let locObj = null;
             if (activeLoc && activeLoc.lat) {
@@ -1630,7 +1597,6 @@
             if(!specificInv && currentDelegate) {
                 alert("✅ تم حفظ الفاتورة وخصمها من سيارتك وجاري الطباعة!");
                 initSalesForm();
-                updateDelegateTodaySummary();
             }
         }
 
@@ -1639,7 +1605,6 @@
             if(rec) {
                 alert("✅ تم حفظ الفاتورة وخصمها من رصيد سيارتك بنجاح!");
                 initSalesForm();
-                updateDelegateTodaySummary();
             }
         }
 
@@ -1840,7 +1805,7 @@
             });
         }
 
-        // 9. لوحة المدير: التحكم في العملاء (تعديل الأكواد - الحذف - التصدير والاستيراد)
+        // 9. لوحة المدير: العملاء
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
@@ -2173,7 +2138,7 @@
             db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => renderMenofTable());
         }
 
-        // 11. المحلات وفواتير LM وحساب النسب
+        // 11. المحلات وفواتير LM
         function calcShopTotal() {
             const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
             const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
@@ -2324,7 +2289,7 @@
             resBox.innerHTML = `<b>📊 نتائج حساب النسب:</b><br>- كليوباترا: <b>${(target*rCleo/sumRatios).toFixed(2)}</b> كرتونة<br>- بوكس: <b>${(target*rBox/sumRatios).toFixed(2)}</b> كرتونة<br>- براون: <b>${(target*rBrown/sumRatios).toFixed(2)}</b> كرتونة<br>- سوبر: <b>${(target*rSuper/sumRatios).toFixed(2)}</b> كرتونة`;
         }
 
-        // 12. تبديل التبويبات وإدارة الجلسات
+        // 12. التنقل بين التبويبات
         function setupUserTabs() {
             if(currentPortalCustomer) return;
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
@@ -2352,11 +2317,7 @@
 
             if(isAdm) {
                 document.getElementById('adminUserManagement').style.display = 'block';
-                renderAdminPortalCustomersTable();
                 updatePendingOrdersBadge();
-                renderAdminPendingOrdersTable();
-                renderDelegatesTrackingTable();
-                renderClientsMapTable();
             }
             updateDelegatesSelects();
         }
@@ -2374,11 +2335,11 @@
             if(tab === 'pendingOrders') renderAdminPendingOrdersTable();
             if(tab === 'saved') renderSavedInvoices();
             if(tab === 'report') renderDailyReport();
-            if(tab === 'carStock') renderCarStockTable();
+            if(tab === 'carStock') { initAdminCarSetup(); renderCarStockTable(); }
             if(tab === 'tracking') { renderDelegatesTrackingTable(); renderClientsMapTable(); }
             if(tab === 'menof') renderMenofTable();
             if(tab === 'shops') renderShopsTable();
-            if(tab === 'lmInvoices') renderLmTable();
+            if(tab === 'lmInvoices') { initLmFormInputs(); renderLmTable(); }
             if(tab === 'settings' && currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin')) renderAdminPortalCustomersTable();
         }
 
