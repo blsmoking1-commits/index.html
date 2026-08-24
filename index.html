@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة المبيعات - شركة بلاك هورس</title>
+    <title>نظام إدارة المبيعات والتتبع - شركة بلاك هورس</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -11,7 +11,7 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
         body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
-        .card { max-width: 720px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .card { max-width: 780px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .text-center { text-align: center; }
         
         .logo-box {
@@ -39,6 +39,7 @@
         .btn-danger { background: #dc2626; color: white; }
         .btn-bluetooth { background: #7c3aed; color: white; }
         .btn-warning { background: #d97706; color: white; }
+        .btn-fleet { background: #0891b2; color: white; }
         .btn-sos { background: #e11d48; color: white; animation: pulseSos 1.5s infinite; font-size: 14px; font-weight: bold; }
         
         @keyframes pulseSos {
@@ -70,6 +71,13 @@
         .modal-content { background:#fff; padding:18px; border-radius:10px; width:90%; max-width:440px; max-height:85vh; overflow-y:auto; }
         
         #sosAlertBanner { display:none; background:#ffe4e6; border:2px solid #e11d48; color:#9f1239; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; }
+        #locationRequestRepBanner { display:none; background:#eff6ff; border:2px solid #2563eb; color:#1e40af; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; text-align:center; animation: pulseReq 2s infinite; }
+        
+        @keyframes pulseReq {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
     </style>
 </head>
 <body>
@@ -154,6 +162,10 @@
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
+        <!-- تنبيه طلب الموقع اللحظي للمندوب عند إرسال المدير/مدير الحركة طلباً -->
+        <div id="locationRequestRepBanner"></div>
+
+        <!-- أزرار الحضور الشخصية للموظف الحالي -->
         <div id="selfAttendanceBox" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
             <div style="font-size:11.5px; font-weight:bold; color:#1e293b;">
                 📌 حالتك اليوم: <span id="lblMyAttendanceStatus" style="color:#64748b;">لم تسجل</span>
@@ -179,7 +191,7 @@
             <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
             <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
             <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة والجرد</div>
-            <div id="tabTracking" class="tab-btn" onclick="switchTab('tracking')" style="display:none; background:#ecfdf5; color:#065f46;">📍 تتبع المناديب والمحلات</div>
+            <div id="tabTracking" class="tab-btn" onclick="switchTab('tracking')" style="display:none; background:#ecfdf5; color:#065f46;">📍 تتبع المناديب والأسطول</div>
             <div id="tabRatios" class="tab-btn" onclick="switchTab('ratios')" style="background:#e0f2fe;">⚖️ النسب</div>
             <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف (التحميل والذمم)</div>
             <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
@@ -229,7 +241,7 @@
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
-        <!-- تبويب المخزن -->
+        <!-- ب) تبويب المخزن -->
         <div id="sectionWarehouse" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">📦 المخزن العام وإدارة البضاعة (بالكرتونة):</h4>
             
@@ -272,7 +284,7 @@
             </div>
         </div>
 
-        <!-- تبويب سجل الحضور والانصراف -->
+        <!-- ج) تبويب سجل الحضور والانصراف (للمدير، HR، مدير الحركة، الحسابات) -->
         <div id="sectionAttendanceLog" style="display: none;">
             <div class="filter-box">
                 <h4 style="margin:0 0 8px 0; color:#065f46;">📋 سجل حضور وانصراف الموظفين والمناديب:</h4>
@@ -298,7 +310,7 @@
             </div>
         </div>
 
-        <!-- ب) تبويب إدارة العملاء -->
+        <!-- د) تبويب إدارة العملاء -->
         <div id="sectionClientsManage" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">👥 لوحة إدارة بيانات العملاء والأكواد والخطوط:</h4>
             <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
@@ -307,6 +319,10 @@
                     <button class="btn btn-success" style="flex:1; margin-top:0; font-size:12px;" onclick="exportClientsFast()">📥 تصدير العملاء فوراً (Excel/CSV)</button>
                     <button class="btn btn-info" style="flex:1; margin-top:0; font-size:12px;" onclick="document.getElementById('excelFileInput').click()">📤 رفع شيت Excel (استبدال الشيت القديم)</button>
                     <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="importClientsFromExcel(event)">
+                </div>
+                <div style="font-size:10px; color:#e11d48; margin-top:6px; font-weight:bold;">
+                    ⚠️ عند رفع ملف Excel جديد، سيتم مسح أي عميل قديم واعتماد بيانات الشيت الجديد فوراً.<br>
+                    💡 الأعمدة المدعومة: (اسم العميل / الكود الثابت / الخط أو خط السير / التليفون / القرية / الفئة).
                 </div>
             </div>
 
@@ -323,7 +339,7 @@
                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px;">
                     <div class="form-group"><label>رقم التليفون:</label><input type="text" id="adminDirectPhone" placeholder="1012345678"></div>
                     <div class="form-group"><label>كلمة السر:</label><input type="text" id="adminDirectPass" placeholder="كلمة السر..."></div>
-                    <div class="form-group"><label>الفئة:</label><select id="adminDirectType" class="form-control"><option value="retail">قطاعي</option><option value="wholesale">جملة</option></select></div>
+                    <div class="form-group"><label>الفئة:</label><select id="adminDirectType"><option value="retail">قطاعي</option><option value="wholesale">جملة</option></select></div>
                 </div>
                 <button class="btn btn-success" onclick="adminDirectAddCustomer()">✅ حفظ وتفعيل حساب العميل فوراً</button>
             </div>
@@ -344,7 +360,7 @@
                                 <th>بيانات الاتصال</th>
                                 <th>الفئة</th>
                                 <th>كلمة السر</th>
-                                <th style="width:120px;">الإجراءات</th>
+                                <th>الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody id="adminPortalCustomersBody"></tbody>
@@ -353,18 +369,22 @@
             </div>
         </div>
 
-        <!-- ج) تتبع المناديب والمحلات للمدير -->
+        <!-- هـ) تتبع المناديب والسيارات والمحلات (المدير + مدير الحركة + HR + المخزن) -->
         <div id="sectionTracking" style="display: none;">
             <div class="filter-box" style="background:#ecfdf5; border-color:#a7f3d0; margin-bottom:12px;">
-                <h4 style="margin:0 0 6px 0; color:#065f46;">📍 مواقع المناديب الحالية (Live Tracking للمدير):</h4>
+                <h4 style="margin:0 0 6px 0; color:#065f46;">📍 تتبع المناديب والسيارات لحظياً (Live Fleet Tracking):</h4>
+                <p style="font-size:11px; color:#047857; margin:0 0 10px 0;">
+                    💡 يتوفر زران للتحكم السريع بكل مندوب: <b>"📡 طلب الموقع"</b> لإرسال إشعار لحظي له على هاتفه، و <b>"🗺️ فتح موقع المندوب والسيارة فوراً"</b> لتشغيل تطبيق الخرائط مباشرة.
+                </p>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
                             <tr>
-                                <th>المندوب</th>
-                                <th>آخر ظهور / تسجيل</th>
-                                <th>الحالة</th>
-                                <th>الموقع المباشر على الخريطة</th>
+                                <th>المندوب والسيارة</th>
+                                <th>آخر اتصال</th>
+                                <th>حالة الاتصال</th>
+                                <th style="min-width:130px;">الزرار 1: طلب الموقع</th>
+                                <th style="min-width:150px;">الزرار 2: فتح الموقع فوراً</th>
                             </tr>
                         </thead>
                         <tbody id="delegatesTrackingTableBody"></tbody>
@@ -392,10 +412,11 @@
             </div>
         </div>
 
-        <!-- د) مراجعة واعتماد طلبات العملاء -->
+        <!-- و) مراجعة واعتماد طلبات العملاء -->
         <div id="sectionPendingOrders" style="display: none;">
             <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
                 <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:</h4>
+                <p style="font-size:11px; color:#b45309; margin:0 0 10px 0;">عند الضغط على "موافقة واعتماد"، يتم تنزيل الفاتورة فوراً في مكانها الصحيح:</p>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
@@ -407,7 +428,7 @@
             </div>
         </div>
 
-        <!-- هـ) واجهة العميل المسجل -->
+        <!-- ز) واجهة العميل المسجل (مغلقة السعر لمنع التلاعب) -->
         <div id="sectionClientOrderOnly" style="display: none;">
             <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
                 <h4 style="margin-top:0; color:#166534;" id="portalClientHeaderTitle">🏪 لوحة طلبات العميل</h4>
@@ -445,13 +466,13 @@
             </div>
         </div>
 
-        <!-- و) الفواتير المحفوظة -->
+        <!-- ح) الفواتير المحفوظة -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box">
                 <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:</h4>
                 <div id="adminDelegateFilterBox" style="display:none; margin-bottom:8px;">
                     <label style="font-size:11px;">المندوب:</label>
-                    <select id="filterDelegateSelect" class="form-control" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
+                    <select id="filterDelegateSelect" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
                         <option value="ALL">📋 عرض كل المناديب</option>
                     </select>
                 </div>
@@ -470,20 +491,20 @@
             </div>
         </div>
 
-        <!-- ز) التقارير الشاملة -->
+        <!-- ط) التقارير الشاملة -->
         <div id="sectionReport" style="display: none;">
             <div class="filter-box" id="reportFilterBoxContainer">
                 <h4 style="margin-top:0;">📊 تقارير المبيعات من تاريخ إلى تاريخ:</h4>
                 <div style="display: flex; gap: 8px; margin-bottom: 8px;" id="adminReportSelectWrapper">
                     <div class="form-group" style="flex:1;">
                         <label>اختر المندوب (للمدير فقط):</label>
-                        <select id="reportDelegateSelect" class="form-control" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
+                        <select id="reportDelegateSelect" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
                             <option value="ALL">📋 كل المناديب</option>
                         </select>
                     </div>
                     <div class="form-group" style="flex:1;">
                         <label>اختر العميل:</label>
-                        <select id="reportClientSelect" class="form-control" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
+                        <select id="reportClientSelect" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
                             <option value="ALL">🏪 كل العملاء</option>
                         </select>
                     </div>
@@ -532,14 +553,14 @@
             </div>
         </div>
 
-        <!-- ح) رصيد السيارة وجرد كل مندوب -->
+        <!-- ي) رصيد السيارة وجرد كل مندوب وتحويل البضاعة / ردها للمخزن -->
         <div id="sectionCarStock" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد سيارة المندوب الحالي:</h4>
             
             <div id="adminCarSetupBox" style="display:none; background:#eff6ff; padding:10px; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:10px;">
                 <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ تحويل بضاعة لسيارة مندوب (يخصم من المخزن) / رد بضاعة:</h5>
                 <label style="font-size:11px; font-weight:bold;">اختر المندوب:</label>
-                <select id="selectDelegateForStock" class="form-control" style="margin-bottom:8px; font-size:12px;" onchange="renderCarStockTable()"></select>
+                <select id="selectDelegateForStock" style="margin-bottom:8px; font-size:12px;" onchange="renderCarStockTable()"></select>
                 
                 <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:6px; margin-bottom:8px;">
                     <div><label style="font-size:10px;">الصنف:</label><select id="selectTransferProductCar"></select></div>
@@ -557,7 +578,7 @@
             </table>
         </div>
 
-        <!-- ط) حساب النسب -->
+        <!-- ك) حساب النسب -->
         <div id="sectionRatios" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:</h4>
             <div class="filter-box">
@@ -567,7 +588,7 @@
                 </div>
                 <div style="display:flex; gap:8px;">
                     <div class="form-group" style="flex:1;"><label>نسبة براون:</label><input type="number" id="ratioBrown" value="0" oninput="calcRatioLoading()"></div>
-                    <div class="form-group" style="flex:1;"><label>نسبة سوبر:</label><input type="number" id="ratioSuper" value="0" oninput="calcRatioLoading()"></div>
+                    <div class="form-group" style="flex:1;"><label>نسبة سوبر (%):</label><input type="number" id="ratioSuper" value="0" min="0" max="100" step="0.1" placeholder="%" oninput="calcRatioLoading()"></div>
                 </div>
                 <div class="form-group">
                     <label>إجمالي الكرتونات المراد تحميلها:</label>
@@ -579,7 +600,7 @@
             </div>
         </div>
 
-        <!-- ي) التحميل من منوف والذمم -->
+        <!-- ل) التحميل من منوف وحساب الذمم التراكمية -->
         <div id="sectionMenof" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل تحميلات منوف والذمم التراكمية:</h4>
             
@@ -613,7 +634,7 @@
                 <div class="form-group"><label>عدد الكرتونات المحملة:</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
                 <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات (سعر الكرتونة = 23,925 ج.م): <b id="menofTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
                 <div class="form-group"><label>قيمة الإيداع المالي المدفوع:</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم التراكمية لهذه الشحنة (الإيداع - سعر البضاعة): <b id="menofZimam" style="color:#16a34a;">0.00</b> ج.م</div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم التراكمية لهذه الشحنة (الإيداع - سعر البضاعة): <b id="menofZimam">0.00</b> ج.م</div>
                 <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل / تحديث شحنة منوف</button>
             </div>
             
@@ -626,7 +647,7 @@
             </div>
         </div>
 
-        <!-- ك) المحلات -->
+        <!-- م) المحلات -->
         <div id="sectionShops" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (سعر الكرتونة = 23,925 ج.م):</h4>
             
@@ -650,14 +671,14 @@
             </table>
         </div>
 
-        <!-- ل) فواتير LM -->
+        <!-- ن) فواتير LM -->
         <div id="sectionLmInvoices" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM:</h4>
             <div class="filter-box">
                 <input type="hidden" id="editLmId" value="">
                 <div class="form-group">
                     <label>اختر الفاتورة:</label>
-                    <select id="lmInvoiceType" class="form-control"><option value="mohamed">فاتورة محمد</option><option value="hossam">فاتورة حسام</option></select>
+                    <select id="lmInvoiceType"><option value="mohamed">فاتورة محمد</option><option value="hossam">فاتورة حسام</option></select>
                 </div>
                 <div class="form-group"><label>قيمة الإيداع المالي:</label><input type="number" id="lmDeposit" placeholder="0"></div>
                 <div id="lmItemsContainer"></div>
@@ -669,7 +690,7 @@
             </table>
         </div>
 
-        <!-- م) الإعدادات وحسابات الموظفين -->
+        <!-- س) الإعدادات وحسابات الموظفين والصلاحيات -->
         <div id="sectionSettings" style="display: none;">
             <div id="adminRepRoutesControlBox" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; padding:12px; border-radius:8px; margin-bottom:12px;">
                 <h4 style="margin-top:0; font-size:13px; color:#1e40af;">🛣️ تعيين وتحديد خطوط السير للمناديب (للمدير فقط):</h4>
@@ -687,14 +708,15 @@
 
             <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px;">
                 <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px;">
-                    <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف:</h5>
-                    <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: hr1 أو acc1 أو 103"></div>
-                    <div class="form-group"><label>اسم المستخدم:</label><input type="text" id="newAccName" placeholder="اسم الموظف..."></div>
+                    <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف جديد:</h5>
+                    <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: fleet1 أو hr1 أو store1 أو 103"></div>
+                    <div class="form-group"><label>اسم الموظف:</label><input type="text" id="newAccName" placeholder="اسم الموظف..."></div>
                     <div class="form-group"><label>كلمة السر:</label><input type="password" id="newAccPass"></div>
                     <div class="form-group">
                         <label>نوع الحساب والصلاحية:</label>
-                        <select id="newAccRole" class="form-control">
+                        <select id="newAccRole">
                             <option value="delegate">مندوب مبيعات</option>
+                            <option value="fleet">مدير الحركة والأسطول</option>
                             <option value="store">مسؤول المخزن</option>
                             <option value="hr">مسؤول الموارد البشرية (HR)</option>
                             <option value="accounting">الحسابات</option>
@@ -729,31 +751,6 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل بيانات العميل للمدير -->
-    <div id="editClientModal" class="modal-bg">
-        <div class="modal-content">
-            <h3 style="margin-top:0; color:#1e293b; font-size:16px;">✏️ تعديل بيانات العميل</h3>
-            <input type="hidden" id="editClientOldName">
-            <input type="hidden" id="editClientUid">
-            <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="editClientName"></div>
-            <div class="form-group"><label>الكود الثابت:</label><input type="text" id="editClientCode"></div>
-            <div class="form-group"><label>خط السير / الخط:</label><input type="text" id="editClientRoute"></div>
-            <div class="form-group"><label>القرية / المركز:</label><input type="text" id="editClientVillage"></div>
-            <div class="form-group"><label>رقم التليفون:</label><input type="text" id="editClientPhone"></div>
-            <div class="form-group"><label>كلمة السر:</label><input type="text" id="editClientPass"></div>
-            <div class="form-group">
-                <label>الفئة:</label>
-                <select id="editClientType" class="form-control">
-                    <option value="retail">قطاعي (بالرابطة)</option>
-                    <option value="wholesale">جملة (بالكرتونة)</option>
-                    <option value="pending">قيد الانتظار</option>
-                </select>
-            </div>
-            <button class="btn btn-success" onclick="saveEditedClient()">💾 حفظ التعديلات</button>
-            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditClientModal()">إلغاء</button>
-        </div>
-    </div>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyARUfzp3O79n5pOONzY13pHcV6uoaMXd9s",
@@ -774,6 +771,7 @@
         const defaultCarStock = { "1500000000": 10, "1500000002": 10, "1500000004": 10, "1500000005": 10, "1500000008": 10, "1500000009": 10, "1500000010": 10, "1500000146": 10 };
         const defaultDelegates = {
             "admin": { pass: ADMIN_PASS, name: "حسام (المدير)", role: "admin", carStock: {...defaultCarStock}, allowedRoutes: ["ALL"] },
+            "fleet": { pass: "fleet123", name: "مدير الحركة", role: "fleet", carStock: {...defaultCarStock}, allowedRoutes: ["ALL"] },
             "store": { pass: "store123", name: "مسؤول المخزن", role: "store", carStock: {...defaultCarStock}, allowedRoutes: ["ALL"] },
             "hr": { pass: "hr123", name: "الموارد البشرية (HR)", role: "hr", allowedRoutes: ["ALL"] },
             "accountant": { pass: "acc123", name: "الحسابات", role: "accounting", allowedRoutes: ["ALL"] },
@@ -785,7 +783,7 @@
             { name: "ال ام احمر", code: "lm_red", buyPricePerCarton: 40788 },
             { name: "ال ام ازرق", code: "lm_blue", buyPricePerCarton: 40788 },
             { name: "مارل احمر", code: "marl_red", buyPricePerCarton: 50736 },
-            { name: "مارل ابيض", code: "marl_white", buyPricePerCarton: 5073 },
+            { name: "مارل ابيض", code: "marl_white", buyPricePerCarton: 50736 },
             { name: "ميريت", code: "merit", buyPricePerCarton: 55210 },
             { name: "ال ام ابيض", code: "lm_white", buyPricePerCarton: 40788 },
             { name: "مارل كرفت", code: "marl_craft", buyPricePerCarton: 39128 }
@@ -815,6 +813,7 @@
         let cloudLmInvoices = [];
         let cloudLocations = {};
         let cloudAttendance = [];
+        let cloudLocationRequests = {};
 
         let currentDelegate = null;
         let currentPortalCustomer = null;
@@ -828,7 +827,6 @@
             return String(p).replace(/\D/g, '').replace(/^20/, '').replace(/^0+/, '');
         }
 
-        // مزامنة Firebase
         db.ref('productsList').on('value', (s) => {
             if(s.val()) { products = Object.values(s.val()); }
             else { db.ref('productsList').set(defaultProducts); }
@@ -844,32 +842,18 @@
             populateRoutesList();
             updateClientsDatalist(); 
             updateReportClientsSelect(); 
-            renderAdminPortalCustomersTable();
         });
 
         db.ref('clientsRoutes').on('value', (s) => {
             cloudClientsRoutes = s.val() || {};
             populateRoutesList();
             updateClientsDatalist();
-            renderAdminPortalCustomersTable();
         });
 
         db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
-        
-        db.ref('menofLoads').on('value', (s) => { 
-            cloudMenofLoads = s.val() ? Object.values(s.val()) : [];
-            renderMenofTable();
-        });
-
-        db.ref('shops').on('value', (s) => { 
-            cloudShops = s.val() ? Object.values(s.val()) : []; 
-            renderShopsTable();
-        });
-
-        db.ref('lmInvoices').on('value', (s) => { 
-            cloudLmInvoices = s.val() ? Object.values(s.val()) : []; 
-            renderLmTable();
-        });
+        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
+        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; });
+        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
         
         db.ref('pendingOrders').on('value', (s) => { 
             cloudPendingOrders = s.val() ? Object.values(s.val()) : [];
@@ -880,7 +864,6 @@
             portalCustomersDB = s.val() || {}; 
             populateRoutesList();
             updateClientsDatalist();
-            renderAdminPortalCustomersTable();
         });
 
         db.ref('attendanceLog').on('value', (s) => {
@@ -891,647 +874,16 @@
 
         db.ref('locations').on('value', (s) => {
             cloudLocations = s.val() || {};
-            if (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin')) {
+            if (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin' || currentDelegate.role === 'fleet')) {
                 checkSosAlerts();
             }
+            renderDelegatesTrackingTable();
         });
 
-        // ----------------- إدارة وتعديل العملاء -----------------
-        function renderAdminPortalCustomersTable() {
-            const tbody = document.getElementById('adminPortalCustomersBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            for(let name in cloudClients) {
-                let code = cloudClients[name];
-                let route = cloudClientsRoutes[name] || '-';
-                let phone = '-';
-                let type = 'قطاعي';
-                let pass = '-';
-
-                for(let uid in portalCustomersDB) {
-                    if(portalCustomersDB[uid].name === name || portalCustomersDB[uid].clientCode === code) {
-                        phone = portalCustomersDB[uid].phone || '-';
-                        type = portalCustomersDB[uid].customerType === 'wholesale' ? 'جملة' : (portalCustomersDB[uid].customerType === 'retail' ? 'قطاعي' : 'معلق');
-                        pass = portalCustomersDB[uid].pass || '-';
-                        break;
-                    }
-                }
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><input type="checkbox" class="client-select-chk" value="${name}"></td>
-                        <td><b>${name}</b></td>
-                        <td><span style="color:#2563eb; font-weight:bold;">${code}</span></td>
-                        <td>${route}</td>
-                        <td>${phone}</td>
-                        <td>${type}</td>
-                        <td>${pass}</td>
-                        <td>
-                            <button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="openEditClientModal('${name}')">✏️ تعديل</button>
-                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="deleteSingleClient('${name}')">🗑️</button>
-                        </td>
-                    </tr>`;
-            }
-        }
-
-        function openEditClientModal(clientName) {
-            let code = cloudClients[clientName] || '';
-            let route = cloudClientsRoutes[clientName] || '';
-            let village = '';
-            let phone = '';
-            let pass = '';
-            let type = 'retail';
-            let targetUid = '';
-
-            for(let uid in portalCustomersDB) {
-                if(portalCustomersDB[uid].name === clientName || portalCustomersDB[uid].clientCode === code) {
-                    targetUid = uid;
-                    village = portalCustomersDB[uid].village || portalCustomersDB[uid].address || '';
-                    phone = portalCustomersDB[uid].phone || '';
-                    pass = portalCustomersDB[uid].pass || '';
-                    type = portalCustomersDB[uid].customerType || 'retail';
-                    if(portalCustomersDB[uid].route) route = portalCustomersDB[uid].route;
-                    break;
-                }
-            }
-
-            document.getElementById('editClientOldName').value = clientName;
-            document.getElementById('editClientUid').value = targetUid;
-            document.getElementById('editClientName').value = clientName;
-            document.getElementById('editClientCode').value = code;
-            document.getElementById('editClientRoute').value = route;
-            document.getElementById('editClientVillage').value = village;
-            document.getElementById('editClientPhone').value = phone;
-            document.getElementById('editClientPass').value = pass;
-            document.getElementById('editClientType').value = type;
-
-            document.getElementById('editClientModal').style.display = 'flex';
-        }
-
-        function closeEditClientModal() {
-            document.getElementById('editClientModal').style.display = 'none';
-        }
-
-        function saveEditedClient() {
-            const oldName = document.getElementById('editClientOldName').value;
-            const newName = document.getElementById('editClientName').value.trim();
-            const newCode = document.getElementById('editClientCode').value.trim();
-            const newRoute = document.getElementById('editClientRoute').value.trim();
-            const newVillage = document.getElementById('editClientVillage').value.trim();
-            const newPhone = document.getElementById('editClientPhone').value.trim();
-            const newPass = document.getElementById('editClientPass').value.trim();
-            const newType = document.getElementById('editClientType').value;
-            const uid = document.getElementById('editClientUid').value;
-
-            if(!newName) {
-                alert("❌ يرجى إدخال اسم العميل.");
-                return;
-            }
-
-            if(oldName && oldName !== newName) {
-                delete cloudClients[oldName];
-                delete cloudClientsRoutes[oldName];
-                db.ref('clients/' + oldName).remove();
-                db.ref('clientsRoutes/' + oldName).remove();
-
-                if(cloudClientsLocations[oldName]) {
-                    cloudClientsLocations[newName] = cloudClientsLocations[oldName];
-                    delete cloudClientsLocations[oldName];
-                    db.ref('clientsLocations/' + oldName).remove();
-                    db.ref('clientsLocations/' + newName).set(cloudClientsLocations[newName]);
-                }
-            }
-
-            cloudClients[newName] = newCode;
-            if(newRoute) cloudClientsRoutes[newName] = newRoute;
-
-            let targetUid = uid || ("cust_" + Date.now());
-            if(!portalCustomersDB[targetUid]) {
-                portalCustomersDB[targetUid] = { uid: targetUid };
-            }
-
-            portalCustomersDB[targetUid].name = newName;
-            portalCustomersDB[targetUid].clientCode = newCode;
-            portalCustomersDB[targetUid].route = newRoute;
-            portalCustomersDB[targetUid].village = newVillage;
-            portalCustomersDB[targetUid].phone = newPhone;
-            portalCustomersDB[targetUid].pass = newPass;
-            portalCustomersDB[targetUid].customerType = newType;
-
-            db.ref('clients').set(cloudClients);
-            db.ref('clientsRoutes').set(cloudClientsRoutes);
-            db.ref('portalCustomers/' + targetUid).set(portalCustomersDB[targetUid]).then(() => {
-                alert("✅ تم تحديث وتعديل بيانات العميل بنجاح!");
-                closeEditClientModal();
-                populateRoutesList();
-                updateClientsDatalist();
-                renderAdminPortalCustomersTable();
-            });
-        }
-
-        function toggleSelectAllClients(master) {
-            document.querySelectorAll('.client-select-chk').forEach(chk => chk.checked = master.checked);
-        }
-
-        function deleteSelectedClients() {
-            const checked = Array.from(document.querySelectorAll('.client-select-chk:checked')).map(c => c.value);
-            if(checked.length === 0) { alert("اختر عميلاً واحداً على الأقل."); return; }
-            if(!confirm(`هل أنت متأكد من حذف ${checked.length} عميل؟`)) return;
-
-            checked.forEach(name => {
-                delete cloudClients[name];
-                delete cloudClientsRoutes[name];
-                db.ref('clients/' + name).remove();
-                db.ref('clientsRoutes/' + name).remove();
-            });
-
-            db.ref('clients').set(cloudClients);
-            db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
-                alert("✅ تم حذف العملاء بنجاح.");
-                renderAdminPortalCustomersTable();
-            });
-        }
-
-        function deleteSingleClient(name) {
-            if(!confirm(`حذف العميل (${name})؟`)) return;
-            delete cloudClients[name];
-            delete cloudClientsRoutes[name];
-            db.ref('clients/' + name).remove();
-            db.ref('clientsRoutes/' + name).remove();
-            db.ref('clients').set(cloudClients);
-            db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => renderAdminPortalCustomersTable());
-        }
-
-        function adminDirectAddCustomer() {
-            const name = document.getElementById('adminDirectName').value.trim();
-            const code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
-            const route = document.getElementById('adminDirectRoute').value.trim();
-            const village = document.getElementById('adminDirectVillage').value.trim();
-            const phone = document.getElementById('adminDirectPhone').value.trim();
-            const pass = document.getElementById('adminDirectPass').value.trim() || "1234";
-            const type = document.getElementById('adminDirectType').value;
-
-            if(!name) { alert("❌ يرجى إدخال اسم العميل."); return; }
-
-            cloudClients[name] = code;
-            if(route) cloudClientsRoutes[name] = route;
-
-            const uid = "cust_" + Date.now();
-            const custData = { uid, name, clientCode: code, route, village, phone, pass, customerType: type };
-
-            db.ref('clients').set(cloudClients);
-            db.ref('clientsRoutes').set(cloudClientsRoutes);
-            db.ref('portalCustomers/' + uid).set(custData).then(() => {
-                alert("✅ تم إضافة وتفعيل حساب العميل بنجاح!");
-                document.getElementById('adminDirectName').value = '';
-                document.getElementById('adminDirectCode').value = '';
-                renderAdminPortalCustomersTable();
-            });
-        }
-
-        function exportClientsFast() {
-            let data = [];
-            for(let name in cloudClients) {
-                data.push({
-                    "اسم العميل": name,
-                    "الكود الثابت": cloudClients[name],
-                    "الخط / خط السير": cloudClientsRoutes[name] || ""
-                });
-            }
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "العملاء");
-            XLSX.writeFile(wb, "قائمة_العملاء.xlsx");
-        }
-
-        function importClientsFromExcel(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet);
-
-                cloudClients = {};
-                cloudClientsRoutes = {};
-
-                rows.forEach(r => {
-                    const name = r["اسم العميل"] || r["العميل"] || r["Name"];
-                    const code = r["الكود الثابت"] || r["الكود"] || r["Code"] || ("C-" + Math.floor(1000 + Math.random() * 9000));
-                    const route = r["الخط / خط السير"] || r["الخط"] || r["خط السير"] || r["Route"] || "";
-                    if(name) {
-                        cloudClients[name] = code;
-                        if(route) cloudClientsRoutes[name] = route;
-                    }
-                });
-
-                db.ref('clients').set(cloudClients);
-                db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
-                    alert("✅ تم استيراد واستبدال العملاء بنجاح!");
-                    renderAdminPortalCustomersTable();
-                });
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        // ----------------- قسم منوف (التحميل والذمم) -----------------
-        function calcMenofTotal() {
-            const cartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
-            const deposit = parseFloat(document.getElementById('menofDeposit')?.value) || 0;
-            const pricePerCarton = 23925;
-            
-            const totalGoods = cartons * pricePerCarton;
-            const zimam = deposit - totalGoods;
-
-            if(document.getElementById('menofTotalPrice')) {
-                document.getElementById('menofTotalPrice').innerText = totalGoods.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            }
-            if(document.getElementById('menofZimam')) {
-                document.getElementById('menofZimam').innerText = zimam.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                document.getElementById('menofZimam').style.color = zimam >= 0 ? '#16a34a' : '#dc2626';
-            }
-        }
-
-        function saveMenofLoad() {
-            const date = document.getElementById('menofDate').value || new Date().toISOString().split('T')[0];
-            const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
-            const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
-            const editId = document.getElementById('editMenofId').value;
-            const pricePerCarton = 23925;
-
-            if(cartons <= 0 && deposit <= 0) {
-                alert("❌ يرجى إدخال عدد الكرتونات أو قيمة الإيداع.");
-                return;
-            }
-
-            const totalGoods = cartons * pricePerCarton;
-            const zimam = deposit - totalGoods;
-
-            if(editId) {
-                let idx = cloudMenofLoads.findIndex(m => String(m.id) === String(editId));
-                if(idx !== -1) {
-                    cloudMenofLoads[idx] = { id: editId, date, cartons, totalGoods, deposit, zimam };
-                }
-            } else {
-                const newLoad = {
-                    id: String(Date.now()),
-                    date: date,
-                    cartons: cartons,
-                    totalGoods: totalGoods,
-                    deposit: deposit,
-                    zimam: zimam
-                };
-                cloudMenofLoads.push(newLoad);
-            }
-
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
-                alert("✅ تم حفظ شحنة منوف بنجاح!");
-                document.getElementById('editMenofId').value = '';
-                document.getElementById('menofCartons').value = '';
-                document.getElementById('menofDeposit').value = '';
-                calcMenofTotal();
-                renderMenofTable();
-            });
-        }
-
-        function renderMenofTable() {
-            const tbody = document.getElementById('menofTableBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            let totalCartons = 0;
-            let totalDeposits = 0;
-            let totalGoods = 0;
-            let netZimam = 0;
-
-            if(cloudMenofLoads.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6">لا توجد شحنات مسجلة في منوف حالياً.</td></tr>`;
-            } else {
-                cloudMenofLoads.slice().reverse().forEach(load => {
-                    const c = parseFloat(load.cartons) || 0;
-                    const dep = parseFloat(load.deposit) || 0;
-                    const goods = parseFloat(load.totalGoods) || (c * 23925);
-                    const zim = parseFloat(load.zimam) !== undefined ? parseFloat(load.zimam) : (dep - goods);
-
-                    totalCartons += c;
-                    totalDeposits += dep;
-                    totalGoods += goods;
-                    netZimam += zim;
-
-                    let zimColor = zim >= 0 ? '#16a34a' : '#dc2626';
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${load.date}</td>
-                            <td><b>${c}</b></td>
-                            <td>${goods.toLocaleString()} ج.م</td>
-                            <td>${dep.toLocaleString()} ج.م</td>
-                            <td style="color:${zimColor}; font-weight:bold;">${zim.toLocaleString()} ج.م</td>
-                            <td>
-                                <button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="editMenofLoad('${load.id}')">✏️</button>
-                                <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="deleteMenofLoad('${load.id}')">🗑️</button>
-                            </td>
-                        </tr>`;
-                });
-            }
-
-            if(document.getElementById('menofTotalCartonsCount')) document.getElementById('menofTotalCartonsCount').innerText = totalCartons;
-            if(document.getElementById('menofTotalDepositsSum')) document.getElementById('menofTotalDepositsSum').innerText = totalDeposits.toLocaleString() + " ج.م";
-            if(document.getElementById('menofTotalGoodsSum')) document.getElementById('menofTotalGoodsSum').innerText = totalGoods.toLocaleString() + " ج.م";
-            if(document.getElementById('menofNetZimamTotal')) {
-                document.getElementById('menofNetZimamTotal').innerText = netZimam.toLocaleString() + " ج.م";
-                document.getElementById('menofNetZimamTotal').style.color = netZimam >= 0 ? '#15803d' : '#dc2626';
-            }
-
-            if(document.getElementById('menofCartonsEquivalent')) {
-                let eqCartons = Math.floor(netZimam / 23925);
-                let remPound = (netZimam % 23925).toFixed(2);
-                document.getElementById('menofCartonsEquivalent').innerText = `${eqCartons} كرتونة و ${remPound} ج.م`;
-            }
-        }
-
-        function editMenofLoad(id) {
-            let load = cloudMenofLoads.find(m => String(m.id) === String(id));
-            if(!load) return;
-            document.getElementById('editMenofId').value = load.id;
-            document.getElementById('menofDate').value = load.date;
-            document.getElementById('menofCartons').value = load.cartons;
-            document.getElementById('menofDeposit').value = load.deposit;
-            calcMenofTotal();
-        }
-
-        function deleteMenofLoad(id) {
-            if(!confirm("⚠️ هل أنت متأكد من حذف هذه الشحنة؟")) return;
-            cloudMenofLoads = cloudMenofLoads.filter(m => String(m.id) !== String(id));
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
-                alert("✅ تم الحذف بنجاح.");
-                renderMenofTable();
-            });
-        }
-
-        // ----------------- حاسبة النسب -----------------
-        function calcRatioLoading() {
-            const cleo = parseFloat(document.getElementById('ratioCleopatra')?.value) || 0;
-            const box = parseFloat(document.getElementById('ratioBox')?.value) || 0;
-            const brown = parseFloat(document.getElementById('ratioBrown')?.value) || 0;
-            const superVal = parseFloat(document.getElementById('ratioSuper')?.value) || 0;
-            const totalTarget = parseFloat(document.getElementById('totalCartonsTarget')?.value) || 0;
-
-            const resBox = document.getElementById('ratioResultBox');
-            if(!resBox) return;
-
-            const sumRatios = cleo + box + brown + superVal;
-            if(sumRatios <= 0 || totalTarget <= 0) {
-                resBox.innerHTML = "أدخل النسب وإجمالي الكرتونات لعرض الكميات.";
-                return;
-            }
-
-            const cCartons = ((cleo / sumRatios) * totalTarget).toFixed(1);
-            const bCartons = ((box / sumRatios) * totalTarget).toFixed(1);
-            const brCartons = ((brown / sumRatios) * totalTarget).toFixed(1);
-            const sCartons = ((superVal / sumRatios) * totalTarget).toFixed(1);
-
-            resBox.innerHTML = `
-                <b>📊 توزيع الشحنة المحملة (${totalTarget} كرتونة):</b><br>
-                • كليوباترا: <b>${cCartons}</b> كرتونة<br>
-                • بوكس: <b>${bCartons}</b> كرتونة<br>
-                • براون: <b>${brCartons}</b> كرتونة<br>
-                • سوبر: <b>${sCartons}</b> كرتونة
-            `;
-        }
-
-        // ----------------- حسابات المحلات -----------------
-        function calcShopTotal() {
-            const cartons = parseFloat(document.getElementById('shopCartons')?.value) || 0;
-            const paid = parseFloat(document.getElementById('shopPaidVal')?.value) || 0;
-            const total = cartons * 23925;
-            const zimam = total - paid;
-            if(document.getElementById('shopTotalPrice')) document.getElementById('shopTotalPrice').innerText = total.toLocaleString() + " ج.م";
-            if(document.getElementById('shopZimam')) document.getElementById('shopZimam').innerText = zimam.toLocaleString() + " ج.م";
-        }
-
-        function saveShopTransaction() {
-            const name = document.getElementById('shopNameInput').value.trim();
-            const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
-            const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
-            const editId = document.getElementById('editShopId').value;
-            const total = cartons * 23925;
-            const zimam = total - paid;
-
-            if(!name) { alert("❌ يرجى إدخال اسم المحل."); return; }
-
-            if(editId) {
-                let idx = cloudShops.findIndex(s => String(s.id) === String(editId));
-                if(idx !== -1) {
-                    cloudShops[idx].name = name;
-                    cloudShops[idx].cartons = cartons;
-                    cloudShops[idx].totalPrice = total;
-                    cloudShops[idx].paid = paid;
-                    cloudShops[idx].zimam = zimam;
-                }
-            } else {
-                cloudShops.push({
-                    id: String(Date.now()),
-                    name, cartons, totalPrice: total, paid, zimam,
-                    date: new Date().toISOString().split('T')[0]
-                });
-            }
-
-            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
-                alert("✅ تم حفظ حساب المحل بنجاح!");
-                document.getElementById('editShopId').value = '';
-                document.getElementById('shopNameInput').value = '';
-                document.getElementById('shopCartons').value = '';
-                document.getElementById('shopPaidVal').value = '';
-                calcShopTotal();
-                renderShopsTable();
-            });
-        }
-
-        function renderShopsTable() {
-            const tbody = document.getElementById('shopsTableBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            const searchVal = document.getElementById('shopSearchInput')?.value.toLowerCase() || '';
-            let filtered = cloudShops.filter(s => !searchVal || (s.name && s.name.toLowerCase().includes(searchVal)));
-
-            if(filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6">لا توجد حسابات مسجلة للمحلات.</td></tr>`;
-                return;
-            }
-
-            filtered.slice().reverse().forEach(s => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${s.name}</b></td>
-                        <td>${s.cartons || 0}</td>
-                        <td>${(s.totalPrice || 0).toLocaleString()} ج.م</td>
-                        <td>${(s.paid || 0).toLocaleString()} ج.م</td>
-                        <td style="color:#dc2626; font-weight:bold;">${(s.zimam || 0).toLocaleString()} ج.م</td>
-                        <td>
-                            <button class="btn btn-success" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="openShopPayModal('${s.id}')">💳 سداد</button>
-                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="deleteShopTransaction('${s.id}')">🗑️</button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        function openShopPayModal(id) {
-            let shop = cloudShops.find(s => String(s.id) === String(id));
-            if(!shop) return;
-            document.getElementById('payShopId').value = shop.id;
-            document.getElementById('payShopName').value = shop.name;
-            document.getElementById('payShopCurrentZimam').value = (shop.zimam || 0).toLocaleString() + " ج.م";
-            document.getElementById('payAmountInput').value = '';
-            document.getElementById('shopPayModal').style.display = 'flex';
-        }
-
-        function closeShopPayModal() { document.getElementById('shopPayModal').style.display = 'none'; }
-
-        function submitShopPayment() {
-            const id = document.getElementById('payShopId').value;
-            const amt = parseFloat(document.getElementById('payAmountInput').value) || 0;
-            if(amt <= 0) { alert("أدخل مبلغ سداد صحيح."); return; }
-
-            let shop = cloudShops.find(s => String(s.id) === String(id));
-            if(shop) {
-                shop.paid = (parseFloat(shop.paid) || 0) + amt;
-                shop.zimam = Math.max(0, (parseFloat(shop.zimam) || 0) - amt);
-                db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
-                    alert("✅ تم تسجيل السداد بنجاح!");
-                    closeShopPayModal();
-                    renderShopsTable();
-                });
-            }
-        }
-
-        function deleteShopTransaction(id) {
-            if(!confirm("⚠️ حذف حساب هذا المحل؟")) return;
-            cloudShops = cloudShops.filter(s => String(s.id) !== String(id));
-            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
-                alert("✅ تم الحذف بنجاح.");
-                renderShopsTable();
-            });
-        }
-
-        // ----------------- فواتير LM -----------------
-        function initLmFormInputs() {
-            const cont = document.getElementById('lmItemsContainer');
-            if(!cont || cont.innerHTML !== '') return;
-            let html = '';
-            lmItemsList.forEach((it, idx) => {
-                html += `
-                    <div style="display:grid; grid-template-columns: 1.5fr 1fr 1fr; gap:6px; margin-bottom:6px; align-items:center;">
-                        <span style="font-size:11px; font-weight:bold;">${it.name}</span>
-                        <input type="number" id="lm_qty_${idx}" placeholder="كرتونة" min="0" style="padding:5px; font-size:11px;">
-                        <input type="number" id="lm_sell_${idx}" placeholder="سعر البيع" value="${it.buyPricePerCarton}" style="padding:5px; font-size:11px;">
-                    </div>`;
-            });
-            cont.innerHTML = html;
-        }
-
-        function saveLmInvoice() {
-            const type = document.getElementById('lmInvoiceType').value;
-            const deposit = parseFloat(document.getElementById('lmDeposit').value) || 0;
-            let totalCost = 0, totalSell = 0;
-
-            lmItemsList.forEach((it, idx) => {
-                const q = parseFloat(document.getElementById(`lm_qty_${idx}`)?.value) || 0;
-                const sp = parseFloat(document.getElementById(`lm_sell_${idx}`)?.value) || it.buyPricePerCarton;
-                if(q > 0) {
-                    totalCost += q * it.buyPricePerCarton;
-                    totalSell += q * sp;
-                }
-            });
-
-            const profit = totalSell - totalCost;
-            cloudLmInvoices.push({
-                id: String(Date.now()),
-                type: type === 'mohamed' ? 'فاتورة محمد' : 'فاتورة حسام',
-                deposit, totalCost, totalSell, profit,
-                date: new Date().toISOString().split('T')[0]
-            });
-
-            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => {
-                alert("✅ تم حفظ فاتورة LM بنجاح!");
-                renderLmTable();
-            });
-        }
-
-        function renderLmTable() {
-            const tbody = document.getElementById('lmInvoicesTableBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-            if(cloudLmInvoices.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6">لا توجد فواتير LM مسجلة.</td></tr>`;
-                return;
-            }
-            cloudLmInvoices.slice().reverse().forEach(inv => {
-                let profitColor = inv.profit >= 0 ? '#16a34a' : '#dc2626';
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${inv.type}</b></td>
-                        <td>${(inv.deposit||0).toLocaleString()} ج.م</td>
-                        <td>${(inv.totalCost||0).toLocaleString()} ج.م</td>
-                        <td>${(inv.totalSell||0).toLocaleString()} ج.م</td>
-                        <td style="color:${profitColor}; font-weight:bold;">${(inv.profit||0).toLocaleString()} ج.م</td>
-                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteLmInvoice('${inv.id}')">🗑️</button></td>
-                    </tr>`;
-            });
-        }
-
-        function deleteLmInvoice(id) {
-            if(!confirm("حذف الفاتورة؟")) return;
-            cloudLmInvoices = cloudLmInvoices.filter(i => String(i.id) !== String(id));
-            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
-        }
-
-        // ----------------- رصيد السيارة وجرد المندوب -----------------
-        function renderCarStockTable() {
-            const tbody = document.getElementById('carStockTableBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            let delCode = currentDelegate ? currentDelegate.code : '101';
-            const selStock = document.getElementById('selectDelegateForStock');
-            if(selStock && selStock.value && (currentDelegate?.role === 'admin' || currentDelegate?.role === 'store')) {
-                delCode = selStock.value;
-            }
-
-            let carStock = (cloudDelegates[delCode] && cloudDelegates[delCode].carStock) ? cloudDelegates[delCode].carStock : defaultCarStock;
-
-            products.forEach(p => {
-                let stockCartons = parseFloat(carStock[p.code]) || 0;
-                let ribbons = Math.round(stockCartons * 50);
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${p.name}</b></td>
-                        <td style="color:#16a34a; font-weight:bold;">${stockCartons} كرتونة (${ribbons} رابطة)</td>
-                    </tr>`;
-            });
-        }
-
-        function createNewUserAccount() {
-            const code = document.getElementById('newAccCode').value.trim();
-            const name = document.getElementById('newAccName').value.trim();
-            const pass = document.getElementById('newAccPass').value.trim();
-            const role = document.getElementById('newAccRole').value;
-
-            if(!code || !name || !pass) { alert("يرجى ملء جميع الحقول."); return; }
-
-            cloudDelegates[code] = { name, pass, role, carStock: {...defaultCarStock}, allowedRoutes: ["ALL"] };
-            db.ref('delegates').set(cloudDelegates).then(() => {
-                alert("✅ تم إنشاء حساب الموظف بنجاح!");
-                document.getElementById('newAccCode').value = '';
-                document.getElementById('newAccName').value = '';
-                document.getElementById('newAccPass').value = '';
-                updateDelegatesSelects();
-            });
-        }
+        db.ref('locationRequests').on('value', (s) => {
+            cloudLocationRequests = s.val() || {};
+            renderDelegatesTrackingTable();
+        });
 
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
@@ -1593,7 +945,7 @@
             if(!cont) return;
             cont.innerHTML = '';
             for(let code in cloudDelegates) {
-                if(code !== 'admin' && code !== 'store') {
+                if(code !== 'admin' && code !== 'store' && code !== 'fleet') {
                     let del = cloudDelegates[code];
                     let routesStr = (del.allowedRoutes || ["ALL"]).join(', ');
                     cont.innerHTML += `
@@ -1607,7 +959,7 @@
 
         function saveAllRepRoutesDirect() {
             for(let code in cloudDelegates) {
-                if(code !== 'admin' && code !== 'store') {
+                if(code !== 'admin' && code !== 'store' && code !== 'fleet') {
                     const val = document.getElementById(`input_routes_${code}`)?.value || 'ALL';
                     cloudDelegates[code].allowedRoutes = val.split(',').map(s => s.trim()).filter(Boolean);
                 }
@@ -1805,6 +1157,27 @@
             });
         }
 
+        function renderCarStockTable() {
+            const tbody = document.getElementById('carStockTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            const isAdm = (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.role === 'store' || currentDelegate.role === 'fleet'));
+            const targetCode = isAdm ? (document.getElementById('selectDelegateForStock')?.value || '101') : currentDelegate.code;
+
+            const carStock = (cloudDelegates[targetCode] && cloudDelegates[targetCode].carStock) ? cloudDelegates[targetCode].carStock : defaultCarStock;
+
+            products.forEach(p => {
+                const stockCartons = parseFloat(carStock[p.code]) || 0;
+                const stockRibbons = Math.round(stockCartons * 50);
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${p.name}</b></td>
+                        <td style="font-weight:bold; color:#16a34a;">${stockCartons} كرتونة (${stockRibbons} رابطة)</td>
+                    </tr>`;
+            });
+        }
+
         function getCurrentGpsCoords() {
             return new Promise((resolve) => {
                 if (!navigator.geolocation) {
@@ -1821,7 +1194,7 @@
                         console.warn("GPS Warning:", err);
                         resolve(latestCoords || null);
                     },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
                 );
             });
         }
@@ -1859,6 +1232,91 @@
                 () => {},
                 { enableHighAccuracy: false, maximumAge: 20000, timeout: 10000 }
             );
+
+            listenToLocationRequestsForRep();
+        }
+
+        // الاستماع لطلبات الموقع الواردة من المدير أو مدير الحركة للمندوب
+        function listenToLocationRequestsForRep() {
+            if (!currentDelegate || currentDelegate.role !== 'delegate') return;
+            db.ref('locationRequests/' + currentDelegate.code).on('value', (snapshot) => {
+                const req = snapshot.val();
+                const banner = document.getElementById('locationRequestRepBanner');
+                if (req && req.status === 'pending') {
+                    if (banner) {
+                        banner.style.display = 'block';
+                        banner.innerHTML = `
+                            📢 <b>تنبيه عاجل من الإدارة:</b><br>
+                            قام (<b>${req.requestedBy || 'مدير الحركة / الإدارة'}</b>) بطلب تحديث موقعك والسيارة الآن!
+                            <button class="btn btn-primary" style="margin-top:8px; padding:7px 12px; font-size:12px; width:auto;" onclick="respondToLocationRequest(true)">📍 إرسال وتحديث موقعي فوراً</button>
+                        `;
+                    }
+                    respondToLocationRequest(false);
+                } else {
+                    if (banner) banner.style.display = 'none';
+                }
+            });
+        }
+
+        // استجابة المندوب لطلب الموقع وتحديث الإحداثيات
+        function respondToLocationRequest(manualTrigger = false) {
+            getCurrentGpsCoords().then(coords => {
+                if (coords && coords.lat) {
+                    const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                    db.ref('locations/' + currentDelegate.code).update({
+                        name: currentDelegate.name,
+                        lat: coords.lat,
+                        lng: coords.lng,
+                        updatedAt: timeStr,
+                        timestamp: Date.now()
+                    });
+
+                    db.ref('locationRequests/' + currentDelegate.code).update({
+                        status: 'completed',
+                        completedAt: timeStr
+                    });
+
+                    const banner = document.getElementById('locationRequestRepBanner');
+                    if (banner) banner.style.display = 'none';
+
+                    if (manualTrigger) {
+                        alert("✅ تم إرسال وتحديث موقعك بنجاح للمدير ومدير الحركة!");
+                    }
+                } else if (manualTrigger) {
+                    alert("⚠️ يرجى تفعيل الـ GPS في الهاتف لتتمكن من إرسال الموقع.");
+                }
+            });
+        }
+
+        // 1) الزرار الأول: طلب الموقع (يرسل إشعار للمندوب)
+        function requestRepLocation(delCode, delName) {
+            const requester = currentDelegate ? currentDelegate.name : "المدير";
+            db.ref('locationRequests/' + delCode).set({
+                requestedBy: requester,
+                requestedRole: currentDelegate ? (currentDelegate.role || 'admin') : 'admin',
+                timestamp: Date.now(),
+                status: 'pending'
+            }).then(() => {
+                alert(`📡 تم إرسال طلب الموقع للمندوب (${delName}) بنجاح! سيظهر له تنبيه فوري لتحديث موقع السيارة.`);
+            });
+        }
+
+        // 2) الزرار الثاني: فتح موقع المندوب والسيارة فوراً بضغطة واحدة
+        function openRepLiveMap(delCode, delName) {
+            const loc = cloudLocations[delCode];
+            if (loc && loc.lat && loc.lng) {
+                const mapsUrl = `https://maps.google.com/?q=${loc.lat},${loc.lng}`;
+                try {
+                    window.location.href = `geo:${loc.lat},${loc.lng}?q=${loc.lat},${loc.lng}(سيارة ${encodeURIComponent(delName)})`;
+                } catch(e) {}
+                setTimeout(() => {
+                    window.open(mapsUrl, '_blank');
+                }, 400);
+            } else {
+                if(confirm(`⚠️ لم يسجل المندوب (${delName}) إحداثيات GPS اليوم بعد.\nهل تريد الضغط على "طلب الموقع" لإرسال تنبيه له بتحديث موقعه الآن؟`)) {
+                    requestRepLocation(delCode, delName);
+                }
+            }
         }
 
         function triggerSosAlert() {
@@ -1896,7 +1354,7 @@
         }
 
         function checkSosAlerts() {
-            if (!currentDelegate || (currentDelegate.role !== 'admin' && currentDelegate.code !== 'admin')) return;
+            if (!currentDelegate || (currentDelegate.role !== 'admin' && currentDelegate.code !== 'admin' && currentDelegate.role !== 'fleet')) return;
             const banner = document.getElementById('sosAlertBanner');
             let activeSosList = [];
 
@@ -1916,46 +1374,65 @@
             }
         }
 
+        // عرض جدول التتبع للمدير، مدير الحركة، HR، والمخزن مع الزرارين المباشرين
         function renderDelegatesTrackingTable() {
-            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'hr'));
-            if (!isAdm) return;
+            const isAuthorized = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet' || currentDelegate.role === 'hr' || currentDelegate.role === 'store'));
+            if (!isAuthorized) return;
 
             const tbody = document.getElementById('delegatesTrackingTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
 
             let hasRows = false;
+            const canRequestLocation = (currentDelegate.role === 'admin' || currentDelegate.code === 'admin' || currentDelegate.role === 'fleet' || currentDelegate.role === 'hr');
+
             for (let code in cloudDelegates) {
-                if (code !== 'admin' && code !== 'store') {
+                if (code !== 'admin' && code !== 'store' && code !== 'fleet' && code !== 'hr' && code !== 'accountant') {
                     hasRows = true;
                     let del = cloudDelegates[code];
                     let loc = cloudLocations[code];
+                    let req = cloudLocationRequests[code];
                     
                     let lat = loc ? loc.lat : null;
                     let lng = loc ? loc.lng : null;
                     let lastTime = loc ? (loc.updatedAt || 'اليوم') : 'غير متصل';
 
-                    let sosBadge = (loc && loc.sos) ? '<span style="color:#e11d48; font-weight:bold;">🚨 استغاثة SOS!</span>' : (lat ? '<span style="color:#16a34a; font-weight:bold;">متصل</span>' : '<span style="color:#64748b;">غير متصل</span>');
-                    let mapLink = (lat && lng) ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" class="btn btn-primary" style="padding:4px 10px; font-size:11px; text-decoration:none; display:inline-block; width:auto; margin:0;">🗺️ فتح الموقع</a>` : '<span style="color:#94a3b8; font-size:10px;">بانتظار GPS</span>';
+                    let sosBadge = (loc && loc.sos) ? '<span style="color:#e11d48; font-weight:bold;">🚨 استغاثة SOS!</span>' : (lat ? '<span style="color:#16a34a; font-weight:bold;">متصل 🟢</span>' : '<span style="color:#64748b;">غير متصل ⚪</span>');
+                    
+                    let reqStatusHtml = '';
+                    if (req && req.status === 'pending') {
+                        reqStatusHtml = `<div style="font-size:9.5px; color:#d97706; font-weight:bold; margin-top:2px;">⏳ جاري انتظار الاستجابة...</div>`;
+                    }
+
+                    // الزرار الأول: طلب الموقع
+                    let btnRequest = canRequestLocation 
+                        ? `<button class="btn btn-warning" style="padding:5px 8px; font-size:11px; width:auto; margin:0;" onclick="requestRepLocation('${code}', '${del.name}')">📡 طلب الموقع</button>${reqStatusHtml}`
+                        : '<span style="color:#94a3b8; font-size:10px;">للمدير والحركة فقط</span>';
+
+                    // الزرار الثاني: فتح موقع المندوب والسيارة فوراً
+                    let btnOpenDirect = (lat && lng) 
+                        ? `<button class="btn btn-primary" style="padding:5px 8px; font-size:11px; width:auto; margin:0;" onclick="openRepLiveMap('${code}', '${del.name}')">🗺️ فتح موقع المندوب والسيارة</button>`
+                        : `<button class="btn btn-info" style="padding:5px 8px; font-size:11px; width:auto; margin:0; background:#94a3b8;" onclick="openRepLiveMap('${code}', '${del.name}')">🗺️ فتح الموقع (بانتظار GPS)</button>`;
 
                     tbody.innerHTML += `
                         <tr>
                             <td><b>${del.name}</b> (${code})</td>
                             <td>${lastTime}</td>
                             <td>${sosBadge}</td>
-                            <td>${mapLink}</td>
+                            <td>${btnRequest}</td>
+                            <td>${btnOpenDirect}</td>
                         </tr>`;
                 }
             }
 
             if (!hasRows) {
-                tbody.innerHTML = `<tr><td colspan="4">لا يوجد مناديب مسجلين حالياً.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5">لا يوجد مناديب مسجلين حالياً.</td></tr>`;
             }
         }
 
         function renderClientsMapTable() {
-            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
-            if (!isAdm) return;
+            const isAuthorized = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
+            if (!isAuthorized) return;
 
             const tbody = document.getElementById('clientsMapTableBody');
             if (!tbody) return;
@@ -2161,9 +1638,10 @@
 
             document.getElementById('lblDelegateName').innerText = currentDelegate.name;
             let roleText = currentDelegate.role === 'admin' ? 'مدير النظام' : 
+                          (currentDelegate.role === 'fleet' ? 'مدير الحركة والأسطول' :
                           (currentDelegate.role === 'store' ? 'مسؤول المخزن' : 
                           (currentDelegate.role === 'hr' ? 'مسؤول HR' : 
-                          (currentDelegate.role === 'accounting' ? 'الحسابات' : 'مندوب مبيعات')));
+                          (currentDelegate.role === 'accounting' ? 'الحسابات' : 'مندوب مبيعات'))));
             document.getElementById('lblDelegateRoleText').innerText = roleText;
             
             document.getElementById('loginView').style.display = 'none';
@@ -2233,6 +1711,7 @@
             switchTab('clientOrderOnly');
         }
 
+        // قفل خانة السعر بالكامل للعميل مع ضبط التنسيق ليظهر غير قابل للتعديل
         function renderPortalProductsForm(isApproved) {
             const container = document.getElementById('portalProductsContainer');
             const totalsContainer = document.getElementById('portalTotalsContainer');
@@ -2254,7 +1733,7 @@
                     <tr>
                         <td style="text-align: right; font-weight: bold; padding: 6px; font-size: 12px; color: #0f172a;">${p.name}</td>
                         <td style="padding: 4px;"><input type="number" id="portal_qty_${idx}" min="0" placeholder="0" oninput="calcPortalOrderTotals()" style="width: 100%; padding: 5px; text-align: center; font-weight: bold; border: 1px solid #0284c7; border-radius: 4px; font-size: 13px;"></td>
-                        <td style="padding: 4px;"><input type="number" id="portal_price_${idx}" value="${defaultPrice}" oninput="calcPortalOrderTotals()" style="width: 100%; padding: 5px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;"></td>
+                        <td style="padding: 4px;"><input type="number" id="portal_price_${idx}" value="${defaultPrice}" readonly class="readonly-input" style="width: 100%; padding: 5px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; background-color: #f1f5f9; color: #475569; font-weight: bold; cursor: not-allowed;"></td>
                         <td style="padding: 4px;"><input type="text" id="portal_total_${idx}" value="0.00" readonly style="width: 100%; padding: 5px; text-align: center; font-weight: bold; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #166534;"></td>
                     </tr>`;
             });
@@ -2266,7 +1745,7 @@
                             <tr style="background:#0f172a; color:#fff;">
                                 <th style="padding:6px; text-align:right;">الصنف</th>
                                 <th style="padding:6px; width:90px;">الكمية (${unitName})</th>
-                                <th style="padding:6px; width:80px;">سعر الـ ${unitName}</th>
+                                <th style="padding:6px; width:80px;">سعر الـ ${unitName} (ثابت)</th>
                                 <th style="padding:6px; width:90px;">الإجمالي</th>
                             </tr>
                         </thead>
@@ -2308,11 +1787,12 @@
         function calcPortalOrderTotals() {
             if(!currentPortalCustomer || currentPortalCustomer.customerType === 'pending') return;
             const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
+            const fixedSystemPrice = isWholesale ? 23925 : 480;
             let grand = 0, totalUnits = 0;
 
             products.forEach((p, idx) => {
                 const q = parseFloat(document.getElementById(`portal_qty_${idx}`)?.value) || 0;
-                const pr = parseFloat(document.getElementById(`portal_price_${idx}`)?.value) || 0;
+                const pr = fixedSystemPrice;
                 const tot = q * pr;
                 if(document.getElementById(`portal_total_${idx}`)) {
                     document.getElementById(`portal_total_${idx}`).value = tot.toFixed(2);
@@ -2341,12 +1821,13 @@
             if(!currentPortalCustomer || currentPortalCustomer.customerType === 'pending') return;
 
             const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
+            const fixedPrice = isWholesale ? 23925 : 480;
             const todayStr = new Date().toISOString().split('T')[0];
             let itemsList = [], totalUnits = 0, grandTotal = 0;
 
             products.forEach((p, idx) => {
                 const q = parseFloat(document.getElementById(`portal_qty_${idx}`)?.value) || 0;
-                const pr = parseFloat(document.getElementById(`portal_price_${idx}`)?.value) || 0;
+                const pr = fixedPrice;
                 if(q > 0) {
                     const tot = q * pr;
                     itemsList.push({ name: p.name, code: p.code, qty: q, price: pr, total: tot, unit: isWholesale ? 'كرتونة' : 'رابطة' });
@@ -2713,7 +2194,7 @@
             const selectedDel = document.getElementById('filterDelegateSelect')?.value;
             const fromDate = document.getElementById('savedFilterFrom')?.value;
             const toDate = document.getElementById('savedFilterTo')?.value;
-            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
             
             let filtered = cloudSales.filter(s => {
                 if(currentDelegate) {
@@ -2743,7 +2224,7 @@
         function viewInvoiceDetails(id) {
             const inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
-            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
 
             let itemsHtml = inv.items.map(it => `- ${it.name} | كمية: ${it.qty} (${it.unit||'رابطة'}) | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>');
             
@@ -2755,7 +2236,7 @@
 
                 mapHtml = `
                     <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:8px; border-radius:6px; margin:8px 0; font-size:11.5px; line-height:1.8;">
-                        <b>🗺️ مواقع GPS (للمدير فقط):</b><br>
+                        <b>🗺️ مواقع GPS (للإدارة):</b><br>
                         • ${clientMapBtn}<br>
                         • ${delegateMapBtn}
                     </div>`;
@@ -2768,7 +2249,7 @@
         function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
 
         function renderDailyReport() {
-            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
             const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
             const selClient = document.getElementById('reportClientSelect')?.value;
             const fromDate = document.getElementById('filterFromDate')?.value;
@@ -2840,6 +2321,7 @@
         function setupUserTabs() {
             if(currentPortalCustomer) return;
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
+            const isFleet = (currentDelegate && currentDelegate.role === 'fleet');
             const isStore = (currentDelegate && currentDelegate.role === 'store');
             const isHR = (currentDelegate && currentDelegate.role === 'hr');
             const isAccounting = (currentDelegate && currentDelegate.role === 'accounting');
@@ -2850,23 +2332,23 @@
                 else b.style.display = 'none';
             });
 
-            document.getElementById('tabNewInvoice').style.display = (isViewer || isStore || isHR || isAccounting) ? 'none' : 'block';
+            document.getElementById('tabNewInvoice').style.display = (isViewer || isStore || isHR || isAccounting || isFleet) ? 'none' : 'block';
             document.getElementById('tabWarehouse').style.display = (isViewer || isHR) ? 'none' : 'block';
             document.getElementById('warehouseAdminControls').style.display = (isAdm || isStore) ? 'block' : 'none';
-            document.getElementById('tabAttendanceLog').style.display = (isAdm || isHR || isAccounting) ? 'block' : 'none';
+            document.getElementById('tabAttendanceLog').style.display = (isAdm || isHR || isAccounting || isFleet) ? 'block' : 'none';
             document.getElementById('tabPendingOrders').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabClientsManage').style.display = isAdm ? 'block' : 'none';
-            document.getElementById('tabTracking').style.display = (isAdm || isHR) ? 'block' : 'none';
+            document.getElementById('tabTracking').style.display = (isAdm || isHR || isFleet || isStore) ? 'block' : 'none';
             document.getElementById('tabRatios').style.display = isViewer ? 'none' : 'block';
             document.getElementById('tabMenof').style.display = (isAdm || isAccounting) ? 'block' : 'none';
             document.getElementById('tabShops').style.display = (isAdm || isAccounting) ? 'block' : 'none';
             document.getElementById('tabLmInvoices').style.display = (isAdm || isAccounting) ? 'block' : 'none';
-            document.getElementById('adminCarSetupBox').style.display = (isAdm || isStore) ? 'block' : 'none';
-            document.getElementById('adminRepRoutesControlBox').style.display = isAdm ? 'block' : 'none';
-            document.getElementById('adminDelegateFilterBox').style.display = isAdm ? 'block' : 'none';
+            document.getElementById('adminCarSetupBox').style.display = (isAdm || isStore || isFleet) ? 'block' : 'none';
+            document.getElementById('adminRepRoutesControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
+            document.getElementById('adminDelegateFilterBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             
             if(document.getElementById('adminReportSelectWrapper')) {
-                document.getElementById('adminReportSelectWrapper').style.display = isAdm ? 'flex' : 'none';
+                document.getElementById('adminReportSelectWrapper').style.display = (isAdm || isFleet) ? 'flex' : 'none';
             }
 
             if(isAdm) {
@@ -2929,14 +2411,14 @@
 
             let str = '';
             for(let code in cloudDelegates) {
-                if(code !== 'admin' && code !== 'store' && code !== 'hr' && code !== 'accountant') {
+                if(code !== 'admin' && code !== 'store' && code !== 'hr' && code !== 'accountant' && code !== 'fleet') {
                     str += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
                 }
             }
 
             if(selFilter) selFilter.innerHTML = '<option value="ALL">📋 عرض كل المناديب</option>' + str;
             if(selStock) selStock.innerHTML = str;
-            if(repDelSel && currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin')) {
+            if(repDelSel && currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin' || currentDelegate.role === 'fleet')) {
                 repDelSel.innerHTML = '<option value="ALL">📋 كل المناديب</option>' + str;
             }
         }
@@ -2950,7 +2432,7 @@
 
         function updateDelegateTodaySummary() {
             const summaryText = document.getElementById('todaySummaryText');
-            if(!summaryText || !currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return;
+            if(!summaryText || !currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store' || currentDelegate.role === 'fleet') return;
             const todayStr = new Date().toISOString().split('T')[0];
             let mySales = cloudSales.filter(s => s.delegateCode === currentDelegate.code && s.date === todayStr && s.status !== 'cancelled');
             let totalAmount = mySales.reduce((acc, cur) => acc + cur.total, 0);
@@ -3059,6 +2541,476 @@
                     historyBox.style.display = 'none';
                 }
             }, 300);
+        }
+
+        function calcRatioLoading() {
+            const rCleo = parseFloat(document.getElementById('ratioCleopatra')?.value) || 0;
+            const rBox = parseFloat(document.getElementById('ratioBox')?.value) || 0;
+            const rBrown = parseFloat(document.getElementById('ratioBrown')?.value) || 0;
+            const rSuperPct = parseFloat(document.getElementById('ratioSuper')?.value) || 0;
+            const totalTarget = parseFloat(document.getElementById('totalCartonsTarget')?.value) || 0;
+            const resultBox = document.getElementById('ratioResultBox');
+            if(!resultBox) return;
+
+            if(totalTarget <= 0) {
+                resultBox.innerHTML = "أدخل إجمالي الكرتونات المراد تحميلها لعرض التفصيل.";
+                return;
+            }
+
+            let superCartons = (totalTarget * rSuperPct) / 100;
+            let remainingCartons = totalTarget - superCartons;
+            let sumRatio = rCleo + rBox + rBrown;
+
+            let cleoCartons = sumRatio > 0 ? (remainingCartons * (rCleo / sumRatio)) : 0;
+            let boxCartons = sumRatio > 0 ? (remainingCartons * (rBox / sumRatio)) : 0;
+            let brownCartons = sumRatio > 0 ? (remainingCartons * (rBrown / sumRatio)) : 0;
+
+            resultBox.innerHTML = `
+                <b>📦 تفصيل كميات التحميل المقترحة لإجمالي (${totalTarget} كرتونة):</b><br>
+                • <b>كليوباترا عادية:</b> ${cleoCartons.toFixed(1)} كرتونة<br>
+                • <b>كيلوبترا بوكس:</b> ${boxCartons.toFixed(1)} كرتونة<br>
+                • <b>براون:</b> ${brownCartons.toFixed(1)} كرتونة<br>
+                • <b>سوبر 94 (${rSuperPct}%):</b> ${superCartons.toFixed(1)} كرتونة
+            `;
+        }
+
+        function calcMenofTotal() {
+            const cartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
+            const deposit = parseFloat(document.getElementById('menofDeposit')?.value) || 0;
+            const totalGoods = cartons * 23925;
+            const zimam = deposit - totalGoods;
+
+            document.getElementById('menofTotalPrice').innerText = totalGoods.toLocaleString() + " ج.م";
+            document.getElementById('menofZimam').innerText = zimam.toLocaleString() + " ج.م";
+        }
+
+        function saveMenofLoad() {
+            const editId = document.getElementById('editMenofId').value;
+            const date = document.getElementById('menofDate').value || new Date().toISOString().split('T')[0];
+            const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
+            const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
+            const totalGoods = cartons * 23925;
+            const zimam = deposit - totalGoods;
+
+            if(cartons <= 0 && deposit <= 0) { alert("أدخل بيانات الشحنة أو الإيداع."); return; }
+
+            if(editId) {
+                let rec = cloudMenofLoads.find(m => String(m.id) === String(editId));
+                if(rec) {
+                    rec.date = date; rec.cartons = cartons; rec.totalGoods = totalGoods; rec.deposit = deposit; rec.zimam = zimam;
+                }
+            } else {
+                cloudMenofLoads.push({
+                    id: String(Date.now()), date, cartons, totalGoods, deposit, zimam
+                });
+            }
+
+            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
+                alert("✅ تم حفظ وتحديث شحنة منوف بنجاح!");
+                document.getElementById('editMenofId').value = '';
+                document.getElementById('menofCartons').value = '';
+                document.getElementById('menofDeposit').value = '';
+                renderMenofTable();
+            });
+        }
+
+        function renderMenofTable() {
+            const tbody = document.getElementById('menofTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            let totalCartons = 0, totalDeposits = 0, totalGoods = 0, netZimam = 0;
+
+            cloudMenofLoads.forEach(m => {
+                totalCartons += (parseFloat(m.cartons) || 0);
+                totalDeposits += (parseFloat(m.deposit) || 0);
+                totalGoods += (parseFloat(m.totalGoods) || 0);
+                netZimam += (parseFloat(m.zimam) || 0);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${m.date}</td>
+                        <td><b>${m.cartons}</b></td>
+                        <td>${(m.totalGoods || 0).toLocaleString()} ج.م</td>
+                        <td style="color:#16a34a; font-weight:bold;">${(m.deposit || 0).toLocaleString()} ج.م</td>
+                        <td style="color:${m.zimam >= 0 ? '#15803d' : '#dc2626'}; font-weight:bold;">${(m.zimam || 0).toLocaleString()} ج.م</td>
+                        <td>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteMenofLoad('${m.id}')">🗑️</button>
+                        </td>
+                    </tr>`;
+            });
+
+            document.getElementById('menofTotalCartonsCount').innerText = totalCartons;
+            document.getElementById('menofTotalDepositsSum').innerText = totalDeposits.toLocaleString();
+            document.getElementById('menofTotalGoodsSum').innerText = totalGoods.toLocaleString();
+            document.getElementById('menofNetZimamTotal').innerText = netZimam.toLocaleString();
+
+            let equivalentCartons = Math.floor(netZimam / 23925);
+            let remMoney = netZimam % 23925;
+            document.getElementById('menofCartonsEquivalent').innerText = `${equivalentCartons} كرتونة و ${remMoney.toLocaleString()} ج.م`;
+        }
+
+        function deleteMenofLoad(id) {
+            if(!confirm("⚠️ هل تريد حذف هذا السجل من شحنات منوف؟")) return;
+            cloudMenofLoads = cloudMenofLoads.filter(m => String(m.id) !== String(id));
+            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => renderMenofTable());
+        }
+
+        function calcShopTotal() {
+            const cartons = parseFloat(document.getElementById('shopCartons')?.value) || 0;
+            const paid = parseFloat(document.getElementById('shopPaidVal')?.value) || 0;
+            const totalPrice = cartons * 23925;
+            const zimam = totalPrice - paid;
+
+            document.getElementById('shopTotalPrice').innerText = totalPrice.toLocaleString() + " ج.م";
+            document.getElementById('shopZimam').innerText = zimam.toLocaleString() + " ج.م";
+        }
+
+        function saveShopTransaction() {
+            const editId = document.getElementById('editShopId').value;
+            const name = document.getElementById('shopNameInput').value.trim();
+            const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
+            const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
+            const totalPrice = cartons * 23925;
+            const zimam = totalPrice - paid;
+
+            if(!name) { alert("أدخل اسم المحل."); return; }
+
+            if(editId) {
+                let rec = cloudShops.find(s => String(s.id) === String(editId));
+                if(rec) {
+                    rec.name = name; rec.cartons = cartons; rec.totalPrice = totalPrice; rec.paid = paid; rec.zimam = zimam;
+                }
+            } else {
+                cloudShops.push({
+                    id: String(Date.now()), name, cartons, totalPrice, paid, zimam, date: new Date().toISOString().split('T')[0]
+                });
+            }
+
+            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
+                alert("✅ تم حفظ حساب المحل بنجاح!");
+                document.getElementById('editShopId').value = '';
+                document.getElementById('shopNameInput').value = '';
+                document.getElementById('shopCartons').value = '';
+                document.getElementById('shopPaidVal').value = '';
+                renderShopsTable();
+            });
+        }
+
+        function renderShopsTable() {
+            const tbody = document.getElementById('shopsTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            const q = document.getElementById('shopSearchInput')?.value.trim().toLowerCase() || '';
+            let filtered = cloudShops.filter(s => !q || (s.name && s.name.toLowerCase().includes(q)));
+
+            filtered.forEach(s => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${s.name}</b></td>
+                        <td>${s.cartons}</td>
+                        <td>${(s.totalPrice || 0).toLocaleString()} ج.م</td>
+                        <td style="color:#16a34a; font-weight:bold;">${(s.paid || 0).toLocaleString()} ج.م</td>
+                        <td style="color:#dc2626; font-weight:bold;">${(s.zimam || 0).toLocaleString()} ج.م</td>
+                        <td>
+                            <button class="btn btn-success" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="openShopPayModal('${s.id}')">💳 سداد</button>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteShopRecord('${s.id}')">🗑️</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function openShopPayModal(id) {
+            let s = cloudShops.find(x => String(x.id) === String(id));
+            if(!s) return;
+            document.getElementById('payShopId').value = s.id;
+            document.getElementById('payShopName').value = s.name;
+            document.getElementById('payShopCurrentZimam').value = (s.zimam || 0).toLocaleString() + " ج.م";
+            document.getElementById('payAmountInput').value = '';
+            document.getElementById('shopPayModal').style.display = 'flex';
+        }
+
+        function closeShopPayModal() { document.getElementById('shopPayModal').style.display = 'none'; }
+
+        function submitShopPayment() {
+            const id = document.getElementById('payShopId').value;
+            const amt = parseFloat(document.getElementById('payAmountInput').value) || 0;
+            if(amt <= 0) { alert("أدخل مبلغ سداد صحيح."); return; }
+
+            let s = cloudShops.find(x => String(x.id) === String(id));
+            if(s) {
+                s.paid = (parseFloat(s.paid) || 0) + amt;
+                s.zimam = (parseFloat(s.zimam) || 0) - amt;
+                db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
+                    alert(`✅ تم تسجيل سداد بمبلغ ${amt.toLocaleString()} ج.م للمحل (${s.name})`);
+                    closeShopPayModal();
+                    renderShopsTable();
+                });
+            }
+        }
+
+        function deleteShopRecord(id) {
+            if(!confirm("⚠️ حذف معاملة هذا المحل؟")) return;
+            cloudShops = cloudShops.filter(s => String(s.id) !== String(id));
+            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => renderShopsTable());
+        }
+
+        function initLmFormInputs() {
+            const cont = document.getElementById('lmItemsContainer');
+            if(!cont) return;
+            cont.innerHTML = '';
+
+            lmItemsList.forEach((it, idx) => {
+                cont.innerHTML += `
+                    <div style="display:grid; grid-template-columns: 1.5fr 1fr 1fr; gap:4px; margin-bottom:4px; align-items:center;">
+                        <span style="font-size:11px; font-weight:bold;">${it.name}:</span>
+                        <input type="number" id="lm_qty_${idx}" placeholder="كراتين" min="0" step="0.1" style="padding:4px; font-size:11px;">
+                        <input type="number" id="lm_sell_price_${idx}" placeholder="سعر البيع" value="${it.buyPricePerCarton + 500}" style="padding:4px; font-size:11px;">
+                    </div>`;
+            });
+        }
+
+        function saveLmInvoice() {
+            const type = document.getElementById('lmInvoiceType').value;
+            const deposit = parseFloat(document.getElementById('lmDeposit').value) || 0;
+            let totalCost = 0, totalSell = 0, items = [];
+
+            lmItemsList.forEach((it, idx) => {
+                const q = parseFloat(document.getElementById(`lm_qty_${idx}`)?.value) || 0;
+                const sellP = parseFloat(document.getElementById(`lm_sell_price_${idx}`)?.value) || 0;
+                if(q > 0) {
+                    const cost = q * it.buyPricePerCarton;
+                    const sell = q * sellP;
+                    totalCost += cost;
+                    totalSell += sell;
+                    items.push({ name: it.name, qty: q, costPrice: it.buyPricePerCarton, sellPrice: sellP, costTotal: cost, sellTotal: sell });
+                }
+            });
+
+            if(items.length === 0 && deposit === 0) { alert("أدخل بيانات الفاتورة."); return; }
+
+            let profit = totalSell - totalCost;
+            cloudLmInvoices.push({
+                id: String(Date.now()), type, deposit, totalCost, totalSell, profit, items, date: new Date().toISOString().split('T')[0]
+            });
+
+            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => {
+                alert("✅ تم حفظ فاتورة LM بنجاح!");
+                renderLmTable();
+            });
+        }
+
+        function renderLmTable() {
+            const tbody = document.getElementById('lmInvoicesTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            cloudLmInvoices.forEach(inv => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${inv.type === 'mohamed' ? 'محمد' : 'حسام'}</b></td>
+                        <td>${(inv.deposit || 0).toLocaleString()} ج.م</td>
+                        <td>${(inv.totalCost || 0).toLocaleString()} ج.م</td>
+                        <td>${(inv.totalSell || 0).toLocaleString()} ج.م</td>
+                        <td style="color:${inv.profit >= 0 ? '#15803d' : '#dc2626'}; font-weight:bold;">${(inv.profit || 0).toLocaleString()} ج.م</td>
+                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteLmInvoice('${inv.id}')">🗑️</button></td>
+                    </tr>`;
+            });
+        }
+
+        function deleteLmInvoice(id) {
+            if(!confirm("⚠️ حذف فاتورة LM؟")) return;
+            cloudLmInvoices = cloudLmInvoices.filter(i => String(i.id) !== String(id));
+            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
+        }
+
+        function createNewUserAccount() {
+            const code = document.getElementById('newAccCode').value.trim();
+            const name = document.getElementById('newAccName').value.trim();
+            const pass = document.getElementById('newAccPass').value.trim();
+            const role = document.getElementById('newAccRole').value;
+
+            if(!code || !name || !pass) { alert("❌ أدخل الكود والاسم وكلمة السر."); return; }
+
+            cloudDelegates[code] = {
+                name, pass, role, carStock: {...defaultCarStock}, allowedRoutes: ["ALL"], locked: false
+            };
+
+            db.ref('delegates/' + code).set(cloudDelegates[code]).then(() => {
+                alert(`✅ تم إنشاء حساب الموظف (${name}) بنجاح كـ [${role}]!`);
+                document.getElementById('newAccCode').value = '';
+                document.getElementById('newAccName').value = '';
+                document.getElementById('newAccPass').value = '';
+                updateDelegatesSelects();
+            });
+        }
+
+        function renderAdminPortalCustomersTable() {
+            const tbody = document.getElementById('adminPortalCustomersBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            let hasRows = false;
+            for(let uid in portalCustomersDB) {
+                hasRows = true;
+                let c = portalCustomersDB[uid];
+                let typeBadge = c.customerType === 'wholesale' ? '<span style="color:#16a34a; font-weight:bold;">جملة</span>' : (c.customerType === 'retail' ? '<span style="color:#2563eb; font-weight:bold;">قطاعي</span>' : '<span style="color:#d97706; font-weight:bold;">جديد</span>');
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><input type="checkbox" class="clientRowCheckbox" value="${uid}"></td>
+                        <td><b>${c.name}</b></td>
+                        <td style="color:#2563eb; font-weight:bold;">${c.clientCode || '-'}</td>
+                        <td style="color:#16a34a; font-weight:bold;">${c.route || '-'}</td>
+                        <td>${c.phone || '-'}<br><small style="color:#64748b;">${c.village || ''}</small></td>
+                        <td>${typeBadge}</td>
+                        <td><small>${c.pass || '-'}</small></td>
+                        <td>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="adminDeleteCustomer('${uid}', '${c.name}')">🗑️</button>
+                        </td>
+                    </tr>`;
+            }
+
+            if(!hasRows) {
+                tbody.innerHTML = `<tr><td colspan="8">لا يوجد عملاء مسجلين بالبوابة.</td></tr>`;
+            }
+        }
+
+        function adminDirectAddCustomer() {
+            const name = document.getElementById('adminDirectName').value.trim();
+            const code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
+            const route = document.getElementById('adminDirectRoute').value.trim();
+            const village = document.getElementById('adminDirectVillage').value.trim();
+            const phone = document.getElementById('adminDirectPhone').value.trim();
+            const pass = document.getElementById('adminDirectPass').value.trim() || "123456";
+            const type = document.getElementById('adminDirectType').value;
+
+            if(!name) { alert("أدخل اسم العميل."); return; }
+
+            const uid = "cust_" + Date.now();
+            portalCustomersDB[uid] = {
+                uid, name, clientCode: code, route, village, phone, pass, customerType: type
+            };
+            cloudClients[name] = code;
+            if(route) cloudClientsRoutes[name] = route;
+
+            db.ref('portalCustomers/' + uid).set(portalCustomersDB[uid]);
+            db.ref('clients/' + name).set(code);
+            if(route) db.ref('clientsRoutes/' + name).set(route);
+
+            alert(`✅ تم حفظ وتفعيل العميل (${name}) بنجاح!`);
+            document.getElementById('adminDirectName').value = '';
+            document.getElementById('adminDirectCode').value = '';
+            document.getElementById('adminDirectRoute').value = '';
+            document.getElementById('adminDirectVillage').value = '';
+            document.getElementById('adminDirectPhone').value = '';
+            document.getElementById('adminDirectPass').value = '';
+            renderAdminPortalCustomersTable();
+        }
+
+        function adminDeleteCustomer(uid, name) {
+            if(!confirm(`هل أنت متأكد من حذف العميل (${name})؟`)) return;
+            delete portalCustomersDB[uid];
+            delete cloudClients[name];
+            delete cloudClientsRoutes[name];
+            delete cloudClientsLocations[name];
+
+            db.ref('portalCustomers/' + uid).remove();
+            db.ref('clients/' + name).remove();
+            db.ref('clientsRoutes/' + name).remove();
+            db.ref('clientsLocations/' + name).remove();
+
+            renderAdminPortalCustomersTable();
+        }
+
+        function toggleSelectAllClients(master) {
+            document.querySelectorAll('.clientRowCheckbox').forEach(cb => cb.checked = master.checked);
+        }
+
+        function deleteSelectedClients() {
+            const selected = Array.from(document.querySelectorAll('.clientRowCheckbox:checked')).map(cb => cb.value);
+            if(selected.length === 0) { alert("حدد عملاء لمسحهم."); return; }
+            if(!confirm(`هل تريد مسح ${selected.length} عميل محدد؟`)) return;
+
+            selected.forEach(uid => {
+                let name = portalCustomersDB[uid]?.name;
+                delete portalCustomersDB[uid];
+                if(name) {
+                    delete cloudClients[name];
+                    delete cloudClientsRoutes[name];
+                }
+                db.ref('portalCustomers/' + uid).remove();
+                if(name) {
+                    db.ref('clients/' + name).remove();
+                    db.ref('clientsRoutes/' + name).remove();
+                }
+            });
+
+            renderAdminPortalCustomersTable();
+        }
+
+        function exportClientsFast() {
+            let data = [];
+            for(let uid in portalCustomersDB) {
+                let c = portalCustomersDB[uid];
+                data.push({
+                    "اسم العميل": c.name,
+                    "الكود الثابت": c.clientCode || '',
+                    "خط السير": c.route || '',
+                    "القرية": c.village || '',
+                    "التليفون": c.phone || '',
+                    "الفئة": c.customerType || 'retail',
+                    "كلمة السر": c.pass || ''
+                });
+            }
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "العملاء");
+            XLSX.writeFile(wb, "BlackHorse_Clients.xlsx");
+        }
+
+        function importClientsFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet);
+
+                if(rows.length === 0) { alert("الملف فارغ."); return; }
+
+                portalCustomersDB = {};
+                cloudClients = {};
+                cloudClientsRoutes = {};
+
+                rows.forEach((r, idx) => {
+                    let name = r["اسم العميل"] || r["العميل"] || r["Name"] || ("عميل " + idx);
+                    let code = r["الكود الثابت"] || r["الكود"] || r["Code"] || ("C-" + (1000 + idx));
+                    let route = r["خط السير"] || r["الخط"] || r["Route"] || "خط عام";
+                    let village = r["القرية"] || r["المركز"] || "";
+                    let phone = r["التليفون"] || r["الموبايل"] || "";
+                    let type = r["الفئة"] || "retail";
+                    let pass = r["كلمة السر"] || "123456";
+
+                    let uid = "cust_" + (Date.now() + idx);
+                    portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, customerType: type, pass };
+                    cloudClients[name] = code;
+                    cloudClientsRoutes[name] = route;
+                });
+
+                db.ref('portalCustomers').set(portalCustomersDB);
+                db.ref('clients').set(cloudClients);
+                db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
+                    alert(`🎉 تم استيراد وتحديث ${rows.length} عميل بنجاح!`);
+                    renderAdminPortalCustomersTable();
+                    populateRoutesList();
+                    updateClientsDatalist();
+                });
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         function changeMyPassword() {
