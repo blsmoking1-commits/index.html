@@ -154,7 +154,6 @@
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
-        <!-- أزرار الحضور الشخصية -->
         <div id="selfAttendanceBox" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
             <div style="font-size:11.5px; font-weight:bold; color:#1e293b;">
                 📌 حالتك اليوم: <span id="lblMyAttendanceStatus" style="color:#64748b;">لم تسجل</span>
@@ -345,7 +344,7 @@
                                 <th>بيانات الاتصال</th>
                                 <th>الفئة</th>
                                 <th>كلمة السر</th>
-                                <th>الإجراءات</th>
+                                <th style="width:120px;">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody id="adminPortalCustomersBody"></tbody>
@@ -580,7 +579,7 @@
             </div>
         </div>
 
-        <!-- ي) التحميل من منوف وحساب الذمم التراكمية -->
+        <!-- ي) التحميل من منوف والذمم -->
         <div id="sectionMenof" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل تحميلات منوف والذمم التراكمية:</h4>
             
@@ -730,6 +729,31 @@
         </div>
     </div>
 
+    <!-- نافذة تعديل بيانات العميل للمدير -->
+    <div id="editClientModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:16px;">✏️ تعديل بيانات العميل</h3>
+            <input type="hidden" id="editClientOldName">
+            <input type="hidden" id="editClientUid">
+            <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="editClientName"></div>
+            <div class="form-group"><label>الكود الثابت:</label><input type="text" id="editClientCode"></div>
+            <div class="form-group"><label>خط السير / الخط:</label><input type="text" id="editClientRoute"></div>
+            <div class="form-group"><label>القرية / المركز:</label><input type="text" id="editClientVillage"></div>
+            <div class="form-group"><label>رقم التليفون:</label><input type="text" id="editClientPhone"></div>
+            <div class="form-group"><label>كلمة السر:</label><input type="text" id="editClientPass"></div>
+            <div class="form-group">
+                <label>الفئة:</label>
+                <select id="editClientType" class="form-control">
+                    <option value="retail">قطاعي (بالرابطة)</option>
+                    <option value="wholesale">جملة (بالكرتونة)</option>
+                    <option value="pending">قيد الانتظار</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="saveEditedClient()">💾 حفظ التعديلات</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditClientModal()">إلغاء</button>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyARUfzp3O79n5pOONzY13pHcV6uoaMXd9s",
@@ -820,17 +844,18 @@
             populateRoutesList();
             updateClientsDatalist(); 
             updateReportClientsSelect(); 
+            renderAdminPortalCustomersTable();
         });
 
         db.ref('clientsRoutes').on('value', (s) => {
             cloudClientsRoutes = s.val() || {};
             populateRoutesList();
             updateClientsDatalist();
+            renderAdminPortalCustomersTable();
         });
 
         db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
         
-        // جلب وتحديث بيانات منوف تلقائياً
         db.ref('menofLoads').on('value', (s) => { 
             cloudMenofLoads = s.val() ? Object.values(s.val()) : [];
             renderMenofTable();
@@ -870,6 +895,247 @@
                 checkSosAlerts();
             }
         });
+
+        // ----------------- إدارة وتعديل العملاء -----------------
+        function renderAdminPortalCustomersTable() {
+            const tbody = document.getElementById('adminPortalCustomersBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            for(let name in cloudClients) {
+                let code = cloudClients[name];
+                let route = cloudClientsRoutes[name] || '-';
+                let phone = '-';
+                let type = 'قطاعي';
+                let pass = '-';
+
+                for(let uid in portalCustomersDB) {
+                    if(portalCustomersDB[uid].name === name || portalCustomersDB[uid].clientCode === code) {
+                        phone = portalCustomersDB[uid].phone || '-';
+                        type = portalCustomersDB[uid].customerType === 'wholesale' ? 'جملة' : (portalCustomersDB[uid].customerType === 'retail' ? 'قطاعي' : 'معلق');
+                        pass = portalCustomersDB[uid].pass || '-';
+                        break;
+                    }
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><input type="checkbox" class="client-select-chk" value="${name}"></td>
+                        <td><b>${name}</b></td>
+                        <td><span style="color:#2563eb; font-weight:bold;">${code}</span></td>
+                        <td>${route}</td>
+                        <td>${phone}</td>
+                        <td>${type}</td>
+                        <td>${pass}</td>
+                        <td>
+                            <button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="openEditClientModal('${name}')">✏️ تعديل</button>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="deleteSingleClient('${name}')">🗑️</button>
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        function openEditClientModal(clientName) {
+            let code = cloudClients[clientName] || '';
+            let route = cloudClientsRoutes[clientName] || '';
+            let village = '';
+            let phone = '';
+            let pass = '';
+            let type = 'retail';
+            let targetUid = '';
+
+            for(let uid in portalCustomersDB) {
+                if(portalCustomersDB[uid].name === clientName || portalCustomersDB[uid].clientCode === code) {
+                    targetUid = uid;
+                    village = portalCustomersDB[uid].village || portalCustomersDB[uid].address || '';
+                    phone = portalCustomersDB[uid].phone || '';
+                    pass = portalCustomersDB[uid].pass || '';
+                    type = portalCustomersDB[uid].customerType || 'retail';
+                    if(portalCustomersDB[uid].route) route = portalCustomersDB[uid].route;
+                    break;
+                }
+            }
+
+            document.getElementById('editClientOldName').value = clientName;
+            document.getElementById('editClientUid').value = targetUid;
+            document.getElementById('editClientName').value = clientName;
+            document.getElementById('editClientCode').value = code;
+            document.getElementById('editClientRoute').value = route;
+            document.getElementById('editClientVillage').value = village;
+            document.getElementById('editClientPhone').value = phone;
+            document.getElementById('editClientPass').value = pass;
+            document.getElementById('editClientType').value = type;
+
+            document.getElementById('editClientModal').style.display = 'flex';
+        }
+
+        function closeEditClientModal() {
+            document.getElementById('editClientModal').style.display = 'none';
+        }
+
+        function saveEditedClient() {
+            const oldName = document.getElementById('editClientOldName').value;
+            const newName = document.getElementById('editClientName').value.trim();
+            const newCode = document.getElementById('editClientCode').value.trim();
+            const newRoute = document.getElementById('editClientRoute').value.trim();
+            const newVillage = document.getElementById('editClientVillage').value.trim();
+            const newPhone = document.getElementById('editClientPhone').value.trim();
+            const newPass = document.getElementById('editClientPass').value.trim();
+            const newType = document.getElementById('editClientType').value;
+            const uid = document.getElementById('editClientUid').value;
+
+            if(!newName) {
+                alert("❌ يرجى إدخال اسم العميل.");
+                return;
+            }
+
+            if(oldName && oldName !== newName) {
+                delete cloudClients[oldName];
+                delete cloudClientsRoutes[oldName];
+                db.ref('clients/' + oldName).remove();
+                db.ref('clientsRoutes/' + oldName).remove();
+
+                if(cloudClientsLocations[oldName]) {
+                    cloudClientsLocations[newName] = cloudClientsLocations[oldName];
+                    delete cloudClientsLocations[oldName];
+                    db.ref('clientsLocations/' + oldName).remove();
+                    db.ref('clientsLocations/' + newName).set(cloudClientsLocations[newName]);
+                }
+            }
+
+            cloudClients[newName] = newCode;
+            if(newRoute) cloudClientsRoutes[newName] = newRoute;
+
+            let targetUid = uid || ("cust_" + Date.now());
+            if(!portalCustomersDB[targetUid]) {
+                portalCustomersDB[targetUid] = { uid: targetUid };
+            }
+
+            portalCustomersDB[targetUid].name = newName;
+            portalCustomersDB[targetUid].clientCode = newCode;
+            portalCustomersDB[targetUid].route = newRoute;
+            portalCustomersDB[targetUid].village = newVillage;
+            portalCustomersDB[targetUid].phone = newPhone;
+            portalCustomersDB[targetUid].pass = newPass;
+            portalCustomersDB[targetUid].customerType = newType;
+
+            db.ref('clients').set(cloudClients);
+            db.ref('clientsRoutes').set(cloudClientsRoutes);
+            db.ref('portalCustomers/' + targetUid).set(portalCustomersDB[targetUid]).then(() => {
+                alert("✅ تم تحديث وتعديل بيانات العميل بنجاح!");
+                closeEditClientModal();
+                populateRoutesList();
+                updateClientsDatalist();
+                renderAdminPortalCustomersTable();
+            });
+        }
+
+        function toggleSelectAllClients(master) {
+            document.querySelectorAll('.client-select-chk').forEach(chk => chk.checked = master.checked);
+        }
+
+        function deleteSelectedClients() {
+            const checked = Array.from(document.querySelectorAll('.client-select-chk:checked')).map(c => c.value);
+            if(checked.length === 0) { alert("اختر عميلاً واحداً على الأقل."); return; }
+            if(!confirm(`هل أنت متأكد من حذف ${checked.length} عميل؟`)) return;
+
+            checked.forEach(name => {
+                delete cloudClients[name];
+                delete cloudClientsRoutes[name];
+                db.ref('clients/' + name).remove();
+                db.ref('clientsRoutes/' + name).remove();
+            });
+
+            db.ref('clients').set(cloudClients);
+            db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
+                alert("✅ تم حذف العملاء بنجاح.");
+                renderAdminPortalCustomersTable();
+            });
+        }
+
+        function deleteSingleClient(name) {
+            if(!confirm(`حذف العميل (${name})؟`)) return;
+            delete cloudClients[name];
+            delete cloudClientsRoutes[name];
+            db.ref('clients/' + name).remove();
+            db.ref('clientsRoutes/' + name).remove();
+            db.ref('clients').set(cloudClients);
+            db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => renderAdminPortalCustomersTable());
+        }
+
+        function adminDirectAddCustomer() {
+            const name = document.getElementById('adminDirectName').value.trim();
+            const code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
+            const route = document.getElementById('adminDirectRoute').value.trim();
+            const village = document.getElementById('adminDirectVillage').value.trim();
+            const phone = document.getElementById('adminDirectPhone').value.trim();
+            const pass = document.getElementById('adminDirectPass').value.trim() || "1234";
+            const type = document.getElementById('adminDirectType').value;
+
+            if(!name) { alert("❌ يرجى إدخال اسم العميل."); return; }
+
+            cloudClients[name] = code;
+            if(route) cloudClientsRoutes[name] = route;
+
+            const uid = "cust_" + Date.now();
+            const custData = { uid, name, clientCode: code, route, village, phone, pass, customerType: type };
+
+            db.ref('clients').set(cloudClients);
+            db.ref('clientsRoutes').set(cloudClientsRoutes);
+            db.ref('portalCustomers/' + uid).set(custData).then(() => {
+                alert("✅ تم إضافة وتفعيل حساب العميل بنجاح!");
+                document.getElementById('adminDirectName').value = '';
+                document.getElementById('adminDirectCode').value = '';
+                renderAdminPortalCustomersTable();
+            });
+        }
+
+        function exportClientsFast() {
+            let data = [];
+            for(let name in cloudClients) {
+                data.push({
+                    "اسم العميل": name,
+                    "الكود الثابت": cloudClients[name],
+                    "الخط / خط السير": cloudClientsRoutes[name] || ""
+                });
+            }
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "العملاء");
+            XLSX.writeFile(wb, "قائمة_العملاء.xlsx");
+        }
+
+        function importClientsFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet);
+
+                cloudClients = {};
+                cloudClientsRoutes = {};
+
+                rows.forEach(r => {
+                    const name = r["اسم العميل"] || r["العميل"] || r["Name"];
+                    const code = r["الكود الثابت"] || r["الكود"] || r["Code"] || ("C-" + Math.floor(1000 + Math.random() * 9000));
+                    const route = r["الخط / خط السير"] || r["الخط"] || r["خط السير"] || r["Route"] || "";
+                    if(name) {
+                        cloudClients[name] = code;
+                        if(route) cloudClientsRoutes[name] = route;
+                    }
+                });
+
+                db.ref('clients').set(cloudClients);
+                db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
+                    alert("✅ تم استيراد واستبدال العملاء بنجاح!");
+                    renderAdminPortalCustomersTable();
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
 
         // ----------------- قسم منوف (التحميل والذمم) -----------------
         function calcMenofTotal() {
@@ -1006,7 +1272,7 @@
             });
         }
 
-        // ----------------- قسم حاسبة النسب -----------------
+        // ----------------- حاسبة النسب -----------------
         function calcRatioLoading() {
             const cleo = parseFloat(document.getElementById('ratioCleopatra')?.value) || 0;
             const box = parseFloat(document.getElementById('ratioBox')?.value) || 0;
@@ -1037,7 +1303,7 @@
             `;
         }
 
-        // ----------------- قسم المحلات -----------------
+        // ----------------- حسابات المحلات -----------------
         function calcShopTotal() {
             const cartons = parseFloat(document.getElementById('shopCartons')?.value) || 0;
             const paid = parseFloat(document.getElementById('shopPaidVal')?.value) || 0;
@@ -1152,7 +1418,7 @@
             });
         }
 
-        // ----------------- قسم فواتير LM -----------------
+        // ----------------- فواتير LM -----------------
         function initLmFormInputs() {
             const cont = document.getElementById('lmItemsContainer');
             if(!cont || cont.innerHTML !== '') return;
@@ -1249,145 +1515,6 @@
             });
         }
 
-        // ----------------- إدارة العملاء والـ Excel -----------------
-        function renderAdminPortalCustomersTable() {
-            const tbody = document.getElementById('adminPortalCustomersBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            for(let name in cloudClients) {
-                let code = cloudClients[name];
-                let route = cloudClientsRoutes[name] || '-';
-                let phone = '-';
-                let type = 'قطاعي';
-                let pass = '-';
-
-                for(let uid in portalCustomersDB) {
-                    if(portalCustomersDB[uid].name === name || portalCustomersDB[uid].clientCode === code) {
-                        phone = portalCustomersDB[uid].phone || '-';
-                        type = portalCustomersDB[uid].customerType === 'wholesale' ? 'جملة' : 'قطاعي';
-                        pass = portalCustomersDB[uid].pass || '-';
-                        break;
-                    }
-                }
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><input type="checkbox" class="client-select-chk" value="${name}"></td>
-                        <td><b>${name}</b></td>
-                        <td><span style="color:#2563eb; font-weight:bold;">${code}</span></td>
-                        <td>${route}</td>
-                        <td>${phone}</td>
-                        <td>${type}</td>
-                        <td>${pass}</td>
-                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteSingleClient('${name}')">🗑️</button></td>
-                    </tr>`;
-            }
-        }
-
-        function toggleSelectAllClients(master) {
-            document.querySelectorAll('.client-select-chk').forEach(chk => chk.checked = master.checked);
-        }
-
-        function deleteSelectedClients() {
-            const checked = Array.from(document.querySelectorAll('.client-select-chk:checked')).map(c => c.value);
-            if(checked.length === 0) { alert("اختر عميلاً واحداً على الأقل."); return; }
-            if(!confirm(`هل أنت متأكد من حذف ${checked.length} عميل؟`)) return;
-
-            checked.forEach(name => {
-                delete cloudClients[name];
-                delete cloudClientsRoutes[name];
-            });
-
-            db.ref('clients').set(cloudClients);
-            db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
-                alert("✅ تم حذف العملاء بنجاح.");
-                renderAdminPortalCustomersTable();
-            });
-        }
-
-        function deleteSingleClient(name) {
-            if(!confirm(`حذف العميل (${name})؟`)) return;
-            delete cloudClients[name];
-            delete cloudClientsRoutes[name];
-            db.ref('clients').set(cloudClients);
-            db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => renderAdminPortalCustomersTable());
-        }
-
-        function adminDirectAddCustomer() {
-            const name = document.getElementById('adminDirectName').value.trim();
-            const code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
-            const route = document.getElementById('adminDirectRoute').value.trim();
-            const village = document.getElementById('adminDirectVillage').value.trim();
-            const phone = document.getElementById('adminDirectPhone').value.trim();
-            const pass = document.getElementById('adminDirectPass').value.trim() || "1234";
-            const type = document.getElementById('adminDirectType').value;
-
-            if(!name) { alert("❌ يرجى إدخال اسم العميل."); return; }
-
-            cloudClients[name] = code;
-            if(route) cloudClientsRoutes[name] = route;
-
-            const uid = "cust_" + Date.now();
-            const custData = { uid, name, clientCode: code, route, village, phone, pass, customerType: type };
-
-            db.ref('clients').set(cloudClients);
-            db.ref('clientsRoutes').set(cloudClientsRoutes);
-            db.ref('portalCustomers/' + uid).set(custData).then(() => {
-                alert("✅ تم إضافة وتفعيل حساب العميل بنجاح!");
-                document.getElementById('adminDirectName').value = '';
-                document.getElementById('adminDirectCode').value = '';
-                renderAdminPortalCustomersTable();
-            });
-        }
-
-        function exportClientsFast() {
-            let data = [];
-            for(let name in cloudClients) {
-                data.push({
-                    "اسم العميل": name,
-                    "الكود الثابت": cloudClients[name],
-                    "الخط / خط السير": cloudClientsRoutes[name] || ""
-                });
-            }
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "العملاء");
-            XLSX.writeFile(wb, "قائمة_العملاء.xlsx");
-        }
-
-        function importClientsFromExcel(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet);
-
-                cloudClients = {};
-                cloudClientsRoutes = {};
-
-                rows.forEach(r => {
-                    const name = r["اسم العميل"] || r["العميل"] || r["Name"];
-                    const code = r["الكود الثابت"] || r["الكود"] || r["Code"] || ("C-" + Math.floor(1000 + Math.random() * 9000));
-                    const route = r["الخط / خط السير"] || r["الخط"] || r["خط السير"] || r["Route"] || "";
-                    if(name) {
-                        cloudClients[name] = code;
-                        if(route) cloudClientsRoutes[name] = route;
-                    }
-                });
-
-                db.ref('clients').set(cloudClients);
-                db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
-                    alert("✅ تم استيراد واستبدال العملاء بنجاح!");
-                    renderAdminPortalCustomersTable();
-                });
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
         function createNewUserAccount() {
             const code = document.getElementById('newAccCode').value.trim();
             const name = document.getElementById('newAccName').value.trim();
@@ -1406,7 +1533,6 @@
             });
         }
 
-        // 1. تجميع وتحديث قائمة خطوط السير
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
             if(!selectRoute) return;
