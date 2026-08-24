@@ -154,7 +154,7 @@
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
-        <!-- أزرار الحضور الشخصية للموظف الحالي -->
+        <!-- أزرار الحضور الشخصية -->
         <div id="selfAttendanceBox" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
             <div style="font-size:11.5px; font-weight:bold; color:#1e293b;">
                 📌 حالتك اليوم: <span id="lblMyAttendanceStatus" style="color:#64748b;">لم تسجل</span>
@@ -309,10 +309,6 @@
                     <button class="btn btn-info" style="flex:1; margin-top:0; font-size:12px;" onclick="document.getElementById('excelFileInput').click()">📤 رفع شيت Excel (استبدال الشيت القديم)</button>
                     <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="importClientsFromExcel(event)">
                 </div>
-                <div style="font-size:10px; color:#e11d48; margin-top:6px; font-weight:bold;">
-                    ⚠️ عند رفع ملف Excel جديد، سيتم مسح أي عميل قديم واعتماد بيانات الشيت الجديد فوراً.<br>
-                    💡 الأعمدة المدعومة: (اسم العميل / الكود الثابت / الخط أو خط السير / التليفون / القرية / الفئة).
-                </div>
             </div>
 
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:6px; margin-bottom:12px;">
@@ -401,7 +397,6 @@
         <div id="sectionPendingOrders" style="display: none;">
             <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
                 <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:</h4>
-                <p style="font-size:11px; color:#b45309; margin:0 0 10px 0;">عند الضغط على "موافقة واعتماد"، يتم تنزيل الفاتورة فوراً في مكانها الصحيح:</p>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
@@ -573,17 +568,14 @@
                 </div>
                 <div style="display:flex; gap:8px;">
                     <div class="form-group" style="flex:1;"><label>نسبة براون:</label><input type="number" id="ratioBrown" value="0" oninput="calcRatioLoading()"></div>
-                    <div class="form-group" style="flex:1;">
-                        <label>نسبة سوبر (%):</label>
-                        <input type="number" id="ratioSuper" value="0" min="0" max="100" step="0.1" placeholder="%" oninput="calcRatioLoading()">
-                    </div>
+                    <div class="form-group" style="flex:1;"><label>نسبة سوبر:</label><input type="number" id="ratioSuper" value="0" oninput="calcRatioLoading()"></div>
                 </div>
                 <div class="form-group">
                     <label>إجمالي الكرتونات المراد تحميلها:</label>
                     <input type="number" id="totalCartonsTarget" placeholder="مثال: 30" oninput="calcRatioLoading()">
                 </div>
-                <div id="ratioResultBox" style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-top:10px; font-size:13px; color:#166534; line-height: 1.6;">
-                    أدخل النسب وإجمالي الكرتونات لعرض تفصيل الكميات.
+                <div id="ratioResultBox" style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-top:10px; font-size:13px; color:#166534;">
+                    أدخل النسب وإجمالي الكرتونات لعرض الكميات.
                 </div>
             </div>
         </div>
@@ -696,7 +688,7 @@
 
             <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px;">
                 <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px;">
-                    <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف (مندوب / مخزن / HR / حسابات / مشاهد):</h5>
+                    <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف:</h5>
                     <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: hr1 أو acc1 أو 103"></div>
                     <div class="form-group"><label>اسم المستخدم:</label><input type="text" id="newAccName" placeholder="اسم الموظف..."></div>
                     <div class="form-group"><label>كلمة السر:</label><input type="password" id="newAccPass"></div>
@@ -769,7 +761,7 @@
             { name: "ال ام احمر", code: "lm_red", buyPricePerCarton: 40788 },
             { name: "ال ام ازرق", code: "lm_blue", buyPricePerCarton: 40788 },
             { name: "مارل احمر", code: "marl_red", buyPricePerCarton: 50736 },
-            { name: "مارل ابيض", code: "marl_white", buyPricePerCarton: 50736 },
+            { name: "مارل ابيض", code: "marl_white", buyPricePerCarton: 5073 },
             { name: "ميريت", code: "merit", buyPricePerCarton: 55210 },
             { name: "ال ام ابيض", code: "lm_white", buyPricePerCarton: 40788 },
             { name: "مارل كرفت", code: "marl_craft", buyPricePerCarton: 39128 }
@@ -812,6 +804,7 @@
             return String(p).replace(/\D/g, '').replace(/^20/, '').replace(/^0+/, '');
         }
 
+        // مزامنة Firebase
         db.ref('productsList').on('value', (s) => {
             if(s.val()) { products = Object.values(s.val()); }
             else { db.ref('productsList').set(defaultProducts); }
@@ -836,9 +829,22 @@
         });
 
         db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
-        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
-        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; });
-        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
+        
+        // جلب وتحديث بيانات منوف تلقائياً
+        db.ref('menofLoads').on('value', (s) => { 
+            cloudMenofLoads = s.val() ? Object.values(s.val()) : [];
+            renderMenofTable();
+        });
+
+        db.ref('shops').on('value', (s) => { 
+            cloudShops = s.val() ? Object.values(s.val()) : []; 
+            renderShopsTable();
+        });
+
+        db.ref('lmInvoices').on('value', (s) => { 
+            cloudLmInvoices = s.val() ? Object.values(s.val()) : []; 
+            renderLmTable();
+        });
         
         db.ref('pendingOrders').on('value', (s) => { 
             cloudPendingOrders = s.val() ? Object.values(s.val()) : [];
@@ -849,6 +855,7 @@
             portalCustomersDB = s.val() || {}; 
             populateRoutesList();
             updateClientsDatalist();
+            renderAdminPortalCustomersTable();
         });
 
         db.ref('attendanceLog').on('value', (s) => {
@@ -864,6 +871,542 @@
             }
         });
 
+        // ----------------- قسم منوف (التحميل والذمم) -----------------
+        function calcMenofTotal() {
+            const cartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
+            const deposit = parseFloat(document.getElementById('menofDeposit')?.value) || 0;
+            const pricePerCarton = 23925;
+            
+            const totalGoods = cartons * pricePerCarton;
+            const zimam = deposit - totalGoods;
+
+            if(document.getElementById('menofTotalPrice')) {
+                document.getElementById('menofTotalPrice').innerText = totalGoods.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            if(document.getElementById('menofZimam')) {
+                document.getElementById('menofZimam').innerText = zimam.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                document.getElementById('menofZimam').style.color = zimam >= 0 ? '#16a34a' : '#dc2626';
+            }
+        }
+
+        function saveMenofLoad() {
+            const date = document.getElementById('menofDate').value || new Date().toISOString().split('T')[0];
+            const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
+            const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
+            const editId = document.getElementById('editMenofId').value;
+            const pricePerCarton = 23925;
+
+            if(cartons <= 0 && deposit <= 0) {
+                alert("❌ يرجى إدخال عدد الكرتونات أو قيمة الإيداع.");
+                return;
+            }
+
+            const totalGoods = cartons * pricePerCarton;
+            const zimam = deposit - totalGoods;
+
+            if(editId) {
+                let idx = cloudMenofLoads.findIndex(m => String(m.id) === String(editId));
+                if(idx !== -1) {
+                    cloudMenofLoads[idx] = { id: editId, date, cartons, totalGoods, deposit, zimam };
+                }
+            } else {
+                const newLoad = {
+                    id: String(Date.now()),
+                    date: date,
+                    cartons: cartons,
+                    totalGoods: totalGoods,
+                    deposit: deposit,
+                    zimam: zimam
+                };
+                cloudMenofLoads.push(newLoad);
+            }
+
+            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
+                alert("✅ تم حفظ شحنة منوف بنجاح!");
+                document.getElementById('editMenofId').value = '';
+                document.getElementById('menofCartons').value = '';
+                document.getElementById('menofDeposit').value = '';
+                calcMenofTotal();
+                renderMenofTable();
+            });
+        }
+
+        function renderMenofTable() {
+            const tbody = document.getElementById('menofTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            let totalCartons = 0;
+            let totalDeposits = 0;
+            let totalGoods = 0;
+            let netZimam = 0;
+
+            if(cloudMenofLoads.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6">لا توجد شحنات مسجلة في منوف حالياً.</td></tr>`;
+            } else {
+                cloudMenofLoads.slice().reverse().forEach(load => {
+                    const c = parseFloat(load.cartons) || 0;
+                    const dep = parseFloat(load.deposit) || 0;
+                    const goods = parseFloat(load.totalGoods) || (c * 23925);
+                    const zim = parseFloat(load.zimam) !== undefined ? parseFloat(load.zimam) : (dep - goods);
+
+                    totalCartons += c;
+                    totalDeposits += dep;
+                    totalGoods += goods;
+                    netZimam += zim;
+
+                    let zimColor = zim >= 0 ? '#16a34a' : '#dc2626';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${load.date}</td>
+                            <td><b>${c}</b></td>
+                            <td>${goods.toLocaleString()} ج.م</td>
+                            <td>${dep.toLocaleString()} ج.م</td>
+                            <td style="color:${zimColor}; font-weight:bold;">${zim.toLocaleString()} ج.م</td>
+                            <td>
+                                <button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="editMenofLoad('${load.id}')">✏️</button>
+                                <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="deleteMenofLoad('${load.id}')">🗑️</button>
+                            </td>
+                        </tr>`;
+                });
+            }
+
+            if(document.getElementById('menofTotalCartonsCount')) document.getElementById('menofTotalCartonsCount').innerText = totalCartons;
+            if(document.getElementById('menofTotalDepositsSum')) document.getElementById('menofTotalDepositsSum').innerText = totalDeposits.toLocaleString() + " ج.م";
+            if(document.getElementById('menofTotalGoodsSum')) document.getElementById('menofTotalGoodsSum').innerText = totalGoods.toLocaleString() + " ج.م";
+            if(document.getElementById('menofNetZimamTotal')) {
+                document.getElementById('menofNetZimamTotal').innerText = netZimam.toLocaleString() + " ج.م";
+                document.getElementById('menofNetZimamTotal').style.color = netZimam >= 0 ? '#15803d' : '#dc2626';
+            }
+
+            if(document.getElementById('menofCartonsEquivalent')) {
+                let eqCartons = Math.floor(netZimam / 23925);
+                let remPound = (netZimam % 23925).toFixed(2);
+                document.getElementById('menofCartonsEquivalent').innerText = `${eqCartons} كرتونة و ${remPound} ج.م`;
+            }
+        }
+
+        function editMenofLoad(id) {
+            let load = cloudMenofLoads.find(m => String(m.id) === String(id));
+            if(!load) return;
+            document.getElementById('editMenofId').value = load.id;
+            document.getElementById('menofDate').value = load.date;
+            document.getElementById('menofCartons').value = load.cartons;
+            document.getElementById('menofDeposit').value = load.deposit;
+            calcMenofTotal();
+        }
+
+        function deleteMenofLoad(id) {
+            if(!confirm("⚠️ هل أنت متأكد من حذف هذه الشحنة؟")) return;
+            cloudMenofLoads = cloudMenofLoads.filter(m => String(m.id) !== String(id));
+            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
+                alert("✅ تم الحذف بنجاح.");
+                renderMenofTable();
+            });
+        }
+
+        // ----------------- قسم حاسبة النسب -----------------
+        function calcRatioLoading() {
+            const cleo = parseFloat(document.getElementById('ratioCleopatra')?.value) || 0;
+            const box = parseFloat(document.getElementById('ratioBox')?.value) || 0;
+            const brown = parseFloat(document.getElementById('ratioBrown')?.value) || 0;
+            const superVal = parseFloat(document.getElementById('ratioSuper')?.value) || 0;
+            const totalTarget = parseFloat(document.getElementById('totalCartonsTarget')?.value) || 0;
+
+            const resBox = document.getElementById('ratioResultBox');
+            if(!resBox) return;
+
+            const sumRatios = cleo + box + brown + superVal;
+            if(sumRatios <= 0 || totalTarget <= 0) {
+                resBox.innerHTML = "أدخل النسب وإجمالي الكرتونات لعرض الكميات.";
+                return;
+            }
+
+            const cCartons = ((cleo / sumRatios) * totalTarget).toFixed(1);
+            const bCartons = ((box / sumRatios) * totalTarget).toFixed(1);
+            const brCartons = ((brown / sumRatios) * totalTarget).toFixed(1);
+            const sCartons = ((superVal / sumRatios) * totalTarget).toFixed(1);
+
+            resBox.innerHTML = `
+                <b>📊 توزيع الشحنة المحملة (${totalTarget} كرتونة):</b><br>
+                • كليوباترا: <b>${cCartons}</b> كرتونة<br>
+                • بوكس: <b>${bCartons}</b> كرتونة<br>
+                • براون: <b>${brCartons}</b> كرتونة<br>
+                • سوبر: <b>${sCartons}</b> كرتونة
+            `;
+        }
+
+        // ----------------- قسم المحلات -----------------
+        function calcShopTotal() {
+            const cartons = parseFloat(document.getElementById('shopCartons')?.value) || 0;
+            const paid = parseFloat(document.getElementById('shopPaidVal')?.value) || 0;
+            const total = cartons * 23925;
+            const zimam = total - paid;
+            if(document.getElementById('shopTotalPrice')) document.getElementById('shopTotalPrice').innerText = total.toLocaleString() + " ج.م";
+            if(document.getElementById('shopZimam')) document.getElementById('shopZimam').innerText = zimam.toLocaleString() + " ج.م";
+        }
+
+        function saveShopTransaction() {
+            const name = document.getElementById('shopNameInput').value.trim();
+            const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
+            const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
+            const editId = document.getElementById('editShopId').value;
+            const total = cartons * 23925;
+            const zimam = total - paid;
+
+            if(!name) { alert("❌ يرجى إدخال اسم المحل."); return; }
+
+            if(editId) {
+                let idx = cloudShops.findIndex(s => String(s.id) === String(editId));
+                if(idx !== -1) {
+                    cloudShops[idx].name = name;
+                    cloudShops[idx].cartons = cartons;
+                    cloudShops[idx].totalPrice = total;
+                    cloudShops[idx].paid = paid;
+                    cloudShops[idx].zimam = zimam;
+                }
+            } else {
+                cloudShops.push({
+                    id: String(Date.now()),
+                    name, cartons, totalPrice: total, paid, zimam,
+                    date: new Date().toISOString().split('T')[0]
+                });
+            }
+
+            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
+                alert("✅ تم حفظ حساب المحل بنجاح!");
+                document.getElementById('editShopId').value = '';
+                document.getElementById('shopNameInput').value = '';
+                document.getElementById('shopCartons').value = '';
+                document.getElementById('shopPaidVal').value = '';
+                calcShopTotal();
+                renderShopsTable();
+            });
+        }
+
+        function renderShopsTable() {
+            const tbody = document.getElementById('shopsTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            const searchVal = document.getElementById('shopSearchInput')?.value.toLowerCase() || '';
+            let filtered = cloudShops.filter(s => !searchVal || (s.name && s.name.toLowerCase().includes(searchVal)));
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6">لا توجد حسابات مسجلة للمحلات.</td></tr>`;
+                return;
+            }
+
+            filtered.slice().reverse().forEach(s => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${s.name}</b></td>
+                        <td>${s.cartons || 0}</td>
+                        <td>${(s.totalPrice || 0).toLocaleString()} ج.م</td>
+                        <td>${(s.paid || 0).toLocaleString()} ج.م</td>
+                        <td style="color:#dc2626; font-weight:bold;">${(s.zimam || 0).toLocaleString()} ج.م</td>
+                        <td>
+                            <button class="btn btn-success" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="openShopPayModal('${s.id}')">💳 سداد</button>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;" onclick="deleteShopTransaction('${s.id}')">🗑️</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function openShopPayModal(id) {
+            let shop = cloudShops.find(s => String(s.id) === String(id));
+            if(!shop) return;
+            document.getElementById('payShopId').value = shop.id;
+            document.getElementById('payShopName').value = shop.name;
+            document.getElementById('payShopCurrentZimam').value = (shop.zimam || 0).toLocaleString() + " ج.م";
+            document.getElementById('payAmountInput').value = '';
+            document.getElementById('shopPayModal').style.display = 'flex';
+        }
+
+        function closeShopPayModal() { document.getElementById('shopPayModal').style.display = 'none'; }
+
+        function submitShopPayment() {
+            const id = document.getElementById('payShopId').value;
+            const amt = parseFloat(document.getElementById('payAmountInput').value) || 0;
+            if(amt <= 0) { alert("أدخل مبلغ سداد صحيح."); return; }
+
+            let shop = cloudShops.find(s => String(s.id) === String(id));
+            if(shop) {
+                shop.paid = (parseFloat(shop.paid) || 0) + amt;
+                shop.zimam = Math.max(0, (parseFloat(shop.zimam) || 0) - amt);
+                db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
+                    alert("✅ تم تسجيل السداد بنجاح!");
+                    closeShopPayModal();
+                    renderShopsTable();
+                });
+            }
+        }
+
+        function deleteShopTransaction(id) {
+            if(!confirm("⚠️ حذف حساب هذا المحل؟")) return;
+            cloudShops = cloudShops.filter(s => String(s.id) !== String(id));
+            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
+                alert("✅ تم الحذف بنجاح.");
+                renderShopsTable();
+            });
+        }
+
+        // ----------------- قسم فواتير LM -----------------
+        function initLmFormInputs() {
+            const cont = document.getElementById('lmItemsContainer');
+            if(!cont || cont.innerHTML !== '') return;
+            let html = '';
+            lmItemsList.forEach((it, idx) => {
+                html += `
+                    <div style="display:grid; grid-template-columns: 1.5fr 1fr 1fr; gap:6px; margin-bottom:6px; align-items:center;">
+                        <span style="font-size:11px; font-weight:bold;">${it.name}</span>
+                        <input type="number" id="lm_qty_${idx}" placeholder="كرتونة" min="0" style="padding:5px; font-size:11px;">
+                        <input type="number" id="lm_sell_${idx}" placeholder="سعر البيع" value="${it.buyPricePerCarton}" style="padding:5px; font-size:11px;">
+                    </div>`;
+            });
+            cont.innerHTML = html;
+        }
+
+        function saveLmInvoice() {
+            const type = document.getElementById('lmInvoiceType').value;
+            const deposit = parseFloat(document.getElementById('lmDeposit').value) || 0;
+            let totalCost = 0, totalSell = 0;
+
+            lmItemsList.forEach((it, idx) => {
+                const q = parseFloat(document.getElementById(`lm_qty_${idx}`)?.value) || 0;
+                const sp = parseFloat(document.getElementById(`lm_sell_${idx}`)?.value) || it.buyPricePerCarton;
+                if(q > 0) {
+                    totalCost += q * it.buyPricePerCarton;
+                    totalSell += q * sp;
+                }
+            });
+
+            const profit = totalSell - totalCost;
+            cloudLmInvoices.push({
+                id: String(Date.now()),
+                type: type === 'mohamed' ? 'فاتورة محمد' : 'فاتورة حسام',
+                deposit, totalCost, totalSell, profit,
+                date: new Date().toISOString().split('T')[0]
+            });
+
+            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => {
+                alert("✅ تم حفظ فاتورة LM بنجاح!");
+                renderLmTable();
+            });
+        }
+
+        function renderLmTable() {
+            const tbody = document.getElementById('lmInvoicesTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            if(cloudLmInvoices.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6">لا توجد فواتير LM مسجلة.</td></tr>`;
+                return;
+            }
+            cloudLmInvoices.slice().reverse().forEach(inv => {
+                let profitColor = inv.profit >= 0 ? '#16a34a' : '#dc2626';
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${inv.type}</b></td>
+                        <td>${(inv.deposit||0).toLocaleString()} ج.م</td>
+                        <td>${(inv.totalCost||0).toLocaleString()} ج.م</td>
+                        <td>${(inv.totalSell||0).toLocaleString()} ج.م</td>
+                        <td style="color:${profitColor}; font-weight:bold;">${(inv.profit||0).toLocaleString()} ج.م</td>
+                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteLmInvoice('${inv.id}')">🗑️</button></td>
+                    </tr>`;
+            });
+        }
+
+        function deleteLmInvoice(id) {
+            if(!confirm("حذف الفاتورة؟")) return;
+            cloudLmInvoices = cloudLmInvoices.filter(i => String(i.id) !== String(id));
+            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
+        }
+
+        // ----------------- رصيد السيارة وجرد المندوب -----------------
+        function renderCarStockTable() {
+            const tbody = document.getElementById('carStockTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            let delCode = currentDelegate ? currentDelegate.code : '101';
+            const selStock = document.getElementById('selectDelegateForStock');
+            if(selStock && selStock.value && (currentDelegate?.role === 'admin' || currentDelegate?.role === 'store')) {
+                delCode = selStock.value;
+            }
+
+            let carStock = (cloudDelegates[delCode] && cloudDelegates[delCode].carStock) ? cloudDelegates[delCode].carStock : defaultCarStock;
+
+            products.forEach(p => {
+                let stockCartons = parseFloat(carStock[p.code]) || 0;
+                let ribbons = Math.round(stockCartons * 50);
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${p.name}</b></td>
+                        <td style="color:#16a34a; font-weight:bold;">${stockCartons} كرتونة (${ribbons} رابطة)</td>
+                    </tr>`;
+            });
+        }
+
+        // ----------------- إدارة العملاء والـ Excel -----------------
+        function renderAdminPortalCustomersTable() {
+            const tbody = document.getElementById('adminPortalCustomersBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            for(let name in cloudClients) {
+                let code = cloudClients[name];
+                let route = cloudClientsRoutes[name] || '-';
+                let phone = '-';
+                let type = 'قطاعي';
+                let pass = '-';
+
+                for(let uid in portalCustomersDB) {
+                    if(portalCustomersDB[uid].name === name || portalCustomersDB[uid].clientCode === code) {
+                        phone = portalCustomersDB[uid].phone || '-';
+                        type = portalCustomersDB[uid].customerType === 'wholesale' ? 'جملة' : 'قطاعي';
+                        pass = portalCustomersDB[uid].pass || '-';
+                        break;
+                    }
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><input type="checkbox" class="client-select-chk" value="${name}"></td>
+                        <td><b>${name}</b></td>
+                        <td><span style="color:#2563eb; font-weight:bold;">${code}</span></td>
+                        <td>${route}</td>
+                        <td>${phone}</td>
+                        <td>${type}</td>
+                        <td>${pass}</td>
+                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteSingleClient('${name}')">🗑️</button></td>
+                    </tr>`;
+            }
+        }
+
+        function toggleSelectAllClients(master) {
+            document.querySelectorAll('.client-select-chk').forEach(chk => chk.checked = master.checked);
+        }
+
+        function deleteSelectedClients() {
+            const checked = Array.from(document.querySelectorAll('.client-select-chk:checked')).map(c => c.value);
+            if(checked.length === 0) { alert("اختر عميلاً واحداً على الأقل."); return; }
+            if(!confirm(`هل أنت متأكد من حذف ${checked.length} عميل؟`)) return;
+
+            checked.forEach(name => {
+                delete cloudClients[name];
+                delete cloudClientsRoutes[name];
+            });
+
+            db.ref('clients').set(cloudClients);
+            db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
+                alert("✅ تم حذف العملاء بنجاح.");
+                renderAdminPortalCustomersTable();
+            });
+        }
+
+        function deleteSingleClient(name) {
+            if(!confirm(`حذف العميل (${name})؟`)) return;
+            delete cloudClients[name];
+            delete cloudClientsRoutes[name];
+            db.ref('clients').set(cloudClients);
+            db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => renderAdminPortalCustomersTable());
+        }
+
+        function adminDirectAddCustomer() {
+            const name = document.getElementById('adminDirectName').value.trim();
+            const code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
+            const route = document.getElementById('adminDirectRoute').value.trim();
+            const village = document.getElementById('adminDirectVillage').value.trim();
+            const phone = document.getElementById('adminDirectPhone').value.trim();
+            const pass = document.getElementById('adminDirectPass').value.trim() || "1234";
+            const type = document.getElementById('adminDirectType').value;
+
+            if(!name) { alert("❌ يرجى إدخال اسم العميل."); return; }
+
+            cloudClients[name] = code;
+            if(route) cloudClientsRoutes[name] = route;
+
+            const uid = "cust_" + Date.now();
+            const custData = { uid, name, clientCode: code, route, village, phone, pass, customerType: type };
+
+            db.ref('clients').set(cloudClients);
+            db.ref('clientsRoutes').set(cloudClientsRoutes);
+            db.ref('portalCustomers/' + uid).set(custData).then(() => {
+                alert("✅ تم إضافة وتفعيل حساب العميل بنجاح!");
+                document.getElementById('adminDirectName').value = '';
+                document.getElementById('adminDirectCode').value = '';
+                renderAdminPortalCustomersTable();
+            });
+        }
+
+        function exportClientsFast() {
+            let data = [];
+            for(let name in cloudClients) {
+                data.push({
+                    "اسم العميل": name,
+                    "الكود الثابت": cloudClients[name],
+                    "الخط / خط السير": cloudClientsRoutes[name] || ""
+                });
+            }
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "العملاء");
+            XLSX.writeFile(wb, "قائمة_العملاء.xlsx");
+        }
+
+        function importClientsFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet);
+
+                cloudClients = {};
+                cloudClientsRoutes = {};
+
+                rows.forEach(r => {
+                    const name = r["اسم العميل"] || r["العميل"] || r["Name"];
+                    const code = r["الكود الثابت"] || r["الكود"] || r["Code"] || ("C-" + Math.floor(1000 + Math.random() * 9000));
+                    const route = r["الخط / خط السير"] || r["الخط"] || r["خط السير"] || r["Route"] || "";
+                    if(name) {
+                        cloudClients[name] = code;
+                        if(route) cloudClientsRoutes[name] = route;
+                    }
+                });
+
+                db.ref('clients').set(cloudClients);
+                db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
+                    alert("✅ تم استيراد واستبدال العملاء بنجاح!");
+                    renderAdminPortalCustomersTable();
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function createNewUserAccount() {
+            const code = document.getElementById('newAccCode').value.trim();
+            const name = document.getElementById('newAccName').value.trim();
+            const pass = document.getElementById('newAccPass').value.trim();
+            const role = document.getElementById('newAccRole').value;
+
+            if(!code || !name || !pass) { alert("يرجى ملء جميع الحقول."); return; }
+
+            cloudDelegates[code] = { name, pass, role, carStock: {...defaultCarStock}, allowedRoutes: ["ALL"] };
+            db.ref('delegates').set(cloudDelegates).then(() => {
+                alert("✅ تم إنشاء حساب الموظف بنجاح!");
+                document.getElementById('newAccCode').value = '';
+                document.getElementById('newAccName').value = '';
+                document.getElementById('newAccPass').value = '';
+                updateDelegatesSelects();
+            });
+        }
+
+        // 1. تجميع وتحديث قائمة خطوط السير
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
             if(!selectRoute) return;
@@ -1133,582 +1676,6 @@
                 document.getElementById('qtyTransferProductCar').value = '';
                 renderCarStockTable();
                 initSalesForm();
-            });
-        }
-
-        function renderCarStockTable() {
-            const tbody = document.getElementById('carStockTableBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'store'));
-            const targetDelCode = isAdm ? (document.getElementById('selectDelegateForStock')?.value || currentDelegate.code) : currentDelegate.code;
-            const carStock = (cloudDelegates[targetDelCode] && cloudDelegates[targetDelCode].carStock) ? cloudDelegates[targetDelCode].carStock : defaultCarStock;
-
-            products.forEach(p => {
-                const stockCartons = carStock[p.code] !== undefined ? carStock[p.code] : 0;
-                const totalRibbons = Math.round(stockCartons * 50);
-                const fullCartons = Math.floor(totalRibbons / 50);
-                const remRibbons = totalRibbons % 50;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${p.name}</b></td>
-                        <td style="color:${stockCartons > 0 ? '#16a34a' : '#dc2626'}; font-weight:bold;">
-                            ${fullCartons} كرتونة و ${remRibbons} رابطة <span style="font-size:10px; color:#64748b;">(إجمالي: ${stockCartons.toFixed(2)} ك)</span>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        function calcRatioLoading() {
-            const cleo = parseFloat(document.getElementById('ratioCleopatra')?.value) || 0;
-            const box = parseFloat(document.getElementById('ratioBox')?.value) || 0;
-            const brown = parseFloat(document.getElementById('ratioBrown')?.value) || 0;
-            const superPct = (parseFloat(document.getElementById('ratioSuper')?.value) || 0) / 100;
-            const totalTarget = parseFloat(document.getElementById('totalCartonsTarget')?.value) || 0;
-            const resBox = document.getElementById('ratioResultBox');
-
-            if (totalTarget <= 0) {
-                resBox.innerHTML = "يرجى كتابة إجمالي عدد الكرتونات المراد تحميلها.";
-                return;
-            }
-
-            const superCartons = totalTarget * superPct;
-            const remainingCartons = Math.max(0, totalTarget - superCartons);
-            const sumWeights = cleo + box + brown;
-
-            let cleoCartons = 0, boxCartons = 0, brownCartons = 0;
-            if (sumWeights > 0) {
-                cleoCartons = (remainingCartons * (cleo / sumWeights));
-                boxCartons = (remainingCartons * (box / sumWeights));
-                brownCartons = (remainingCartons * (brown / sumWeights));
-            }
-
-            resBox.innerHTML = `
-                <b>📦 توزيع التحميل من إجمالي (${totalTarget} كرتونة):</b><br>
-                • كليوباترا: <b>${cleoCartons.toFixed(2)}</b> كرتونة (${(cleoCartons * 50).toFixed(0)} رابطة)<br>
-                • بوكس: <b>${boxCartons.toFixed(2)}</b> كرتونة (${(boxCartons * 50).toFixed(0)} رابطة)<br>
-                • براون: <b>${brownCartons.toFixed(2)}</b> كرتونة (${(brownCartons * 50).toFixed(0)} رابطة)<br>
-                • سوبر (${(superPct * 100).toFixed(1)}%): <b>${superCartons.toFixed(2)}</b> كرتونة (${(superCartons * 50).toFixed(0)} رابطة)
-            `;
-        }
-
-        function calcMenofTotal() {
-            const cartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
-            const deposit = parseFloat(document.getElementById('menofDeposit')?.value) || 0;
-            const totalPrice = cartons * 23925;
-            const zimam = deposit - totalPrice;
-
-            document.getElementById('menofTotalPrice').innerText = totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 });
-            document.getElementById('menofZimam').innerText = zimam.toLocaleString('en-US', { minimumFractionDigits: 2 });
-        }
-
-        function saveMenofLoad() {
-            const date = document.getElementById('menofDate').value;
-            const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
-            const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
-            const editId = document.getElementById('editMenofId').value;
-
-            if (!date || cartons <= 0) { alert("أدخل تاريخ التحميل وعدد الكراتين."); return; }
-
-            const totalPrice = cartons * 23925;
-            const zimam = deposit - totalPrice;
-
-            if (editId) {
-                let idx = cloudMenofLoads.findIndex(m => m.id === editId);
-                if (idx !== -1) cloudMenofLoads[idx] = { id: editId, date, cartons, totalPrice, deposit, zimam };
-            } else {
-                cloudMenofLoads.push({ id: String(Date.now()), date, cartons, totalPrice, deposit, zimam });
-            }
-
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
-                alert("✅ تم حفظ شحنة منوف بنجاح!");
-                document.getElementById('editMenofId').value = '';
-                document.getElementById('menofCartons').value = '';
-                document.getElementById('menofDeposit').value = '';
-                calcMenofTotal();
-                renderMenofTable();
-            });
-        }
-
-        function renderMenofTable() {
-            const tbody = document.getElementById('menofTableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            let totalCartons = 0, totalDeposits = 0, totalGoods = 0, totalZimam = 0;
-
-            cloudMenofLoads.slice().reverse().forEach(m => {
-                totalCartons += (m.cartons || 0);
-                totalDeposits += (m.deposit || 0);
-                totalGoods += (m.totalPrice || 0);
-                totalZimam += (m.zimam || 0);
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${m.date}</td>
-                        <td><b>${m.cartons}</b></td>
-                        <td>${(m.totalPrice||0).toLocaleString()} ج.م</td>
-                        <td>${(m.deposit||0).toLocaleString()} ج.م</td>
-                        <td style="color:${(m.zimam||0) >= 0 ? '#16a34a' : '#dc2626'}; font-weight:bold;">${(m.zimam||0).toLocaleString()} ج.م</td>
-                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteMenofLoad('${m.id}')">🗑️</button></td>
-                    </tr>`;
-            });
-
-            document.getElementById('menofTotalCartonsCount').innerText = totalCartons;
-            document.getElementById('menofTotalDepositsSum').innerText = totalDeposits.toLocaleString();
-            document.getElementById('menofTotalGoodsSum').innerText = totalGoods.toLocaleString();
-            document.getElementById('menofNetZimamTotal').innerText = totalZimam.toLocaleString();
-
-            let eqCartons = Math.floor(totalZimam / 23925);
-            let eqRem = (totalZimam % 23925).toFixed(2);
-            document.getElementById('menofCartonsEquivalent').innerText = `${eqCartons} كرتونة و ${eqRem} ج.م`;
-        }
-
-        function deleteMenofLoad(id) {
-            if (!confirm("حذف هذه الشحنة؟")) return;
-            cloudMenofLoads = cloudMenofLoads.filter(m => m.id !== id);
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(renderMenofTable);
-        }
-
-        function calcShopTotal() {
-            const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
-            const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
-            const total = cartons * 23925;
-            const zimam = total - paid;
-            document.getElementById('shopTotalPrice').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
-            document.getElementById('shopZimam').innerText = zimam.toLocaleString('en-US', { minimumFractionDigits: 2 });
-        }
-
-        function saveShopTransaction() {
-            const name = document.getElementById('shopNameInput').value.trim();
-            const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
-            const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
-            const editId = document.getElementById('editShopId').value;
-            
-            if(!name || cartons <= 0) { alert("أدخل اسم المحل وعدد الكراتين."); return; }
-            
-            const totalPrice = cartons * 23925;
-            const zimam = totalPrice - paid;
-            const todayStr = new Date().toISOString().split('T')[0];
-            
-            if(editId) {
-                let idx = cloudShops.findIndex(s => s.id === editId);
-                if(idx !== -1) cloudShops[idx] = { ...cloudShops[idx], name, cartons, totalPrice, paid, zimam };
-            } else {
-                cloudShops.push({ id: String(Date.now()), name, cartons, totalPrice, paid, zimam, date: todayStr });
-            }
-
-            db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
-                alert("✅ تم حفظ معاملة المحل بنجاح!");
-                document.getElementById('editShopId').value = '';
-                document.getElementById('shopNameInput').value = '';
-                document.getElementById('shopCartons').value = '';
-                document.getElementById('shopPaidVal').value = '';
-                calcShopTotal();
-                renderShopsTable();
-            });
-        }
-
-        function renderShopsTable() {
-            const tbody = document.getElementById('shopsTableBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            const q = (document.getElementById('shopSearchInput')?.value || '').trim().toLowerCase();
-            let filtered = cloudShops.filter(s => !q || (s.name && s.name.toLowerCase().includes(q)));
-
-            if(filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="6">لا توجد حسابات مسجلة.</td></tr>'; return; }
-
-            filtered.slice().reverse().forEach(s => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${s.name}</b></td>
-                        <td>${s.cartons}</td>
-                        <td>${(s.totalPrice||0).toLocaleString()} ج.م</td>
-                        <td>${(s.paid||0).toLocaleString()} ج.م</td>
-                        <td style="color:${(s.zimam||0) > 0 ? '#dc2626' : '#16a34a'}; font-weight:bold;">${(s.zimam||0).toLocaleString()} ج.م</td>
-                        <td>
-                            <button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="openShopPayModal('${s.id}')">💳 سداد</button>
-                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteShopTransaction('${s.id}')">🗑️</button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        function openShopPayModal(id) {
-            let s = cloudShops.find(x => x.id === id);
-            if(!s) return;
-            document.getElementById('payShopId').value = s.id;
-            document.getElementById('payShopName').value = s.name;
-            document.getElementById('payShopCurrentZimam').value = (s.zimam || 0).toLocaleString() + " ج.م";
-            document.getElementById('payAmountInput').value = '';
-            document.getElementById('shopPayModal').style.display = 'flex';
-        }
-
-        function closeShopPayModal() { document.getElementById('shopPayModal').style.display = 'none'; }
-
-        function submitShopPayment() {
-            const id = document.getElementById('payShopId').value;
-            const payVal = parseFloat(document.getElementById('payAmountInput').value) || 0;
-            if(payVal <= 0) { alert("أدخل مبلغ سداد صحيح."); return; }
-
-            let s = cloudShops.find(x => x.id === id);
-            if(s) {
-                s.paid = (s.paid || 0) + payVal;
-                s.zimam = Math.max(0, (s.zimam || 0) - payVal);
-                db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
-                    alert("✅ تم تسجيل السداد وتحديث المديونية بنجاح!");
-                    closeShopPayModal();
-                    renderShopsTable();
-                });
-            }
-        }
-
-        function deleteShopTransaction(id) {
-            if(!confirm("حذف هذه المعاملة؟")) return;
-            cloudShops = cloudShops.filter(s => s.id !== id);
-            db.ref('shops').set(Object.assign({}, cloudShops)).then(renderShopsTable);
-        }
-
-        function initLmFormInputs() {
-            const container = document.getElementById('lmItemsContainer');
-            if(!container) return;
-
-            let html = '<div style="overflow-x:auto;"><table class="report-table"><thead><tr><th>الصنف</th><th>كراتين</th><th>سعر الشراء</th><th>سعر البيع</th><th>الربح</th></tr></thead><tbody>';
-            lmItemsList.forEach((item, idx) => {
-                html += `
-                    <tr>
-                        <td><b>${item.name}</b></td>
-                        <td><input type="number" id="lm_qty_${idx}" min="0" placeholder="0" oninput="calcLmTotals()" style="width:70px; padding:4px; text-align:center;"></td>
-                        <td><input type="number" id="lm_buy_${idx}" value="${item.buyPricePerCarton}" oninput="calcLmTotals()" style="width:85px; padding:4px; text-align:center;"></td>
-                        <td><input type="number" id="lm_sell_${idx}" value="${item.buyPricePerCarton + 500}" oninput="calcLmTotals()" style="width:85px; padding:4px; text-align:center;"></td>
-                        <td id="lm_profit_${idx}" style="font-weight:bold; color:#16a34a;">0.00</td>
-                    </tr>`;
-            });
-            html += '</tbody></table></div>';
-            html += `<div style="background:#f8fafc; border:1px solid #cbd5e1; padding:8px; border-radius:6px; margin-top:8px; font-size:12px; font-weight:bold;">
-                إجمالي التكلفة: <span id="lmTotalCost" style="color:#0284c7;">0.00</span> ج.م | إجمالي البيع: <span id="lmTotalSell" style="color:#16a34a;">0.00</span> ج.م | صافي الربح: <span id="lmTotalProfit" style="color:#15803d;">0.00</span> ج.م
-            </div>`;
-            container.innerHTML = html;
-            calcLmTotals();
-        }
-
-        function calcLmTotals() {
-            let totalCost = 0, totalSell = 0, totalProfit = 0;
-            lmItemsList.forEach((item, idx) => {
-                const q = parseFloat(document.getElementById(`lm_qty_${idx}`)?.value) || 0;
-                const buy = parseFloat(document.getElementById(`lm_buy_${idx}`)?.value) || 0;
-                const sell = parseFloat(document.getElementById(`lm_sell_${idx}`)?.value) || 0;
-                const profit = (sell - buy) * q;
-                totalCost += (buy * q);
-                totalSell += (sell * q);
-                totalProfit += profit;
-                if(document.getElementById(`lm_profit_${idx}`)) {
-                    document.getElementById(`lm_profit_${idx}`).innerText = profit.toLocaleString('en-US', { minimumFractionDigits: 2 });
-                }
-            });
-            if(document.getElementById('lmTotalCost')) document.getElementById('lmTotalCost').innerText = totalCost.toLocaleString();
-            if(document.getElementById('lmTotalSell')) document.getElementById('lmTotalSell').innerText = totalSell.toLocaleString();
-            if(document.getElementById('lmTotalProfit')) document.getElementById('lmTotalProfit').innerText = totalProfit.toLocaleString();
-        }
-
-        function saveLmInvoice() {
-            const invType = document.getElementById('lmInvoiceType').value;
-            const deposit = parseFloat(document.getElementById('lmDeposit').value) || 0;
-            const editId = document.getElementById('editLmId').value;
-            let items = [];
-            let totalCost = 0, totalSell = 0;
-
-            lmItemsList.forEach((item, idx) => {
-                const q = parseFloat(document.getElementById(`lm_qty_${idx}`)?.value) || 0;
-                const buy = parseFloat(document.getElementById(`lm_buy_${idx}`)?.value) || 0;
-                const sell = parseFloat(document.getElementById(`lm_sell_${idx}`)?.value) || 0;
-                if(q > 0) {
-                    items.push({ name: item.name, code: item.code, qty: q, buyPrice: buy, sellPrice: sell, profit: (sell - buy) * q });
-                    totalCost += buy * q;
-                    totalSell += sell * q;
-                }
-            });
-
-            if(items.length === 0) { alert("أدخل كمية لصنف واحد على الأقل في فاتورة LM."); return; }
-
-            const profit = totalSell - totalCost;
-            const todayStr = new Date().toISOString().split('T')[0];
-            const typeName = invType === 'mohamed' ? 'فاتورة محمد' : 'فاتورة حسام';
-            const rec = { id: editId || String(Date.now()), type: invType, typeName: typeName, deposit, totalCost, totalSell, profit, items, date: todayStr };
-
-            if(editId) {
-                let idx = cloudLmInvoices.findIndex(l => l.id === editId);
-                if(idx !== -1) cloudLmInvoices[idx] = rec;
-            } else {
-                cloudLmInvoices.push(rec);
-            }
-
-            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => {
-                alert("✅ تم حفظ فاتورة LM بنجاح!");
-                document.getElementById('editLmId').value = '';
-                document.getElementById('lmDeposit').value = '';
-                initLmFormInputs();
-                renderLmTable();
-            });
-        }
-
-        function renderLmTable() {
-            const tbody = document.getElementById('lmInvoicesTableBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            if(cloudLmInvoices.length === 0) { tbody.innerHTML = '<tr><td colspan="6">لا توجد فواتير LM محفوظة.</td></tr>'; return; }
-
-            cloudLmInvoices.slice().reverse().forEach(l => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${l.typeName || l.type}</b> (${l.date || ''})</td>
-                        <td>${(l.deposit||0).toLocaleString()} ج.م</td>
-                        <td>${(l.totalCost||0).toLocaleString()} ج.م</td>
-                        <td>${(l.totalSell||0).toLocaleString()} ج.م</td>
-                        <td style="color:${(l.profit||0) >= 0 ? '#16a34a' : '#dc2626'}; font-weight:bold;">${(l.profit||0).toLocaleString()} ج.م</td>
-                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteLmInvoice('${l.id}')">🗑️</button></td>
-                    </tr>`;
-            });
-        }
-
-        function deleteLmInvoice(id) {
-            if(!confirm("حذف فاتورة LM هذه؟")) return;
-            cloudLmInvoices = cloudLmInvoices.filter(l => l.id !== id);
-            db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(renderLmTable);
-        }
-
-        function renderAdminPortalCustomersTable() {
-            const tbody = document.getElementById('adminPortalCustomersBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            let keys = Object.keys(cloudClients);
-            if(keys.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8">لا يوجد عملاء مسجلين.</td></tr>';
-                return;
-            }
-
-            keys.forEach(cName => {
-                let code = cloudClients[cName] || '';
-                let route = cloudClientsRoutes[cName] || '-';
-                let phone = '-';
-                let pass = '-';
-                let type = 'قطاعي';
-                let uidKey = null;
-
-                for(let uid in portalCustomersDB) {
-                    if(portalCustomersDB[uid].name === cName || portalCustomersDB[uid].clientCode === code) {
-                        uidKey = uid;
-                        phone = portalCustomersDB[uid].phone || '-';
-                        pass = portalCustomersDB[uid].pass || '-';
-                        type = portalCustomersDB[uid].customerType === 'wholesale' ? 'جملة' : (portalCustomersDB[uid].customerType === 'retail' ? 'قطاعي' : 'معلق');
-                        break;
-                    }
-                }
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><input type="checkbox" class="client-row-checkbox" value="${cName}"></td>
-                        <td><b>${cName}</b></td>
-                        <td><span style="color:#2563eb; font-weight:bold;">${code}</span></td>
-                        <td><span style="color:#16a34a;">${route}</span></td>
-                        <td>${phone}</td>
-                        <td>${type}</td>
-                        <td><span style="color:#64748b;">${pass}</span></td>
-                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteClientDirect('${cName}', '${uidKey||''}')">🗑️</button></td>
-                    </tr>`;
-            });
-        }
-
-        function toggleSelectAllClients(master) {
-            document.querySelectorAll('.client-row-checkbox').forEach(cb => cb.checked = master.checked);
-        }
-
-        function deleteClientDirect(cName, uidKey) {
-            if(!confirm(`حذف العميل (${cName}) نهائياً؟`)) return;
-            delete cloudClients[cName];
-            delete cloudClientsRoutes[cName];
-            delete cloudClientsLocations[cName];
-            if(uidKey && portalCustomersDB[uidKey]) delete portalCustomersDB[uidKey];
-
-            db.ref('clients').set(cloudClients);
-            db.ref('clientsRoutes').set(cloudClientsRoutes);
-            db.ref('clientsLocations').set(cloudClientsLocations);
-            db.ref('portalCustomers').set(portalCustomersDB).then(() => {
-                alert("✅ تم حذف العميل بنجاح!");
-                populateRoutesList();
-                updateClientsDatalist();
-                renderAdminPortalCustomersTable();
-            });
-        }
-
-        function deleteSelectedClients() {
-            const checked = Array.from(document.querySelectorAll('.client-row-checkbox:checked')).map(cb => cb.value);
-            if(checked.length === 0) { alert("حدد عميلاً واحداً على الأقل للمسح."); return; }
-            if(!confirm(`مسح ${checked.length} عميل محدد؟`)) return;
-
-            checked.forEach(cName => {
-                delete cloudClients[cName];
-                delete cloudClientsRoutes[cName];
-                delete cloudClientsLocations[cName];
-                for(let uid in portalCustomersDB) {
-                    if(portalCustomersDB[uid].name === cName) delete portalCustomersDB[uid];
-                }
-            });
-
-            db.ref('clients').set(cloudClients);
-            db.ref('clientsRoutes').set(cloudClientsRoutes);
-            db.ref('clientsLocations').set(cloudClientsLocations);
-            db.ref('portalCustomers').set(portalCustomersDB).then(() => {
-                alert("✅ تم مسح العملاء المحددين بنجاح!");
-                populateRoutesList();
-                updateClientsDatalist();
-                renderAdminPortalCustomersTable();
-            });
-        }
-
-        function adminDirectAddCustomer() {
-            const name = document.getElementById('adminDirectName').value.trim();
-            const code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
-            const route = document.getElementById('adminDirectRoute').value.trim();
-            const village = document.getElementById('adminDirectVillage').value.trim();
-            const phone = document.getElementById('adminDirectPhone').value.trim();
-            const pass = document.getElementById('adminDirectPass').value.trim() || "123456";
-            const type = document.getElementById('adminDirectType').value;
-
-            if(!name) { alert("أدخل اسم العميل / المحل."); return; }
-
-            cloudClients[name] = code;
-            if(route) cloudClientsRoutes[name] = route;
-            const uid = "cust_" + Date.now();
-            portalCustomersDB[uid] = {
-                uid, name, clientCode: code, route, village, phone: phone ? ("+20" + phone.replace(/^0+/, '')) : '',
-                pass, customerType: type
-            };
-
-            db.ref('clients').set(cloudClients);
-            db.ref('clientsRoutes').set(cloudClientsRoutes);
-            db.ref('portalCustomers').set(portalCustomersDB).then(() => {
-                alert(`✅ تم حفظ وتفعيل حساب العميل (${name}) بنجاح!`);
-                document.getElementById('adminDirectName').value = '';
-                document.getElementById('adminDirectCode').value = '';
-                document.getElementById('adminDirectRoute').value = '';
-                document.getElementById('adminDirectVillage').value = '';
-                document.getElementById('adminDirectPhone').value = '';
-                document.getElementById('adminDirectPass').value = '';
-                populateRoutesList();
-                updateClientsDatalist();
-                renderAdminPortalCustomersTable();
-            });
-        }
-
-        function exportClientsFast() {
-            let data = [];
-            for(let name in cloudClients) {
-                let code = cloudClients[name];
-                let route = cloudClientsRoutes[name] || '';
-                let phone = '', village = '', pass = '', type = 'قطاعي';
-                for(let uid in portalCustomersDB) {
-                    if(portalCustomersDB[uid].name === name) {
-                        phone = portalCustomersDB[uid].phone || '';
-                        village = portalCustomersDB[uid].village || '';
-                        pass = portalCustomersDB[uid].pass || '';
-                        type = portalCustomersDB[uid].customerType === 'wholesale' ? 'جملة' : 'قطاعي';
-                        break;
-                    }
-                }
-                data.push({ "اسم العميل": name, "الكود الثابت": code, "الخط": route, "القرية": village, "التليفون": phone, "كلمة السر": pass, "الفئة": type });
-            }
-            if(data.length === 0) { alert("لا توجد بيانات عملاء لتصديرها."); return; }
-            let ws = XLSX.utils.json_to_sheet(data);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "العملاء");
-            XLSX.writeFile(wb, "عملاء_شركة_بلاك_هورس.xlsx");
-        }
-
-        function importClientsFromExcel(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const bstr = evt.target.result;
-                const wb = XLSX.read(bstr, { type: 'binary' });
-                const wsname = wb.SheetNames[0];
-                const ws = wb.Sheets[wsname];
-                const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-                if(rows.length <= 1) { alert("الملف فارغ أو لا يحتوي بيانات."); return; }
-
-                if(!confirm("⚠️ رفع ملف جديد سيقوم باستبدال ومسح العملاء الحاليين واعتماد الشيت الجديد. هل تريد الاستمرار؟")) return;
-
-                let newClients = {}, newRoutes = {}, newPortal = {};
-                let headers = rows[0].map(h => String(h || '').trim());
-                let idxName = headers.findIndex(h => h.includes("اسم") || h.includes("عميل") || h.includes("محل"));
-                let idxCode = headers.findIndex(h => h.includes("كود") || h.includes("الكود"));
-                let idxRoute = headers.findIndex(h => h.includes("خط") || h.includes("سير"));
-                let idxVillage = headers.findIndex(h => h.includes("قرية") || h.includes("مركز"));
-                let idxPhone = headers.findIndex(h => h.includes("تليفون") || h.includes("موبايل") || h.includes("هاتف"));
-                let idxPass = headers.findIndex(h => h.includes("سر") || h.includes("كلمة"));
-                let idxType = headers.findIndex(h => h.includes("فئة") || h.includes("نوع"));
-
-                if(idxName === -1) idxName = 0;
-
-                for(let i = 1; i < rows.length; i++) {
-                    let r = rows[i];
-                    if(!r || !r[idxName]) continue;
-                    let name = String(r[idxName]).trim();
-                    let code = idxCode !== -1 && r[idxCode] ? String(r[idxCode]).trim() : ("C-" + (1000 + i));
-                    let route = idxRoute !== -1 && r[idxRoute] ? String(r[idxRoute]).trim() : '';
-                    let village = idxVillage !== -1 && r[idxVillage] ? String(r[idxVillage]).trim() : '';
-                    let phone = idxPhone !== -1 && r[idxPhone] ? String(r[idxPhone]).trim() : '';
-                    let pass = idxPass !== -1 && r[idxPass] ? String(r[idxPass]).trim() : '123456';
-                    let typeRaw = idxType !== -1 && r[idxType] ? String(r[idxType]).trim() : 'retail';
-                    let type = (typeRaw.includes('جملة') || typeRaw === 'wholesale') ? 'wholesale' : 'retail';
-
-                    newClients[name] = code;
-                    if(route) newRoutes[name] = route;
-                    let uid = "cust_" + (Date.now() + i);
-                    newPortal[uid] = { uid, name, clientCode: code, route, village, phone, pass, customerType: type };
-                }
-
-                cloudClients = newClients;
-                cloudClientsRoutes = newRoutes;
-                portalCustomersDB = newPortal;
-
-                db.ref('clients').set(cloudClients);
-                db.ref('clientsRoutes').set(cloudClientsRoutes);
-                db.ref('portalCustomers').set(portalCustomersDB).then(() => {
-                    alert("🎉 تم استيراد بيانات الشيت بنجاح وتحديث النظام!");
-                    populateRoutesList();
-                    updateClientsDatalist();
-                    renderAdminPortalCustomersTable();
-                });
-            };
-            reader.readAsBinaryString(file);
-        }
-
-        function createNewUserAccount() {
-            const code = document.getElementById('newAccCode').value.trim();
-            const name = document.getElementById('newAccName').value.trim();
-            const pass = document.getElementById('newAccPass').value.trim();
-            const role = document.getElementById('newAccRole').value;
-
-            if(!code || !name || !pass) { alert("أدخل كود الموظف، الاسم، وكلمة السر."); return; }
-
-            cloudDelegates[code] = {
-                name, pass, role, carStock: {...defaultCarStock}, allowedRoutes: ["ALL"], locked: false
-            };
-
-            db.ref('delegates').set(cloudDelegates).then(() => {
-                alert(`✅ تم إنشاء حساب الموظف (${name}) بنجاح!`);
-                document.getElementById('newAccCode').value = '';
-                document.getElementById('newAccName').value = '';
-                document.getElementById('newAccPass').value = '';
-                updateDelegatesSelects();
-                renderRepRoutesInputs();
             });
         }
 
