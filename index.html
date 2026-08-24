@@ -11,7 +11,7 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
         body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
-        .card { max-width: 720px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .card { max-width: 680px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .text-center { text-align: center; }
         
         .logo-box {
@@ -70,14 +70,13 @@
         .modal-content { background:#fff; padding:18px; border-radius:10px; width:90%; max-width:440px; max-height:85vh; overflow-y:auto; }
         
         #sosAlertBanner { display:none; background:#ffe4e6; border:2px solid #e11d48; color:#9f1239; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; }
-        .bulk-actions-bar { display: flex; gap: 8px; align-items: center; background: #fff1f2; border: 1px solid #fecdd3; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div id="sosAlertBanner"></div>
 
-    <!-- 1. تسجيل الدخول -->
+    <!-- 1. شاشة تسجيل الدخول -->
     <div id="loginView" class="card">
         <div class="logo-box">
             <h1>BLACK HORSE</h1>
@@ -114,6 +113,7 @@
                     <input type="text" id="regClientPhone" placeholder="1012345678" style="flex: 1;" maxlength="10">
                 </div>
             </div>
+            <div class="form-group"><label>خط السير / الخط:</label><input type="text" id="regClientRoute" placeholder="مثال: خط سنتريس / خط أشمون..."></div>
             <div class="form-group"><label>عنوان المحل بالتفصيل:</label><input type="text" id="regClientAddress" placeholder="المدينة، الشارع..."></div>
             <div class="form-group"><label>القرية / المركز:</label><input type="text" id="regClientVillage" placeholder="مثال: أشمون / سنتريس..."></div>
             
@@ -182,15 +182,23 @@
             </div>
 
             <input type="hidden" id="editInvoiceId" value="">
+            
+            <div class="form-group" style="background:#eff6ff; border:1px solid #bfdbfe; padding:8px 10px; border-radius:8px;">
+                <label style="color:#1e40af; font-size:12px;">🛣️ اختر خط السير (لعرض عملاء الخط فقط):</label>
+                <select id="selectRouteFilter" onchange="onRouteFilterChange()" style="font-weight:bold; font-size:12.5px; color:#1e3a8a; background:#fff;">
+                    <option value="ALL">🛣️ عرض كل الخطوط (كل العملاء)</option>
+                </select>
+            </div>
+
             <div class="form-group">
                 <label>اسم العميل / المحل:</label>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <input type="text" id="clientName" placeholder="اكتب اسم العميل مباشرة هنا..." oninput="onClientNameInput()" style="flex: 2; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
-                    <select id="selectExistingClient" onchange="pickExistingClient()" style="flex: 1.2; padding: 9px 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11px; background: #f8fafc; color: #334155;">
+                    <select id="selectExistingClient" onchange="pickExistingClient()" style="flex: 1.3; padding: 9px 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11px; background: #f8fafc; color: #334155;">
                         <option value="">📋 عميل مسجل...</option>
                     </select>
                 </div>
-                <div style="font-size: 11px; color: #64748b; margin-top: 3px;">كود العميل الثابت: <b id="lblClientCode" style="color:#2563eb;">--</b></div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 3px;">كود العميل الثابت: <b id="lblClientCode" style="color:#2563eb;">--</b> | الخط: <b id="lblClientRoute" style="color:#16a34a;">--</b></div>
                 <div id="clientMonthlyHistory" class="client-history-box"></div>
             </div>
 
@@ -204,59 +212,55 @@
 
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
 
-            <button class="btn btn-bluetooth" onclick="printViaRawBT()">🖨️ طباعة عبر RawBT وتوثيق موقع المحل</button>
-            <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة وخصمها من رصيد سيارتك</button>
+            <button class="btn btn-bluetooth" onclick="printViaRawBT()">🖨️ طباعة عبر RawBT (بلوتوث) وحفظ اللوكيشن</button>
+            <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة مع تثبيت لوكيشن المحل</button>
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
         <!-- ب) تبويب إدارة العملاء -->
         <div id="sectionClientsManage" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">👥 لوحة إدارة بيانات العملاء والأكواد الثابتة:</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">👥 لوحة إدارة بيانات العملاء والأكواد والخطوط:</h4>
 
-            <!-- استيراد وتصدير الإكسيل -->
             <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
                 <h5 style="margin:0 0 8px 0; color:#0f172a; font-size:13px;">📊 استيراد وتصدير شيت Excel:</h5>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="btn btn-success" style="flex:1; margin-top:0; font-size:12px;" onclick="exportClientsFast()">📥 تصدير العملاء فوراً (Excel/CSV)</button>
-                    <button class="btn btn-info" style="flex:1; margin-top:0; font-size:12px;" onclick="document.getElementById('excelFileInput').click()">📤 رفع عملاء من شيت Excel</button>
+                    <button class="btn btn-info" style="flex:1; margin-top:0; font-size:12px;" onclick="document.getElementById('excelFileInput').click()">📤 رفع شيت Excel (استبدال الشيت القديم)</button>
                     <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="importClientsFromExcel(event)">
                 </div>
             </div>
 
-            <!-- إضافة عميل جديد -->
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:6px; margin-bottom:12px;">
-                <h5 style="margin:0 0 8px 0; color:#166534; font-size:13px;">➕ إضافة عميل جديد وتعيين كوده الثابت:</h5>
+                <h5 style="margin:0 0 8px 0; color:#166534; font-size:13px;">➕ إضافة عميل جديد وتعيين كوده الثابت وخط السير:</h5>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
                     <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="adminDirectName" placeholder="اسم المحل..."></div>
                     <div class="form-group"><label>الكود الثابت:</label><input type="text" id="adminDirectCode" placeholder="مثال: C-101"></div>
                 </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                    <div class="form-group"><label>خط السير / الخط:</label><input type="text" id="adminDirectRoute" placeholder="مثال: خط سنتريس..."></div>
+                    <div class="form-group"><label>القرية / المركز:</label><input type="text" id="adminDirectVillage" placeholder="أشمون / سنتريس..."></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px;">
                     <div class="form-group"><label>رقم التليفون:</label><input type="text" id="adminDirectPhone" placeholder="1012345678"></div>
                     <div class="form-group"><label>كلمة السر:</label><input type="text" id="adminDirectPass" placeholder="كلمة السر..."></div>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-                    <div class="form-group"><label>القرية / المركز:</label><input type="text" id="adminDirectVillage" placeholder="أشمون / سنتريس..."></div>
                     <div class="form-group"><label>الفئة:</label><select id="adminDirectType" class="form-control"><option value="retail">قطاعي</option><option value="wholesale">جملة</option></select></div>
                 </div>
                 <button class="btn btn-success" onclick="adminDirectAddCustomer()">✅ حفظ وتفعيل حساب العميل فوراً</button>
             </div>
 
-            <!-- تحكم متعدد -->
-            <div class="bulk-actions-bar">
-                <span style="font-size:12px; font-weight:bold; color:#9f1239; flex:1;">🗑️ التحكم المتعدد بالعملاء:</span>
-                <button class="btn btn-danger" style="margin:0; width:auto; padding:5px 12px; font-size:11px;" onclick="deleteSelectedClients()">مسح العملاء المحددين معاً</button>
-            </div>
-
-            <!-- جدول العملاء -->
             <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:10px; border-radius:6px; margin-bottom:12px;">
-                <h5 style="margin:0 0 6px 0; color:#1e40af; font-size:13px;">👑 قائمة العملاء المسجلين:</h5>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <h5 style="margin:0; color:#1e40af; font-size:13px;">👑 قائمة العملاء المسجلين:</h5>
+                    <button class="btn btn-danger" style="width:auto; margin:0; padding:5px 10px; font-size:11px;" onclick="deleteSelectedClients()">🗑️ مسح العملاء المحددين</button>
+                </div>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
                             <tr>
-                                <th style="width:30px;"><input type="checkbox" id="selectAllClientsChk" onchange="toggleSelectAllClients(this)"></th>
+                                <th style="width: 25px;"><input type="checkbox" id="selectAllClientsCheckbox" onchange="toggleSelectAllClients(this)"></th>
                                 <th>اسم العميل</th>
                                 <th>الكود الثابت</th>
+                                <th>الخط / السير</th>
                                 <th>بيانات الاتصال</th>
                                 <th>الفئة</th>
                                 <th>كلمة السر</th>
@@ -269,7 +273,7 @@
             </div>
         </div>
 
-        <!-- ج) تتبع المناديب والمحلات -->
+        <!-- ج) تتبع المناديب والمحلات للمدير -->
         <div id="sectionTracking" style="display: none;">
             <div class="filter-box" style="background:#ecfdf5; border-color:#a7f3d0; margin-bottom:12px;">
                 <h4 style="margin:0 0 6px 0; color:#065f46;">📍 مواقع المناديب الحالية (Live Tracking للمدير):</h4>
@@ -296,6 +300,7 @@
                             <tr>
                                 <th>اسم المحل</th>
                                 <th>الكود</th>
+                                <th>الخط</th>
                                 <th>القرية / العنوان</th>
                                 <th>موقع المحل على الخريطة</th>
                                 <th>تحديث الموقع</th>
@@ -307,7 +312,7 @@
             </div>
         </div>
 
-        <!-- د) طلبات العملاء المعلقة -->
+        <!-- د) مراجعة واعتماد طلبات العملاء -->
         <div id="sectionPendingOrders" style="display: none;">
             <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
                 <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:</h4>
@@ -322,7 +327,7 @@
             </div>
         </div>
 
-        <!-- هـ) لوحة طلبات العميل -->
+        <!-- هـ) واجهة العميل المسجل -->
         <div id="sectionClientOrderOnly" style="display: none;">
             <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
                 <h4 style="margin-top:0; color:#166534;" id="portalClientHeaderTitle">🏪 لوحة طلبات العميل</h4>
@@ -447,7 +452,7 @@
             </div>
         </div>
 
-        <!-- ح) رصيد السيارة -->
+        <!-- ح) رصيد السيارة وجرد كل مندوب -->
         <div id="sectionCarStock" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد سيارة المندوب الحالي:</h4>
             
@@ -487,7 +492,7 @@
             </div>
         </div>
 
-        <!-- ي) التحميل من منوف -->
+        <!-- ي) التحميل من منوف والذمم التراكمية -->
         <div id="sectionMenof" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل تحميلات منوف والذمم التراكمية:</h4>
             
@@ -577,7 +582,7 @@
             </table>
         </div>
 
-        <!-- م) الإعدادات -->
+        <!-- م) الإعدادات وحسابات الموظفين -->
         <div id="sectionSettings" style="display: none;">
             <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px; margin-bottom:12px;">
                 <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر:</h4>
@@ -657,7 +662,7 @@
             { name: "ال ام احمر", code: "lm_red", buyPricePerCarton: 40788 },
             { name: "ال ام ازرق", code: "lm_blue", buyPricePerCarton: 40788 },
             { name: "مارل احمر", code: "marl_red", buyPricePerCarton: 50736 },
-            { name: "مارل ابيض", code: "marl_white", buyPricePerCarton: 50736 },
+            { name: "مارل ابيض", code: "marl_white", buyPricePerCarton: 5073 },
             { name: "ميريت", code: "merit", buyPricePerCarton: 55210 },
             { name: "ال ام ابيض", code: "lm_white", buyPricePerCarton: 40788 },
             { name: "مارل كرفت", code: "marl_craft", buyPricePerCarton: 39128 }
@@ -673,6 +678,7 @@
         let cloudSales = [];
         let cloudDelegates = defaultDelegates;
         let cloudClients = {};
+        let cloudClientsRoutes = {};
         let cloudClientsLocations = {};
         let portalCustomersDB = {};
         let cloudPendingOrders = [];
@@ -687,7 +693,6 @@
         let clientInputTimer = null;
         let latestCoords = null;
         let tempRegCoords = null;
-        let adminCustomerRegistry = [];
 
         function cleanPhoneStr(p) {
             if(!p) return "";
@@ -696,15 +701,36 @@
 
         db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
         db.ref('delegates').on('value', (s) => { if(s.val()) cloudDelegates = s.val(); });
+        
         db.ref('clients').on('value', (s) => { 
             cloudClients = s.val() || {}; 
+            populateRoutesList();
             updateClientsDatalist(); 
             updateReportClientsSelect(); 
         });
+
+        db.ref('clientsRoutes').on('value', (s) => {
+            cloudClientsRoutes = s.val() || {};
+            populateRoutesList();
+            updateClientsDatalist();
+        });
+
         db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
-        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
-        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; });
-        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
+        
+        db.ref('menofLoads').on('value', (s) => { 
+            cloudMenofLoads = s.val() ? Object.values(s.val()) : []; 
+            renderMenofTable();
+        });
+
+        db.ref('shops').on('value', (s) => { 
+            cloudShops = s.val() ? Object.values(s.val()) : []; 
+            renderShopsTable();
+        });
+
+        db.ref('lmInvoices').on('value', (s) => { 
+            cloudLmInvoices = s.val() ? Object.values(s.val()) : []; 
+            renderLmTable();
+        });
         
         db.ref('pendingOrders').on('value', (s) => { 
             cloudPendingOrders = s.val() ? Object.values(s.val()) : [];
@@ -713,7 +739,8 @@
 
         db.ref('portalCustomers').on('value', (s) => { 
             portalCustomersDB = s.val() || {}; 
-            updateClientsDatalist(); 
+            populateRoutesList();
+            updateClientsDatalist();
         });
 
         db.ref('locations').on('value', (s) => {
@@ -723,22 +750,59 @@
             }
         });
 
-        // 1. نظام الـ GPS الفوري
-        function getCurrentPreciseLocation() {
+        // 1. تجميع وتحديث قائمة خطوط السير
+        function populateRoutesList() {
+            const selectRoute = document.getElementById('selectRouteFilter');
+            if(!selectRoute) return;
+
+            let currentVal = selectRoute.value || 'ALL';
+            let routesSet = new Set();
+
+            for(let name in cloudClientsRoutes) {
+                if(cloudClientsRoutes[name] && cloudClientsRoutes[name].trim()) {
+                    routesSet.add(cloudClientsRoutes[name].trim());
+                }
+            }
+
+            for(let uid in portalCustomersDB) {
+                let r = portalCustomersDB[uid].route;
+                if(r && r.trim()) routesSet.add(r.trim());
+            }
+
+            let html = '<option value="ALL">🛣️ عرض كل الخطوط (كل العملاء)</option>';
+            routesSet.forEach(route => {
+                html += `<option value="${route}">📍 ${route}</option>`;
+            });
+
+            selectRoute.innerHTML = html;
+            if(routesSet.has(currentVal) || currentVal === 'ALL') {
+                selectRoute.value = currentVal;
+            } else {
+                selectRoute.value = 'ALL';
+            }
+        }
+
+        function onRouteFilterChange() {
+            updateClientsDatalist();
+        }
+
+        function getCurrentGpsCoords() {
             return new Promise((resolve) => {
                 if (!navigator.geolocation) {
-                    resolve(latestCoords);
+                    resolve(latestCoords || null);
                     return;
                 }
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        latestCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                        resolve(latestCoords);
+                        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        latestCoords = coords;
+                        resolve(coords);
                     },
-                    () => {
-                        resolve(latestCoords);
+                    (err) => {
+                        console.warn("GPS Warning:", err);
+                        resolve(latestCoords || null);
                     },
-                    { enableHighAccuracy: true, timeout: 3500, maximumAge: 10000 }
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
             });
         }
@@ -746,17 +810,18 @@
         function startTrackingDelegateLocation() {
             if (!navigator.geolocation || !currentDelegate || currentDelegate.role !== 'delegate') return;
             
-            navigator.geolocation.getCurrentPosition((pos) => {
-                latestCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-                db.ref('locations/' + currentDelegate.code).update({
-                    name: currentDelegate.name,
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                    updatedAt: timeStr,
-                    timestamp: Date.now()
-                }).catch(() => {});
-            }, () => {}, { enableHighAccuracy: false, timeout: 4000 });
+            getCurrentGpsCoords().then(coords => {
+                if(coords) {
+                    const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                    db.ref('locations/' + currentDelegate.code).update({
+                        name: currentDelegate.name,
+                        lat: coords.lat,
+                        lng: coords.lng,
+                        updatedAt: timeStr,
+                        timestamp: Date.now()
+                    }).catch(() => {});
+                }
+            });
 
             if (watchPositionId) navigator.geolocation.clearWatch(watchPositionId);
 
@@ -882,11 +947,13 @@
                 hasClients = true;
                 let cCode = cloudClients[cName];
                 let cLoc = cloudClientsLocations[cName] || null;
+                let cRoute = cloudClientsRoutes[cName] || '-';
                 let cVillage = '-';
 
                 for (let uid in portalCustomersDB) {
                     if (portalCustomersDB[uid].name === cName || portalCustomersDB[uid].clientCode === cCode) {
                         cVillage = portalCustomersDB[uid].village || portalCustomersDB[uid].address || '-';
+                        if(portalCustomersDB[uid].route) cRoute = portalCustomersDB[uid].route;
                         if (!cLoc && portalCustomersDB[uid].location) cLoc = portalCustomersDB[uid].location;
                         break;
                     }
@@ -894,60 +961,54 @@
 
                 let mapBtn = (cLoc && cLoc.lat && cLoc.lng) 
                     ? `<a href="https://maps.google.com/?q=${cLoc.lat},${cLoc.lng}" target="_blank" class="btn btn-primary" style="padding:3px 8px; font-size:10px; text-decoration:none; display:inline-block; width:auto; margin:0;">📍 موقع المحل</a>` 
-                    : '<span style="color:#94a3b8; font-size:10px;">غير محدد</span>';
+                    : '<span style="color:#94a3b8; font-size:10px;">غير مسجل GPS</span>';
 
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${cName}</b></td>
                         <td><small style="color:#2563eb; font-weight:bold;">${cCode}</small></td>
+                        <td><span style="color:#16a34a; font-weight:bold;">${cRoute}</span></td>
                         <td>${cVillage}</td>
                         <td>${mapBtn}</td>
-                        <td><button class="btn btn-info" style="padding:3px 6px; font-size:10px; margin:0; width:auto;" onclick="adminSetClientLocation('${cName}')">🛰️ تعيين الموقع</button></td>
+                        <td><button class="btn btn-info" style="padding:3px 6px; font-size:10px; margin:0; width:auto;" onclick="adminSetClientLocation('${cName}')">🛰️ تعيين موقع حالي</button></td>
                     </tr>`;
             }
 
             if (!hasClients) {
-                tbody.innerHTML = `<tr><td colspan="5">لا يوجد عملاء مسجلين حالياً.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6">لا يوجد عملاء مسجلين حالياً.</td></tr>`;
             }
         }
 
         function adminSetClientLocation(clientName) {
-            if (!navigator.geolocation) { alert("المتصفح لا يدعم تحديد الموقع."); return; }
-            navigator.geolocation.getCurrentPosition((pos) => {
-                let lat = pos.coords.latitude;
-                let lng = pos.coords.longitude;
-                let locObj = { lat, lng, mapUrl: `https://maps.google.com/?q=${lat},${lng}` };
-
+            getCurrentGpsCoords().then(coords => {
+                if(!coords) { alert("تعذر التقاط GPS، يرجى تفعيل الموقع."); return; }
+                let locObj = { lat: coords.lat, lng: coords.lng, mapUrl: `https://maps.google.com/?q=${coords.lat},${coords.lng}` };
                 cloudClientsLocations[clientName] = locObj;
                 db.ref('clientsLocations/' + clientName).set(locObj).then(() => {
                     alert(`✅ تم تثبيت موقع المحل (${clientName}) بنجاح!`);
                     renderClientsMapTable();
                 });
-            }, (err) => {
-                alert("تعذر جلب موقع GPS: " + err.message);
-            }, { enableHighAccuracy: true });
+            });
         }
 
         function captureCustomerGpsLocation() {
-            if (!navigator.geolocation) {
-                alert("المتصفح لا يدعم خدمة الـ GPS");
-                return;
-            }
             const statusElem = document.getElementById('regGpsStatus');
             statusElem.innerText = "جاري استقبال إشارة GPS بدقة...";
             
-            navigator.geolocation.getCurrentPosition((pos) => {
-                tempRegCoords = {
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                    mapUrl: `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`
-                };
-                statusElem.style.color = "#16a34a";
-                statusElem.innerText = `✅ تم التقاط موقع المحل بنجاح: (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
-            }, (err) => {
-                statusElem.style.color = "#dc2626";
-                statusElem.innerText = "⚠️ تعذر استقبال GPS، تأكد من تفعيل إذن الموقع.";
-            }, { enableHighAccuracy: true, timeout: 5000 });
+            getCurrentGpsCoords().then(pos => {
+                if(pos) {
+                    tempRegCoords = {
+                        lat: pos.lat,
+                        lng: pos.lng,
+                        mapUrl: `https://maps.google.com/?q=${pos.lat},${pos.lng}`
+                    };
+                    statusElem.style.color = "#16a34a";
+                    statusElem.innerText = `✅ تم التقاط موقع المحل بنجاح: (${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)})`;
+                } else {
+                    statusElem.style.color = "#dc2626";
+                    statusElem.innerText = "⚠️ تعذر استقبال GPS، تأكد من تفعيل إذن الموقع.";
+                }
+            });
         }
 
         function showCustomerRegisterScreen() {
@@ -965,6 +1026,7 @@
             const email = document.getElementById('regClientEmail').value.trim().toLowerCase();
             const password = document.getElementById('regClientPass').value.trim();
             const phoneInput = document.getElementById('regClientPhone').value.trim();
+            const route = document.getElementById('regClientRoute').value.trim();
             const address = document.getElementById('regClientAddress').value.trim();
             const village = document.getElementById('regClientVillage').value.trim();
 
@@ -980,6 +1042,11 @@
             cloudClients[name] = clientCode;
             db.ref('clients').set(cloudClients).catch(e => {});
 
+            if(route) {
+                cloudClientsRoutes[name] = route;
+                db.ref('clientsRoutes/' + name).set(route).catch(e => {});
+            }
+
             if (tempRegCoords) {
                 cloudClientsLocations[name] = tempRegCoords;
                 db.ref('clientsLocations/' + name).set(tempRegCoords).catch(e => {});
@@ -991,6 +1058,7 @@
                 email: email || (phoneInput+"@blackhorse.com"),
                 pass: password,
                 phone: fullPhone,
+                route: route,
                 address: address,
                 village: village,
                 customerType: 'pending',
@@ -1275,6 +1343,7 @@
                 clientName: currentPortalCustomer.name,
                 clientCode: currentPortalCustomer.clientCode || '',
                 village: currentPortalCustomer.village || '',
+                route: currentPortalCustomer.route || '',
                 phone: currentPortalCustomer.phone || '',
                 orderType: isWholesale ? 'wholesale' : 'retail',
                 items: itemsList,
@@ -1291,7 +1360,7 @@
             db.ref('pendingOrders').set(Object.assign({}, cloudPendingOrders)).then(() => {
                 alert("🎉 تم إرسال طلب الفاتورة بنجاح!\nالطلب الآن بانتظار موافقة المدير.");
                 let waItemsDetails = itemsList.map(it => `• ${it.name}: ${it.qty} ${it.unit} بسعر ${it.price} (إجمالي: ${it.total} ج.م)`).join('%0A');
-                let waText = `طلب فاتورة جديد بانتظار موافقة المدير:%0A----------------------------%0A🏪 المحل: ${currentPortalCustomer.name}%0A🏷️ الكود: ${currentPortalCustomer.clientCode}%0A📍 القرية: ${currentPortalCustomer.village || ''}%0A📅 التاريخ: ${todayStr}%0A📂 النوع: ${isWholesale ? 'جملة (بالكرتونة)' : 'قطاعي (بالرابطة)'}%0A----------------------------%0Aالأصناف المطلوبة:%0A${waItemsDetails}%0A----------------------------%0A📦 إجمالي الكمية: ${totalUnits} ${isWholesale ? 'كرتونة' : 'رابطة'}%0A💰 الإجمالي الكلي: ${grandTotal} ج.م%0A💵 المسدد: ${paid} ج.م%0A🔴 الذمم: ${zimam} ج.م`;
+                let waText = `طلب فاتورة جديد بانتظار موافقة المدير:%0A----------------------------%0A🏪 المحل: ${currentPortalCustomer.name}%0A🏷️ الكود: ${currentPortalCustomer.clientCode}%0A📍 القرية: ${currentPortalCustomer.village || ''}%0A🛣️ الخط: ${currentPortalCustomer.route || ''}%0A📅 التاريخ: ${todayStr}%0A📂 النوع: ${isWholesale ? 'جملة (بالكرتونة)' : 'قطاعي (بالرابطة)'}%0A----------------------------%0Aالأصناف المطلوبة:%0A${waItemsDetails}%0A----------------------------%0A📦 إجمالي الكمية: ${totalUnits} ${isWholesale ? 'كرتونة' : 'رابطة'}%0A💰 الإجمالي الكلي: ${grandTotal} ج.م%0A💵 المسدد: ${paid} ج.م%0A🔴 الذمم: ${zimam} ج.م`;
                 window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
                 renderPortalProductsForm(true);
                 renderClientOrdersStatusTable();
@@ -1362,7 +1431,7 @@
                     id: String(Date.now()), name: order.clientName, clientCode: order.clientCode || '',
                     cartons: order.totalUnits || 1, totalPrice: order.grandTotal, paid: order.paid || 0,
                     zimam: order.zimam || 0, notes: itemsSummaryStr, village: order.village || '',
-                    date: order.date, items: order.items || [], location: order.location || null
+                    route: order.route || '', date: order.date, items: order.items || [], location: order.location || null
                 });
                 db.ref('shops').set(Object.assign({}, cloudShops));
             } else {
@@ -1370,7 +1439,7 @@
                     id: String(Date.now()), invNo: Math.floor(1000 + Math.random() * 9000), date: order.date,
                     delegateCode: "portal_client", delegateName: "طلب معتمد من بوابة العميل (قطاعي)",
                     client: order.clientName, clientCode: order.clientCode || '', village: order.village || '',
-                    total: order.grandTotal, totalQty: order.totalUnits || 1, status: 'active', items: order.items || [],
+                    route: order.route || '', total: order.grandTotal, totalQty: order.totalUnits || 1, status: 'active', items: order.items || [],
                     clientLocation: order.location || null
                 });
                 db.ref('sales').set(Object.assign({}, cloudSales));
@@ -1425,6 +1494,7 @@
             document.getElementById('clientName').value = '';
             document.getElementById('clientVillage').value = '';
             document.getElementById('lblClientCode').innerText = '--';
+            document.getElementById('lblClientRoute').innerText = '--';
             document.getElementById('clientMonthlyHistory').style.display = 'none';
             
             const list = document.getElementById('productsList');
@@ -1478,7 +1548,6 @@
             document.getElementById('grandTotal').innerText = grand.toFixed(2);
         }
 
-        // إنشاء الفاتورة مع التثبيت الذكي لموقع العميل
         async function createInvoiceObject() {
             if(!currentDelegate || currentDelegate.role === 'viewer' || currentDelegate.role === 'store') return null;
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
@@ -1492,6 +1561,8 @@
                 cloudClients[client] = clientCode;
                 db.ref('clients/' + client).set(clientCode).catch(e => {});
             }
+
+            let clientRoute = cloudClientsRoutes[client] || "";
 
             let targetDelCode = currentDelegate.code;
             let grand = 0, hasItems = false, itemsSoldList = [], totalRibbonsCount = 0;
@@ -1525,44 +1596,20 @@
 
             if (!hasItems) { alert("أدخل كمية لصنف واحد على الأقل!"); return null; }
 
-            // التحقق من الموقع المسجل للعميل مسبقاً
-            let clientLoc = cloudClientsLocations[client] || null;
-            if (!clientLoc) {
-                for (let uid in portalCustomersDB) {
-                    if ((portalCustomersDB[uid].name === client || portalCustomersDB[uid].clientCode === clientCode) && portalCustomersDB[uid].location) {
-                        clientLoc = portalCustomersDB[uid].location;
-                        break;
-                    }
-                }
-            }
-
-            // سحب الموقع الفوري للمندوب
-            let activeLoc = await getCurrentPreciseLocation();
-            let delegateLocObj = null;
-            if (activeLoc && activeLoc.lat) {
-                delegateLocObj = {
-                    lat: activeLoc.lat,
-                    lng: activeLoc.lng,
-                    mapUrl: `https://maps.google.com/?q=${activeLoc.lat},${activeLoc.lng}`
+            const freshCoords = await getCurrentGpsCoords();
+            let locObj = null;
+            if (freshCoords && freshCoords.lat) {
+                locObj = {
+                    lat: freshCoords.lat,
+                    lng: freshCoords.lng,
+                    mapUrl: `https://maps.google.com/?q=${freshCoords.lat},${freshCoords.lng}`
                 };
             }
 
-            // إذا كان العميل جديداً فقط يتم توثيق موقعه الثابت
-            if (!clientLoc && delegateLocObj) {
-                clientLoc = delegateLocObj;
-                cloudClientsLocations[client] = clientLoc;
-                db.ref('clientsLocations/' + client).set(clientLoc).catch(e => {});
-            }
-
-            if (delegateLocObj && currentDelegate.role === 'delegate') {
-                const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-                db.ref('locations/' + currentDelegate.code).update({
-                    name: currentDelegate.name,
-                    lat: delegateLocObj.lat,
-                    lng: delegateLocObj.lng,
-                    updatedAt: timeStr,
-                    timestamp: Date.now()
-                }).catch(() => {});
+            let clientLoc = locObj || cloudClientsLocations[client] || null;
+            if (locObj) {
+                cloudClientsLocations[client] = locObj;
+                db.ref('clientsLocations/' + client).set(locObj).catch(e => {});
             }
 
             if(cloudDelegates[targetDelCode]) {
@@ -1574,9 +1621,9 @@
             const salesRecord = {
                 id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
                 delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
-                client: client, village: village, clientCode: clientCode,
+                client: client, village: village, route: clientRoute, clientCode: clientCode,
                 total: grand, totalQty: totalRibbonsCount, status: 'active', items: itemsSoldList,
-                location: delegateLocObj,
+                location: locObj,
                 clientLocation: clientLoc
             };
 
@@ -1602,20 +1649,15 @@
             }, 700);
 
             if(!specificInv && currentDelegate) {
-                alert("✅ تم حفظ الفاتورة بنجاح وجاري الطباعة!");
+                alert("✅ تم حفظ الفاتورة، خصم الكمية، وتثبيت موقع المحل بنجاح!");
                 initSalesForm();
             }
-        }
-
-        function printSavedInvoice(id) {
-            const inv = cloudSales.find(x => String(x.id) === String(id));
-            if(inv) printViaRawBT(inv);
         }
 
         async function saveAndEmailOnly() {
             const rec = await createInvoiceObject();
             if(rec) {
-                alert("✅ تم حفظ الفاتورة بنجاح!");
+                alert("✅ تم حفظ الفاتورة وتثبيت موقع العميل GPS في حساب المدير بنجاح!");
                 initSalesForm();
             }
         }
@@ -1663,7 +1705,7 @@
             filtered.slice().reverse().forEach(inv => {
                 let isCancelled = (inv.status === 'cancelled');
                 let statusBadge = isCancelled ? `<span style="color:#dc2626; font-weight:bold;">ملغاة</span>` : `<span style="color:#16a34a; font-weight:bold;">نشطة</span>`;
-                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printSavedInvoice('${inv.id}')">🖨️</button> `;
+                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️</button> `;
                 actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="viewInvoiceDetails('${inv.id}')">👁️</button> `;
                 if(!isCancelled && (isAdm || (currentDelegate && inv.delegateCode === currentDelegate.code))) {
                     actionButtons += `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="cancelInvoice('${inv.id}')">❌</button>`;
@@ -1694,7 +1736,7 @@
                     </div>`;
             }
 
-            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
+            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>الخط:</b> ${inv.route || 'غير محدد'}<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
             document.getElementById('invoiceModal').style.display = 'flex';
         }
 
@@ -1817,41 +1859,50 @@
             });
         }
 
-        // 9. إدارة العملاء
-        function toggleSelectAllClients(master) {
-            const checkboxes = document.querySelectorAll('.client-bulk-chk');
-            checkboxes.forEach(cb => cb.checked = master.checked);
+        function toggleSelectAllClients(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.client-select-chk');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
         }
 
         function deleteSelectedClients() {
-            const selectedBoxes = document.querySelectorAll('.client-bulk-chk:checked');
-            if(selectedBoxes.length === 0) {
-                alert("⚠️ يرجى تحديد عميل واحد على الأقل من القائمة لمسحه.");
+            const selectedCheckboxes = document.querySelectorAll('.client-select-chk:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert("يرجى تحديد عميل واحد على الأقل للمسح.");
                 return;
             }
 
-            if(!confirm(`⚠️ هل أنت متأكد من مسح (${selectedBoxes.length}) عميل دفعة واحدة؟`)) return;
+            if (!confirm(`⚠️ هل أنت متأكد من رغبتك في حذف (${selectedCheckboxes.length}) عميل دفعة واحدة؟`)) {
+                return;
+            }
 
-            selectedBoxes.forEach(cb => {
-                let name = cb.getAttribute('data-name');
-                let uid = cb.getAttribute('data-uid');
+            selectedCheckboxes.forEach(cb => {
+                const clientName = decodeURIComponent(cb.value);
+                const uid = cb.getAttribute('data-uid');
 
-                if (name && cloudClients[name]) {
-                    delete cloudClients[name];
-                    db.ref('clients/' + name).remove();
-                    delete cloudClientsLocations[name];
-                    db.ref('clientsLocations/' + name).remove();
-                }
+                delete cloudClients[clientName];
+                delete cloudClientsRoutes[clientName];
+                delete cloudClientsLocations[clientName];
+                db.ref('clients/' + clientName).remove();
+                db.ref('clientsRoutes/' + clientName).remove();
+                db.ref('clientsLocations/' + clientName).remove();
+
                 if (uid && portalCustomersDB[uid]) {
                     delete portalCustomersDB[uid];
                     db.ref('portalCustomers/' + uid).remove();
                 }
             });
 
-            alert("✅ تم مسح العملاء المحددين بنجاح!");
-            updateClientsDatalist();
-            renderAdminPortalCustomersTable();
-            document.getElementById('selectAllClientsChk').checked = false;
+            db.ref('clients').set(cloudClients);
+            db.ref('clientsRoutes').set(cloudClientsRoutes);
+            db.ref('portalCustomers').set(portalCustomersDB).then(() => {
+                alert("✅ تم حذف العملاء المحددين بنجاح!");
+                const selectAll = document.getElementById('selectAllClientsCheckbox');
+                if (selectAll) selectAll.checked = false;
+                populateRoutesList();
+                updateClientsDatalist();
+                renderAdminPortalCustomersTable();
+                renderClientsMapTable();
+            });
         }
 
         function renderAdminPortalCustomersTable() {
@@ -1864,54 +1915,50 @@
                 if(portalCustomersDB[uid].name) allClientNames.add(portalCustomersDB[uid].name);
             }
 
-            adminCustomerRegistry = [];
-            if(allClientNames.size === 0) { tbody.innerHTML = `<tr><td colspan="7">لا يوجد عملاء مسجلين حالياً.</td></tr>`; return; }
+            if(allClientNames.size === 0) { tbody.innerHTML = `<tr><td colspan="8">لا يوجد عملاء مسجلين حالياً.</td></tr>`; return; }
 
             let htmlBuffer = '';
-            let index = 0;
             allClientNames.forEach(clientName => {
                 let foundUid = Object.keys(portalCustomersDB).find(u => portalCustomersDB[u].name === clientName);
                 let cust = foundUid ? portalCustomersDB[foundUid] : null;
+                let safeKey = foundUid || ("c_" + encodeURIComponent(clientName).replace(/[^a-zA-Z0-9]/g, '_'));
                 let clientCode = (cust && cust.clientCode) ? cust.clientCode : (cloudClients[clientName] || '');
+                let clientRoute = (cust && cust.route) ? cust.route : (cloudClientsRoutes[clientName] || '');
                 let phoneDisplay = cust ? (cust.phone || '-') : '-';
                 let currentType = cust ? cust.customerType : 'retail';
                 let currentPass = cust ? (cust.pass || '123456') : '123456';
 
-                adminCustomerRegistry.push({ originalName: clientName, uid: foundUid || '' });
-
                 htmlBuffer += `
                     <tr>
-                        <td><input type="checkbox" class="client-bulk-chk" data-name="${clientName}" data-uid="${foundUid || ''}"></td>
-                        <td><input type="text" id="adm_name_${index}" value="${clientName}" style="width:110px; padding:3px; font-size:11px; font-weight:bold;"></td>
-                        <td><input type="text" id="adm_code_${index}" value="${clientCode}" style="width:80px; padding:3px; text-align:center; font-weight:bold; color:#2563eb;"></td>
+                        <td><input type="checkbox" class="client-select-chk" value="${encodeURIComponent(clientName)}" data-uid="${foundUid || ''}"></td>
+                        <td><input type="text" id="adm_name_${safeKey}" value="${clientName}" style="width:100px; padding:3px; font-size:11px; font-weight:bold;"></td>
+                        <td><input type="text" id="adm_code_${safeKey}" value="${clientCode}" style="width:70px; padding:3px; text-align:center; font-weight:bold; color:#2563eb;"></td>
+                        <td><input type="text" id="adm_route_${safeKey}" value="${clientRoute}" placeholder="الخط..." style="width:80px; padding:3px; font-size:11px; color:#16a34a; font-weight:bold;"></td>
                         <td style="font-size:10px;">${phoneDisplay}</td>
                         <td>
-                            <select id="adm_type_${index}" style="font-size:10px; padding:3px;">
+                            <select id="adm_type_${safeKey}" style="font-size:10px; padding:3px;">
                                 <option value="retail" ${currentType==='retail'?'selected':''}>قطاعي</option>
                                 <option value="wholesale" ${currentType==='wholesale'?'selected':''}>جملة</option>
                                 <option value="pending" ${currentType==='pending'?'selected':''}>قيد المراجعة</option>
                             </select>
                         </td>
-                        <td><input type="text" id="adm_pass_${index}" value="${currentPass}" style="padding:3px; font-size:10px; width:70px; text-align:center;"></td>
+                        <td><input type="text" id="adm_pass_${safeKey}" value="${currentPass}" style="padding:3px; font-size:10px; width:65px; text-align:center;"></td>
                         <td>
-                            <button class="btn btn-success" style="padding:3px 6px; font-size:10px; margin:0 0 3px 0; width:auto;" onclick="adminSaveCustomerByIndex(${index})">💾 حفظ</button>
-                            <button class="btn btn-danger" style="padding:3px 6px; font-size:10px; margin:0; width:auto;" onclick="adminDeleteCustomerByIndex(${index})">🗑️ حذف</button>
+                            <button class="btn btn-success" style="padding:3px 6px; font-size:10px; margin:0 0 3px 0; width:auto;" onclick="adminSaveFullCustomerApproval('${safeKey}', '${encodeURIComponent(clientName)}', '${foundUid || ''}')">💾 حفظ</button>
+                            <button class="btn btn-danger" style="padding:3px 6px; font-size:10px; margin:0; width:auto;" onclick="adminDeleteCustomer('${encodeURIComponent(clientName)}', '${foundUid || ''}')">🗑️ حذف</button>
                         </td>
                     </tr>`;
-                index++;
             });
             tbody.innerHTML = htmlBuffer;
         }
 
-        function adminSaveCustomerByIndex(index) {
-            const reg = adminCustomerRegistry[index];
-            if(!reg) return;
-
-            const oldName = reg.originalName;
-            const newName = document.getElementById(`adm_name_${index}`).value.trim();
-            const newCode = document.getElementById(`adm_code_${index}`).value.trim();
-            const newType = document.getElementById(`adm_type_${index}`).value;
-            const newPass = document.getElementById(`adm_pass_${index}`).value.trim();
+        function adminSaveFullCustomerApproval(safeKey, rawOldName, uid) {
+            const oldName = decodeURIComponent(rawOldName);
+            const newName = document.getElementById(`adm_name_${safeKey}`).value.trim();
+            const newCode = document.getElementById(`adm_code_${safeKey}`).value.trim();
+            const newRoute = document.getElementById(`adm_route_${safeKey}`).value.trim();
+            const newType = document.getElementById(`adm_type_${safeKey}`).value;
+            const newPass = document.getElementById(`adm_pass_${safeKey}`).value.trim();
 
             if(!newName || !newCode) {
                 alert("❌ يرجى إدخال اسم العميل والكود الثابت.");
@@ -1920,12 +1967,20 @@
 
             if(oldName !== newName) {
                 delete cloudClients[oldName];
-                db.ref('clients/' + oldName).remove();
+                delete cloudClientsRoutes[oldName];
+                db.ref('clientsRoutes/' + oldName).remove();
+                if(cloudClientsLocations[oldName]) {
+                    cloudClientsLocations[newName] = cloudClientsLocations[oldName];
+                    delete cloudClientsLocations[oldName];
+                    db.ref('clientsLocations/' + oldName).remove();
+                    db.ref('clientsLocations/' + newName).set(cloudClientsLocations[newName]);
+                }
             }
 
             cloudClients[newName] = newCode;
+            cloudClientsRoutes[newName] = newRoute;
 
-            let actualUid = reg.uid || ("cust_" + Date.now());
+            let actualUid = uid || ("cust_" + Date.now());
             let existingCust = portalCustomersDB[actualUid] || {};
 
             let updatedCustData = {
@@ -1933,6 +1988,7 @@
                 uid: actualUid,
                 name: newName,
                 clientCode: newCode,
+                route: newRoute,
                 customerType: newType,
                 pass: newPass,
                 phone: existingCust.phone || '',
@@ -1942,33 +1998,35 @@
 
             portalCustomersDB[actualUid] = updatedCustData;
             db.ref('clients').set(cloudClients);
+            db.ref('clientsRoutes').set(cloudClientsRoutes);
             db.ref('portalCustomers/' + actualUid).set(updatedCustData).then(() => {
-                alert(`✅ تم حفظ وتحديث بيانات وكود العميل (${newName}) بنجاح!`);
+                alert(`✅ تم حفظ وتحديث بيانات وكود وخط العميل (${newName}) بنجاح!`);
+                populateRoutesList();
                 updateClientsDatalist();
-                renderAdminPortalCustomersTable();
             });
         }
 
-        function adminDeleteCustomerByIndex(index) {
-            const reg = adminCustomerRegistry[index];
-            if(!reg) return;
-
-            const clientName = reg.originalName;
+        function adminDeleteCustomer(rawClientName, uid) {
+            const clientName = decodeURIComponent(rawClientName);
             if(!confirm(`⚠️ هل أنت متأكد من حذف العميل (${clientName}) نهائياً من قاعدة البيانات؟`)) return;
 
             delete cloudClients[clientName];
-            db.ref('clients/' + clientName).remove();
+            delete cloudClientsRoutes[clientName];
             delete cloudClientsLocations[clientName];
+            db.ref('clients/' + clientName).remove();
+            db.ref('clientsRoutes/' + clientName).remove();
             db.ref('clientsLocations/' + clientName).remove();
 
-            if(reg.uid && portalCustomersDB[reg.uid]) {
-                delete portalCustomersDB[reg.uid];
-                db.ref('portalCustomers/' + reg.uid).remove();
+            if(uid && portalCustomersDB[uid]) {
+                delete portalCustomersDB[uid];
+                db.ref('portalCustomers/' + uid).remove();
             }
 
             alert(`✅ تم حذف العميل (${clientName}) بنجاح!`);
+            populateRoutesList();
             updateClientsDatalist();
             renderAdminPortalCustomersTable();
+            renderClientsMapTable();
         }
 
         function exportClientsFast() {
@@ -1983,18 +2041,19 @@
             }
 
             let csvContent = "\uFEFF";
-            csvContent += "اسم المحل / العميل,الكود الثابت,رقم التليفون,القرية / المركز,الفئة,كلمة السر\n";
+            csvContent += "اسم المحل / العميل,الكود الثابت,الخط / خط السير,رقم التليفون,القرية / المركز,الفئة,كلمة السر\n";
 
             allClientNames.forEach(name => {
                 let foundUid = Object.keys(portalCustomersDB).find(u => portalCustomersDB[u].name === name);
                 let cust = foundUid ? portalCustomersDB[foundUid] : null;
                 let cCode = (cust && cust.clientCode) ? cust.clientCode : (cloudClients[name] || '');
+                let route = (cust && cust.route) ? cust.route : (cloudClientsRoutes[name] || '');
                 let phone = cust ? (cust.phone || '') : '';
                 let village = cust ? (cust.village || cust.address || '') : '';
                 let type = cust ? (cust.customerType === 'wholesale' ? 'جملة' : 'قطاعي') : 'قطاعي';
                 let pass = cust ? (cust.pass || '123456') : '123456';
 
-                let row = `"${(name||'').replace(/"/g, '""')}","${cCode}","${phone}","${village}","${type}","${pass}"`;
+                let row = `"${name}","${cCode}","${route}","${phone}","${village}","${type}","${pass}"`;
                 csvContent += row + "\n";
             });
 
@@ -2012,7 +2071,10 @@
             const file = e.target.files[0];
             if(!file) return;
 
-            const shouldOverwrite = confirm("❓ هل ترغب في مسح وإلغاء جميع العملاء القدامى واعتماد هذا الشيت الجديد فقط؟\n\n- اضغط [موافق OK] لمسح القديم واعتماد الشيت الجديد كلياً.\n- اضغط [إلغاء Cancel] لدمج الشيت مع العملاء الحاليين دون حذفهم.");
+            if(!confirm("⚠️ تنبيه هام:\nسيتم مسح جميع العملاء القدامى بالكامل واعتماد العملاء من شيت الإكسيل الجديد فقط.\nهل تريد المتابعة؟")) {
+                e.target.value = '';
+                return;
+            }
 
             const reader = new FileReader();
             reader.onload = function(evt) {
@@ -2027,18 +2089,17 @@
                         return;
                     }
 
-                    if(shouldOverwrite) {
-                        cloudClients = {};
-                        portalCustomersDB = {};
-                        cloudClientsLocations = {};
-                    }
-
+                    let newClients = {};
+                    let newRoutes = {};
+                    let newPortalCustomers = {};
                     let addedCount = 0;
+
                     jsonData.forEach((row, idx) => {
                         let name = row["اسم المحل / العميل"] || row["اسم العميل"] || row["الاسم"] || row["Name"] || row["name"];
                         if(name) {
                             name = String(name).trim();
                             let code = row["الكود الثابت"] || row["الكود"] || row["كود"] || row["Code"] || row["code"] || ("C-" + (1000 + idx));
+                            let route = row["الخط / خط السير"] || row["الخط"] || row["خط السير"] || row["المنطقة"] || row["Route"] || row["route"] || "";
                             let phone = row["رقم التليفون"] || row["الموبايل"] || row["Phone"] || "";
                             let village = row["القرية / المركز"] || row["القرية"] || row["العنوان"] || "";
                             let rawType = String(row["الفئة"] || row["نوع الفئة"] || "قطاعي").trim();
@@ -2046,16 +2107,19 @@
 
                             let type = (rawType.includes('جملة') || rawType === 'wholesale') ? 'wholesale' : 'retail';
 
-                            cloudClients[name] = String(code).trim();
+                            newClients[name] = String(code).trim();
+                            if(route) newRoutes[name] = String(route).trim();
+
                             let uid = "cust_imp_" + Date.now() + "_" + idx;
                             let fullPhone = phone ? ("+20" + String(phone).replace(/\D/g, '').replace(/^20/, '').replace(/^0+/, '')) : "";
 
-                            portalCustomersDB[uid] = {
+                            newPortalCustomers[uid] = {
                                 uid: uid,
                                 name: name,
                                 email: (phone ? phone : uid) + "@blackhorse.com",
                                 pass: pass,
                                 phone: fullPhone,
+                                route: String(route).trim(),
                                 address: village,
                                 village: village,
                                 customerType: type,
@@ -2065,13 +2129,19 @@
                         }
                     });
 
-                    db.ref('clients').set(cloudClients);
-                    db.ref('portalCustomers').set(portalCustomersDB);
-                    if(shouldOverwrite) db.ref('clientsLocations').set({});
+                    cloudClients = newClients;
+                    cloudClientsRoutes = newRoutes;
+                    portalCustomersDB = newPortalCustomers;
 
-                    alert(`🎉 تم ${shouldOverwrite ? 'استبدال واعتماد' : 'استيراد وإضافة'} (${addedCount}) عميل بنجاح!`);
-                    updateClientsDatalist();
-                    renderAdminPortalCustomersTable();
+                    db.ref('clients').set(cloudClients);
+                    db.ref('clientsRoutes').set(cloudClientsRoutes);
+                    db.ref('portalCustomers').set(portalCustomersDB).then(() => {
+                        alert(`🎉 تم إلغاء العملاء القدامى واعتماد (${addedCount}) عميل جديد بنجاح من الشيت وتوزيعهم على الخطوط!`);
+                        populateRoutesList();
+                        updateClientsDatalist();
+                        renderAdminPortalCustomersTable();
+                        renderClientsMapTable();
+                    });
 
                 } catch(err) {
                     alert("❌ حدث خطأ أثناء قراءة ملف الإكسيل: " + err.message);
@@ -2084,6 +2154,7 @@
         function adminDirectAddCustomer() {
             let name = document.getElementById('adminDirectName').value.trim();
             let code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
+            let route = document.getElementById('adminDirectRoute').value.trim();
             let phone = document.getElementById('adminDirectPhone').value.trim();
             let pass = document.getElementById('adminDirectPass').value.trim() || "123456";
             let village = document.getElementById('adminDirectVillage').value.trim();
@@ -2093,18 +2164,22 @@
 
             let uid = "cust_" + Date.now();
             let fullPhone = phone ? ("+20" + phone.replace(/^0+/, '')) : "";
-            let custData = { uid, name, email: phone ? (phone + "@blackhorse.com") : (name + "@blackhorse.com"), pass, phone: fullPhone, address: village, village, customerType: type, clientCode: code };
+            let custData = { uid, name, email: phone ? (phone + "@blackhorse.com") : (name + "@blackhorse.com"), pass, phone: fullPhone, route, address: village, village, customerType: type, clientCode: code };
 
             cloudClients[name] = code;
+            if(route) cloudClientsRoutes[name] = route;
             portalCustomersDB[uid] = custData;
             db.ref('clients').set(cloudClients);
+            if(route) db.ref('clientsRoutes/' + name).set(route);
             db.ref('portalCustomers/' + uid).set(custData).then(() => {
-                alert(`🎉 تم إضافة وتفعيل حساب (${name}) بكود ثابت [${code}] بنجاح!`);
+                alert(`🎉 تم إضافة وتفعيل حساب (${name}) بكود ثابت [${code}] وخط [${route||'عام'}] بنجاح!`);
                 document.getElementById('adminDirectName').value = '';
                 document.getElementById('adminDirectCode').value = '';
+                document.getElementById('adminDirectRoute').value = '';
                 document.getElementById('adminDirectPhone').value = '';
                 document.getElementById('adminDirectPass').value = '';
                 document.getElementById('adminDirectVillage').value = '';
+                populateRoutesList();
                 updateClientsDatalist();
                 renderAdminPortalCustomersTable();
             });
@@ -2128,7 +2203,7 @@
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             const totalPrice = cartons * 23925;
-            const zimam = deposit - totalPrice;
+            const zimam = totalPrice - deposit;
             
             document.getElementById('menofTotalPrice').innerText = totalPrice.toFixed(2);
             document.getElementById('menofZimam').innerText = zimam.toFixed(2);
@@ -2139,7 +2214,7 @@
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
             const totalPrice = cartons * 23925;
-            const zimam = deposit - totalPrice;
+            const zimam = totalPrice - deposit;
             const id = document.getElementById('editMenofId').value || String(Date.now());
 
             cloudMenofLoads = cloudMenofLoads.filter(x => String(x.id) !== String(id));
@@ -2151,17 +2226,6 @@
                 document.getElementById('menofDeposit').value = '';
                 renderMenofTable();
             });
-        }
-
-        function editMenof(id) {
-            const m = cloudMenofLoads.find(x => String(x.id) === String(id));
-            if(!m) return;
-            document.getElementById('editMenofId').value = m.id;
-            document.getElementById('menofDate').value = m.date;
-            document.getElementById('menofCartons').value = m.cartons;
-            document.getElementById('menofDeposit').value = m.deposit;
-            calcMenofTotal();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function renderMenofTable() {
@@ -2191,10 +2255,7 @@
                     <td>${tp.toFixed(2)}</td>
                     <td>${dep.toFixed(2)}</td>
                     <td style="color:${currentZimam >= 0 ? '#16a34a' : '#dc2626'}; font-weight:bold;">${currentZimam.toFixed(2)}</td>
-                    <td>
-                        <button class="btn btn-info" style="padding:2px 4px; font-size:9px; width:auto;" onclick="editMenof('${m.id}')">✏️ تعديل</button>
-                        <button class="btn btn-danger" style="padding:2px 4px; font-size:9px; width:auto;" onclick="deleteMenof('${m.id}')">حذف</button>
-                    </td>
+                    <td><button class="btn btn-danger" style="padding:2px 4px; font-size:9px; width:auto;" onclick="deleteMenof('${m.id}')">حذف</button></td>
                 </tr>`;
             });
 
@@ -2248,23 +2309,8 @@
             cloudShops.push({ id, name, cartons, totalPrice, paid, zimam });
             db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
                 alert("✅ تم حفظ معاملة المحل بنجاح!");
-                document.getElementById('editShopId').value = '';
-                document.getElementById('shopNameInput').value = '';
-                document.getElementById('shopCartons').value = '';
-                document.getElementById('shopPaidVal').value = '';
                 renderShopsTable();
             });
-        }
-
-        function editShop(id) {
-            const s = cloudShops.find(x => String(x.id) === String(id));
-            if(!s) return;
-            document.getElementById('editShopId').value = s.id;
-            document.getElementById('shopNameInput').value = s.name;
-            document.getElementById('shopCartons').value = s.cartons;
-            document.getElementById('shopPaidVal').value = s.paid;
-            calcShopTotal();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function renderShopsTable() {
@@ -2286,7 +2332,6 @@
                     <td style="color:#dc2626; font-weight:bold;">${zimamVal} ج.م</td>
                     <td>
                         <button class="btn btn-success" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openShopPayModal('${s.id}')">💳 دفع</button>
-                        <button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="editShop('${s.id}')">✏️</button>
                         <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="deleteShop('${s.id}')">حذف</button>
                     </td>
                 </tr>`;
@@ -2524,12 +2569,16 @@
             const selVal = document.getElementById('selectExistingClient').value;
             if(selVal) {
                 document.getElementById('clientName').value = selVal;
-                for (let uid in portalCustomersDB) {
-                    if(portalCustomersDB[uid].name === selVal && portalCustomersDB[uid].village) {
-                        document.getElementById('clientVillage').value = portalCustomersDB[uid].village;
+                
+                for(let uid in portalCustomersDB) {
+                    if(portalCustomersDB[uid].name === selVal) {
+                        if(portalCustomersDB[uid].village) {
+                            document.getElementById('clientVillage').value = portalCustomersDB[uid].village;
+                        }
                         break;
                     }
                 }
+                
                 onClientNameInput();
             }
         }
@@ -2537,21 +2586,27 @@
         function updateClientsDatalist() {
             const sel = document.getElementById('selectExistingClient');
             if(!sel) return;
-            sel.innerHTML = '<option value="">📋 عميل مسجل...</option>';
-            
-            let clientSet = new Set([...Object.keys(cloudClients)]);
-            for(let uid in portalCustomersDB) {
-                if(portalCustomersDB[uid].name) clientSet.add(portalCustomersDB[uid].name);
-            }
 
-            clientSet.forEach(cName => {
-                let code = cloudClients[cName] || '';
-                if(!code) {
-                    let u = Object.keys(portalCustomersDB).find(k => portalCustomersDB[k].name === cName);
-                    if(u) code = portalCustomersDB[u].clientCode || '';
+            const selectedRoute = document.getElementById('selectRouteFilter')?.value || 'ALL';
+            sel.innerHTML = '<option value="">📋 عميل مسجل...</option>';
+
+            for(let cName in cloudClients) {
+                let clientRoute = cloudClientsRoutes[cName] || '';
+                
+                if(!clientRoute) {
+                    for(let uid in portalCustomersDB) {
+                        if(portalCustomersDB[uid].name === cName && portalCustomersDB[uid].route) {
+                            clientRoute = portalCustomersDB[uid].route;
+                            break;
+                        }
+                    }
                 }
-                sel.innerHTML += `<option value="${cName}">${cName} ${code ? `(${code})` : ''}</option>`;
-            });
+
+                if(selectedRoute === 'ALL' || (clientRoute && clientRoute.trim() === selectedRoute.trim())) {
+                    let routeTag = clientRoute ? ` [${clientRoute}]` : '';
+                    sel.innerHTML += `<option value="${cName}">${cName} (${cloudClients[cName]})${routeTag}</option>`;
+                }
+            }
             updateReportClientsSelect();
         }
 
@@ -2560,19 +2615,29 @@
             
             const val = document.getElementById('clientName').value.trim();
             const lblCode = document.getElementById('lblClientCode');
+            const lblRoute = document.getElementById('lblClientRoute');
             const historyBox = document.getElementById('clientMonthlyHistory');
             
             if(!val) { 
                 lblCode.innerText = "--"; 
+                if(lblRoute) lblRoute.innerText = "--";
                 historyBox.style.display = 'none'; 
                 return; 
             }
 
+            let foundRoute = cloudClientsRoutes[val] || "--";
+            for(let uid in portalCustomersDB) {
+                if(portalCustomersDB[uid].name === val && portalCustomersDB[uid].route) {
+                    foundRoute = portalCustomersDB[uid].route;
+                    break;
+                }
+            }
+            if(lblRoute) lblRoute.innerText = foundRoute;
+
             if(cloudClients[val]) {
                 lblCode.innerText = cloudClients[val];
             } else {
-                let foundCust = Object.values(portalCustomersDB).find(c => c.name === val);
-                lblCode.innerText = foundCust ? foundCust.clientCode : "عميل جديد (تلقائي)";
+                lblCode.innerText = "عميل جديد (تلقائي)";
             }
 
             clientInputTimer = setTimeout(() => {
