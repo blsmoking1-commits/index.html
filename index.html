@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة المبيعات والتتبع - شركة بلاك هورس</title>
+    <title>نظام إدارة المبيعات والتتبع الشامل - شركة بلاك هورس</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -11,7 +11,7 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
         body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
-        .card { max-width: 780px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .card { max-width: 800px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .text-center { text-align: center; }
         
         .logo-box {
@@ -28,7 +28,7 @@
 
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #334155; }
-        .form-group input, .form-group select { width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
         .readonly-input { background-color: #f1f5f9; color: #64748b; font-weight: bold; }
 
         .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; margin-top: 6px; }
@@ -68,7 +68,7 @@
 
         .badge-notify { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 9px; margin-right: 4px; }
         .modal-bg { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
-        .modal-content { background:#fff; padding:18px; border-radius:10px; width:90%; max-width:440px; max-height:85vh; overflow-y:auto; }
+        .modal-content { background:#fff; padding:18px; border-radius:10px; width:92%; max-width:480px; max-height:85vh; overflow-y:auto; }
         
         #sosAlertBanner { display:none; background:#ffe4e6; border:2px solid #e11d48; color:#9f1239; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; }
         #locationRequestRepBanner { display:none; background:#eff6ff; border:2px solid #2563eb; color:#1e40af; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; text-align:center; animation: pulseReq 2s infinite; }
@@ -87,9 +87,9 @@
     <!-- 1. شاشة تسجيل الدخول -->
     <div id="loginView" class="card">
         <div class="logo-box">
-            <h1>BLACK HORSE</h1>
-            <p>شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية</p>
-            <div class="tax-info">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027</div>
+            <h1 id="loginHeaderName">BLACK HORSE</h1>
+            <p id="loginHeaderSubtitle">شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية</p>
+            <div class="tax-info" id="loginHeaderTax">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027</div>
         </div>
         
         <div id="loginMainForm">
@@ -196,7 +196,7 @@
             <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف (التحميل والذمم)</div>
             <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
             <div id="tabLmInvoices" class="tab-btn" onclick="switchTab('lmInvoices')" style="display:none; background:#fef3c7;">🚬 فواتير LM</div>
-            <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات</div>
+            <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات والتحكم</div>
         </div>
 
         <!-- أ) فاتورة جديدة -->
@@ -276,7 +276,7 @@
                             <th>الرصيد المتاح (كرتونة)</th>
                             <th>ما يعادل روابط</th>
                             <th>سعر الكرتونة</th>
-                            <th>إجراءات الصنف</th>
+                            <th>إجراءات وتعديل</th>
                         </tr>
                     </thead>
                     <tbody id="warehouseStockTableBody"></tbody>
@@ -284,7 +284,7 @@
             </div>
         </div>
 
-        <!-- ج) تبويب سجل الحضور والانصراف (للمدير، HR، مدير الحركة، الحسابات) -->
+        <!-- ج) تبويب سجل الحضور والانصراف -->
         <div id="sectionAttendanceLog" style="display: none;">
             <div class="filter-box">
                 <h4 style="margin:0 0 8px 0; color:#065f46;">📋 سجل حضور وانصراف الموظفين والمناديب:</h4>
@@ -312,17 +312,13 @@
 
         <!-- د) تبويب إدارة العملاء -->
         <div id="sectionClientsManage" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">👥 لوحة إدارة بيانات العملاء والأكواد والخطوط:</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">👥 لوحة إدارة بيانات وتعديل العملاء:</h4>
             <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
                 <h5 style="margin:0 0 8px 0; color:#0f172a; font-size:13px;">📊 استيراد وتصدير شيت Excel:</h5>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="btn btn-success" style="flex:1; margin-top:0; font-size:12px;" onclick="exportClientsFast()">📥 تصدير العملاء فوراً (Excel/CSV)</button>
                     <button class="btn btn-info" style="flex:1; margin-top:0; font-size:12px;" onclick="document.getElementById('excelFileInput').click()">📤 رفع شيت Excel (استبدال الشيت القديم)</button>
                     <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="importClientsFromExcel(event)">
-                </div>
-                <div style="font-size:10px; color:#e11d48; margin-top:6px; font-weight:bold;">
-                    ⚠️ عند رفع ملف Excel جديد، سيتم مسح أي عميل قديم واعتماد بيانات الشيت الجديد فوراً.<br>
-                    💡 الأعمدة المدعومة: (اسم العميل / الكود الثابت / الخط أو خط السير / التليفون / القرية / الفئة).
                 </div>
             </div>
 
@@ -346,7 +342,7 @@
 
             <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:10px; border-radius:6px; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <h5 style="margin:0; color:#1e40af; font-size:13px;">👑 قائمة العملاء المسجلين:</h5>
+                    <h5 style="margin:0; color:#1e40af; font-size:13px;">👑 قائمة العملاء المسجلين (قابلة للتعديل الشامل):</h5>
                     <button class="btn btn-danger" style="width:auto; margin:0; padding:5px 10px; font-size:11px;" onclick="deleteSelectedClients()">🗑️ مسح العملاء المحددين</button>
                 </div>
                 <div style="overflow-x:auto;">
@@ -357,10 +353,10 @@
                                 <th>اسم العميل</th>
                                 <th>الكود الثابت</th>
                                 <th>الخط / السير</th>
-                                <th>بيانات الاتصال</th>
+                                <th>بيانات الاتصال والقرية</th>
                                 <th>الفئة</th>
                                 <th>كلمة السر</th>
-                                <th>الإجراءات</th>
+                                <th>إجراءات وتعديل</th>
                             </tr>
                         </thead>
                         <tbody id="adminPortalCustomersBody"></tbody>
@@ -369,13 +365,10 @@
             </div>
         </div>
 
-        <!-- هـ) تتبع المناديب والسيارات والمحلات (المدير + مدير الحركة + HR + المخزن) -->
+        <!-- هـ) تتبع المناديب والسيارات والمحلات -->
         <div id="sectionTracking" style="display: none;">
             <div class="filter-box" style="background:#ecfdf5; border-color:#a7f3d0; margin-bottom:12px;">
                 <h4 style="margin:0 0 6px 0; color:#065f46;">📍 تتبع المناديب والسيارات لحظياً (Live Fleet Tracking):</h4>
-                <p style="font-size:11px; color:#047857; margin:0 0 10px 0;">
-                    💡 يتوفر زران للتحكم السريع بكل مندوب: <b>"📡 طلب الموقع"</b> لإرسال إشعار لحظي له على هاتفه، و <b>"🗺️ فتح موقع المندوب والسيارة فوراً"</b> لتشغيل تطبيق الخرائط مباشرة.
-                </p>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
@@ -416,7 +409,6 @@
         <div id="sectionPendingOrders" style="display: none;">
             <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
                 <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:</h4>
-                <p style="font-size:11px; color:#b45309; margin:0 0 10px 0;">عند الضغط على "موافقة واعتماد"، يتم تنزيل الفاتورة فوراً في مكانها الصحيح:</p>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
@@ -428,7 +420,7 @@
             </div>
         </div>
 
-        <!-- ز) واجهة العميل المسجل (مغلقة السعر لمنع التلاعب) -->
+        <!-- ز) واجهة العميل المسجل -->
         <div id="sectionClientOrderOnly" style="display: none;">
             <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
                 <h4 style="margin-top:0; color:#166534;" id="portalClientHeaderTitle">🏪 لوحة طلبات العميل</h4>
@@ -458,15 +450,9 @@
                     </table>
                 </div>
             </div>
-
-            <div class="filter-box" style="background:#fff; border:1px solid #cbd5e1; margin-top:10px;">
-                <h4 style="margin-top:0; color:#1e293b; font-size:13px;">🔑 تغيير كلمة السر الخاصة بحسابك:</h4>
-                <div class="form-group"><label>كلمة السر الجديدة:</label><input type="password" id="clientNewPassInput" placeholder="أدخل كلمة السر الجديدة..."></div>
-                <button class="btn btn-primary" onclick="changeCustomerPassword()">تحديث كلمة السر</button>
-            </div>
         </div>
 
-        <!-- ح) الفواتير المحفوظة -->
+        <!-- ح) الفواتير المحفوظة وتعديلها -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box">
                 <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:</h4>
@@ -482,10 +468,10 @@
                 </div>
             </div>
 
-            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير:</h4>
+            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير (قابل لتعديل المدير الشامل):</h4>
             <div style="overflow-x: auto;">
                 <table class="report-table">
-                    <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>القرية/المركز</th><th>المندوب</th><th>الإجمالي</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+                    <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>القرية/المركز</th><th>المندوب</th><th>الإجمالي</th><th>الحالة</th><th>الإجراءات والتعديل</th></tr></thead>
                     <tbody id="savedInvoicesBody"></tbody>
                 </table>
             </div>
@@ -524,11 +510,10 @@
                 <div class="stat-card" style="background:#eff6ff; border-color:#bfdbfe;">
                     <div class="title" style="color:#1e40af;">📦 إجمالي الكميات المباعة:</div>
                     <div class="val" style="color:#2563eb; font-size:14px;"><span id="repTotalCartonsSum">0 كرتونة و 0 رابطة</span></div>
-                    <div style="font-size:10px; color:#475569; margin-top:2px;">إجمالي الروابط: <b id="repTotalRibbonsSum">0</b> رابطة</div>
                 </div>
             </div>
 
-            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">📦 تفصيل الأصناف المباعة (بالكرتونة والرابطة):</h4>
+            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">📦 تفصيل الأصناف المباعة:</h4>
             <div style="overflow-x:auto;">
                 <table class="report-table">
                     <thead>
@@ -553,7 +538,7 @@
             </div>
         </div>
 
-        <!-- ي) رصيد السيارة وجرد كل مندوب وتحويل البضاعة / ردها للمخزن -->
+        <!-- ي) رصيد السيارة وجرد كل مندوب -->
         <div id="sectionCarStock" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد سيارة المندوب الحالي:</h4>
             
@@ -600,48 +585,43 @@
             </div>
         </div>
 
-        <!-- ل) التحميل من منوف وحساب الذمم التراكمية -->
+        <!-- ل) التحميل من منوف -->
         <div id="sectionMenof" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل تحميلات منوف والذمم التراكمية:</h4>
             
             <div class="stat-grid">
                 <div class="stat-card" style="border-color:#bae6fd; background:#f0f9ff;">
-                    <div class="title">📦 إجمالي عدد الكراتين المحملة:</div>
+                    <div class="title">📦 إجمالي عدد الكراتين:</div>
                     <div class="val" style="color:#0284c7;"><span id="menofTotalCartonsCount">0</span> كرتونة</div>
                 </div>
                 <div class="stat-card" style="border-color:#bbf7d0; background:#f0fdf4;">
-                    <div class="title">💵 إجمالي مبالغ الإيداعات:</div>
+                    <div class="title">💵 إجمالي الإيداعات:</div>
                     <div class="val" style="color:#16a34a;"><span id="menofTotalDepositsSum">0.00</span> ج.م</div>
                 </div>
                 <div class="stat-card" style="border-color:#fde68a; background:#fffbeb;">
-                    <div class="title">🛒 إجمالي قيمة البضاعة المستلمة:</div>
+                    <div class="title">🛒 إجمالي البضاعة:</div>
                     <div class="val" style="color:#b45309;"><span id="menofTotalGoodsSum">0.00</span> ج.م</div>
                 </div>
                 <div class="stat-card" style="border-color:#a7f3d0; background:#ecfdf5;">
-                    <div class="title">💰 صافي الذمم التراكمي (فلوس ليك):</div>
+                    <div class="title">💰 صافي الذمم (ليك):</div>
                     <div class="val" style="color:#15803d;"><span id="menofNetZimamTotal">0.00</span> ج.م</div>
                 </div>
             </div>
 
-            <div id="menofZimamSummaryBox" style="background:#ecfdf5; border:1px solid #a7f3d0; padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; color:#065f46;">
-                <div>📦 <b>ما يعادل كراتين متبقية مستحقة ليك:</b> <span id="menofCartonsEquivalent" style="font-weight:bold;">0 كرتونة و 0.00 ج.م</span></div>
-            </div>
-
             <div class="filter-box">
-                <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ تسجيل شحنة تحميل جديدة من منوف:</h5>
+                <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ تسجيل / تعديل شحنة تحميل منوف:</h5>
                 <input type="hidden" id="editMenofId" value="">
                 <div class="form-group"><label>تاريخ التحميل:</label><input type="date" id="menofDate"></div>
                 <div class="form-group"><label>عدد الكرتونات المحملة:</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات (سعر الكرتونة = 23,925 ج.م): <b id="menofTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
+                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات: <b id="menofTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
                 <div class="form-group"><label>قيمة الإيداع المالي المدفوع:</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم التراكمية لهذه الشحنة (الإيداع - سعر البضاعة): <b id="menofZimam">0.00</b> ج.م</div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم التراكمية لهذه الشحنة: <b id="menofZimam">0.00</b> ج.م</div>
                 <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل / تحديث شحنة منوف</button>
             </div>
             
-            <h4 style="font-size:12.5px; margin: 10px 0 4px 0;">📋 سجل الشحنات بالتفصيل:</h4>
             <div style="overflow-x:auto;">
                 <table class="report-table">
-                    <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>إجمالي البضاعة</th><th>الإيداع</th><th>الذمم (ليك)</th><th>الإجراءات</th></tr></thead>
+                    <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>إجمالي البضاعة</th><th>الإيداع</th><th>الذمم (ليك)</th><th>الإجراءات والتعديل</th></tr></thead>
                     <tbody id="menofTableBody"></tbody>
                 </table>
             </div>
@@ -649,24 +629,18 @@
 
         <!-- م) المحلات -->
         <div id="sectionShops" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (سعر الكرتونة = 23,925 ج.م):</h4>
-            
-            <div class="filter-box" style="background:#e0f2fe; border:1px solid #bae6fd;">
-                <label style="font-size:12px; font-weight:bold; color:#0369a1;">🔍 بحث باسم العميل / المحل:</label>
-                <input type="text" id="shopSearchInput" placeholder="اكتب اسم المحل أو العميل للفلترة..." oninput="renderShopsTable()" style="margin-top:4px;">
-            </div>
-
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات والمديونيات:</h4>
             <div class="filter-box">
                 <input type="hidden" id="editShopId" value="">
                 <div class="form-group"><label>اسم المحل:</label><input type="text" id="shopNameInput" placeholder="اكتب اسم المحل..."></div>
                 <div class="form-group"><label>عدد كرتونات البضاعة للمحل:</label><input type="number" id="shopCartons" placeholder="0" oninput="calcShopTotal()"></div>
                 <div style="font-size: 12px; margin-bottom: 8px;">إجمالي قيمة البضاعة: <b id="shopTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
                 <div class="form-group"><label>المبلغ المسدد (الإيداع):</label><input type="number" id="shopPaidVal" placeholder="0" oninput="calcShopTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px; color:#dc2626;">المديونية (الذمم المتبقية على المحل): <b id="shopZimam">0.00</b> ج.م</div>
+                <div style="font-size: 12px; margin-bottom: 8px; color:#dc2626;">المديونية (الذمم المتبقية): <b id="shopZimam">0.00</b> ج.م</div>
                 <button class="btn btn-primary" onclick="saveShopTransaction()">حفظ / تحديث معاملة المحل</button>
             </div>
             <table class="report-table">
-                <thead><tr><th>المحل</th><th>الكرتونات</th><th>إجمالي البضاعة</th><th>المسدد</th><th>المديونية</th><th>الإجراءات</th></tr></thead>
+                <thead><tr><th>المحل</th><th>الكرتونات</th><th>إجمالي البضاعة</th><th>المسدد</th><th>المديونية</th><th>الإجراءات والتعديل</th></tr></thead>
                 <tbody id="shopsTableBody"></tbody>
             </table>
         </div>
@@ -685,29 +659,38 @@
                 <button class="btn btn-success" style="margin-top:10px;" onclick="saveLmInvoice()">حفظ / تحديث فاتورة LM</button>
             </div>
             <table class="report-table">
-                <thead><tr><th>النوع</th><th>الإيداع</th><th>التكلفة</th><th>البيع</th><th>المكسب / الخسارة</th><th>الإجراءات</th></tr></thead>
+                <thead><tr><th>النوع</th><th>الإيداع</th><th>التكلفة</th><th>البيع</th><th>المكسب / الخسارة</th><th>الإجراءات والتعديل</th></tr></thead>
                 <tbody id="lmInvoicesTableBody"></tbody>
             </table>
         </div>
 
-        <!-- س) الإعدادات وحسابات الموظفين والصلاحيات -->
+        <!-- س) الإعدادات ولوحة المدير للتحكم بكل شيء -->
         <div id="sectionSettings" style="display: none;">
+            
+            <!-- لوحة المدير لتعديل بيانات النظام الأساسية والواتساب والأسعار -->
+            <div id="adminSystemControlBox" style="display:none; background:#f8fafc; border:1.5px solid #0284c7; padding:14px; border-radius:10px; margin-bottom:14px;">
+                <h4 style="margin-top:0; font-size:14px; color:#0369a1;">⚙️ الإعدادات العامة للنظام ورقم الواتساب (للمدير فقط):</h4>
+                <div class="form-group"><label>اسم الشركة / النشاط الرئيسي:</label><input type="text" id="sysInputName" placeholder="BLACK HORSE"></div>
+                <div class="form-group"><label>الشعار / الوصف الفرعي:</label><input type="text" id="sysInputSubtitle" placeholder="شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية"></div>
+                <div class="form-group"><label>بيانات السجل والضرائب والنشاط:</label><input type="text" id="sysInputTax" placeholder="كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027"></div>
+                <div class="form-group"><label>رقم الواتساب الرسمي (بدون مسافات مثل: 201011112764):</label><input type="text" id="sysInputWa" placeholder="201011112764"></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                    <div class="form-group"><label>سعر كرتونة الجملة الافتراضي (ج.م):</label><input type="number" id="sysInputCartonPrice" value="23925"></div>
+                    <div class="form-group"><label>سعر رابطة القطاعي الافتراضي (ج.م):</label><input type="number" id="sysInputRibbonPrice" value="480"></div>
+                </div>
+                <button class="btn btn-primary" onclick="saveSystemSettingsDirect()">💾 حفظ وتحديث إعدادات النظام بالكامل</button>
+            </div>
+
+            <!-- لوحة تعيين خطوط السير للمناديب -->
             <div id="adminRepRoutesControlBox" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; padding:12px; border-radius:8px; margin-bottom:12px;">
-                <h4 style="margin-top:0; font-size:13px; color:#1e40af;">🛣️ تعيين وتحديد خطوط السير للمناديب (للمدير فقط):</h4>
-                <p style="font-size:10.5px; color:#1e3a8a; margin:0 0 8px 0;">أدخل الخطوط المخصصة لكل مندوب مفصولة بفواصل (، أو ,) مثل: خط شبين, سدود, أشمون</p>
+                <h4 style="margin-top:0; font-size:13px; color:#1e40af;">🛣️ تعيين وتحديد خطوط السير للمناديب:</h4>
                 <div id="repRoutesInputsList"></div>
                 <button class="btn btn-primary" style="margin-top:6px;" onclick="saveAllRepRoutesDirect()">💾 حفظ وتحديث خطوط المناديب</button>
             </div>
 
-            <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px; margin-bottom:12px;">
-                <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر:</h4>
-                <div class="form-group"><label>كلمة السر الحالية:</label><input type="password" id="currentPassInput"></div>
-                <div class="form-group"><label>كلمة السر الجديدة:</label><input type="password" id="newPassInput"></div>
-                <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر</button>
-            </div>
-
-            <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px;">
-                <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px;">
+            <!-- لوحة المدير لإدارة وتعديل كل حسابات الموظفين -->
+            <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px; margin-bottom:10px;">
                     <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف جديد:</h5>
                     <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: fleet1 أو hr1 أو store1 أو 103"></div>
                     <div class="form-group"><label>اسم الموظف:</label><input type="text" id="newAccName" placeholder="اسم الموظف..."></div>
@@ -725,11 +708,123 @@
                     </div>
                     <button class="btn btn-primary" onclick="createNewUserAccount()">إنشاء حساب الموظف</button>
                 </div>
+
+                <h5 style="margin:0 0 6px 0; color:#1e293b;">👥 قائمة الموظفين المسجلين (تعديل، تغيير باسورد، قفل):</h5>
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr><th>الكود</th><th>الاسم</th><th>الصلاحية</th><th>كلمة السر</th><th>الحالة</th><th>إجراءات وتعديل</th></tr>
+                        </thead>
+                        <tbody id="adminUsersListTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px;">
+                <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر لحسابك:</h4>
+                <div class="form-group"><label>كلمة السر الحالية:</label><input type="password" id="currentPassInput"></div>
+                <div class="form-group"><label>كلمة السر الجديدة:</label><input type="password" id="newPassInput"></div>
+                <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر</button>
             </div>
         </div>
     </div>
 
-    <!-- نافذة تفاصيل الفاتورة -->
+    <!-- 4. النوافذ المنبثقة (Modals) للتعديل الشامل -->
+
+    <!-- نافذة تعديل الفاتورة بالكامل للمدير -->
+    <div id="editInvoiceModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات الفاتورة (للمدير)</h3>
+            <input type="hidden" id="modalEditInvId">
+            <div class="form-group"><label>رقم الفاتورة:</label><input type="text" id="modalEditInvNo"></div>
+            <div class="form-group"><label>تاريخ الفاتورة:</label><input type="date" id="modalEditInvDate"></div>
+            <div class="form-group"><label>اسم العميل:</label><input type="text" id="modalEditInvClient"></div>
+            <div class="form-group"><label>القرية / المركز:</label><input type="text" id="modalEditInvVillage"></div>
+            <div class="form-group"><label>خط السير:</label><input type="text" id="modalEditInvRoute"></div>
+            <div class="form-group"><label>المندوب المسجل:</label><input type="text" id="modalEditInvDelegate" class="readonly-input" readonly></div>
+            <div class="form-group"><label>إجمالي الفاتورة (ج.م):</label><input type="number" id="modalEditInvTotal" step="0.01"></div>
+            <div class="form-group">
+                <label>حالة الفاتورة:</label>
+                <select id="modalEditInvStatus">
+                    <option value="active">نشطة (مفعلة)</option>
+                    <option value="cancelled">ملغاة</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="saveEditedInvoice()">💾 حفظ وتحديث الفاتورة</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditInvoiceModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل بيانات العميل بالكامل -->
+    <div id="editCustomerModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات العميل</h3>
+            <input type="hidden" id="modalEditCustUid">
+            <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="modalEditCustName"></div>
+            <div class="form-group"><label>الكود الثابت:</label><input type="text" id="modalEditCustCode"></div>
+            <div class="form-group"><label>خط السير:</label><input type="text" id="modalEditCustRoute"></div>
+            <div class="form-group"><label>القرية / العنوان:</label><input type="text" id="modalEditCustVillage"></div>
+            <div class="form-group"><label>رقم التليفون:</label><input type="text" id="modalEditCustPhone"></div>
+            <div class="form-group"><label>كلمة السر:</label><input type="text" id="modalEditCustPass"></div>
+            <div class="form-group">
+                <label>فئة الحساب:</label>
+                <select id="modalEditCustType">
+                    <option value="retail">قطاعي (بالرابطة)</option>
+                    <option value="wholesale">جملة (بالكرتونة)</option>
+                    <option value="pending">قيد الانتظار</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="saveEditedCustomer()">💾 حفظ وتحديث بيانات العميل</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditCustomerModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل صنف المخزن بالكامل -->
+    <div id="editProductModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات الصنف في المخزن</h3>
+            <input type="hidden" id="modalEditProdOrigCode">
+            <div class="form-group"><label>اسم الصنف:</label><input type="text" id="modalEditProdName"></div>
+            <div class="form-group"><label>كود الصنف:</label><input type="text" id="modalEditProdCode"></div>
+            <div class="form-group"><label>رصيد المخزن المتاح (كرتونة):</label><input type="number" id="modalEditProdStock" step="0.1"></div>
+            <div class="form-group"><label>سعر الكرتونة الافتراضي (ج.م):</label><input type="number" id="modalEditProdPrice"></div>
+            <button class="btn btn-success" onclick="saveEditedProduct()">💾 حفظ وتحديث الصنف</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditProductModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل بيانات موظف / مندوب -->
+    <div id="editUserModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات الموظف / المندوب</h3>
+            <input type="hidden" id="modalEditUserOrigCode">
+            <div class="form-group"><label>كود المستخدم:</label><input type="text" id="modalEditUserCode" class="readonly-input" readonly></div>
+            <div class="form-group"><label>اسم الموظف:</label><input type="text" id="modalEditUserName"></div>
+            <div class="form-group"><label>كلمة السر:</label><input type="text" id="modalEditUserPass"></div>
+            <div class="form-group">
+                <label>نوع الحساب والصلاحية:</label>
+                <select id="modalEditUserRole">
+                    <option value="delegate">مندوب مبيعات</option>
+                    <option value="fleet">مدير الحركة والأسطول</option>
+                    <option value="store">مسؤول المخزن</option>
+                    <option value="hr">مسؤول الموارد البشرية (HR)</option>
+                    <option value="accounting">الحسابات</option>
+                    <option value="viewer">مشاهد فقط</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>حالة الحساب:</label>
+                <select id="modalEditUserLocked">
+                    <option value="false">مفعل ونشط</option>
+                    <option value="true">مقفل ومحظور</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="saveEditedUser()">💾 حفظ وتحديث بيانات الموظف</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditUserModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة عرض تفاصيل الفاتورة -->
     <div id="invoiceModal" class="modal-bg">
         <div class="modal-content">
             <h3 style="margin-top:0; color:#1e293b;">📄 محتوى الفاتورة</h3>
@@ -765,8 +860,18 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        const ADMIN_PASS = "Hossam2023@";
-        const TARGET_PHONE_WA = "201011112764";
+        let ADMIN_PASS = "Hossam2023@";
+        
+        let defaultSettings = {
+            companyName: "BLACK HORSE",
+            companySubtitle: "شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية",
+            taxInfo: "كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027",
+            whatsapp: "201011112764",
+            defaultCartonPrice: 23925,
+            defaultRibbonPrice: 480
+        };
+
+        let systemSettings = { ...defaultSettings };
 
         const defaultCarStock = { "1500000000": 10, "1500000002": 10, "1500000004": 10, "1500000005": 10, "1500000008": 10, "1500000009": 10, "1500000010": 10, "1500000146": 10 };
         const defaultDelegates = {
@@ -827,15 +932,82 @@
             return String(p).replace(/\D/g, '').replace(/^20/, '').replace(/^0+/, '');
         }
 
+        function getTargetWhatsApp() {
+            return (systemSettings && systemSettings.whatsapp) ? String(systemSettings.whatsapp).replace(/\D/g, '') : "201011112764";
+        }
+
+        // الاستماع لإعدادات النظام العامة
+        db.ref('systemSettings').on('value', (s) => {
+            if(s.val()) systemSettings = { ...defaultSettings, ...s.val() };
+            else db.ref('systemSettings').set(defaultSettings);
+            applySystemBranding();
+        });
+
+        function applySystemBranding() {
+            const hName = document.getElementById('loginHeaderName');
+            const hSub = document.getElementById('loginHeaderSubtitle');
+            const hTax = document.getElementById('loginHeaderTax');
+
+            if(hName) hName.innerText = systemSettings.companyName || "BLACK HORSE";
+            if(hSub) hSub.innerText = systemSettings.companySubtitle || "";
+            if(hTax) hTax.innerText = systemSettings.taxInfo || "";
+
+            const inputName = document.getElementById('sysInputName');
+            const inputSub = document.getElementById('sysInputSubtitle');
+            const inputTax = document.getElementById('sysInputTax');
+            const inputWa = document.getElementById('sysInputWa');
+            const inputCarton = document.getElementById('sysInputCartonPrice');
+            const inputRibbon = document.getElementById('sysInputRibbonPrice');
+
+            if(inputName) inputName.value = systemSettings.companyName || "";
+            if(inputSub) inputSub.value = systemSettings.companySubtitle || "";
+            if(inputTax) inputTax.value = systemSettings.taxInfo || "";
+            if(inputWa) inputWa.value = systemSettings.whatsapp || "201011112764";
+            if(inputCarton) inputCarton.value = systemSettings.defaultCartonPrice || 23925;
+            if(inputRibbon) inputRibbon.value = systemSettings.defaultRibbonPrice || 480;
+        }
+
+        function saveSystemSettingsDirect() {
+            const cName = document.getElementById('sysInputName').value.trim() || "BLACK HORSE";
+            const cSub = document.getElementById('sysInputSubtitle').value.trim();
+            const cTax = document.getElementById('sysInputTax').value.trim();
+            const cWa = document.getElementById('sysInputWa').value.trim().replace(/\D/g, '') || "201011112764";
+            const cCarton = parseFloat(document.getElementById('sysInputCartonPrice').value) || 23925;
+            const cRibbon = parseFloat(document.getElementById('sysInputRibbonPrice').value) || 480;
+
+            systemSettings = {
+                companyName: cName,
+                companySubtitle: cSub,
+                taxInfo: cTax,
+                whatsapp: cWa,
+                defaultCartonPrice: cCarton,
+                defaultRibbonPrice: cRibbon
+            };
+
+            db.ref('systemSettings').set(systemSettings).then(() => {
+                alert("✅ تم حفظ وتحديث كافة إعدادات النظام والواتساب والأسعار بنجاح!");
+                applySystemBranding();
+            });
+        }
+
         db.ref('productsList').on('value', (s) => {
-            if(s.val()) { products = Object.values(s.val()); }
-            else { db.ref('productsList').set(defaultProducts); }
+            if(s.val()) products = Object.values(s.val());
+            else db.ref('productsList').set(defaultProducts);
             initSalesForm();
             renderWarehouseTable();
         });
 
-        db.ref('sales').on('value', (s) => { cloudSales = s.val() ? Object.values(s.val()) : []; });
-        db.ref('delegates').on('value', (s) => { if(s.val()) cloudDelegates = s.val(); renderRepRoutesInputs(); updateDelegatesSelects(); });
+        db.ref('sales').on('value', (s) => { 
+            cloudSales = s.val() ? Object.values(s.val()) : []; 
+            renderSavedInvoices();
+        });
+
+        db.ref('delegates').on('value', (s) => { 
+            if(s.val()) cloudDelegates = s.val(); 
+            renderRepRoutesInputs(); 
+            updateDelegatesSelects(); 
+            renderAdminUsersTable();
+        });
         
         db.ref('clients').on('value', (s) => { 
             cloudClients = s.val() || {}; 
@@ -851,19 +1023,21 @@
         });
 
         db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
-        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; });
-        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; });
-        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; });
+        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; renderMenofTable(); });
+        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; renderShopsTable(); });
+        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; renderLmTable(); });
         
         db.ref('pendingOrders').on('value', (s) => { 
             cloudPendingOrders = s.val() ? Object.values(s.val()) : [];
             updatePendingOrdersBadge();
+            renderAdminPendingOrdersTable();
         });
 
         db.ref('portalCustomers').on('value', (s) => { 
             portalCustomersDB = s.val() || {}; 
             populateRoutesList();
             updateClientsDatalist();
+            renderAdminPortalCustomersTable();
         });
 
         db.ref('attendanceLog').on('value', (s) => {
@@ -909,16 +1083,11 @@
             });
 
             selectRoute.innerHTML = html;
-            if(routesSet.has(currentVal) || currentVal === 'ALL') {
-                selectRoute.value = currentVal;
-            } else {
-                selectRoute.value = 'ALL';
-            }
+            if(routesSet.has(currentVal) || currentVal === 'ALL') selectRoute.value = currentVal;
+            else selectRoute.value = 'ALL';
         }
 
-        function onRouteFilterChange() {
-            updateClientsDatalist();
-        }
+        function onRouteFilterChange() { updateClientsDatalist(); }
 
         function onVillageInputSyncRoute() {
             const villageVal = document.getElementById('clientVillage')?.value.trim();
@@ -929,9 +1098,7 @@
             const selectRoute = document.getElementById('selectRouteFilter');
             
             let exists = Array.from(selectRoute.options).some(opt => opt.value === guessedRoute || opt.value === villageVal);
-            if(!exists) {
-                selectRoute.innerHTML += `<option value="${guessedRoute}">📍 ${guessedRoute}</option>`;
-            }
+            if(!exists) selectRoute.innerHTML += `<option value="${guessedRoute}">📍 ${guessedRoute}</option>`;
 
             if(clientVal) {
                 cloudClientsRoutes[clientVal] = guessedRoute;
@@ -1032,6 +1199,7 @@
             });
         }
 
+        // ==================== تعديل أصناف المخزن ====================
         function renderWarehouseTable() {
             const tbody = document.getElementById('warehouseStockTableBody');
             const selectIn = document.getElementById('selectWarehouseProductIn');
@@ -1046,7 +1214,14 @@
             products.forEach(p => {
                 const stockCartons = parseFloat(p.stock) || 0;
                 const totalRibbons = Math.round(stockCartons * 50);
-                const deleteBtn = isAdm ? `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteProductFromWarehouse('${p.code}')">🗑️ حذف</button>` : '-';
+                
+                let actionsBtn = '-';
+                if (isAdm) {
+                    actionsBtn = `
+                        <button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="openEditProductModal('${p.code}')">✏️ تعديل</button>
+                        <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="deleteProductFromWarehouse('${p.code}')">🗑️ حذف</button>
+                    `;
+                }
 
                 tbody.innerHTML += `
                     <tr>
@@ -1054,8 +1229,8 @@
                         <td><small style="color:#64748b;">${p.code}</small></td>
                         <td style="font-weight:bold; color:#16a34a; font-size:12px;">${stockCartons} كرتونة</td>
                         <td>${totalRibbons} رابطة</td>
-                        <td>${(p.price || 23925).toLocaleString()} ج.م</td>
-                        <td>${deleteBtn}</td>
+                        <td>${(p.price || systemSettings.defaultCartonPrice || 23925).toLocaleString()} ج.م</td>
+                        <td>${actionsBtn}</td>
                     </tr>`;
 
                 if(selectIn) selectIn.innerHTML += `<option value="${p.code}">${p.name} (الرصيد: ${stockCartons} ك)</option>`;
@@ -1063,11 +1238,49 @@
             });
         }
 
+        function openEditProductModal(code) {
+            let p = products.find(x => x.code === code);
+            if(!p) return;
+            document.getElementById('modalEditProdOrigCode').value = p.code;
+            document.getElementById('modalEditProdName').value = p.name;
+            document.getElementById('modalEditProdCode').value = p.code;
+            document.getElementById('modalEditProdStock').value = p.stock || 0;
+            document.getElementById('modalEditProdPrice').value = p.price || 23925;
+            document.getElementById('editProductModal').style.display = 'flex';
+        }
+
+        function closeEditProductModal() { document.getElementById('editProductModal').style.display = 'none'; }
+
+        function saveEditedProduct() {
+            const origCode = document.getElementById('modalEditProdOrigCode').value;
+            const name = document.getElementById('modalEditProdName').value.trim();
+            const code = document.getElementById('modalEditProdCode').value.trim();
+            const stock = parseFloat(document.getElementById('modalEditProdStock').value) || 0;
+            const price = parseFloat(document.getElementById('modalEditProdPrice').value) || 23925;
+
+            if(!name || !code) { alert("أدخل اسم وكود الصنف."); return; }
+
+            let p = products.find(x => x.code === origCode);
+            if(p) {
+                p.name = name;
+                p.code = code;
+                p.stock = stock;
+                p.price = price;
+            }
+
+            db.ref('productsList').set(products).then(() => {
+                alert("✅ تم تعديل بيانات الصنف وحفظها بنجاح!");
+                closeEditProductModal();
+                renderWarehouseTable();
+                initSalesForm();
+            });
+        }
+
         function addNewProductItemToWarehouse() {
             const name = document.getElementById('newWarehouseProdName').value.trim();
             const code = document.getElementById('newWarehouseProdCode').value.trim() || String(Date.now());
             const stock = parseFloat(document.getElementById('newWarehouseProdStock').value) || 0;
-            const price = parseFloat(document.getElementById('newWarehouseProdPrice').value) || 23925;
+            const price = parseFloat(document.getElementById('newWarehouseProdPrice').value) || systemSettings.defaultCartonPrice || 23925;
 
             if(!name) { alert("❌ يرجى إدخال اسم الصنف."); return; }
 
@@ -1083,9 +1296,7 @@
         function deleteProductFromWarehouse(code) {
             if(!confirm("⚠️ هل أنت متأكد من حذف هذا الصنف نهائياً من المخزن والفواتير؟")) return;
             products = products.filter(p => p.code !== code);
-            db.ref('productsList').set(products).then(() => {
-                alert("✅ تم حذف الصنف بنجاح.");
-            });
+            db.ref('productsList').set(products).then(() => alert("✅ تم حذف الصنف بنجاح."));
         }
 
         function addStockToWarehouseDirect() {
@@ -1236,7 +1447,6 @@
             listenToLocationRequestsForRep();
         }
 
-        // الاستماع لطلبات الموقع الواردة من المدير أو مدير الحركة للمندوب
         function listenToLocationRequestsForRep() {
             if (!currentDelegate || currentDelegate.role !== 'delegate') return;
             db.ref('locationRequests/' + currentDelegate.code).on('value', (snapshot) => {
@@ -1258,7 +1468,6 @@
             });
         }
 
-        // استجابة المندوب لطلب الموقع وتحديث الإحداثيات
         function respondToLocationRequest(manualTrigger = false) {
             getCurrentGpsCoords().then(coords => {
                 if (coords && coords.lat) {
@@ -1279,16 +1488,13 @@
                     const banner = document.getElementById('locationRequestRepBanner');
                     if (banner) banner.style.display = 'none';
 
-                    if (manualTrigger) {
-                        alert("✅ تم إرسال وتحديث موقعك بنجاح للمدير ومدير الحركة!");
-                    }
+                    if (manualTrigger) alert("✅ تم إرسال وتحديث موقعك بنجاح للمدير ومدير الحركة!");
                 } else if (manualTrigger) {
                     alert("⚠️ يرجى تفعيل الـ GPS في الهاتف لتتمكن من إرسال الموقع.");
                 }
             });
         }
 
-        // 1) الزرار الأول: طلب الموقع (يرسل إشعار للمندوب)
         function requestRepLocation(delCode, delName) {
             const requester = currentDelegate ? currentDelegate.name : "المدير";
             db.ref('locationRequests/' + delCode).set({
@@ -1301,7 +1507,6 @@
             });
         }
 
-        // 2) الزرار الثاني: فتح موقع المندوب والسيارة فوراً بضغطة واحدة
         function openRepLiveMap(delCode, delName) {
             const loc = cloudLocations[delCode];
             if (loc && loc.lat && loc.lng) {
@@ -1309,11 +1514,9 @@
                 try {
                     window.location.href = `geo:${loc.lat},${loc.lng}?q=${loc.lat},${loc.lng}(سيارة ${encodeURIComponent(delName)})`;
                 } catch(e) {}
-                setTimeout(() => {
-                    window.open(mapsUrl, '_blank');
-                }, 400);
+                setTimeout(() => window.open(mapsUrl, '_blank'), 400);
             } else {
-                if(confirm(`⚠️ لم يسجل المندوب (${delName}) إحداثيات GPS اليوم بعد.\nهل تريد الضغط على "طلب الموقع" لإرسال تنبيه له بتحديث موقعه الآن؟`)) {
+                if(confirm(`⚠️ لم يسجل المندوب (${delName}) إحداثيات GPS اليوم بعد.\nهل تريد إرسال تنبيه له بالضغط على "طلب الموقع"؟`)) {
                     requestRepLocation(delCode, delName);
                 }
             }
@@ -1342,7 +1545,7 @@
                 if (latestCoords && latestCoords.lat) {
                     msg += `%0Aموقعي على الخريطة:%0Ahttps://maps.google.com/?q=${latestCoords.lat},${latestCoords.lng}`;
                 }
-                window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${msg}`, '_blank');
+                window.open(`https://api.whatsapp.com/send?phone=${getTargetWhatsApp()}&text=${msg}`, '_blank');
             });
         }
 
@@ -1374,7 +1577,6 @@
             }
         }
 
-        // عرض جدول التتبع للمدير، مدير الحركة، HR، والمخزن مع الزرارين المباشرين
         function renderDelegatesTrackingTable() {
             const isAuthorized = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet' || currentDelegate.role === 'hr' || currentDelegate.role === 'store'));
             if (!isAuthorized) return;
@@ -1404,12 +1606,10 @@
                         reqStatusHtml = `<div style="font-size:9.5px; color:#d97706; font-weight:bold; margin-top:2px;">⏳ جاري انتظار الاستجابة...</div>`;
                     }
 
-                    // الزرار الأول: طلب الموقع
                     let btnRequest = canRequestLocation 
                         ? `<button class="btn btn-warning" style="padding:5px 8px; font-size:11px; width:auto; margin:0;" onclick="requestRepLocation('${code}', '${del.name}')">📡 طلب الموقع</button>${reqStatusHtml}`
                         : '<span style="color:#94a3b8; font-size:10px;">للمدير والحركة فقط</span>';
 
-                    // الزرار الثاني: فتح موقع المندوب والسيارة فوراً
                     let btnOpenDirect = (lat && lng) 
                         ? `<button class="btn btn-primary" style="padding:5px 8px; font-size:11px; width:auto; margin:0;" onclick="openRepLiveMap('${code}', '${del.name}')">🗺️ فتح موقع المندوب والسيارة</button>`
                         : `<button class="btn btn-info" style="padding:5px 8px; font-size:11px; width:auto; margin:0; background:#94a3b8;" onclick="openRepLiveMap('${code}', '${del.name}')">🗺️ فتح الموقع (بانتظار GPS)</button>`;
@@ -1425,9 +1625,7 @@
                 }
             }
 
-            if (!hasRows) {
-                tbody.innerHTML = `<tr><td colspan="5">لا يوجد مناديب مسجلين حالياً.</td></tr>`;
-            }
+            if (!hasRows) tbody.innerHTML = `<tr><td colspan="5">لا يوجد مناديب مسجلين حالياً.</td></tr>`;
         }
 
         function renderClientsMapTable() {
@@ -1470,9 +1668,7 @@
                     </tr>`;
             }
 
-            if (!hasClients) {
-                tbody.innerHTML = `<tr><td colspan="6">لا يوجد عملاء مسجلين حالياً.</td></tr>`;
-            }
+            if (!hasClients) tbody.innerHTML = `<tr><td colspan="6">لا يوجد عملاء مسجلين حالياً.</td></tr>`;
         }
 
         function adminSetClientLocation(clientName) {
@@ -1584,7 +1780,7 @@
             const info = document.getElementById('forgotClientNameInput').value.trim();
             if(!info) { alert("أدخل اسم المحل أو رقم تليفونك."); return; }
             let msg = `السلام عليكم يا مدير، أنا العميل (${info}) نسيت كلمة السر لحسابي في بلاك هورس، برجاء المساعدة في استعادة كلمة السر.`;
-            window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent(msg)}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?phone=${getTargetWhatsApp()}&text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function handleLogin() {
@@ -1627,7 +1823,7 @@
             if (rawInput === "admin" && pass === ADMIN_PASS) {
                 currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin", allowedRoutes: ["ALL"] };
             } else if (dDB[rawInput]) {
-                if (dDB[rawInput].locked) { alert("❌ الحساب مقفل!"); return; }
+                if (dDB[rawInput].locked) { alert("❌ هذا الحساب مقفل ومحظور من الإدارة!"); return; }
                 if (dDB[rawInput].pass === pass) {
                     currentDelegate = { code: rawInput, name: dDB[rawInput].name, role: dDB[rawInput].role || 'delegate', allowedRoutes: dDB[rawInput].allowedRoutes || ["ALL"] };
                 } else { alert("❌ كلمة السر غير صحيحة!"); return; }
@@ -1670,12 +1866,15 @@
             let btnSubmit = document.getElementById('btnSubmitPortalOrder');
             let isApproved = (currentPortalCustomer.customerType === 'wholesale' || currentPortalCustomer.customerType === 'retail');
 
+            let currentCartonPrice = systemSettings.defaultCartonPrice || 23925;
+            let currentRibbonPrice = systemSettings.defaultRibbonPrice || 480;
+
             if(currentPortalCustomer.customerType === 'wholesale') {
                 typeLabel = 'جملة (محلات - الحساب بالكرتونة)';
                 banner.style.display = 'block';
                 banner.style.background = '#dcfce7';
                 banner.style.color = '#15803d';
-                banner.innerText = '✅ فئة حسابك: جملة - اطلب أصنافك بالكرتونة (سعر الكرتونة = 23,925 ج.م)';
+                banner.innerText = `✅ فئة حسابك: جملة - اطلب أصنافك بالكرتونة (سعر الكرتونة = ${currentCartonPrice.toLocaleString()} ج.م)`;
                 btnSubmit.disabled = false;
                 btnSubmit.style.opacity = '1';
             } else if(currentPortalCustomer.customerType === 'retail') {
@@ -1683,7 +1882,7 @@
                 banner.style.display = 'block';
                 banner.style.background = '#e0f2fe';
                 banner.style.color = '#0369a1';
-                banner.innerText = '✅ فئة حسابك: قطاعي - اطلب أصنافك بالرابطة (سعر الرابطة = 480 ج.م)';
+                banner.innerText = `✅ فئة حسابك: قطاعي - اطلب أصنافك بالرابطة (سعر الرابطة = ${currentRibbonPrice} ج.م)`;
                 btnSubmit.disabled = false;
                 btnSubmit.style.opacity = '1';
             } else {
@@ -1711,7 +1910,6 @@
             switchTab('clientOrderOnly');
         }
 
-        // قفل خانة السعر بالكامل للعميل مع ضبط التنسيق ليظهر غير قابل للتعديل
         function renderPortalProductsForm(isApproved) {
             const container = document.getElementById('portalProductsContainer');
             const totalsContainer = document.getElementById('portalTotalsContainer');
@@ -1725,7 +1923,7 @@
 
             const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
             const unitName = isWholesale ? "كرتونة" : "رابطة";
-            const defaultPrice = isWholesale ? 23925 : 480;
+            const defaultPrice = isWholesale ? (systemSettings.defaultCartonPrice || 23925) : (systemSettings.defaultRibbonPrice || 480);
 
             let tableRows = '';
             products.forEach((p, idx) => {
@@ -1787,7 +1985,7 @@
         function calcPortalOrderTotals() {
             if(!currentPortalCustomer || currentPortalCustomer.customerType === 'pending') return;
             const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
-            const fixedSystemPrice = isWholesale ? 23925 : 480;
+            const fixedSystemPrice = isWholesale ? (systemSettings.defaultCartonPrice || 23925) : (systemSettings.defaultRibbonPrice || 480);
             let grand = 0, totalUnits = 0;
 
             products.forEach((p, idx) => {
@@ -1821,7 +2019,7 @@
             if(!currentPortalCustomer || currentPortalCustomer.customerType === 'pending') return;
 
             const isWholesale = (currentPortalCustomer.customerType === 'wholesale');
-            const fixedPrice = isWholesale ? 23925 : 480;
+            const fixedPrice = isWholesale ? (systemSettings.defaultCartonPrice || 23925) : (systemSettings.defaultRibbonPrice || 480);
             const todayStr = new Date().toISOString().split('T')[0];
             let itemsList = [], totalUnits = 0, grandTotal = 0;
 
@@ -1865,7 +2063,7 @@
                 alert("🎉 تم إرسال طلب الفاتورة بنجاح!\nالطلب الآن بانتظار موافقة المدير.");
                 let waItemsDetails = itemsList.map(it => `• ${it.name}: ${it.qty} ${it.unit} بسعر ${it.price} (إجمالي: ${it.total} ج.م)`).join('%0A');
                 let waText = `طلب فاتورة جديد بانتظار موافقة المدير:%0A----------------------------%0A🏪 المحل: ${currentPortalCustomer.name}%0A🏷️ الكود: ${currentPortalCustomer.clientCode}%0A📍 القرية: ${currentPortalCustomer.village || ''}%0A🛣️ الخط: ${currentPortalCustomer.route || ''}%0A📅 التاريخ: ${todayStr}%0A📂 النوع: ${isWholesale ? 'جملة (بالكرتونة)' : 'قطاعي (بالرابطة)'}%0A----------------------------%0Aالأصناف المطلوبة:%0A${waItemsDetails}%0A----------------------------%0A📦 إجمالي الكمية: ${totalUnits} ${isWholesale ? 'كرتونة' : 'رابطة'}%0A💰 الإجمالي الكلي: ${grandTotal} ج.م%0A💵 المسدد: ${paid} ج.م%0A🔴 الذمم: ${zimam} ج.م`;
-                window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${waText}`, '_blank');
+                window.open(`https://api.whatsapp.com/send?phone=${getTargetWhatsApp()}&text=${waText}`, '_blank');
                 renderPortalProductsForm(true);
                 renderClientOrdersStatusTable();
             });
@@ -1894,7 +2092,7 @@
             if(!badge) return;
             let pendingCount = cloudPendingOrders.filter(o => o.status === 'pending').length;
             if(pendingCount > 0) { badge.style.display = 'inline-block'; badge.innerText = pendingCount; }
-            else { badge.style.display = 'none'; }
+            else badge.style.display = 'none';
         }
 
         function renderAdminPendingOrdersTable() {
@@ -2007,6 +2205,7 @@
 
             const targetCode = currentDelegate.code;
             const carStock = (cloudDelegates[targetCode] && cloudDelegates[targetCode].carStock) ? cloudDelegates[targetCode].carStock : defaultCarStock;
+            const defaultRibbonPrice = systemSettings.defaultRibbonPrice || 480;
 
             let tableRowsHtml = '';
             products.forEach((p, idx) => {
@@ -2019,7 +2218,7 @@
                         <td style="text-align: right; font-weight: bold; padding: 6px 4px; font-size: 12px; color: #0f172a;">${p.name}</td>
                         <td style="padding: 4px; font-size: 10px; color: ${stockRibbons > 0 ? '#16a34a':'#dc2626'}; font-weight: bold;">${cartonsVal} ك و ${ribbonsVal} ر</td>
                         <td style="padding: 4px;"><input type="number" id="qty_${idx}" min="0" placeholder="0" oninput="calcTotals()" style="width: 100%; padding: 5px; text-align: center; font-weight: bold; border: 1px solid #0284c7; border-radius: 4px; font-size: 13px;"></td>
-                        <td style="padding: 4px;"><input type="number" id="price_${idx}" value="480" oninput="calcTotals()" style="width: 100%; padding: 5px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;"></td>
+                        <td style="padding: 4px;"><input type="number" id="price_${idx}" value="${defaultRibbonPrice}" oninput="calcTotals()" style="width: 100%; padding: 5px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;"></td>
                         <td style="padding: 4px;"><input type="text" id="total_${idx}" value="0.00" readonly style="width: 100%; padding: 5px; text-align: center; font-weight: bold; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #166534;"></td>
                     </tr>`;
             });
@@ -2142,7 +2341,10 @@
             const rec = specificInv || (await createInvoiceObject());
             if(!rec) return;
 
-            let receiptText = `     [ BLACK HORSE ]\nشركة بلاك هورس - موزع معتمد\nكود النشاط: 7761 | س.ت: 76027\n------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}------------------------\nالمنتج    سعر/كمية  إجمالي\n------------------------\n`;
+            let cName = systemSettings.companyName || "BLACK HORSE";
+            let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
+
+            let receiptText = `     [ ${cName} ]\nشركة ${cName} - موزع معتمد\n${cTax}\n------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}------------------------\nالمنتج    سعر/كمية  إجمالي\n------------------------\n`;
             rec.items.forEach(it => { receiptText += `${it.name}\n          ${it.qtyText || (it.price+'/'+it.qty)}  ${it.total.toFixed(2)}\n`; });
             receiptText += `------------------------\nالإجمالي:        ${rec.total.toFixed(2)}\n------------------------\n\n\n`;
 
@@ -2169,7 +2371,7 @@
         }
 
         function sendSingleInvoiceViaWhatsApp() {
-            window.open(`https://api.whatsapp.com/send?phone=${TARGET_PHONE_WA}&text=${encodeURIComponent("فاتورة مبيعات بلاك هورس")}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?phone=${getTargetWhatsApp()}&text=${encodeURIComponent("فاتورة مبيعات " + (systemSettings.companyName || "بلاك هورس"))}`, '_blank');
         }
 
         function cancelInvoice(id) {
@@ -2186,6 +2388,7 @@
             }
         }
 
+        // ==================== تعديل الفواتير السابقة للمدير ====================
         function renderSavedInvoices() {
             const tbody = document.getElementById('savedInvoicesBody');
             if(!tbody) return;
@@ -2211,8 +2414,14 @@
             filtered.slice().reverse().forEach(inv => {
                 let isCancelled = (inv.status === 'cancelled');
                 let statusBadge = isCancelled ? `<span style="color:#dc2626; font-weight:bold;">ملغاة</span>` : `<span style="color:#16a34a; font-weight:bold;">نشطة</span>`;
+                
                 let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️</button> `;
                 actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="viewInvoiceDetails('${inv.id}')">👁️</button> `;
+                
+                if (isAdm) {
+                    actionButtons += `<button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openEditInvoiceModal('${inv.id}')">✏️ تعديل</button> `;
+                }
+
                 if(!isCancelled && (isAdm || (currentDelegate && inv.delegateCode === currentDelegate.code))) {
                     actionButtons += `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="cancelInvoice('${inv.id}')">❌</button>`;
                 }
@@ -2221,12 +2430,52 @@
             });
         }
 
+        function openEditInvoiceModal(id) {
+            let inv = cloudSales.find(s => String(s.id) === String(id));
+            if(!inv) return;
+
+            document.getElementById('modalEditInvId').value = inv.id;
+            document.getElementById('modalEditInvNo').value = inv.invNo || '';
+            document.getElementById('modalEditInvDate').value = inv.date || '';
+            document.getElementById('modalEditInvClient').value = inv.client || '';
+            document.getElementById('modalEditInvVillage').value = inv.village || '';
+            document.getElementById('modalEditInvRoute').value = inv.route || '';
+            document.getElementById('modalEditInvDelegate').value = inv.delegateName || '';
+            document.getElementById('modalEditInvTotal').value = inv.total || 0;
+            document.getElementById('modalEditInvStatus').value = inv.status || 'active';
+
+            document.getElementById('editInvoiceModal').style.display = 'flex';
+        }
+
+        function closeEditInvoiceModal() { document.getElementById('editInvoiceModal').style.display = 'none'; }
+
+        function saveEditedInvoice() {
+            const id = document.getElementById('modalEditInvId').value;
+            let inv = cloudSales.find(s => String(s.id) === String(id));
+            if(!inv) return;
+
+            inv.invNo = document.getElementById('modalEditInvNo').value.trim();
+            inv.date = document.getElementById('modalEditInvDate').value;
+            inv.client = document.getElementById('modalEditInvClient').value.trim();
+            inv.village = document.getElementById('modalEditInvVillage').value.trim();
+            inv.route = document.getElementById('modalEditInvRoute').value.trim();
+            inv.total = parseFloat(document.getElementById('modalEditInvTotal').value) || 0;
+            inv.status = document.getElementById('modalEditInvStatus').value;
+
+            db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
+                alert("✅ تم تعديل وحفظ بيانات الفاتورة بنجاح!");
+                closeEditInvoiceModal();
+                renderSavedInvoices();
+                renderDailyReport();
+            });
+        }
+
         function viewInvoiceDetails(id) {
             const inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
 
-            let itemsHtml = inv.items.map(it => `- ${it.name} | كمية: ${it.qty} (${it.unit||'رابطة'}) | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>');
+            let itemsHtml = inv.items ? inv.items.map(it => `- ${it.name} | كمية: ${it.qty} (${it.unit||'رابطة'}) | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>') : 'لا توجد أصناف مفصلة';
             
             let mapHtml = '';
             if (isAdm) {
@@ -2274,11 +2523,11 @@
                 invTb.innerHTML = '';
                 filtered.forEach(s => {
                     totalMoney += s.total;
-                    s.items.forEach(it => { 
-                        if(qMap[it.code] !== undefined) {
-                            qMap[it.code] += (it.unit === 'كرتونة' ? it.qty * 50 : it.qty); 
-                        }
-                    });
+                    if(s.items) {
+                        s.items.forEach(it => { 
+                            if(qMap[it.code] !== undefined) qMap[it.code] += (it.unit === 'كرتونة' ? it.qty * 50 : it.qty); 
+                        });
+                    }
                     invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td>${s.village || '-'}</td><td>${s.delegateName}</td><td><b>${s.total}</b> ج.م</td></tr>`;
                 });
             }
@@ -2313,9 +2562,6 @@
             if(document.getElementById('repTotalCartonsSum')) {
                 document.getElementById('repTotalCartonsSum').innerText = `${overallCartons} كرتونة و ${overallRemRibbons} رابطة`;
             }
-            if(document.getElementById('repTotalRibbonsSum')) {
-                document.getElementById('repTotalRibbonsSum').innerText = totalAllRibbons;
-            }
         }
 
         function setupUserTabs() {
@@ -2343,6 +2589,8 @@
             document.getElementById('tabMenof').style.display = (isAdm || isAccounting) ? 'block' : 'none';
             document.getElementById('tabShops').style.display = (isAdm || isAccounting) ? 'block' : 'none';
             document.getElementById('tabLmInvoices').style.display = (isAdm || isAccounting) ? 'block' : 'none';
+            
+            document.getElementById('adminSystemControlBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminCarSetupBox').style.display = (isAdm || isStore || isFleet) ? 'block' : 'none';
             document.getElementById('adminRepRoutesControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             document.getElementById('adminDelegateFilterBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
@@ -2354,6 +2602,7 @@
             if(isAdm) {
                 document.getElementById('adminUserManagement').style.display = 'block';
                 updatePendingOrdersBadge();
+                renderAdminUsersTable();
             }
             updateDelegatesSelects();
         }
@@ -2402,6 +2651,7 @@
             if(tabKey === 'menof') renderMenofTable();
             if(tabKey === 'shops') renderShopsTable();
             if(tabKey === 'lmInvoices') { initLmFormInputs(); renderLmTable(); }
+            if(tabKey === 'settings') { applySystemBranding(); renderAdminUsersTable(); }
         }
 
         function updateDelegatesSelects() {
@@ -2459,16 +2709,12 @@
             const selVal = document.getElementById('selectExistingClient').value;
             if(selVal) {
                 document.getElementById('clientName').value = selVal;
-                
                 for(let uid in portalCustomersDB) {
                     if(portalCustomersDB[uid].name === selVal) {
-                        if(portalCustomersDB[uid].village) {
-                            document.getElementById('clientVillage').value = portalCustomersDB[uid].village;
-                        }
+                        if(portalCustomersDB[uid].village) document.getElementById('clientVillage').value = portalCustomersDB[uid].village;
                         break;
                     }
                 }
-                
                 onClientNameInput();
             }
         }
@@ -2502,7 +2748,6 @@
 
         function onClientNameInput() {
             clearTimeout(clientInputTimer);
-            
             const val = document.getElementById('clientName').value.trim();
             const lblCode = document.getElementById('lblClientCode');
             const lblRoute = document.getElementById('lblClientRoute');
@@ -2524,11 +2769,8 @@
             }
             if(lblRoute) lblRoute.innerText = foundRoute;
 
-            if(cloudClients[val]) {
-                lblCode.innerText = cloudClients[val];
-            } else {
-                lblCode.innerText = "عميل جديد (تلقائي)";
-            }
+            if(cloudClients[val]) lblCode.innerText = cloudClients[val];
+            else lblCode.innerText = "عميل جديد (تلقائي)";
 
             clientInputTimer = setTimeout(() => {
                 let clientSales = cloudSales.filter(s => s.client && s.client.toLowerCase() === val.toLowerCase() && s.status !== 'cancelled');
@@ -2577,7 +2819,8 @@
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit')?.value) || 0;
-            const totalGoods = cartons * 23925;
+            const price = systemSettings.defaultCartonPrice || 23925;
+            const totalGoods = cartons * price;
             const zimam = deposit - totalGoods;
 
             document.getElementById('menofTotalPrice').innerText = totalGoods.toLocaleString() + " ج.م";
@@ -2589,7 +2832,8 @@
             const date = document.getElementById('menofDate').value || new Date().toISOString().split('T')[0];
             const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
-            const totalGoods = cartons * 23925;
+            const price = systemSettings.defaultCartonPrice || 23925;
+            const totalGoods = cartons * price;
             const zimam = deposit - totalGoods;
 
             if(cartons <= 0 && deposit <= 0) { alert("أدخل بيانات الشحنة أو الإيداع."); return; }
@@ -2600,9 +2844,7 @@
                     rec.date = date; rec.cartons = cartons; rec.totalGoods = totalGoods; rec.deposit = deposit; rec.zimam = zimam;
                 }
             } else {
-                cloudMenofLoads.push({
-                    id: String(Date.now()), date, cartons, totalGoods, deposit, zimam
-                });
+                cloudMenofLoads.push({ id: String(Date.now()), date, cartons, totalGoods, deposit, zimam });
             }
 
             db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
@@ -2614,12 +2856,24 @@
             });
         }
 
+        function editMenofLoad(id) {
+            let rec = cloudMenofLoads.find(m => String(m.id) === String(id));
+            if(!rec) return;
+            document.getElementById('editMenofId').value = rec.id;
+            document.getElementById('menofDate').value = rec.date || '';
+            document.getElementById('menofCartons').value = rec.cartons || '';
+            document.getElementById('menofDeposit').value = rec.deposit || '';
+            calcMenofTotal();
+            window.scrollTo({ top: 300, behavior: 'smooth' });
+        }
+
         function renderMenofTable() {
             const tbody = document.getElementById('menofTableBody');
             if(!tbody) return;
             tbody.innerHTML = '';
 
             let totalCartons = 0, totalDeposits = 0, totalGoods = 0, netZimam = 0;
+            const cartonPrice = systemSettings.defaultCartonPrice || 23925;
 
             cloudMenofLoads.forEach(m => {
                 totalCartons += (parseFloat(m.cartons) || 0);
@@ -2635,19 +2889,16 @@
                         <td style="color:#16a34a; font-weight:bold;">${(m.deposit || 0).toLocaleString()} ج.م</td>
                         <td style="color:${m.zimam >= 0 ? '#15803d' : '#dc2626'}; font-weight:bold;">${(m.zimam || 0).toLocaleString()} ج.م</td>
                         <td>
-                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteMenofLoad('${m.id}')">🗑️</button>
+                            <button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="editMenofLoad('${m.id}')">✏️</button>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="deleteMenofLoad('${m.id}')">🗑️</button>
                         </td>
                     </tr>`;
             });
 
-            document.getElementById('menofTotalCartonsCount').innerText = totalCartons;
-            document.getElementById('menofTotalDepositsSum').innerText = totalDeposits.toLocaleString();
-            document.getElementById('menofTotalGoodsSum').innerText = totalGoods.toLocaleString();
-            document.getElementById('menofNetZimamTotal').innerText = netZimam.toLocaleString();
-
-            let equivalentCartons = Math.floor(netZimam / 23925);
-            let remMoney = netZimam % 23925;
-            document.getElementById('menofCartonsEquivalent').innerText = `${equivalentCartons} كرتونة و ${remMoney.toLocaleString()} ج.م`;
+            if(document.getElementById('menofTotalCartonsCount')) document.getElementById('menofTotalCartonsCount').innerText = totalCartons;
+            if(document.getElementById('menofTotalDepositsSum')) document.getElementById('menofTotalDepositsSum').innerText = totalDeposits.toLocaleString();
+            if(document.getElementById('menofTotalGoodsSum')) document.getElementById('menofTotalGoodsSum').innerText = totalGoods.toLocaleString();
+            if(document.getElementById('menofNetZimamTotal')) document.getElementById('menofNetZimamTotal').innerText = netZimam.toLocaleString();
         }
 
         function deleteMenofLoad(id) {
@@ -2659,7 +2910,8 @@
         function calcShopTotal() {
             const cartons = parseFloat(document.getElementById('shopCartons')?.value) || 0;
             const paid = parseFloat(document.getElementById('shopPaidVal')?.value) || 0;
-            const totalPrice = cartons * 23925;
+            const price = systemSettings.defaultCartonPrice || 23925;
+            const totalPrice = cartons * price;
             const zimam = totalPrice - paid;
 
             document.getElementById('shopTotalPrice').innerText = totalPrice.toLocaleString() + " ج.م";
@@ -2671,7 +2923,8 @@
             const name = document.getElementById('shopNameInput').value.trim();
             const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
             const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
-            const totalPrice = cartons * 23925;
+            const price = systemSettings.defaultCartonPrice || 23925;
+            const totalPrice = cartons * price;
             const zimam = totalPrice - paid;
 
             if(!name) { alert("أدخل اسم المحل."); return; }
@@ -2682,9 +2935,7 @@
                     rec.name = name; rec.cartons = cartons; rec.totalPrice = totalPrice; rec.paid = paid; rec.zimam = zimam;
                 }
             } else {
-                cloudShops.push({
-                    id: String(Date.now()), name, cartons, totalPrice, paid, zimam, date: new Date().toISOString().split('T')[0]
-                });
+                cloudShops.push({ id: String(Date.now()), name, cartons, totalPrice, paid, zimam, date: new Date().toISOString().split('T')[0] });
             }
 
             db.ref('shops').set(Object.assign({}, cloudShops)).then(() => {
@@ -2695,6 +2946,17 @@
                 document.getElementById('shopPaidVal').value = '';
                 renderShopsTable();
             });
+        }
+
+        function editShopRecord(id) {
+            let s = cloudShops.find(x => String(x.id) === String(id));
+            if(!s) return;
+            document.getElementById('editShopId').value = s.id;
+            document.getElementById('shopNameInput').value = s.name;
+            document.getElementById('shopCartons').value = s.cartons || '';
+            document.getElementById('shopPaidVal').value = s.paid || '';
+            calcShopTotal();
+            window.scrollTo({ top: 300, behavior: 'smooth' });
         }
 
         function renderShopsTable() {
@@ -2714,8 +2976,9 @@
                         <td style="color:#16a34a; font-weight:bold;">${(s.paid || 0).toLocaleString()} ج.م</td>
                         <td style="color:#dc2626; font-weight:bold;">${(s.zimam || 0).toLocaleString()} ج.م</td>
                         <td>
-                            <button class="btn btn-success" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="openShopPayModal('${s.id}')">💳 سداد</button>
-                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteShopRecord('${s.id}')">🗑️</button>
+                            <button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; margin:0 1px;" onclick="editShopRecord('${s.id}')">✏️</button>
+                            <button class="btn btn-success" style="padding:2px 6px; font-size:10px; width:auto; margin:0 1px;" onclick="openShopPayModal('${s.id}')">💳 سداد</button>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0 1px;" onclick="deleteShopRecord('${s.id}')">🗑️</button>
                         </td>
                     </tr>`;
             });
@@ -2774,6 +3037,7 @@
         function saveLmInvoice() {
             const type = document.getElementById('lmInvoiceType').value;
             const deposit = parseFloat(document.getElementById('lmDeposit').value) || 0;
+            const editId = document.getElementById('editLmId').value;
             let totalCost = 0, totalSell = 0, items = [];
 
             lmItemsList.forEach((it, idx) => {
@@ -2791,14 +3055,40 @@
             if(items.length === 0 && deposit === 0) { alert("أدخل بيانات الفاتورة."); return; }
 
             let profit = totalSell - totalCost;
-            cloudLmInvoices.push({
-                id: String(Date.now()), type, deposit, totalCost, totalSell, profit, items, date: new Date().toISOString().split('T')[0]
-            });
+
+            if(editId) {
+                let rec = cloudLmInvoices.find(x => String(x.id) === String(editId));
+                if(rec) {
+                    rec.type = type; rec.deposit = deposit; rec.totalCost = totalCost; rec.totalSell = totalSell; rec.profit = profit; rec.items = items;
+                }
+            } else {
+                cloudLmInvoices.push({ id: String(Date.now()), type, deposit, totalCost, totalSell, profit, items, date: new Date().toISOString().split('T')[0] });
+            }
 
             db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => {
                 alert("✅ تم حفظ فاتورة LM بنجاح!");
+                document.getElementById('editLmId').value = '';
                 renderLmTable();
             });
+        }
+
+        function editLmInvoice(id) {
+            let inv = cloudLmInvoices.find(x => String(x.id) === String(id));
+            if(!inv) return;
+            document.getElementById('editLmId').value = inv.id;
+            document.getElementById('lmInvoiceType').value = inv.type || 'mohamed';
+            document.getElementById('lmDeposit').value = inv.deposit || '';
+
+            if(inv.items) {
+                inv.items.forEach(it => {
+                    let idx = lmItemsList.findIndex(l => l.name === it.name);
+                    if(idx !== -1) {
+                        if(document.getElementById(`lm_qty_${idx}`)) document.getElementById(`lm_qty_${idx}`).value = it.qty;
+                        if(document.getElementById(`lm_sell_price_${idx}`)) document.getElementById(`lm_sell_price_${idx}`).value = it.sellPrice;
+                    }
+                });
+            }
+            window.scrollTo({ top: 300, behavior: 'smooth' });
         }
 
         function renderLmTable() {
@@ -2814,7 +3104,10 @@
                         <td>${(inv.totalCost || 0).toLocaleString()} ج.م</td>
                         <td>${(inv.totalSell || 0).toLocaleString()} ج.م</td>
                         <td style="color:${inv.profit >= 0 ? '#15803d' : '#dc2626'}; font-weight:bold;">${(inv.profit || 0).toLocaleString()} ج.م</td>
-                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="deleteLmInvoice('${inv.id}')">🗑️</button></td>
+                        <td>
+                            <button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="editLmInvoice('${inv.id}')">✏️</button>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="deleteLmInvoice('${inv.id}')">🗑️</button>
+                        </td>
                     </tr>`;
             });
         }
@@ -2825,6 +3118,7 @@
             db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
         }
 
+        // ==================== تعديل وإدارة حسابات الموظفين ====================
         function createNewUserAccount() {
             const code = document.getElementById('newAccCode').value.trim();
             const name = document.getElementById('newAccName').value.trim();
@@ -2843,9 +3137,86 @@
                 document.getElementById('newAccName').value = '';
                 document.getElementById('newAccPass').value = '';
                 updateDelegatesSelects();
+                renderAdminUsersTable();
             });
         }
 
+        function renderAdminUsersTable() {
+            const tbody = document.getElementById('adminUsersListTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            for(let code in cloudDelegates) {
+                let u = cloudDelegates[code];
+                let isLocked = u.locked ? '<span style="color:#dc2626; font-weight:bold;">🔒 محظور</span>' : '<span style="color:#16a34a; font-weight:bold;">نشط</span>';
+                let roleArabic = u.role === 'admin' ? 'مدير النظام' : (u.role === 'fleet' ? 'مدير الحركة' : (u.role === 'store' ? 'المخزن' : (u.role === 'hr' ? 'HR' : (u.role === 'accounting' ? 'الحسابات' : 'مندوب'))));
+                
+                let editBtn = `<button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="openEditUserModal('${code}')">✏️ تعديل</button>`;
+                let deleteBtn = (code !== 'admin') ? `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="deleteUserAccount('${code}')">🗑️</button>` : '-';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${code}</b></td>
+                        <td>${u.name}</td>
+                        <td>${roleArabic}</td>
+                        <td><code>${u.pass || '-'}</code></td>
+                        <td>${isLocked}</td>
+                        <td>${editBtn} ${deleteBtn}</td>
+                    </tr>`;
+            }
+        }
+
+        function openEditUserModal(code) {
+            let u = cloudDelegates[code];
+            if(!u) return;
+            document.getElementById('modalEditUserOrigCode').value = code;
+            document.getElementById('modalEditUserCode').value = code;
+            document.getElementById('modalEditUserName').value = u.name;
+            document.getElementById('modalEditUserPass').value = u.pass;
+            document.getElementById('modalEditUserRole').value = u.role || 'delegate';
+            document.getElementById('modalEditUserLocked').value = u.locked ? 'true' : 'false';
+            document.getElementById('editUserModal').style.display = 'flex';
+        }
+
+        function closeEditUserModal() { document.getElementById('editUserModal').style.display = 'none'; }
+
+        function saveEditedUser() {
+            const code = document.getElementById('modalEditUserOrigCode').value;
+            const name = document.getElementById('modalEditUserName').value.trim();
+            const pass = document.getElementById('modalEditUserPass').value.trim();
+            const role = document.getElementById('modalEditUserRole').value;
+            const locked = (document.getElementById('modalEditUserLocked').value === 'true');
+
+            if(!name || !pass) { alert("أدخل اسم الموظف وكلمة السر."); return; }
+
+            if(cloudDelegates[code]) {
+                cloudDelegates[code].name = name;
+                cloudDelegates[code].pass = pass;
+                cloudDelegates[code].role = role;
+                cloudDelegates[code].locked = locked;
+            }
+
+            db.ref('delegates/' + code).set(cloudDelegates[code]).then(() => {
+                alert("✅ تم تعديل وحفظ بيانات الموظف بنجاح!");
+                closeEditUserModal();
+                renderAdminUsersTable();
+                updateDelegatesSelects();
+            });
+        }
+
+        function deleteUserAccount(code) {
+            if(code === 'admin') { alert("لا يمكن حذف حساب المدير الرئيسي."); return; }
+            if(!confirm(`⚠️ هل أنت متأكد من حذف حساب الموظف (${cloudDelegates[code]?.name}) نهائياً؟`)) return;
+
+            delete cloudDelegates[code];
+            db.ref('delegates/' + code).remove().then(() => {
+                alert("✅ تم حذف حساب الموظف.");
+                renderAdminUsersTable();
+                updateDelegatesSelects();
+            });
+        }
+
+        // ==================== تعديل بيانات العملاء ====================
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
@@ -2867,14 +3238,74 @@
                         <td>${typeBadge}</td>
                         <td><small>${c.pass || '-'}</small></td>
                         <td>
-                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="adminDeleteCustomer('${uid}', '${c.name}')">🗑️</button>
+                            <button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="openEditCustomerModal('${uid}')">✏️ تعديل</button>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="adminDeleteCustomer('${uid}', '${c.name}')">🗑️</button>
                         </td>
                     </tr>`;
             }
 
-            if(!hasRows) {
-                tbody.innerHTML = `<tr><td colspan="8">لا يوجد عملاء مسجلين بالبوابة.</td></tr>`;
+            if(!hasRows) tbody.innerHTML = `<tr><td colspan="8">لا يوجد عملاء مسجلين بالبوابة.</td></tr>`;
+        }
+
+        function openEditCustomerModal(uid) {
+            let c = portalCustomersDB[uid];
+            if(!c) return;
+            document.getElementById('modalEditCustUid').value = uid;
+            document.getElementById('modalEditCustName').value = c.name || '';
+            document.getElementById('modalEditCustCode').value = c.clientCode || '';
+            document.getElementById('modalEditCustRoute').value = c.route || '';
+            document.getElementById('modalEditCustVillage').value = c.village || '';
+            document.getElementById('modalEditCustPhone').value = c.phone || '';
+            document.getElementById('modalEditCustPass').value = c.pass || '';
+            document.getElementById('modalEditCustType').value = c.customerType || 'retail';
+            document.getElementById('editCustomerModal').style.display = 'flex';
+        }
+
+        function closeEditCustomerModal() { document.getElementById('editCustomerModal').style.display = 'none'; }
+
+        function saveEditedCustomer() {
+            const uid = document.getElementById('modalEditCustUid').value;
+            let c = portalCustomersDB[uid];
+            if(!c) return;
+
+            const oldName = c.name;
+            const newName = document.getElementById('modalEditCustName').value.trim();
+            const code = document.getElementById('modalEditCustCode').value.trim();
+            const route = document.getElementById('modalEditCustRoute').value.trim();
+            const village = document.getElementById('modalEditCustVillage').value.trim();
+            const phone = document.getElementById('modalEditCustPhone').value.trim();
+            const pass = document.getElementById('modalEditCustPass').value.trim();
+            const type = document.getElementById('modalEditCustType').value;
+
+            if(!newName) { alert("أدخل اسم العميل."); return; }
+
+            c.name = newName;
+            c.clientCode = code;
+            c.route = route;
+            c.village = village;
+            c.phone = phone;
+            c.pass = pass;
+            c.customerType = type;
+
+            if(oldName !== newName) {
+                delete cloudClients[oldName];
+                delete cloudClientsRoutes[oldName];
+                db.ref('clients/' + oldName).remove();
+                db.ref('clientsRoutes/' + oldName).remove();
             }
+
+            cloudClients[newName] = code;
+            if(route) cloudClientsRoutes[newName] = route;
+
+            db.ref('portalCustomers/' + uid).set(c);
+            db.ref('clients/' + newName).set(code);
+            if(route) db.ref('clientsRoutes/' + newName).set(route);
+
+            alert("✅ تم تعديل وتحديث بيانات العميل بنجاح!");
+            closeEditCustomerModal();
+            renderAdminPortalCustomersTable();
+            populateRoutesList();
+            updateClientsDatalist();
         }
 
         function adminDirectAddCustomer() {
@@ -2889,9 +3320,7 @@
             if(!name) { alert("أدخل اسم العميل."); return; }
 
             const uid = "cust_" + Date.now();
-            portalCustomersDB[uid] = {
-                uid, name, clientCode: code, route, village, phone, pass, customerType: type
-            };
+            portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, pass, customerType: type };
             cloudClients[name] = code;
             if(route) cloudClientsRoutes[name] = route;
 
@@ -2967,7 +3396,7 @@
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "العملاء");
-            XLSX.writeFile(wb, "BlackHorse_Clients.xlsx");
+            XLSX.writeFile(wb, (systemSettings.companyName || "BlackHorse") + "_Clients.xlsx");
         }
 
         function importClientsFromExcel(e) {
@@ -3020,6 +3449,11 @@
 
             if(currentDelegate.code === 'admin') {
                 if(currentPass !== ADMIN_PASS) { alert("كلمة السر الحالية غير صحيحة."); return; }
+                ADMIN_PASS = newPass;
+                if(cloudDelegates['admin']) {
+                    cloudDelegates['admin'].pass = newPass;
+                    db.ref('delegates/admin/pass').set(newPass);
+                }
                 alert("تم تحديث كلمة سر المدير بنجاح!");
             } else {
                 if(cloudDelegates[currentDelegate.code].pass !== currentPass) { alert("كلمة السر الحالية غير صحيحة."); return; }
