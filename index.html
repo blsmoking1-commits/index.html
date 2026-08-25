@@ -197,6 +197,7 @@
             <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
             <div id="tabLmInvoices" class="tab-btn" onclick="switchTab('lmInvoices')" style="display:none; background:#fef3c7;">🚬 فواتير LM</div>
             <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات والتحكم</div>
+            <div id="tabCustomCode" class="tab-btn" onclick="switchTab('customCode')" style="display:none; background:#fae8ff; color:#86198f;">💻 حقن وتعديل الأكواد</div>
         </div>
 
         <!-- أ) فاتورة جديدة -->
@@ -727,6 +728,33 @@
                 <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر</button>
             </div>
         </div>
+
+        <!-- ع) تبويب حقن وتعديل الأكواد المباشرة (للمدير فقط) -->
+        <div id="sectionCustomCode" style="display: none;">
+            <div class="filter-box" style="background:#fdf4ff; border-color:#f0abfc;">
+                <h4 style="margin-top:0; color:#86198f; font-size:14px;">⚡ لوحة إضافة وحقن الأكواد وتعديل النظام (للمدير فقط):</h4>
+                
+                <div class="form-group">
+                    <label style="color:#701a75;">1) كود HTML المخصص (تبويبات، أزرار، عناصر إضافية):</label>
+                    <textarea id="customHtmlInput" rows="5" placeholder="اكتب أو الصق كود الـ HTML هنا..." style="font-family:monospace; font-size:12px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label style="color:#701a75;">2) كود JavaScript المخصص (وظائف، دوال، عمليات ربط):</label>
+                    <textarea id="customJsInput" rows="6" placeholder="اكتب كود الـ JavaScript هنا..." style="font-family:monospace; font-size:12px; direction:ltr; text-align:left;"></textarea>
+                </div>
+
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" style="flex:1; background:#9333ea;" onclick="saveAndApplyCustomCode()">💾 حفظ في السحابة وتطبيق فوراً</button>
+                    <button class="btn btn-warning" style="flex:1;" onclick="executeCustomCodeLiveOnly()">⚡ تجربة الكود مؤقتاً</button>
+                    <button class="btn btn-danger" style="width:auto; margin-top:6px; background:#dc2626;" onclick="clearCustomCode()">🗑️ مسح الكود</button>
+                </div>
+            </div>
+
+            <!-- الحاوية الديناميكية التي ينزل بداخلها الـ HTML المحقون تلقائياً -->
+            <div id="customDynamicContainer" style="margin-top:15px;"></div>
+        </div>
+
     </div>
 
     <!-- 4. النوافذ المنبثقة (Modals) للتعديل الشامل -->
@@ -1057,6 +1085,28 @@
         db.ref('locationRequests').on('value', (s) => {
             cloudLocationRequests = s.val() || {};
             renderDelegatesTrackingTable();
+        });
+
+        // الاستماع التلقائي للأكواد المخصصة المحقونة
+        db.ref('customInjectedCode').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                if (data.html) {
+                    const container = document.getElementById('customDynamicContainer');
+                    if (container) container.innerHTML = data.html;
+                }
+                if (data.js) {
+                    try {
+                        new Function(data.js)();
+                    } catch (err) {
+                        console.error("خطأ أثناء تشغيل كود JavaScript المخصص:", err);
+                    }
+                }
+                const htmlField = document.getElementById('customHtmlInput');
+                const jsField = document.getElementById('customJsInput');
+                if (htmlField && !htmlField.value) htmlField.value = data.html || '';
+                if (jsField && !jsField.value) jsField.value = data.js || '';
+            }
         });
 
         function populateRoutesList() {
@@ -2589,6 +2639,7 @@
             document.getElementById('tabMenof').style.display = (isAdm || isAccounting) ? 'block' : 'none';
             document.getElementById('tabShops').style.display = (isAdm || isAccounting) ? 'block' : 'none';
             document.getElementById('tabLmInvoices').style.display = (isAdm || isAccounting) ? 'block' : 'none';
+            document.getElementById('tabCustomCode').style.display = isAdm ? 'block' : 'none';
             
             document.getElementById('adminSystemControlBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminCarSetupBox').style.display = (isAdm || isStore || isFleet) ? 'block' : 'none';
@@ -2623,7 +2674,8 @@
                 'menof': { btn: 'tabMenof', sec: 'sectionMenof' },
                 'shops': { btn: 'tabShops', sec: 'sectionShops' },
                 'lmInvoices': { btn: 'tabLmInvoices', sec: 'sectionLmInvoices' },
-                'settings': { btn: 'tabSettings', sec: 'sectionSettings' }
+                'settings': { btn: 'tabSettings', sec: 'sectionSettings' },
+                'customCode': { btn: 'tabCustomCode', sec: 'sectionCustomCode' }
             };
 
             for(let k in tabsMap) {
@@ -2652,6 +2704,53 @@
             if(tabKey === 'shops') renderShopsTable();
             if(tabKey === 'lmInvoices') { initLmFormInputs(); renderLmTable(); }
             if(tabKey === 'settings') { applySystemBranding(); renderAdminUsersTable(); }
+        }
+
+        // دوال التحكم بحقن الأكواد المباشرة
+        function saveAndApplyCustomCode() {
+            const customHtml = document.getElementById('customHtmlInput').value;
+            const customJs = document.getElementById('customJsInput').value;
+
+            db.ref('customInjectedCode').set({
+                html: customHtml,
+                js: customJs,
+                updatedAt: new Date().toISOString()
+            }).then(() => {
+                alert("✅ تم حفظ وتطبيق الأكواد بنجاح في قاعدة البيانات!");
+                if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
+                if (customJs) {
+                    try {
+                        new Function(customJs)();
+                    } catch (e) {
+                        alert("⚠️ تحذير: يوجد خطأ برمجي في كود الـ JS:\n" + e.message);
+                    }
+                }
+            });
+        }
+
+        function executeCustomCodeLiveOnly() {
+            const customHtml = document.getElementById('customHtmlInput').value;
+            const customJs = document.getElementById('customJsInput').value;
+
+            if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
+            if (customJs) {
+                try {
+                    new Function(customJs)();
+                    alert("⚡ تم تشغيل الكود تجريبياً في جلستك الحالية فقط.");
+                } catch (e) {
+                    alert("❌ خطأ في كود الـ JS:\n" + e.message);
+                }
+            }
+        }
+
+        function clearCustomCode() {
+            if (!confirm("⚠️ هل أنت متأكد من مسح كافة الأكواد المخصصة من النظام؟")) return;
+            db.ref('customInjectedCode').remove().then(() => {
+                document.getElementById('customHtmlInput').value = '';
+                document.getElementById('customJsInput').value = '';
+                document.getElementById('customDynamicContainer').innerHTML = '';
+                alert("✅ تم مسح الأكواد المخصصة بنجاح.");
+            });
         }
 
         function updateDelegatesSelects() {
