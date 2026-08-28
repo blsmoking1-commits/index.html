@@ -71,6 +71,7 @@
         .modal-content { background:#fff; padding:18px; border-radius:10px; width:92%; max-width:480px; max-height:85vh; overflow-y:auto; }
         
         #sosAlertBanner { display:none; background:#ffe4e6; border:2px solid #e11d48; color:#9f1239; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; }
+        #oilChangeAlertBanner { display:none; background:#fff1f2; border:2px solid #e11d48; color:#9f1239; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; font-weight:bold; }
         #locationRequestRepBanner { display:none; background:#eff6ff; border:2px solid #2563eb; color:#1e40af; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; text-align:center; animation: pulseReq 2s infinite; }
         
         @keyframes pulseReq {
@@ -83,6 +84,7 @@
 <body>
 
     <div id="sosAlertBanner"></div>
+    <div id="oilChangeAlertBanner"></div>
 
     <!-- 1. شاشة تسجيل الدخول -->
     <div id="loginView" class="card">
@@ -200,10 +202,34 @@
             <div id="tabCustomCode" class="tab-btn" onclick="switchTab('customCode')" style="display:none; background:#fae8ff; color:#86198f;">💻 حقن وتعديل الأكواد</div>
         </div>
 
+        <!-- الحاوية الديناميكية العامة للأكواد المحقونة -->
+        <div id="customDynamicContainer"></div>
+
         <!-- أ) فاتورة جديدة -->
         <div id="sectionInvoice" style="overflow: visible;">
             <div id="delegateTodaySummary" style="background:#e0f2fe; border:1px solid #bae6fd; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; color:#0369a1;">
                 <b>📌 ملخص مبيعاتك اليوم:</b> <span id="todaySummaryText">0 فواتير | 0.00 ج.م</span>
+            </div>
+
+            <!-- بيان إلزامي: اختيار السيارة وقراءة العداد قبل التحرك -->
+            <div id="vehicleMandatoryBox" style="background:#fffbeb; border:2px solid #f59e0b; padding:12px; border-radius:8px; margin-bottom:12px;">
+                <div style="font-weight:bold; color:#b45309; font-size:13px; margin-bottom:8px;">🚗 بيانات السيارة وقراءة العداد (بيان إلزامي قبل الخروج):</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="color:#78350f;">السيارة المستخدمة:</label>
+                        <select id="invoiceVehicleSelect" onchange="onVehicleSelectChange()" style="background:#fff; font-weight:bold;">
+                            <option value="">-- اختر السيارة --</option>
+                            <option value="dababa">الدبابة</option>
+                            <option value="bike1">بايك 1</option>
+                            <option value="bike2">بايك 2</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="color:#78350f;">قراءة عداد السيارة الحالية (كم):</label>
+                        <input type="number" id="invoiceOdometerInput" placeholder="أدخل قراءة العداد..." min="0" step="1" oninput="checkCurrentVehicleOilLimit()">
+                    </div>
+                </div>
+                <div id="vehicleOilStatusText" style="font-size:11px; margin-top:6px; color:#475569; font-weight:bold;"></div>
             </div>
 
             <input type="hidden" id="editInvoiceId" value="">
@@ -375,6 +401,7 @@
                         <thead>
                             <tr>
                                 <th>المندوب والسيارة</th>
+                                <th>آخر قراءة عداد</th>
                                 <th>آخر اتصال</th>
                                 <th>حالة الاتصال</th>
                                 <th style="min-width:130px;">الزرار 1: طلب الموقع</th>
@@ -472,7 +499,7 @@
             <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير (قابل لتعديل المدير الشامل):</h4>
             <div style="overflow-x: auto;">
                 <table class="report-table">
-                    <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>القرية/المركز</th><th>المندوب</th><th>الإجمالي</th><th>الحالة</th><th>الإجراءات والتعديل</th></tr></thead>
+                    <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>السيارة</th><th>العداد</th><th>المندوب</th><th>الإجمالي</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
                     <tbody id="savedInvoicesBody"></tbody>
                 </table>
             </div>
@@ -668,6 +695,26 @@
         <!-- س) الإعدادات ولوحة المدير للتحكم بكل شيء -->
         <div id="sectionSettings" style="display: none;">
             
+            <!-- لوحة متابعة عدادات السيارات وغيار الزيت (1500 كم) -->
+            <div id="adminVehiclesOilControlBox" style="display:none; background:#fffbeb; border:1.5px solid #f59e0b; padding:14px; border-radius:10px; margin-bottom:14px;">
+                <h4 style="margin-top:0; font-size:14px; color:#b45309;">🚗 متابعة أسطول السيارات وقراءات العداد وغيار الزيت (1500 كم):</h4>
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr>
+                                <th>السيارة</th>
+                                <th>قراءة العداد الحالية</th>
+                                <th>عداد آخر غيار زيت</th>
+                                <th>المسافة المقطوعة</th>
+                                <th>حالة الزيت</th>
+                                <th>تسجيل غيار زيت جديد (تصفير الـ 1500)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vehiclesOilTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- لوحة المدير لتعديل بيانات النظام الأساسية والواتساب والأسعار -->
             <div id="adminSystemControlBox" style="display:none; background:#f8fafc; border:1.5px solid #0284c7; padding:14px; border-radius:10px; margin-bottom:14px;">
                 <h4 style="margin-top:0; font-size:14px; color:#0369a1;">⚙️ الإعدادات العامة للنظام ورقم الواتساب (للمدير فقط):</h4>
@@ -745,14 +792,11 @@
                 </div>
 
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                    <button class="btn btn-primary" style="flex:1; background:#9333ea;" onclick="saveAndApplyCustomCode()">💾 حفظ في السحابة وتطبيق فوراً</button>
+                    <button class="btn btn-primary" style="flex:1; background:#9333ea;" onclick="saveAndApplyCustomCode()">💾 حفظ في السحابة وتطبيق دائم فوراً</button>
                     <button class="btn btn-warning" style="flex:1;" onclick="executeCustomCodeLiveOnly()">⚡ تجربة الكود مؤقتاً</button>
                     <button class="btn btn-danger" style="width:auto; margin-top:6px; background:#dc2626;" onclick="clearCustomCode()">🗑️ مسح الكود</button>
                 </div>
             </div>
-
-            <!-- الحاوية الديناميكية التي ينزل بداخلها الـ HTML المحقون تلقائياً -->
-            <div id="customDynamicContainer" style="margin-top:15px;"></div>
         </div>
 
     </div>
@@ -767,6 +811,8 @@
             <div class="form-group"><label>رقم الفاتورة:</label><input type="text" id="modalEditInvNo"></div>
             <div class="form-group"><label>تاريخ الفاتورة:</label><input type="date" id="modalEditInvDate"></div>
             <div class="form-group"><label>اسم العميل:</label><input type="text" id="modalEditInvClient"></div>
+            <div class="form-group"><label>السيارة:</label><input type="text" id="modalEditInvVehicle"></div>
+            <div class="form-group"><label>قراءة العداد (كم):</label><input type="number" id="modalEditInvOdometer"></div>
             <div class="form-group"><label>القرية / المركز:</label><input type="text" id="modalEditInvVillage"></div>
             <div class="form-group"><label>خط السير:</label><input type="text" id="modalEditInvRoute"></div>
             <div class="form-group"><label>المندوب المسجل:</label><input type="text" id="modalEditInvDelegate" class="readonly-input" readonly></div>
@@ -780,6 +826,18 @@
             </div>
             <button class="btn btn-success" onclick="saveEditedInvoice()">💾 حفظ وتحديث الفاتورة</button>
             <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditInvoiceModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة تسجيل غيار زيت جديد للمدير -->
+    <div id="oilChangeModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#b45309; font-size:15px;">🛢️ تسجيل غيار زيت جديد</h3>
+            <input type="hidden" id="modalOilVehicleKey">
+            <div class="form-group"><label>اسم السيارة:</label><input type="text" id="modalOilVehicleName" class="readonly-input" readonly></div>
+            <div class="form-group"><label>قراءة العداد الحالية عند غيار الزيت (كم):</label><input type="number" id="modalOilNewKm" placeholder="أدخل قراءة العداد الحالية..."></div>
+            <button class="btn btn-success" onclick="confirmOilChangeReset()">✅ تأكيد غيار الزيت واحتساب 1500 كم جديدة</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeOilChangeModal()">إلغاء</button>
         </div>
     </div>
 
@@ -901,6 +959,12 @@
 
         let systemSettings = { ...defaultSettings };
 
+        const defaultVehicles = {
+            "dababa": { id: "dababa", name: "الدبابة", currentKm: 0, lastOilKm: 0, interval: 1500 },
+            "bike1": { id: "bike1", name: "بايك 1", currentKm: 0, lastOilKm: 0, interval: 1500 },
+            "bike2": { id: "bike2", name: "بايك 2", currentKm: 0, lastOilKm: 0, interval: 1500 }
+        };
+
         const defaultCarStock = { "1500000000": 10, "1500000002": 10, "1500000004": 10, "1500000005": 10, "1500000008": 10, "1500000009": 10, "1500000010": 10, "1500000146": 10 };
         const defaultDelegates = {
             "admin": { pass: ADMIN_PASS, name: "حسام (المدير)", role: "admin", carStock: {...defaultCarStock}, allowedRoutes: ["ALL"] },
@@ -947,6 +1011,7 @@
         let cloudLocations = {};
         let cloudAttendance = [];
         let cloudLocationRequests = {};
+        let cloudVehicles = { ...defaultVehicles };
 
         let currentDelegate = null;
         let currentPortalCustomer = null;
@@ -969,6 +1034,15 @@
             if(s.val()) systemSettings = { ...defaultSettings, ...s.val() };
             else db.ref('systemSettings').set(defaultSettings);
             applySystemBranding();
+        });
+
+        // الاستماع لحالة السيارات والعدادات
+        db.ref('vehicles').on('value', (s) => {
+            if(s.val()) cloudVehicles = { ...defaultVehicles, ...s.val() };
+            else db.ref('vehicles').set(defaultVehicles);
+            renderVehiclesOilTable();
+            checkGlobalOilChangeAlerts();
+            checkCurrentVehicleOilLimit();
         });
 
         function applySystemBranding() {
@@ -1087,27 +1161,205 @@
             renderDelegatesTrackingTable();
         });
 
-        // الاستماع التلقائي للأكواد المخصصة المحقونة
+        // ==================== مراجعة وإصلاح تبويب حقن الأكواد ====================
         db.ref('customInjectedCode').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 if (data.html) {
                     const container = document.getElementById('customDynamicContainer');
                     if (container) container.innerHTML = data.html;
+                } else {
+                    const container = document.getElementById('customDynamicContainer');
+                    if (container) container.innerHTML = '';
                 }
+
                 if (data.js) {
-                    try {
-                        new Function(data.js)();
-                    } catch (err) {
-                        console.error("خطأ أثناء تشغيل كود JavaScript المخصص:", err);
-                    }
+                    let oldScript = document.getElementById('injectedJsNode');
+                    if (oldScript) oldScript.remove();
+
+                    let newScript = document.createElement('script');
+                    newScript.id = 'injectedJsNode';
+                    newScript.text = data.js;
+                    document.body.appendChild(newScript);
                 }
+
                 const htmlField = document.getElementById('customHtmlInput');
                 const jsField = document.getElementById('customJsInput');
-                if (htmlField && !htmlField.value) htmlField.value = data.html || '';
-                if (jsField && !jsField.value) jsField.value = data.js || '';
+                if (htmlField && !htmlField.matches(':focus')) htmlField.value = data.html || '';
+                if (jsField && !jsField.matches(':focus')) jsField.value = data.js || '';
             }
         });
+
+        function saveAndApplyCustomCode() {
+            const customHtml = document.getElementById('customHtmlInput').value;
+            const customJs = document.getElementById('customJsInput').value;
+
+            db.ref('customInjectedCode').set({
+                html: customHtml,
+                js: customJs,
+                updatedAt: new Date().toISOString()
+            }).then(() => {
+                alert("✅ تم حفظ وتطبيق الأكواد بنجاح في قاعدة البيانات بشكل دائم!");
+            }).catch(err => {
+                alert("❌ خطأ أثناء الحفظ: " + err.message);
+            });
+        }
+
+        function executeCustomCodeLiveOnly() {
+            const customHtml = document.getElementById('customHtmlInput').value;
+            const customJs = document.getElementById('customJsInput').value;
+
+            if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
+            if (customJs) {
+                try {
+                    let tempScript = document.createElement('script');
+                    tempScript.text = customJs;
+                    document.body.appendChild(tempScript);
+                    alert("⚡ تم تشغيل الكود تجريبياً في جلستك الحالية.");
+                } catch (e) {
+                    alert("❌ خطأ في كود الـ JS:\n" + e.message);
+                }
+            }
+        }
+
+        function clearCustomCode() {
+            if (!confirm("⚠️ هل أنت متأكد من مسح كافة الأكواد المخصصة من النظام؟")) return;
+            db.ref('customInjectedCode').remove().then(() => {
+                document.getElementById('customHtmlInput').value = '';
+                document.getElementById('customJsInput').value = '';
+                document.getElementById('customDynamicContainer').innerHTML = '';
+                let oldScript = document.getElementById('injectedJsNode');
+                if (oldScript) oldScript.remove();
+                alert("✅ تم مسح الأكواد المخصصة بنجاح.");
+            });
+        }
+
+        // ==================== دوال عدادات السيارات وتنبيه غيار الزيت ====================
+        function onVehicleSelectChange() {
+            const vKey = document.getElementById('invoiceVehicleSelect').value;
+            const odoInput = document.getElementById('invoiceOdometerInput');
+            if(!vKey) {
+                odoInput.value = '';
+                document.getElementById('vehicleOilStatusText').innerText = '';
+                return;
+            }
+            const car = cloudVehicles[vKey];
+            if(car && car.currentKm) {
+                odoInput.placeholder = `آخر قراءة: ${car.currentKm} كم`;
+            }
+            checkCurrentVehicleOilLimit();
+        }
+
+        function checkCurrentVehicleOilLimit() {
+            const vKey = document.getElementById('invoiceVehicleSelect')?.value;
+            const odoVal = parseFloat(document.getElementById('invoiceOdometerInput')?.value) || 0;
+            const statusDiv = document.getElementById('vehicleOilStatusText');
+            if(!statusDiv || !vKey) return;
+
+            const car = cloudVehicles[vKey];
+            if(!car) return;
+
+            const lastOil = parseFloat(car.lastOilKm) || 0;
+            const effectiveKm = odoVal > 0 ? odoVal : (car.currentKm || 0);
+            const driven = effectiveKm - lastOil;
+            const limit = car.interval || 1500;
+            const remaining = limit - driven;
+
+            if(driven >= limit) {
+                statusDiv.innerHTML = `<span style="color:#dc2626;">🚨 تنبيه غيار زيت: قطعت السيارة (${driven} كم) منذ آخر غيار وتجاوزت الـ ${limit} كم! يرجى غيار الزيت.</span>`;
+            } else {
+                statusDiv.innerHTML = `<span style="color:#16a34a;">🟢 حالة الزيت جيدة: قطعت (${driven} كم)، المتبقي حتى غيار الزيت: (${remaining} كم).</span>`;
+            }
+        }
+
+        function checkGlobalOilChangeAlerts() {
+            const banner = document.getElementById('oilChangeAlertBanner');
+            if(!banner) return;
+
+            let alerts = [];
+            for(let key in cloudVehicles) {
+                let v = cloudVehicles[key];
+                let driven = (parseFloat(v.currentKm) || 0) - (parseFloat(v.lastOilKm) || 0);
+                let limit = v.interval || 1500;
+                if(driven >= limit) {
+                    alerts.push(`🚨 <b>تحذير صيانة:</b> سيارة (<b>${v.name}</b>) قطعت <b>${driven} كم</b> وتجاوزت مسافة غيار الزيت المقررة (<b>${limit} كم</b>) - يلزم غيار الزيت فوراً!`);
+                }
+            }
+
+            if(alerts.length > 0) {
+                banner.style.display = 'block';
+                banner.innerHTML = alerts.join('<hr style="margin:6px 0; border:0; border-top:1px solid #fecdd3;">');
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        function renderVehiclesOilTable() {
+            const tbody = document.getElementById('vehiclesOilTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            for(let key in cloudVehicles) {
+                let v = cloudVehicles[key];
+                let curKm = parseFloat(v.currentKm) || 0;
+                let lastOil = parseFloat(v.lastOilKm) || 0;
+                let driven = curKm - lastOil;
+                let limit = v.interval || 1500;
+                let remaining = limit - driven;
+
+                let statusBadge = driven >= limit 
+                    ? `<span style="color:#dc2626; font-weight:bold; background:#ffe4e6; padding:2px 6px; border-radius:4px;">🚨 يلزم غيار زيت (${driven} كم)</span>`
+                    : `<span style="color:#16a34a; font-weight:bold;">🟢 سليم (متبقي ${remaining} كم)</span>`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${v.name}</b></td>
+                        <td style="font-weight:bold; color:#2563eb;">${curKm} كم</td>
+                        <td>${lastOil} كم</td>
+                        <td><b>${driven} كم</b></td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-warning" style="padding:4px 8px; font-size:11px; width:auto; margin:0;" onclick="openOilChangeModal('${key}')">🛢️ تسجيل غيار زيت</button>
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        function openOilChangeModal(vKey) {
+            let v = cloudVehicles[vKey];
+            if(!v) return;
+            document.getElementById('modalOilVehicleKey').value = vKey;
+            document.getElementById('modalOilVehicleName').value = v.name;
+            document.getElementById('modalOilNewKm').value = v.currentKm || '';
+            document.getElementById('oilChangeModal').style.display = 'flex';
+        }
+
+        function closeOilChangeModal() {
+            document.getElementById('oilChangeModal').style.display = 'none';
+        }
+
+        function confirmOilChangeReset() {
+            const vKey = document.getElementById('modalOilVehicleKey').value;
+            const newKm = parseFloat(document.getElementById('modalOilNewKm').value);
+
+            if(isNaN(newKm) || newKm < 0) {
+                alert("❌ يرجى كتابة قراءة صحيحة للعداد عند غيار الزيت.");
+                return;
+            }
+
+            if(!cloudVehicles[vKey]) cloudVehicles[vKey] = { ...defaultVehicles[vKey] };
+            cloudVehicles[vKey].lastOilKm = newKm;
+            if(newKm > (cloudVehicles[vKey].currentKm || 0)) {
+                cloudVehicles[vKey].currentKm = newKm;
+            }
+
+            db.ref('vehicles/' + vKey).set(cloudVehicles[vKey]).then(() => {
+                alert(`✅ تم تسجيل غيار الزيت لسيارة (${cloudVehicles[vKey].name}) عند قراءة عداد [${newKm} كم] وتصفير احتساب الـ 1500 كم بنجاح!`);
+                closeOilChangeModal();
+                renderVehiclesOilTable();
+                checkGlobalOilChangeAlerts();
+            });
+        }
 
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
@@ -1649,6 +1901,8 @@
                     let lng = loc ? loc.lng : null;
                     let lastTime = loc ? (loc.updatedAt || 'اليوم') : 'غير متصل';
 
+                    let lastOdoText = (del.lastOdometer && del.lastVehicle) ? `🚗 ${del.lastVehicle} (${del.lastOdometer} كم)` : '-';
+
                     let sosBadge = (loc && loc.sos) ? '<span style="color:#e11d48; font-weight:bold;">🚨 استغاثة SOS!</span>' : (lat ? '<span style="color:#16a34a; font-weight:bold;">متصل 🟢</span>' : '<span style="color:#64748b;">غير متصل ⚪</span>');
                     
                     let reqStatusHtml = '';
@@ -1667,6 +1921,7 @@
                     tbody.innerHTML += `
                         <tr>
                             <td><b>${del.name}</b> (${code})</td>
+                            <td><b style="color:#0284c7; font-size:11px;">${lastOdoText}</b></td>
                             <td>${lastTime}</td>
                             <td>${sosBadge}</td>
                             <td>${btnRequest}</td>
@@ -1675,7 +1930,7 @@
                 }
             }
 
-            if (!hasRows) tbody.innerHTML = `<tr><td colspan="5">لا يوجد مناديب مسجلين حالياً.</td></tr>`;
+            if (!hasRows) tbody.innerHTML = `<tr><td colspan="6">لا يوجد مناديب مسجلين حالياً.</td></tr>`;
         }
 
         function renderClientsMapTable() {
@@ -2216,16 +2471,6 @@
             });
         }
 
-        function changeCustomerPassword() {
-            const newPass = document.getElementById('clientNewPassInput').value.trim();
-            if(!newPass || !currentPortalCustomer) return;
-            currentPortalCustomer.pass = newPass;
-            db.ref('portalCustomers/' + currentPortalCustomer.uid + '/pass').set(newPass).then(() => {
-                alert("✅ تم تحديث كلمة السر بنجاح!");
-                document.getElementById('clientNewPassInput').value = '';
-            });
-        }
-
         function initSalesForm() {
             if(!currentDelegate || currentDelegate.role === 'viewer') return;
 
@@ -2306,6 +2551,25 @@
 
         async function createInvoiceObject() {
             if(!currentDelegate || currentDelegate.role === 'viewer') return null;
+
+            // التحقق الإلزامي من اختيار السيارة وقراءة العداد
+            const vehicleKey = document.getElementById('invoiceVehicleSelect').value;
+            const odometerReading = parseFloat(document.getElementById('invoiceOdometerInput').value);
+
+            if(!vehicleKey) {
+                alert("❌ بيان إلزامي: يرجى اختيار السيارة التي سوف تتحرك بها (الدبابة، بايك 1، بايك 2).");
+                document.getElementById('invoiceVehicleSelect').focus();
+                return null;
+            }
+
+            if(isNaN(odometerReading) || odometerReading <= 0) {
+                alert("❌ بيان إلزامي: يرجى إدخال قراءة عداد السيارة الحالية قبل الخروج وحفظ الفاتورة.");
+                document.getElementById('invoiceOdometerInput').focus();
+                return null;
+            }
+
+            const vehicleName = cloudVehicles[vehicleKey]?.name || vehicleKey;
+
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const village = document.getElementById('clientVillage').value.trim() || "";
             const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
@@ -2369,14 +2633,22 @@
 
             if(cloudDelegates[targetDelCode]) {
                 cloudDelegates[targetDelCode].carStock = carStock;
-                db.ref('delegates').set(cloudDelegates).catch(e => {});
+                cloudDelegates[targetDelCode].lastVehicle = vehicleName;
+                cloudDelegates[targetDelCode].lastOdometer = odometerReading;
+                db.ref('delegates/' + targetDelCode).set(cloudDelegates[targetDelCode]).catch(e => {});
             }
+
+            // تحديث قراءة العداد للسيارة في السحابة
+            if(!cloudVehicles[vehicleKey]) cloudVehicles[vehicleKey] = { ...defaultVehicles[vehicleKey] };
+            cloudVehicles[vehicleKey].currentKm = odometerReading;
+            db.ref('vehicles/' + vehicleKey).set(cloudVehicles[vehicleKey]).catch(e => {});
 
             let recordId = String(Date.now());
             const salesRecord = {
                 id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
                 delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
                 client: client, village: village, route: route, clientCode: clientCode,
+                vehicleKey: vehicleKey, vehicleName: vehicleName, odometer: odometerReading,
                 total: grand, totalQty: totalRibbonsCount, status: 'active', items: itemsSoldList,
                 location: locObj,
                 clientLocation: clientLoc
@@ -2394,7 +2666,7 @@
             let cName = systemSettings.companyName || "BLACK HORSE";
             let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
 
-            let receiptText = `     [ ${cName} ]\nشركة ${cName} - موزع معتمد\n${cTax}\n------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}------------------------\nالمنتج    سعر/كمية  إجمالي\n------------------------\n`;
+            let receiptText = `     [ ${cName} ]\nشركة ${cName} - موزع معتمد\n${cTax}\n------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالسيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}------------------------\nالمنتج    سعر/كمية  إجمالي\n------------------------\n`;
             rec.items.forEach(it => { receiptText += `${it.name}\n          ${it.qtyText || (it.price+'/'+it.qty)}  ${it.total.toFixed(2)}\n`; });
             receiptText += `------------------------\nالإجمالي:        ${rec.total.toFixed(2)}\n------------------------\n\n\n`;
 
@@ -2407,7 +2679,7 @@
             }, 700);
 
             if(!specificInv && currentDelegate) {
-                alert("✅ تم حفظ الفاتورة، خصم الكمية، وتثبيت موقع المحل بنجاح!");
+                alert("✅ تم حفظ الفاتورة وتحديث عداد السيارة وخصم الكمية بنجاح!");
                 initSalesForm();
             }
         }
@@ -2415,7 +2687,7 @@
         async function saveAndEmailOnly() {
             const rec = await createInvoiceObject();
             if(rec) {
-                alert("✅ تم حفظ الفاتورة وتثبيت موقع العميل GPS في حساب المدير بنجاح!");
+                alert("✅ تم حفظ الفاتورة وتحديث عداد السيارة وتثبيت موقع العميل GPS بنجاح!");
                 initSalesForm();
             }
         }
@@ -2459,7 +2731,7 @@
                 return true;
             });
 
-            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="8">لا توجد فواتير مطابقة.</td></tr>`; return; }
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="9">لا توجد فواتير مطابقة.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
                 let isCancelled = (inv.status === 'cancelled');
@@ -2476,7 +2748,7 @@
                     actionButtons += `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="cancelInvoice('${inv.id}')">❌</button>`;
                 }
 
-                tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.village || '-'}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
+                tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td><b>${inv.vehicleName || '-'}</b></td><td>${inv.odometer ? inv.odometer + ' كم' : '-'}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
             });
         }
 
@@ -2488,6 +2760,8 @@
             document.getElementById('modalEditInvNo').value = inv.invNo || '';
             document.getElementById('modalEditInvDate').value = inv.date || '';
             document.getElementById('modalEditInvClient').value = inv.client || '';
+            document.getElementById('modalEditInvVehicle').value = inv.vehicleName || '';
+            document.getElementById('modalEditInvOdometer').value = inv.odometer || '';
             document.getElementById('modalEditInvVillage').value = inv.village || '';
             document.getElementById('modalEditInvRoute').value = inv.route || '';
             document.getElementById('modalEditInvDelegate').value = inv.delegateName || '';
@@ -2507,6 +2781,8 @@
             inv.invNo = document.getElementById('modalEditInvNo').value.trim();
             inv.date = document.getElementById('modalEditInvDate').value;
             inv.client = document.getElementById('modalEditInvClient').value.trim();
+            inv.vehicleName = document.getElementById('modalEditInvVehicle').value.trim();
+            inv.odometer = parseFloat(document.getElementById('modalEditInvOdometer').value) || 0;
             inv.village = document.getElementById('modalEditInvVillage').value.trim();
             inv.route = document.getElementById('modalEditInvRoute').value.trim();
             inv.total = parseFloat(document.getElementById('modalEditInvTotal').value) || 0;
@@ -2541,7 +2817,7 @@
                     </div>`;
             }
 
-            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>الخط:</b> ${inv.route || 'غير محدد'}<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
+            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>السيارة:</b> ${inv.vehicleName || 'عام'} (عداد: ${inv.odometer || '-'} كم)<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>الخط:</b> ${inv.route || 'غير محدد'}<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
             document.getElementById('invoiceModal').style.display = 'flex';
         }
 
@@ -2641,6 +2917,7 @@
             document.getElementById('tabLmInvoices').style.display = (isAdm || isAccounting) ? 'block' : 'none';
             document.getElementById('tabCustomCode').style.display = isAdm ? 'block' : 'none';
             
+            document.getElementById('adminVehiclesOilControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             document.getElementById('adminSystemControlBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminCarSetupBox').style.display = (isAdm || isStore || isFleet) ? 'block' : 'none';
             document.getElementById('adminRepRoutesControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
@@ -2703,54 +2980,7 @@
             if(tabKey === 'menof') renderMenofTable();
             if(tabKey === 'shops') renderShopsTable();
             if(tabKey === 'lmInvoices') { initLmFormInputs(); renderLmTable(); }
-            if(tabKey === 'settings') { applySystemBranding(); renderAdminUsersTable(); }
-        }
-
-        // دوال التحكم بحقن الأكواد المباشرة
-        function saveAndApplyCustomCode() {
-            const customHtml = document.getElementById('customHtmlInput').value;
-            const customJs = document.getElementById('customJsInput').value;
-
-            db.ref('customInjectedCode').set({
-                html: customHtml,
-                js: customJs,
-                updatedAt: new Date().toISOString()
-            }).then(() => {
-                alert("✅ تم حفظ وتطبيق الأكواد بنجاح في قاعدة البيانات!");
-                if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
-                if (customJs) {
-                    try {
-                        new Function(customJs)();
-                    } catch (e) {
-                        alert("⚠️ تحذير: يوجد خطأ برمجي في كود الـ JS:\n" + e.message);
-                    }
-                }
-            });
-        }
-
-        function executeCustomCodeLiveOnly() {
-            const customHtml = document.getElementById('customHtmlInput').value;
-            const customJs = document.getElementById('customJsInput').value;
-
-            if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
-            if (customJs) {
-                try {
-                    new Function(customJs)();
-                    alert("⚡ تم تشغيل الكود تجريبياً في جلستك الحالية فقط.");
-                } catch (e) {
-                    alert("❌ خطأ في كود الـ JS:\n" + e.message);
-                }
-            }
-        }
-
-        function clearCustomCode() {
-            if (!confirm("⚠️ هل أنت متأكد من مسح كافة الأكواد المخصصة من النظام؟")) return;
-            db.ref('customInjectedCode').remove().then(() => {
-                document.getElementById('customHtmlInput').value = '';
-                document.getElementById('customJsInput').value = '';
-                document.getElementById('customDynamicContainer').innerHTML = '';
-                alert("✅ تم مسح الأكواد المخصصة بنجاح.");
-            });
+            if(tabKey === 'settings') { applySystemBranding(); renderAdminUsersTable(); renderVehiclesOilTable(); }
         }
 
         function updateDelegatesSelects() {
@@ -2972,7 +3202,6 @@
             tbody.innerHTML = '';
 
             let totalCartons = 0, totalDeposits = 0, totalGoods = 0, netZimam = 0;
-            const cartonPrice = systemSettings.defaultCartonPrice || 23925;
 
             cloudMenofLoads.forEach(m => {
                 totalCartons += (parseFloat(m.cartons) || 0);
@@ -3063,10 +3292,7 @@
             if(!tbody) return;
             tbody.innerHTML = '';
 
-            const q = document.getElementById('shopSearchInput')?.value.trim().toLowerCase() || '';
-            let filtered = cloudShops.filter(s => !q || (s.name && s.name.toLowerCase().includes(q)));
-
-            filtered.forEach(s => {
+            cloudShops.forEach(s => {
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${s.name}</b></td>
