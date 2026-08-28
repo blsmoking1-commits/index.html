@@ -59,7 +59,7 @@
         .report-table th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; }
         .grand-box { background: #0f172a; color: #fff; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; margin: 12px 0; }
         .filter-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
-        .client-history-box { background: #fef08a; padding: 8px; border-radius: 6px; font-size: 11px; margin-top: 6px; display: none; color: #713f12; }
+        .client-history-box { background: #fef9c3; padding: 10px; border-radius: 8px; font-size: 11px; margin-top: 8px; display: none; color: #713f12; border: 1.5px solid #facc15; }
 
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .stat-card { background: #fff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center; }
@@ -715,6 +715,13 @@
                 </div>
             </div>
 
+            <!-- لوحة توحيد ودمج كافة مسميات خطوط السير للعملاء -->
+            <div id="adminUnifyRoutesBox" style="display:none; background:#f0fdf4; border:1.5px solid #16a34a; padding:12px; border-radius:8px; margin-bottom:14px;">
+                <h4 style="margin-top:0; font-size:13px; color:#166534;">🛣️ توحيد ودمج خطوط السير في قاعدة البيانات:</h4>
+                <p style="font-size:11.5px; color:#334155; margin:4px 0 8px 0;">يقوم هذا الزر بدمج المسميات المختلفة تلقائياً (مثل دمج «شبين الكوم» مع «خط شبين الكوم») لجميع العملاء المسجلين دفعة واحدة.</p>
+                <button class="btn btn-success" style="font-size:12px; padding:8px;" onclick="adminFixAndUnifyAllRoutes()">⚡ توحيد ودمج جميع خطوط السير للعملاء الآن</button>
+            </div>
+
             <!-- لوحة المدير لتعديل بيانات النظام الأساسية والواتساب والأسعار -->
             <div id="adminSystemControlBox" style="display:none; background:#f8fafc; border:1.5px solid #0284c7; padding:14px; border-radius:10px; margin-bottom:14px;">
                 <h4 style="margin-top:0; font-size:14px; color:#0369a1;">⚙️ الإعدادات العامة للنظام ورقم الواتساب (للمدير فقط):</h4>
@@ -1020,6 +1027,25 @@
         let latestCoords = null;
         let tempRegCoords = null;
 
+        // دالة تنظيف وتوحيد الحروف العربية لمطابقة الأسماء بدقة
+        function normalizeArabicText(text) {
+            if (!text) return "";
+            return String(text)
+                .trim()
+                .toLowerCase()
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/ة/g, 'ه')
+                .replace(/ى/g, 'ي')
+                .replace(/\s+/g, ' ');
+        }
+
+        // دالة تنظيف وتوحيد مسميات خطوط السير
+        function normalizeRouteName(route) {
+            if (!route) return "";
+            let clean = route.trim().replace(/^خط\s+/, '').trim();
+            return clean ? "خط " + clean : "";
+        }
+
         function cleanPhoneStr(p) {
             if(!p) return "";
             return String(p).replace(/\D/g, '').replace(/^20/, '').replace(/^0+/, '');
@@ -1161,7 +1187,7 @@
             renderDelegatesTrackingTable();
         });
 
-        // ==================== مراجعة وإصلاح تبويب حقن الأكواد ====================
+        // تشغيل الأكواد المخصصة عبر إضافة سكريبت فعلي في الـ DOM
         db.ref('customInjectedCode').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -1245,7 +1271,7 @@
             }
             const car = cloudVehicles[vKey];
             if(car && car.currentKm) {
-                odoInput.placeholder = `آخر قراءة: ${car.currentKm} كم`;
+                odoInput.placeholder = `آخر قراءة مسجلة: ${car.currentKm} كم`;
             }
             checkCurrentVehicleOilLimit();
         }
@@ -1266,9 +1292,9 @@
             const remaining = limit - driven;
 
             if(driven >= limit) {
-                statusDiv.innerHTML = `<span style="color:#dc2626;">🚨 تنبيه غيار زيت: قطعت السيارة (${driven} كم) منذ آخر غيار وتجاوزت الـ ${limit} كم! يرجى غيار الزيت.</span>`;
+                statusDiv.innerHTML = `<span style="color:#dc2626;">🚨 تنبيه صيانة: قطعت السيارة (${driven} كم) منذ آخر غيار زيت وتجاوزت الحد المسموح (${limit} كم)! يجب تغيير الزيت فوراً.</span>`;
             } else {
-                statusDiv.innerHTML = `<span style="color:#16a34a;">🟢 حالة الزيت جيدة: قطعت (${driven} كم)، المتبقي حتى غيار الزيت: (${remaining} كم).</span>`;
+                statusDiv.innerHTML = `<span style="color:#16a34a;">🟢 حالة الزيت جيدة: قطعت (${driven} كم)، المتبقي حتى غيار الزيت القادم: (${remaining} كم).</span>`;
             }
         }
 
@@ -1282,7 +1308,7 @@
                 let driven = (parseFloat(v.currentKm) || 0) - (parseFloat(v.lastOilKm) || 0);
                 let limit = v.interval || 1500;
                 if(driven >= limit) {
-                    alerts.push(`🚨 <b>تحذير صيانة:</b> سيارة (<b>${v.name}</b>) قطعت <b>${driven} كم</b> وتجاوزت مسافة غيار الزيت المقررة (<b>${limit} كم</b>) - يلزم غيار الزيت فوراً!`);
+                    alerts.push(`🚨 <b>تحذير صيانة عاجل:</b> سيارة (<b>${v.name}</b>) قطعت <b>${driven} كم</b> وتجاوزت مسافة غيار الزيت المقررة (<b>${limit} كم</b>) - يلزم غيار الزيت وتصفير العداد!`);
                 }
             }
 
@@ -1361,22 +1387,27 @@
             });
         }
 
+        // ==================== توحيد خطوط السير والعملاء ====================
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
-            if(!selectRoute) return;
+            if (!selectRoute) return;
 
             let currentVal = selectRoute.value || 'ALL';
             let routesSet = new Set();
 
-            for(let name in cloudClientsRoutes) {
-                if(cloudClientsRoutes[name] && cloudClientsRoutes[name].trim()) {
-                    routesSet.add(cloudClientsRoutes[name].trim());
+            for (let name in cloudClientsRoutes) {
+                if (cloudClientsRoutes[name]) {
+                    let norm = normalizeRouteName(cloudClientsRoutes[name]);
+                    if (norm) routesSet.add(norm);
                 }
             }
 
-            for(let uid in portalCustomersDB) {
+            for (let uid in portalCustomersDB) {
                 let r = portalCustomersDB[uid].route;
-                if(r && r.trim()) routesSet.add(r.trim());
+                if (r) {
+                    let norm = normalizeRouteName(r);
+                    if (norm) routesSet.add(norm);
+                }
             }
 
             let html = '<option value="ALL">🛣️ عرض كل الخطوط (كل العملاء)</option>';
@@ -1385,8 +1416,7 @@
             });
 
             selectRoute.innerHTML = html;
-            if(routesSet.has(currentVal) || currentVal === 'ALL') selectRoute.value = currentVal;
-            else selectRoute.value = 'ALL';
+            selectRoute.value = routesSet.has(currentVal) || currentVal === 'ALL' ? currentVal : 'ALL';
         }
 
         function onRouteFilterChange() { updateClientsDatalist(); }
@@ -1396,10 +1426,10 @@
             const clientVal = document.getElementById('clientName')?.value.trim();
             if(!villageVal) return;
 
-            const guessedRoute = "خط " + villageVal;
+            const guessedRoute = normalizeRouteName(villageVal);
             const selectRoute = document.getElementById('selectRouteFilter');
             
-            let exists = Array.from(selectRoute.options).some(opt => opt.value === guessedRoute || opt.value === villageVal);
+            let exists = Array.from(selectRoute.options).some(opt => opt.value === guessedRoute);
             if(!exists) selectRoute.innerHTML += `<option value="${guessedRoute}">📍 ${guessedRoute}</option>`;
 
             if(clientVal) {
@@ -1407,6 +1437,147 @@
                 db.ref('clientsRoutes/' + clientVal).set(guessedRoute).catch(() => {});
                 document.getElementById('lblClientRoute').innerText = guessedRoute;
             }
+        }
+
+        function updateClientsDatalist() {
+            const sel = document.getElementById('selectExistingClient');
+            if (!sel) return;
+
+            const selectedRoute = document.getElementById('selectRouteFilter')?.value || 'ALL';
+            const normSelected = normalizeRouteName(selectedRoute);
+            sel.innerHTML = '<option value="">📋 عميل مسجل...</option>';
+
+            for (let cName in cloudClients) {
+                let rawRoute = cloudClientsRoutes[cName] || '';
+                
+                if (!rawRoute) {
+                    for (let uid in portalCustomersDB) {
+                        if (portalCustomersDB[uid].name === cName && portalCustomersDB[uid].route) {
+                            rawRoute = portalCustomersDB[uid].route;
+                            break;
+                        }
+                    }
+                }
+
+                let normClientRoute = normalizeRouteName(rawRoute);
+
+                if (selectedRoute === 'ALL' || (normClientRoute && normClientRoute === normSelected)) {
+                    let routeTag = normClientRoute ? ` [${normClientRoute}]` : '';
+                    sel.innerHTML += `<option value="${cName}">${cName} (${cloudClients[cName]})${routeTag}</option>`;
+                }
+            }
+            updateReportClientsSelect();
+        }
+
+        function adminFixAndUnifyAllRoutes() {
+            if (!confirm("هل تريد توحيد كافة مسميات الخطوط المسجلة للعملاء تلقائياً (مثل دمج 'شبين الكوم' مع 'خط شبين الكوم')؟")) return;
+
+            for (let name in cloudClientsRoutes) {
+                cloudClientsRoutes[name] = normalizeRouteName(cloudClientsRoutes[name]);
+            }
+            for (let uid in portalCustomersDB) {
+                if (portalCustomersDB[uid].route) {
+                    portalCustomersDB[uid].route = normalizeRouteName(portalCustomersDB[uid].route);
+                }
+            }
+
+            Promise.all([
+                db.ref('clientsRoutes').set(cloudClientsRoutes),
+                db.ref('portalCustomers').set(portalCustomersDB)
+            ]).then(() => {
+                alert("✅ تم توحيد ودمج جميع خطوط السير في قاعدة البيانات بنجاح!");
+                populateRoutesList();
+                updateClientsDatalist();
+            });
+        }
+
+        // ==================== استعلام مسحوبات العميل الشاملة ====================
+        function onClientNameInput() {
+            clearTimeout(clientInputTimer);
+            const val = document.getElementById('clientName').value.trim();
+            const lblCode = document.getElementById('lblClientCode');
+            const lblRoute = document.getElementById('lblClientRoute');
+            const historyBox = document.getElementById('clientMonthlyHistory');
+            
+            if (!val) { 
+                lblCode.innerText = "--"; 
+                if (lblRoute) lblRoute.innerText = "--";
+                historyBox.style.display = 'none'; 
+                return; 
+            }
+
+            const normVal = normalizeArabicText(val);
+
+            // البحث عن كود العميل وخط السير
+            let foundCode = "--";
+            let foundRoute = "--";
+
+            for (let cName in cloudClients) {
+                if (normalizeArabicText(cName) === normVal) {
+                    foundCode = cloudClients[cName];
+                    foundRoute = cloudClientsRoutes[cName] || "--";
+                    break;
+                }
+            }
+
+            for (let uid in portalCustomersDB) {
+                let cust = portalCustomersDB[uid];
+                if (normalizeArabicText(cust.name) === normVal || (cust.clientCode && cust.clientCode.toLowerCase() === val.toLowerCase())) {
+                    foundCode = cust.clientCode || foundCode;
+                    foundRoute = cust.route || foundRoute;
+                    break;
+                }
+            }
+
+            lblCode.innerText = foundCode !== "--" ? foundCode : "عميل جديد (تلقائي)";
+            if (lblRoute) lblRoute.innerText = normalizeRouteName(foundRoute) || "--";
+
+            clientInputTimer = setTimeout(() => {
+                // 1. جلب فواتير القطاعي (cloudSales)
+                let retailSales = cloudSales.filter(s => {
+                    if (s.status === 'cancelled') return false;
+                    let matchName = s.client && normalizeArabicText(s.client) === normVal;
+                    let matchCode = (foundCode !== "--" && s.clientCode && s.clientCode === foundCode);
+                    return matchName || matchCode;
+                });
+
+                // 2. جلب مسحوبات الجملة والمحلات (cloudShops)
+                let wholesaleSales = (cloudShops || []).filter(s => {
+                    let matchName = s.name && normalizeArabicText(s.name) === normVal;
+                    let matchCode = (foundCode !== "--" && s.clientCode && s.clientCode === foundCode);
+                    return matchName || matchCode;
+                });
+
+                let totalRetail = retailSales.reduce((sum, i) => sum + (parseFloat(i.total) || 0), 0);
+                let totalWholesale = wholesaleSales.reduce((sum, i) => sum + (parseFloat(i.totalPrice) || 0), 0);
+                let totalZimam = wholesaleSales.reduce((sum, i) => sum + (parseFloat(i.zimam) || 0), 0);
+                let grandTotal = totalRetail + totalWholesale;
+
+                if (retailSales.length > 0 || wholesaleSales.length > 0) {
+                    let details = [];
+                    
+                    retailSales.forEach(i => {
+                        details.push(`📝 فاتورة قطاعي #${i.invNo}: ${parseFloat(i.total).toFixed(2)} ج.م (${i.date})`);
+                    });
+
+                    wholesaleSales.forEach(i => {
+                        details.push(`🏪 جملة/محلات: ${parseFloat(i.totalPrice).toFixed(2)} ج.م (مديونية: ${parseFloat(i.zimam).toFixed(2)} ج.م) (${i.date || 'سابق'})`);
+                    });
+
+                    historyBox.style.display = 'block';
+                    historyBox.innerHTML = `
+                        <div style="font-weight:bold; margin-bottom:4px; font-size:12px;">
+                            📊 إجمالي مسحوبات العميل: <span style="color:#15803d;">${grandTotal.toFixed(2)} ج.م</span>
+                            ${totalZimam > 0 ? ` | <span style="color:#dc2626;">المديونية الحالية: ${totalZimam.toFixed(2)} ج.م</span>` : ''}
+                        </div>
+                        <div style="font-size:10.5px; line-height:1.6; max-height:85px; overflow-y:auto; background:#fff; padding:6px; border-radius:4px; border:1px solid #fde047;">
+                            ${details.join('<br>')}
+                        </div>
+                    `;
+                } else {
+                    historyBox.style.display = 'none';
+                }
+            }, 250);
         }
 
         function renderRepRoutesInputs() {
@@ -2040,8 +2211,9 @@
             db.ref('clients').set(cloudClients).catch(e => {});
 
             if(route) {
-                cloudClientsRoutes[name] = route;
-                db.ref('clientsRoutes/' + name).set(route).catch(e => {});
+                let normR = normalizeRouteName(route);
+                cloudClientsRoutes[name] = normR;
+                db.ref('clientsRoutes/' + name).set(normR).catch(e => {});
             }
 
             if (tempRegCoords) {
@@ -2055,7 +2227,7 @@
                 email: email || (phoneInput+"@blackhorse.com"),
                 pass: password,
                 phone: fullPhone,
-                route: route,
+                route: normalizeRouteName(route),
                 address: address,
                 village: village,
                 customerType: 'pending',
@@ -2918,6 +3090,7 @@
             document.getElementById('tabCustomCode').style.display = isAdm ? 'block' : 'none';
             
             document.getElementById('adminVehiclesOilControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
+            document.getElementById('adminUnifyRoutesBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminSystemControlBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminCarSetupBox').style.display = (isAdm || isStore || isFleet) ? 'block' : 'none';
             document.getElementById('adminRepRoutesControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
@@ -3046,72 +3219,6 @@
                 }
                 onClientNameInput();
             }
-        }
-
-        function updateClientsDatalist() {
-            const sel = document.getElementById('selectExistingClient');
-            if(!sel) return;
-
-            const selectedRoute = document.getElementById('selectRouteFilter')?.value || 'ALL';
-            sel.innerHTML = '<option value="">📋 عميل مسجل...</option>';
-
-            for(let cName in cloudClients) {
-                let clientRoute = cloudClientsRoutes[cName] || '';
-                
-                if(!clientRoute) {
-                    for(let uid in portalCustomersDB) {
-                        if(portalCustomersDB[uid].name === cName && portalCustomersDB[uid].route) {
-                            clientRoute = portalCustomersDB[uid].route;
-                            break;
-                        }
-                    }
-                }
-
-                if(selectedRoute === 'ALL' || (clientRoute && clientRoute.trim() === selectedRoute.trim())) {
-                    let routeTag = clientRoute ? ` [${clientRoute}]` : '';
-                    sel.innerHTML += `<option value="${cName}">${cName} (${cloudClients[cName]})${routeTag}</option>`;
-                }
-            }
-            updateReportClientsSelect();
-        }
-
-        function onClientNameInput() {
-            clearTimeout(clientInputTimer);
-            const val = document.getElementById('clientName').value.trim();
-            const lblCode = document.getElementById('lblClientCode');
-            const lblRoute = document.getElementById('lblClientRoute');
-            const historyBox = document.getElementById('clientMonthlyHistory');
-            
-            if(!val) { 
-                lblCode.innerText = "--"; 
-                if(lblRoute) lblRoute.innerText = "--";
-                historyBox.style.display = 'none'; 
-                return; 
-            }
-
-            let foundRoute = cloudClientsRoutes[val] || "--";
-            for(let uid in portalCustomersDB) {
-                if(portalCustomersDB[uid].name === val && portalCustomersDB[uid].route) {
-                    foundRoute = portalCustomersDB[uid].route;
-                    break;
-                }
-            }
-            if(lblRoute) lblRoute.innerText = foundRoute;
-
-            if(cloudClients[val]) lblCode.innerText = cloudClients[val];
-            else lblCode.innerText = "عميل جديد (تلقائي)";
-
-            clientInputTimer = setTimeout(() => {
-                let clientSales = cloudSales.filter(s => s.client && s.client.toLowerCase() === val.toLowerCase() && s.status !== 'cancelled');
-                if(clientSales.length > 0) {
-                    let totalMonth = clientSales.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
-                    let details = clientSales.map(i => `فاتورة #${i.invNo}: ${i.total} ج.م (${i.date})`).join(' | ');
-                    historyBox.style.display = 'block';
-                    historyBox.innerHTML = `<b>📊 مبيعات العميل النشطة:</b> إجمالي الصافي = ${totalMonth.toFixed(2)} ج.م<br><span style="font-size:10px;">${details}</span>`;
-                } else {
-                    historyBox.style.display = 'none';
-                }
-            }, 300);
         }
 
         function calcRatioLoading() {
@@ -3596,7 +3703,7 @@
             const oldName = c.name;
             const newName = document.getElementById('modalEditCustName').value.trim();
             const code = document.getElementById('modalEditCustCode').value.trim();
-            const route = document.getElementById('modalEditCustRoute').value.trim();
+            const route = normalizeRouteName(document.getElementById('modalEditCustRoute').value.trim());
             const village = document.getElementById('modalEditCustVillage').value.trim();
             const phone = document.getElementById('modalEditCustPhone').value.trim();
             const pass = document.getElementById('modalEditCustPass').value.trim();
@@ -3636,7 +3743,7 @@
         function adminDirectAddCustomer() {
             const name = document.getElementById('adminDirectName').value.trim();
             const code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
-            const route = document.getElementById('adminDirectRoute').value.trim();
+            const route = normalizeRouteName(document.getElementById('adminDirectRoute').value.trim());
             const village = document.getElementById('adminDirectVillage').value.trim();
             const phone = document.getElementById('adminDirectPhone').value.trim();
             const pass = document.getElementById('adminDirectPass').value.trim() || "123456";
@@ -3743,7 +3850,7 @@
                 rows.forEach((r, idx) => {
                     let name = r["اسم العميل"] || r["العميل"] || r["Name"] || ("عميل " + idx);
                     let code = r["الكود الثابت"] || r["الكود"] || r["Code"] || ("C-" + (1000 + idx));
-                    let route = r["خط السير"] || r["الخط"] || r["Route"] || "خط عام";
+                    let route = normalizeRouteName(r["خط السير"] || r["الخط"] || r["Route"] || "خط عام");
                     let village = r["القرية"] || r["المركز"] || "";
                     let phone = r["التليفون"] || r["الموبايل"] || "";
                     let type = r["الفئة"] || "retail";
