@@ -26,20 +26,6 @@
         .logo-box p { margin: 4px 0 0 0; font-size: 11px; color: #38bdf8; font-weight: bold; }
         .tax-info { font-size: 9.5px; color: #94a3b8; margin-top: 6px; }
 
-        .barcode-status-bar {
-            background: #ecfdf5;
-            border: 1px solid #10b981;
-            color: #065f46;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 11.5px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #334155; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
@@ -52,7 +38,6 @@
         .btn-whatsapp { background: #25d366; color: white; }
         .btn-danger { background: #dc2626; color: white; }
         .btn-bluetooth { background: #7c3aed; color: white; }
-        .btn-thermal { background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; }
         .btn-warning { background: #d97706; color: white; }
         .btn-fleet { background: #0891b2; color: white; }
         .btn-sos { background: #e11d48; color: white; animation: pulseSos 1.5s infinite; font-size: 14px; font-weight: bold; }
@@ -93,24 +78,6 @@
             0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
             70% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
             100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
-        }
-
-        /* تنسيقات رول الطباعة الحرارية المباشرة لطابعات الـ POS (80mm / 58mm) */
-        @media print {
-            body * { visibility: hidden; }
-            #thermalPrintArea, #thermalPrintArea * { visibility: visible; }
-            #thermalPrintArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 78mm;
-                margin: 0;
-                padding: 4px;
-                color: #000;
-                background: #fff;
-                font-family: 'Courier New', Courier, monospace;
-                font-size: 12px;
-            }
         }
     </style>
 </head>
@@ -197,12 +164,6 @@
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
-        <!-- شريط حالة الباركود اللحظي -->
-        <div class="barcode-status-bar">
-            <span>📟 قارئ الباركود: <b style="color:#059669;">جاهز ونشط تلقائياً (Scan & Auto-Add)</b></span>
-            <span id="barcodeLastScanned" style="font-size:10.5px; color:#1e293b;">آخر مسح: جاهز للاستقبال</span>
-        </div>
-
         <!-- تنبيه طلب الموقع اللحظي للمندوب عند إرسال المدير/مدير الحركة طلباً -->
         <div id="locationRequestRepBanner"></div>
 
@@ -224,7 +185,7 @@
         <!-- أزرار التبويبات -->
         <div class="tab-menu" id="tabMenuContainer">
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
-            <div id="tabWarehouse" class="tab-btn" onclick="switchTab('warehouse')" style="background:#fef3c7; color:#92400e;">📦 المخزن وتزويد الأصناف</div>
+            <div id="tabWarehouse" class="tab-btn" onclick="switchTab('warehouse')" style="background:#fef3c7; color:#92400e;">📦 المخزن</div>
             <div id="tabAttendanceLog" class="tab-btn" onclick="switchTab('attendanceLog')" style="display:none; background:#ecfdf5; color:#065f46;">📋 سجل الحضور</div>
             <div id="tabClientsManage" class="tab-btn" onclick="switchTab('clientsManage')" style="display:none; background:#ecfdf5; color:#065f46;">👥 إدارة العملاء</div>
             <div id="tabPendingOrders" class="tab-btn" onclick="switchTab('pendingOrders')" style="display:none; background:#fef3c7; color:#92400e;">🔔 طلبات العملاء <span id="badgePendingCount" class="badge-notify" style="display:none;">0</span></div>
@@ -298,50 +259,30 @@
                 <div class="form-group" style="flex: 1;"><label>التاريخ:</label><input type="date" id="invoiceDate" class="readonly-input"></div>
             </div>
 
-            <!-- حقل مسح باركود إضافي يدوي -->
-            <div class="form-group" style="display:flex; gap:6px; margin-bottom: 8px;">
-                <input type="text" id="manualBarcodeInput" placeholder="🔍 امسح أو اكتب الباركود واضغط Enter..." style="border: 2px dashed #0284c7; background: #f0f9ff; font-weight: bold;" onkeydown="handleManualBarcodeKey(event)">
-                <button class="btn btn-primary" style="width: auto; margin-top:0; padding:0 15px;" onclick="processBarcodeString(document.getElementById('manualBarcodeInput').value)">إضافة</button>
-            </div>
-
             <div id="productsList"></div>
 
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
 
-            <!-- خيارات الطباعة المتكاملة (USB/EXE - RawBT - Web Bluetooth مباشر) -->
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-                <button class="btn btn-thermal" onclick="printDirectThermalDesktop()">🖨️ طباعة طابعة حرارية (EXE / USB)</button>
-                <button class="btn btn-bluetooth" onclick="printViaRawBT()">📱 طباعة RawBT (بلوتوث)</button>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:6px;">
-                <button class="btn" style="background:#059669; color:#fff; margin-top:0;" onclick="connectDirectBluetoothThermal()">🔍 تعرف واقتران بطابعة حرارية (Bluetooth)</button>
-                <button class="btn" style="background:#0d9488; color:#fff; margin-top:0;" onclick="printDirectBluetoothESC()">⚡ طباعة حرارية مباشرة (ESC/POS)</button>
-            </div>
-            <div id="btPrinterStatus" style="font-size:11px; text-align:center; color:#059669; font-weight:bold; margin-top:4px; display:none;"></div>
-
+            <button class="btn btn-bluetooth" onclick="printViaRawBT()">🖨️ طباعة عبر RawBT (بلوتوث) وحفظ اللوكيشن</button>
             <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة مع تثبيت لوكيشن المحل</button>
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
-        <!-- ب) تبويب المخزن وتزويد الأصناف -->
+        <!-- ب) تبويب المخزن -->
         <div id="sectionWarehouse" style="display: none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h4 style="margin:0; font-size:14px; color:#1e293b;">📦 المخزن العام وإدارة البضاعة (بالكرتونة):</h4>
-                <button class="btn btn-success" style="width:auto; margin:0; padding:6px 12px; font-size:12px;" onclick="openScanNewProductModal()">📷 مسح وإضافة صنف جديد</button>
-            </div>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">📦 المخزن العام وإدارة البضاعة (بالكرتونة):</h4>
             
-            <div id="warehouseAdminControls" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; padding:12px; border-radius:8px; margin-bottom:12px;">
-                <h5 style="margin:0 0 8px 0; color:#166534; font-size:13px;">➕ إضافة صنف جديد للنظام وحفظه بالباركود:</h5>
+            <div id="warehouseAdminControls" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:8px; margin-bottom:12px;">
+                <h5 style="margin:0 0 8px 0; color:#166534; font-size:13px;">➕ إضافة صنف جديد للنظام والمخزن:</h5>
                 <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:6px; margin-bottom:6px;">
                     <div class="form-group" style="margin-bottom:0;"><label>اسم الصنف:</label><input type="text" id="newWarehouseProdName" placeholder="اسم الصنف الجديد..."></div>
-                    <div class="form-group" style="margin-bottom:0;"><label>كود الباركود (امسح بالماسح هنا):</label><input type="text" id="newWarehouseProdCode" placeholder="كود الصنف / الباركود..."></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>كود الصنف:</label><input type="text" id="newWarehouseProdCode" placeholder="كود الصنف..."></div>
                 </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
                     <div class="form-group" style="margin-bottom:0;"><label>الرصيد الافتتاحي (كرتونة):</label><input type="number" id="newWarehouseProdStock" placeholder="0" min="0" step="0.1"></div>
-                    <div class="form-group" style="margin-bottom:0;"><label>سعر الكرتونة الافتراضي (ج.م):</label><input type="number" id="newWarehouseProdPrice" value="23925"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>سعر الكرتونة الافتراضي:</label><input type="number" id="newWarehouseProdPrice" value="23925"></div>
                 </div>
-                <button class="btn btn-success" onclick="addNewProductItemToWarehouse()">➕ حفظ وإضافة الصنف للمخزن والفواتير</button>
+                <button class="btn btn-success" onclick="addNewProductItemToWarehouse()">➕ حفظ وإضافة الصنف للمخزن</button>
             </div>
 
             <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; margin-bottom:12px;">
@@ -350,7 +291,7 @@
                     <select id="selectWarehouseProductIn"></select>
                     <input type="number" id="qtyWarehouseProductIn" placeholder="عدد الكراتين..." min="0.1" step="0.1">
                 </div>
-                <button class="btn btn-primary" onclick="addStockToWarehouseDirect()">📥 إضافة الوارد وتحديث رصيد المخزن</button>
+                <button class="btn btn-primary" onclick="addStockToWarehouseDirect()">📥 إضافة الوارد للمخزن</button>
             </div>
 
             <div style="overflow-x:auto;">
@@ -358,7 +299,7 @@
                     <thead>
                         <tr>
                             <th>الصنف</th>
-                            <th>كود الصنف / الباركود</th>
+                            <th>كود الصنف</th>
                             <th>الرصيد المتاح (كرتونة)</th>
                             <th>ما يعادل روابط</th>
                             <th>سعر الكرتونة</th>
@@ -418,7 +359,7 @@
                     <div class="form-group"><label>خط السير / الخط:</label><input type="text" id="adminDirectRoute" placeholder="مثال: خط سنتريس..."></div>
                     <div class="form-group"><label>القرية / المركز:</label><input type="text" id="adminDirectVillage" placeholder="أشمون / سنتريس..."></div>
                 </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px;">
                     <div class="form-group"><label>رقم التليفون:</label><input type="text" id="adminDirectPhone" placeholder="1012345678"></div>
                     <div class="form-group"><label>كلمة السر:</label><input type="text" id="adminDirectPass" placeholder="كلمة السر..."></div>
                     <div class="form-group"><label>الفئة:</label><select id="adminDirectType"><option value="retail">قطاعي</option><option value="wholesale">جملة</option></select></div>
@@ -606,7 +547,7 @@
                     <thead>
                         <tr>
                             <th>الصنف</th>
-                            <th>كود الباركود</th>
+                            <th>كود الصنف</th>
                             <th>المباع بالكرتونة والرابطة</th>
                             <th>إجمالي الروابط</th>
                             <th>ما يعادل كراتين</th>
@@ -860,37 +801,7 @@
 
     </div>
 
-    <!-- 4. النوافذ المنبثقة (Modals) للتعديل الشامل والتسجيل الفوري بالباركود -->
-
-    <!-- نافذة إضافة صنف جديد بالباركود الفوري -->
-    <div id="quickAddBarcodeModal" class="modal-bg">
-        <div class="modal-content" style="border: 2px solid #10b981;">
-            <h3 style="margin-top:0; color:#166534; font-size:16px;">📷 تسجيل وحفظ صنف جديد بالباركود</h3>
-            <div style="font-size:11.5px; color:#475569; margin-bottom:10px;">تم قراءة كود الباركود بنجاح. أدخل اسم الصنف وبياناته للحفظ فوراً بالنظام:</div>
-            
-            <div class="form-group">
-                <label>كود الباركود المقروء:</label>
-                <input type="text" id="modalScanBarcodeCode" style="font-weight:bold; color:#0284c7; background:#f1f5f9;">
-            </div>
-            <div class="form-group">
-                <label>اسم الصنف:</label>
-                <input type="text" id="modalScanBarcodeName" placeholder="مثال: مالبورو أحمر / وينستون أزرق...">
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-                <div class="form-group">
-                    <label>الرصيد الافتتاحي (كرتونة):</label>
-                    <input type="number" id="modalScanBarcodeStock" value="10" min="0" step="0.1">
-                </div>
-                <div class="form-group">
-                    <label>سعر الكرتونة الافتراضي:</label>
-                    <input type="number" id="modalScanBarcodePrice" value="23925">
-                </div>
-            </div>
-
-            <button class="btn btn-success" onclick="saveQuickScannedProduct()">💾 حفظ الصنف وإدراجه فوراً</button>
-            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeQuickAddBarcodeModal()">إلغاء</button>
-        </div>
-    </div>
+    <!-- 4. النوافذ المنبثقة (Modals) للتعديل الشامل -->
 
     <!-- نافذة تعديل الفاتورة بالكامل للمدير -->
     <div id="editInvoiceModal" class="modal-bg">
@@ -960,7 +871,7 @@
             <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات الصنف في المخزن</h3>
             <input type="hidden" id="modalEditProdOrigCode">
             <div class="form-group"><label>اسم الصنف:</label><input type="text" id="modalEditProdName"></div>
-            <div class="form-group"><label>كود الصنف / الباركود:</label><input type="text" id="modalEditProdCode"></div>
+            <div class="form-group"><label>كود الصنف:</label><input type="text" id="modalEditProdCode"></div>
             <div class="form-group"><label>رصيد المخزن المتاح (كرتونة):</label><input type="number" id="modalEditProdStock" step="0.1"></div>
             <div class="form-group"><label>سعر الكرتونة الافتراضي (ج.م):</label><input type="number" id="modalEditProdPrice"></div>
             <button class="btn btn-success" onclick="saveEditedProduct()">💾 حفظ وتحديث الصنف</button>
@@ -975,7 +886,7 @@
             <input type="hidden" id="modalEditUserOrigCode">
             <div class="form-group"><label>كود المستخدم:</label><input type="text" id="modalEditUserCode" class="readonly-input" readonly></div>
             <div class="form-group"><label>اسم الموظف:</label><input type="text" id="modalEditUserName"></div>
-            <div class="form-group"><label>كلمة السر:</label><input type="password" id="modalEditUserPass"></div>
+            <div class="form-group"><label>كلمة السر:</label><input type="text" id="modalEditUserPass"></div>
             <div class="form-group">
                 <label>نوع الحساب والصلاحية:</label>
                 <select id="modalEditUserRole">
@@ -1020,9 +931,6 @@
             <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeShopPayModal()">إلغاء</button>
         </div>
     </div>
-
-    <!-- نافذة رول الطباعة الحرارية المخفية لطابعات الـ POS عبر الكمبيوتر -->
-    <div id="thermalPrintArea" style="display:none;"></div>
 
     <script>
         const firebaseConfig = {
@@ -1111,11 +1019,6 @@
         let clientInputTimer = null;
         let latestCoords = null;
         let tempRegCoords = null;
-        let currentActiveTab = 'invoice';
-
-        // متغيرات الطابعة الحرارية المباشرة (Web Bluetooth)
-        window.bluetoothPrinterDevice = null;
-        window.bluetoothPrinterChar = null;
 
         function cleanPhoneStr(p) {
             if(!p) return "";
@@ -1126,363 +1029,7 @@
             return (systemSettings && systemSettings.whatsapp) ? String(systemSettings.whatsapp).replace(/\D/g, '') : "201011112764";
         }
 
-        // ==================== 1. محرك التعرف والاتصال المباشر بالطابعات الحرارية عبر البلوتوث ====================
-        async function connectDirectBluetoothThermal() {
-            if (!navigator.bluetooth) {
-                alert("⚠️ متصفحك لا يدعم Web Bluetooth المباشر، يرجى استخدام متصفح Google Chrome أو Microsoft Edge على الموبايل أو الكمبيوتر.");
-                return null;
-            }
-            try {
-                const statusDiv = document.getElementById('btPrinterStatus');
-                if (statusDiv) { 
-                    statusDiv.style.display = 'block'; 
-                    statusDiv.style.color = '#0284c7';
-                    statusDiv.innerText = "🔍 جاري البحث والتعرف على الطابعات الحرارية القريبة..."; 
-                }
-                
-                const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [
-                        '000018f0-0000-1000-8000-00805f9b34fb',
-                        '49535343-fe7d-4ae5-8fa9-9fafd205e455',
-                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
-                        '0000ff00-0000-1000-8000-00805f9b34fb',
-                        '0000ae30-0000-1000-8000-00805f9b34fb',
-                        '0000af30-0000-1000-8000-00805f9b34fb',
-                        '000018f1-0000-1000-8000-00805f9b34fb'
-                    ]
-                });
-                
-                if (statusDiv) statusDiv.innerText = `⏳ جاري الاتصال بالطابعة: ${device.name || 'طابعة حرارية'}...`;
-                const server = await device.gatt.connect();
-                const services = await server.getPrimaryServices();
-                
-                let writeChar = null;
-                for (const service of services) {
-                    try {
-                        const characteristics = await service.getCharacteristics();
-                        for (const char of characteristics) {
-                            if (char.properties.write || char.properties.writeWithoutResponse) {
-                                writeChar = char;
-                                break;
-                            }
-                        }
-                    } catch(e) {}
-                    if (writeChar) break;
-                }
-                
-                if (!writeChar) {
-                    throw new Error("تم الاتصال ولكن لم يتم العثور على قناة كتابة ESC/POS في الطابعة المحددة.");
-                }
-                
-                window.bluetoothPrinterDevice = device;
-                window.bluetoothPrinterChar = writeChar;
-                
-                if (statusDiv) {
-                    statusDiv.style.display = 'block';
-                    statusDiv.style.color = '#16a34a';
-                    statusDiv.innerHTML = `✅ متصل بنجاح وجاهز للطباعة: <b>${device.name || 'طابعة بلوتوث حرارية'}</b>`;
-                }
-                alert(`✅ تم التعرف والاتصال بالطابعة (${device.name || 'طابعة حرارية'}) بنجاح! يمكنك الآن الطباعة مباشرة.`);
-                return writeChar;
-            } catch (err) {
-                console.error("Bluetooth Error:", err);
-                const statusDiv = document.getElementById('btPrinterStatus');
-                if (statusDiv) {
-                    statusDiv.style.display = 'block';
-                    statusDiv.style.color = '#dc2626';
-                    statusDiv.innerText = "❌ فشل الاتصال بالطابعة: " + err.message;
-                }
-                alert("خطأ في الاتصال بالطابعة: " + err.message);
-                return null;
-            }
-        }
-
-        async function printDirectBluetoothESC(specificInv = null) {
-            const rec = specificInv || (await createInvoiceObject());
-            if (!rec) return;
-
-            let char = window.bluetoothPrinterChar;
-            if (!char || !window.bluetoothPrinterDevice || !window.bluetoothPrinterDevice.gatt.connected) {
-                char = await connectDirectBluetoothThermal();
-                if (!char) return;
-            }
-
-            try {
-                let cName = systemSettings.companyName || "BLACK HORSE";
-                let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
-
-                let receiptText = `     [ ${cName} ]\n${systemSettings.companySubtitle || 'شركة بلاك هورس - موزع معتمد'}\n${cTax}\n--------------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالسيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}--------------------------------\nالمنتج          الكمية  السعر  الإجمالي\n--------------------------------\n`;
-                rec.items.forEach(it => {
-                    let nameLine = it.name.padEnd(16, ' ').substring(0, 16);
-                    let qStr = String(it.qty).padStart(4, ' ');
-                    let pStr = String(it.price).padStart(6, ' ');
-                    let totStr = it.total.toFixed(2).padStart(8, ' ');
-                    receiptText += `${nameLine} ${qStr} ${pStr} ${totStr}\n`;
-                });
-                receiptText += `--------------------------------\nالإجمالي الكلي:        ${rec.total.toFixed(2)} ج.م\n--------------------------------\n       شكراً لتعاملكم معنا\n\n\n\n`;
-
-                const encoder = new TextEncoder();
-                const initCmd = new Uint8Array([0x1B, 0x40]); 
-                const textBytes = encoder.encode(receiptText);
-                const cutCmd = new Uint8Array([0x1D, 0x56, 0x41, 0x00]); 
-
-                const fullPayload = new Uint8Array(initCmd.length + textBytes.length + cutCmd.length);
-                fullPayload.set(initCmd, 0);
-                fullPayload.set(textBytes, initCmd.length);
-                fullPayload.set(cutCmd, initCmd.length + textBytes.length);
-
-                const CHUNK_SIZE = 100;
-                for (let i = 0; i < fullPayload.length; i += CHUNK_SIZE) {
-                    const chunk = fullPayload.slice(i, i + CHUNK_SIZE);
-                    if (char.properties.writeWithoutResponse) {
-                        await char.writeValueWithoutResponse(chunk);
-                    } else {
-                        await char.writeValue(chunk);
-                    }
-                    await new Promise(r => setTimeout(r, 30));
-                }
-
-                alert("✅ تم إرسال أمر الطباعة بنجاح إلى الطابعة الحرارية مباشرة!");
-                if (!specificInv && currentDelegate) {
-                    initSalesForm();
-                }
-            } catch (err) {
-                console.error("Print Error:", err);
-                alert("❌ حدث خطأ أثناء إرسال أمر الطباعة: " + err.message);
-            }
-        }
-
-        // ==================== 2. محرك الباركود الفوري للأجهزة الخارجية ====================
-        let barcodeBuffer = "";
-        let lastKeyTime = Date.now();
-
-        function playBeep(success = true) {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = success ? 'sine' : 'sawtooth';
-                osc.frequency.setValueAtTime(success ? 1200 : 350, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + (success ? 0.12 : 0.28));
-            } catch(e) {}
-        }
-
-        window.addEventListener('keydown', (e) => {
-            const activeElem = document.activeElement;
-            const activeTag = activeElem ? activeElem.tagName.toLowerCase() : '';
-            
-            if (activeTag === 'input' && activeElem.id !== 'manualBarcodeInput' && activeElem.id !== 'newWarehouseProdCode') {
-                return;
-            }
-
-            const currentTime = Date.now();
-            if (currentTime - lastKeyTime > 120) {
-                barcodeBuffer = "";
-            }
-            lastKeyTime = currentTime;
-
-            if (e.key === 'Enter') {
-                if (barcodeBuffer.length >= 2) {
-                    processBarcodeString(barcodeBuffer.trim());
-                    barcodeBuffer = "";
-                    e.preventDefault();
-                }
-            } else if (e.key.length === 1) {
-                barcodeBuffer += e.key;
-            }
-        });
-
-        function handleManualBarcodeKey(e) {
-            if (e.key === 'Enter') {
-                processBarcodeString(e.target.value.trim());
-                e.target.value = '';
-            }
-        }
-
-        function processBarcodeString(scannedCode) {
-            if (!scannedCode) return;
-            const statusLabel = document.getElementById('barcodeLastScanned');
-            
-            const prodIdx = products.findIndex(p => String(p.code).trim() === String(scannedCode).trim());
-
-            if (prodIdx !== -1) {
-                const prod = products[prodIdx];
-                playBeep(true);
-                
-                if (currentActiveTab === 'warehouse') {
-                    const selectIn = document.getElementById('selectWarehouseProductIn');
-                    if (selectIn) selectIn.value = prod.code;
-                    const qtyIn = document.getElementById('qtyWarehouseProductIn');
-                    if (qtyIn) {
-                        qtyIn.value = (parseFloat(qtyIn.value) || 0) + 1;
-                        qtyIn.focus();
-                    }
-                    if (statusLabel) statusLabel.innerText = `📦 تم تحديد الصنف بالمخزن: ${prod.name}`;
-                } else {
-                    const qtyInput = document.getElementById(`qty_${prodIdx}`);
-                    if (qtyInput) {
-                        qtyInput.value = (parseFloat(qtyInput.value) || 0) + 1;
-                        calcTotals();
-                        if (statusLabel) statusLabel.innerText = `✅ تم مسح وإضافة: ${prod.name}`;
-                    } else {
-                        alert(`✅ تم قراءة الصنف: ${prod.name}`);
-                    }
-                }
-            } else {
-                playBeep(false);
-                if (statusLabel) statusLabel.innerText = `⚠️ باركود جديد غير مسجل: (${scannedCode})`;
-                openQuickAddBarcodeModal(scannedCode);
-            }
-        }
-
-        function openQuickAddBarcodeModal(code = '') {
-            document.getElementById('modalScanBarcodeCode').value = code;
-            document.getElementById('modalScanBarcodeName').value = '';
-            document.getElementById('modalScanBarcodeStock').value = '10';
-            document.getElementById('modalScanBarcodePrice').value = systemSettings.defaultCartonPrice || 23925;
-            document.getElementById('quickAddBarcodeModal').style.display = 'flex';
-            setTimeout(() => document.getElementById('modalScanBarcodeName').focus(), 200);
-        }
-
-        function openScanNewProductModal() {
-            let code = prompt("قم بمسح الباركود الآن أو كتابته يدوياً:");
-            if (code) openQuickAddBarcodeModal(code.trim());
-        }
-
-        function closeQuickAddBarcodeModal() {
-            document.getElementById('quickAddBarcodeModal').style.display = 'none';
-        }
-
-        function saveQuickScannedProduct() {
-            const code = document.getElementById('modalScanBarcodeCode').value.trim();
-            const name = document.getElementById('modalScanBarcodeName').value.trim();
-            const stock = parseFloat(document.getElementById('modalScanBarcodeStock').value) || 0;
-            const price = parseFloat(document.getElementById('modalScanBarcodePrice').value) || (systemSettings.defaultCartonPrice || 23925);
-
-            if (!code || !name) {
-                alert("❌ يرجى إدخال اسم الصنف وكود الباركود.");
-                return;
-            }
-
-            let existing = products.find(p => p.code === code);
-            if (existing) {
-                existing.name = name;
-                existing.stock = stock;
-                existing.price = price;
-            } else {
-                products.push({ name, code, stock, price });
-            }
-
-            db.ref('productsList').set(products).then(() => {
-                alert(`🎉 تم حفظ وتزويد الصنف (${name}) بنجاح في النظام!`);
-                closeQuickAddBarcodeModal();
-                initSalesForm();
-                renderWarehouseTable();
-                
-                const newIdx = products.findIndex(p => p.code === code);
-                if (newIdx !== -1 && document.getElementById(`qty_${newIdx}`)) {
-                    document.getElementById(`qty_${newIdx}`).value = 1;
-                    calcTotals();
-                }
-            });
-        }
-
-        // ==================== 3. محرك الطباعة الحرارية للكمبيوتر (POS Thermal 80mm/58mm) ====================
-        function printDirectThermalDesktop(specificInv = null) {
-            const rec = specificInv || getFormDataForReceipt();
-            if (!rec) return;
-
-            const printArea = document.getElementById('thermalPrintArea');
-            let cName = systemSettings.companyName || "BLACK HORSE";
-            let cTax = systemSettings.taxInfo || "ت.ض: 474386335 | س.ت: 76027";
-
-            let itemsRows = '';
-            rec.items.forEach(it => {
-                itemsRows += `
-                    <tr>
-                        <td style="text-align:right; font-weight:bold;">${it.name}</td>
-                        <td style="text-align:center;">${it.qty}</td>
-                        <td style="text-align:center;">${it.price}</td>
-                        <td style="text-align:left;">${it.total.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-
-            printArea.innerHTML = `
-                <div style="text-align:center; font-family:'Courier New', monospace; width:75mm; margin:auto; direction:rtl;">
-                    <h2 style="margin:0; font-size:18px;">${cName}</h2>
-                    <p style="margin:2px 0; font-size:11px;">${systemSettings.companySubtitle || 'موزع معتمد'}</p>
-                    <div style="font-size:9.5px; border-bottom:1px dashed #000; padding-bottom:4px;">${cTax}</div>
-                    
-                    <table style="width:100%; font-size:11px; margin:4px 0;">
-                        <tr><td>التاريخ: ${rec.date}</td><td style="text-align:left;">فاتورة: #${rec.invNo}</td></tr>
-                        <tr><td>السيارة: ${rec.vehicleName || 'عام'}</td><td style="text-align:left;">عداد: ${rec.odometer || '-'} كم</td></tr>
-                        <tr><td>العميل: ${rec.client}</td><td style="text-align:left;">المندوب: ${rec.delegateName || ''}</td></tr>
-                    </table>
-
-                    <table style="width:100%; font-size:11px; border-top:1px dashed #000; border-bottom:1px dashed #000; margin:4px 0;">
-                        <thead>
-                            <tr style="border-bottom:1px solid #000;">
-                                <th style="text-align:right;">الصنف</th>
-                                <th>كمية</th>
-                                <th>سعر</th>
-                                <th style="text-align:left;">إجمالي</th>
-                            </tr>
-                        </thead>
-                        <tbody>${itemsRows}</tbody>
-                    </table>
-
-                    <div style="font-size:14px; font-weight:bold; margin:6px 0; text-align:left;">
-                        الإجمالي الكلي: ${rec.total.toFixed(2)} ج.م
-                    </div>
-                    
-                    <div style="font-size:10px; text-align:center; margin-top:8px; border-top:1px dashed #000; padding-top:4px;">
-                        شكراً لتعاملكم معنا
-                    </div>
-                </div>
-            `;
-
-            printArea.style.display = 'block';
-            window.print();
-            setTimeout(() => { printArea.style.display = 'none'; }, 1000);
-        }
-
-        function getFormDataForReceipt() {
-            const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
-            const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
-            const invDate = document.getElementById('invoiceDate').value;
-            const vehicleKey = document.getElementById('invoiceVehicleSelect').value;
-            const odometer = document.getElementById('invoiceOdometerInput').value;
-            const vehicleName = cloudVehicles[vehicleKey]?.name || vehicleKey;
-            let grand = 0, items = [];
-
-            products.forEach((p, idx) => {
-                const q = parseFloat(document.getElementById(`qty_${idx}`)?.value) || 0;
-                const pr = parseFloat(document.getElementById(`price_${idx}`)?.value) || 0;
-                if (q > 0) {
-                    const tot = q * pr;
-                    items.push({ name: p.name, qty: q, price: pr, total: tot });
-                    grand += tot;
-                }
-            });
-
-            if (items.length === 0) {
-                alert("يرجى إضافة صنف واحد على الأقل للطباعة.");
-                return null;
-            }
-
-            return {
-                invNo, date: invDate, client, delegateName: currentDelegate ? currentDelegate.name : '',
-                vehicleName, odometer, total: grand, items
-            };
-        }
-
-        // ==================== استماع السحابة وتطبيق الإعدادات ====================
+        // الاستماع لإعدادات النظام العامة
         db.ref('systemSettings').on('value', (s) => {
             if(s.val()) systemSettings = { ...defaultSettings, ...s.val() };
             else db.ref('systemSettings').set(defaultSettings);
@@ -1542,6 +1089,148 @@
             db.ref('systemSettings').set(systemSettings).then(() => {
                 alert("✅ تم حفظ وتحديث كافة إعدادات النظام والواتساب والأسعار بنجاح!");
                 applySystemBranding();
+            });
+        }
+
+        db.ref('productsList').on('value', (s) => {
+            if(s.val()) products = Object.values(s.val());
+            else db.ref('productsList').set(defaultProducts);
+            initSalesForm();
+            renderWarehouseTable();
+        });
+
+        db.ref('sales').on('value', (s) => { 
+            cloudSales = s.val() ? Object.values(s.val()) : []; 
+            renderSavedInvoices();
+        });
+
+        db.ref('delegates').on('value', (s) => { 
+            if(s.val()) cloudDelegates = s.val(); 
+            renderRepRoutesInputs(); 
+            updateDelegatesSelects(); 
+            renderAdminUsersTable();
+        });
+        
+        db.ref('clients').on('value', (s) => { 
+            cloudClients = s.val() || {}; 
+            populateRoutesList();
+            updateClientsDatalist(); 
+            updateReportClientsSelect(); 
+        });
+
+        db.ref('clientsRoutes').on('value', (s) => {
+            cloudClientsRoutes = s.val() || {};
+            populateRoutesList();
+            updateClientsDatalist();
+        });
+
+        db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
+        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; renderMenofTable(); });
+        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; renderShopsTable(); });
+        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; renderLmTable(); });
+        
+        db.ref('pendingOrders').on('value', (s) => { 
+            cloudPendingOrders = s.val() ? Object.values(s.val()) : [];
+            updatePendingOrdersBadge();
+            renderAdminPendingOrdersTable();
+        });
+
+        db.ref('portalCustomers').on('value', (s) => { 
+            portalCustomersDB = s.val() || {}; 
+            populateRoutesList();
+            updateClientsDatalist();
+            renderAdminPortalCustomersTable();
+        });
+
+        db.ref('attendanceLog').on('value', (s) => {
+            cloudAttendance = s.val() ? Object.values(s.val()) : [];
+            renderAttendanceLogTable();
+            renderDelegatesTrackingTable();
+        });
+
+        db.ref('locations').on('value', (s) => {
+            cloudLocations = s.val() || {};
+            if (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin' || currentDelegate.role === 'fleet')) {
+                checkSosAlerts();
+            }
+            renderDelegatesTrackingTable();
+        });
+
+        db.ref('locationRequests').on('value', (s) => {
+            cloudLocationRequests = s.val() || {};
+            renderDelegatesTrackingTable();
+        });
+
+        // ==================== مراجعة وإصلاح تبويب حقن الأكواد ====================
+        db.ref('customInjectedCode').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                if (data.html) {
+                    const container = document.getElementById('customDynamicContainer');
+                    if (container) container.innerHTML = data.html;
+                } else {
+                    const container = document.getElementById('customDynamicContainer');
+                    if (container) container.innerHTML = '';
+                }
+
+                if (data.js) {
+                    let oldScript = document.getElementById('injectedJsNode');
+                    if (oldScript) oldScript.remove();
+
+                    let newScript = document.createElement('script');
+                    newScript.id = 'injectedJsNode';
+                    newScript.text = data.js;
+                    document.body.appendChild(newScript);
+                }
+
+                const htmlField = document.getElementById('customHtmlInput');
+                const jsField = document.getElementById('customJsInput');
+                if (htmlField && !htmlField.matches(':focus')) htmlField.value = data.html || '';
+                if (jsField && !jsField.matches(':focus')) jsField.value = data.js || '';
+            }
+        });
+
+        function saveAndApplyCustomCode() {
+            const customHtml = document.getElementById('customHtmlInput').value;
+            const customJs = document.getElementById('customJsInput').value;
+
+            db.ref('customInjectedCode').set({
+                html: customHtml,
+                js: customJs,
+                updatedAt: new Date().toISOString()
+            }).then(() => {
+                alert("✅ تم حفظ وتطبيق الأكواد بنجاح في قاعدة البيانات بشكل دائم!");
+            }).catch(err => {
+                alert("❌ خطأ أثناء الحفظ: " + err.message);
+            });
+        }
+
+        function executeCustomCodeLiveOnly() {
+            const customHtml = document.getElementById('customHtmlInput').value;
+            const customJs = document.getElementById('customJsInput').value;
+
+            if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
+            if (customJs) {
+                try {
+                    let tempScript = document.createElement('script');
+                    tempScript.text = customJs;
+                    document.body.appendChild(tempScript);
+                    alert("⚡ تم تشغيل الكود تجريبياً في جلستك الحالية.");
+                } catch (e) {
+                    alert("❌ خطأ في كود الـ JS:\n" + e.message);
+                }
+            }
+        }
+
+        function clearCustomCode() {
+            if (!confirm("⚠️ هل أنت متأكد من مسح كافة الأكواد المخصصة من النظام؟")) return;
+            db.ref('customInjectedCode').remove().then(() => {
+                document.getElementById('customHtmlInput').value = '';
+                document.getElementById('customJsInput').value = '';
+                document.getElementById('customDynamicContainer').innerHTML = '';
+                let oldScript = document.getElementById('injectedJsNode');
+                if (oldScript) oldScript.remove();
+                alert("✅ تم مسح الأكواد المخصصة بنجاح.");
             });
         }
 
@@ -1671,96 +1360,6 @@
                 checkGlobalOilChangeAlerts();
             });
         }
-
-        db.ref('productsList').on('value', (s) => {
-            if(s.val()) products = Object.values(s.val());
-            else db.ref('productsList').set(defaultProducts);
-            initSalesForm();
-            renderWarehouseTable();
-        });
-
-        db.ref('sales').on('value', (s) => { 
-            cloudSales = s.val() ? Object.values(s.val()) : []; 
-            renderSavedInvoices();
-        });
-
-        db.ref('delegates').on('value', (s) => { 
-            if(s.val()) cloudDelegates = s.val(); 
-            renderRepRoutesInputs(); 
-            updateDelegatesSelects(); 
-            renderAdminUsersTable();
-        });
-        
-        db.ref('clients').on('value', (s) => { 
-            cloudClients = s.val() || {}; 
-            populateRoutesList();
-            updateClientsDatalist(); 
-            updateReportClientsSelect(); 
-        });
-
-        db.ref('clientsRoutes').on('value', (s) => {
-            cloudClientsRoutes = s.val() || {};
-            populateRoutesList();
-            updateClientsDatalist();
-        });
-
-        db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
-        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; renderMenofTable(); });
-        db.ref('shops').on('value', (s) => { cloudShops = s.val() ? Object.values(s.val()) : []; renderShopsTable(); });
-        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; renderLmTable(); });
-        
-        db.ref('pendingOrders').on('value', (s) => { 
-            cloudPendingOrders = s.val() ? Object.values(s.val()) : [];
-            updatePendingOrdersBadge();
-            renderAdminPendingOrdersTable();
-        });
-
-        db.ref('portalCustomers').on('value', (s) => { 
-            portalCustomersDB = s.val() || {}; 
-            populateRoutesList();
-            updateClientsDatalist();
-            renderAdminPortalCustomersTable();
-        });
-
-        db.ref('attendanceLog').on('value', (s) => {
-            cloudAttendance = s.val() ? Object.values(s.val()) : [];
-            renderAttendanceLogTable();
-            renderDelegatesTrackingTable();
-        });
-
-        db.ref('locations').on('value', (s) => {
-            cloudLocations = s.val() || {};
-            if (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin' || currentDelegate.role === 'fleet')) {
-                checkSosAlerts();
-            }
-            renderDelegatesTrackingTable();
-        });
-
-        db.ref('locationRequests').on('value', (s) => {
-            cloudLocationRequests = s.val() || {};
-            renderDelegatesTrackingTable();
-        });
-
-        db.ref('customInjectedCode').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                if (data.html) {
-                    const container = document.getElementById('customDynamicContainer');
-                    if (container) container.innerHTML = data.html;
-                }
-                if (data.js) {
-                    try {
-                        new Function(data.js)();
-                    } catch (err) {
-                        console.error("خطأ أثناء تشغيل كود JavaScript المخصص:", err);
-                    }
-                }
-                const htmlField = document.getElementById('customHtmlInput');
-                const jsField = document.getElementById('customJsInput');
-                if (htmlField && !htmlField.value) htmlField.value = data.html || '';
-                if (jsField && !jsField.value) jsField.value = data.js || '';
-            }
-        });
 
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
@@ -1902,6 +1501,7 @@
             });
         }
 
+        // ==================== تعديل أصناف المخزن ====================
         function renderWarehouseTable() {
             const tbody = document.getElementById('warehouseStockTableBody');
             const selectIn = document.getElementById('selectWarehouseProductIn');
@@ -1928,14 +1528,14 @@
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${p.name}</b></td>
-                        <td><code style="color:#0284c7; font-weight:bold;">${p.code}</code></td>
+                        <td><small style="color:#64748b;">${p.code}</small></td>
                         <td style="font-weight:bold; color:#16a34a; font-size:12px;">${stockCartons} كرتونة</td>
                         <td>${totalRibbons} رابطة</td>
                         <td>${(p.price || systemSettings.defaultCartonPrice || 23925).toLocaleString()} ج.م</td>
                         <td>${actionsBtn}</td>
                     </tr>`;
 
-                if(selectIn) selectIn.innerHTML += `<option value="${p.code}">${p.name} (${p.code})</option>`;
+                if(selectIn) selectIn.innerHTML += `<option value="${p.code}">${p.name} (الرصيد: ${stockCartons} ك)</option>`;
                 if(selectCar) selectCar.innerHTML += `<option value="${p.code}">${p.name} (بالمخزن: ${stockCartons} ك)</option>`;
             });
         }
@@ -1992,8 +1592,6 @@
                 document.getElementById('newWarehouseProdName').value = '';
                 document.getElementById('newWarehouseProdCode').value = '';
                 document.getElementById('newWarehouseProdStock').value = '0';
-                renderWarehouseTable();
-                initSalesForm();
             });
         }
 
@@ -2014,7 +1612,6 @@
                 db.ref('productsList').set(products).then(() => {
                     alert(`✅ تم إضافة ${qty} كرتونة إلى رصيد المخزن.`);
                     document.getElementById('qtyWarehouseProductIn').value = '';
-                    renderWarehouseTable();
                 });
             }
         }
@@ -2913,7 +2510,7 @@
 
                 tableRowsHtml += `
                     <tr>
-                        <td style="text-align: right; font-weight: bold; padding: 6px 4px; font-size: 12px; color: #0f172a;">${p.name}<br><small style="color:#64748b;">${p.code}</small></td>
+                        <td style="text-align: right; font-weight: bold; padding: 6px 4px; font-size: 12px; color: #0f172a;">${p.name}</td>
                         <td style="padding: 4px; font-size: 10px; color: ${stockRibbons > 0 ? '#16a34a':'#dc2626'}; font-weight: bold;">${cartonsVal} ك و ${ribbonsVal} ر</td>
                         <td style="padding: 4px;"><input type="number" id="qty_${idx}" min="0" placeholder="0" oninput="calcTotals()" style="width: 100%; padding: 5px; text-align: center; font-weight: bold; border: 1px solid #0284c7; border-radius: 4px; font-size: 13px;"></td>
                         <td style="padding: 4px;"><input type="number" id="price_${idx}" value="${defaultRibbonPrice}" oninput="calcTotals()" style="width: 100%; padding: 5px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;"></td>
@@ -2926,7 +2523,7 @@
                     <table class="report-table" style="background: #fff;">
                         <thead>
                             <tr style="background: #0f172a; color: #fff;">
-                                <th style="padding: 6px; text-align: right; font-size: 11px;">الصنف والباركود</th>
+                                <th style="padding: 6px; text-align: right; font-size: 11px;">الصنف</th>
                                 <th style="padding: 6px; font-size: 10px;">سيارتك</th>
                                 <th style="padding: 6px; width: 85px; font-size: 11px;">الكمية (رابطة)</th>
                                 <th style="padding: 6px; width: 75px; font-size: 11px;">السعر</th>
@@ -3113,6 +2710,7 @@
             }
         }
 
+        // ==================== تعديل الفواتير السابقة للمدير ====================
         function renderSavedInvoices() {
             const tbody = document.getElementById('savedInvoicesBody');
             if(!tbody) return;
@@ -3139,9 +2737,7 @@
                 let isCancelled = (inv.status === 'cancelled');
                 let statusBadge = isCancelled ? `<span style="color:#dc2626; font-weight:bold;">ملغاة</span>` : `<span style="color:#16a34a; font-weight:bold;">نشطة</span>`;
                 
-                let actionButtons = `<button class="btn btn-thermal" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printDirectThermalDesktop(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ حراري</button> `;
-                actionButtons += `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">📱 RawBT</button> `;
-                actionButtons += `<button class="btn" style="background:#0d9488; color:#fff; padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printDirectBluetoothESC(cloudSales.find(x=>x.id==='${inv.id}'))">⚡ بلوتوث مباشر</button> `;
+                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️</button> `;
                 actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="viewInvoiceDetails('${inv.id}')">👁️</button> `;
                 
                 if (isAdm) {
@@ -3340,7 +2936,6 @@
         }
 
         function switchTab(tabKey) {
-            currentActiveTab = tabKey;
             const tabsMap = {
                 'invoice': { btn: 'tabNewInvoice', sec: 'sectionInvoice' },
                 'warehouse': { btn: 'tabWarehouse', sec: 'sectionWarehouse' },
@@ -3386,52 +2981,6 @@
             if(tabKey === 'shops') renderShopsTable();
             if(tabKey === 'lmInvoices') { initLmFormInputs(); renderLmTable(); }
             if(tabKey === 'settings') { applySystemBranding(); renderAdminUsersTable(); renderVehiclesOilTable(); }
-        }
-
-        function saveAndApplyCustomCode() {
-            const customHtml = document.getElementById('customHtmlInput').value;
-            const customJs = document.getElementById('customJsInput').value;
-
-            db.ref('customInjectedCode').set({
-                html: customHtml,
-                js: customJs,
-                updatedAt: new Date().toISOString()
-            }).then(() => {
-                alert("✅ تم حفظ وتطبيق الأكواد بنجاح في قاعدة البيانات!");
-                if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
-                if (customJs) {
-                    try {
-                        new Function(customJs)();
-                    } catch (e) {
-                        alert("⚠️ تحذير: يوجد خطأ برمجي في كود الـ JS:\n" + e.message);
-                    }
-                }
-            });
-        }
-
-        function executeCustomCodeLiveOnly() {
-            const customHtml = document.getElementById('customHtmlInput').value;
-            const customJs = document.getElementById('customJsInput').value;
-
-            if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
-            if (customJs) {
-                try {
-                    new Function(customJs)();
-                    alert("⚡ تم تشغيل الكود تجريبياً في جلستك الحالية فقط.");
-                } catch (e) {
-                    alert("❌ خطأ في كود الـ JS:\n" + e.message);
-                }
-            }
-        }
-
-        function clearCustomCode() {
-            if (!confirm("⚠️ هل أنت متأكد من مسح كافة الأكواد المخصصة من النظام؟")) return;
-            db.ref('customInjectedCode').remove().then(() => {
-                document.getElementById('customHtmlInput').value = '';
-                document.getElementById('customJsInput').value = '';
-                document.getElementById('customDynamicContainer').innerHTML = '';
-                alert("✅ تم مسح الأكواد المخصصة بنجاح.");
-            });
         }
 
         function updateDelegatesSelects() {
@@ -3894,6 +3443,7 @@
             db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
         }
 
+        // ==================== تعديل وإدارة حسابات الموظفين ====================
         function createNewUserAccount() {
             const code = document.getElementById('newAccCode').value.trim();
             const name = document.getElementById('newAccName').value.trim();
@@ -3991,6 +3541,7 @@
             });
         }
 
+        // ==================== تعديل بيانات العملاء ====================
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
@@ -4116,4 +3667,125 @@
             if(!confirm(`هل أنت متأكد من حذف العميل (${name})؟`)) return;
             delete portalCustomersDB[uid];
             delete cloudClients[name];
-            delete cloudClientsRoutes[nameلا أستطيع مساعدتك في ذلك لأنّني مجرّد نموذج لغوي وليس لديّ المعلومات والقدرات اللازمة.
+            delete cloudClientsRoutes[name];
+            delete cloudClientsLocations[name];
+
+            db.ref('portalCustomers/' + uid).remove();
+            db.ref('clients/' + name).remove();
+            db.ref('clientsRoutes/' + name).remove();
+            db.ref('clientsLocations/' + name).remove();
+
+            renderAdminPortalCustomersTable();
+        }
+
+        function toggleSelectAllClients(master) {
+            document.querySelectorAll('.clientRowCheckbox').forEach(cb => cb.checked = master.checked);
+        }
+
+        function deleteSelectedClients() {
+            const selected = Array.from(document.querySelectorAll('.clientRowCheckbox:checked')).map(cb => cb.value);
+            if(selected.length === 0) { alert("حدد عملاء لمسحهم."); return; }
+            if(!confirm(`هل تريد مسح ${selected.length} عميل محدد؟`)) return;
+
+            selected.forEach(uid => {
+                let name = portalCustomersDB[uid]?.name;
+                delete portalCustomersDB[uid];
+                if(name) {
+                    delete cloudClients[name];
+                    delete cloudClientsRoutes[name];
+                }
+                db.ref('portalCustomers/' + uid).remove();
+                if(name) {
+                    db.ref('clients/' + name).remove();
+                    db.ref('clientsRoutes/' + name).remove();
+                }
+            });
+
+            renderAdminPortalCustomersTable();
+        }
+
+        function exportClientsFast() {
+            let data = [];
+            for(let uid in portalCustomersDB) {
+                let c = portalCustomersDB[uid];
+                data.push({
+                    "اسم العميل": c.name,
+                    "الكود الثابت": c.clientCode || '',
+                    "خط السير": c.route || '',
+                    "القرية": c.village || '',
+                    "التليفون": c.phone || '',
+                    "الفئة": c.customerType || 'retail',
+                    "كلمة السر": c.pass || ''
+                });
+            }
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "العملاء");
+            XLSX.writeFile(wb, (systemSettings.companyName || "BlackHorse") + "_Clients.xlsx");
+        }
+
+        function importClientsFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet);
+
+                if(rows.length === 0) { alert("الملف فارغ."); return; }
+
+                portalCustomersDB = {};
+                cloudClients = {};
+                cloudClientsRoutes = {};
+
+                rows.forEach((r, idx) => {
+                    let name = r["اسم العميل"] || r["العميل"] || r["Name"] || ("عميل " + idx);
+                    let code = r["الكود الثابت"] || r["الكود"] || r["Code"] || ("C-" + (1000 + idx));
+                    let route = r["خط السير"] || r["الخط"] || r["Route"] || "خط عام";
+                    let village = r["القرية"] || r["المركز"] || "";
+                    let phone = r["التليفون"] || r["الموبايل"] || "";
+                    let type = r["الفئة"] || "retail";
+                    let pass = r["كلمة السر"] || "123456";
+
+                    let uid = "cust_" + (Date.now() + idx);
+                    portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, customerType: type, pass };
+                    cloudClients[name] = code;
+                    cloudClientsRoutes[name] = route;
+                });
+
+                db.ref('portalCustomers').set(portalCustomersDB);
+                db.ref('clients').set(cloudClients);
+                db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
+                    alert(`🎉 تم استيراد وتحديث ${rows.length} عميل بنجاح!`);
+                    renderAdminPortalCustomersTable();
+                    populateRoutesList();
+                    updateClientsDatalist();
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function changeMyPassword() {
+            const currentPass = document.getElementById('currentPassInput').value.trim();
+            const newPass = document.getElementById('newPassInput').value.trim();
+            if(!currentPass || !newPass || !currentDelegate) return;
+
+            if(currentDelegate.code === 'admin') {
+                if(currentPass !== ADMIN_PASS) { alert("كلمة السر الحالية غير صحيحة."); return; }
+                ADMIN_PASS = newPass;
+                if(cloudDelegates['admin']) {
+                    cloudDelegates['admin'].pass = newPass;
+                    db.ref('delegates/admin/pass').set(newPass);
+                }
+                alert("تم تحديث كلمة سر المدير بنجاح!");
+            } else {
+                if(cloudDelegates[currentDelegate.code].pass !== currentPass) { alert("كلمة السر الحالية غير صحيحة."); return; }
+                cloudDelegates[currentDelegate.code].pass = newPass;
+                db.ref('delegates').set(cloudDelegates).then(() => alert("✅ تم تغيير كلمة السر بنجاح!"));
+            }
+        }
+    </script>
+</body>
+</html>
