@@ -26,6 +26,20 @@
         .logo-box p { margin: 4px 0 0 0; font-size: 11px; color: #38bdf8; font-weight: bold; }
         .tax-info { font-size: 9.5px; color: #94a3b8; margin-top: 6px; }
 
+        .barcode-status-bar {
+            background: #ecfdf5;
+            border: 1px solid #10b981;
+            color: #065f46;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #334155; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
@@ -38,6 +52,7 @@
         .btn-whatsapp { background: #25d366; color: white; }
         .btn-danger { background: #dc2626; color: white; }
         .btn-bluetooth { background: #7c3aed; color: white; }
+        .btn-thermal { background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; }
         .btn-warning { background: #d97706; color: white; }
         .btn-fleet { background: #0891b2; color: white; }
         .btn-sos { background: #e11d48; color: white; animation: pulseSos 1.5s infinite; font-size: 14px; font-weight: bold; }
@@ -59,7 +74,7 @@
         .report-table th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; }
         .grand-box { background: #0f172a; color: #fff; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; margin: 12px 0; }
         .filter-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
-        .client-history-box { background: #fef9c3; padding: 10px; border-radius: 8px; font-size: 11px; margin-top: 8px; display: none; color: #713f12; border: 1.5px solid #facc15; }
+        .client-history-box { background: #fef08a; padding: 8px; border-radius: 6px; font-size: 11px; margin-top: 6px; display: none; color: #713f12; }
 
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .stat-card { background: #fff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center; }
@@ -71,7 +86,6 @@
         .modal-content { background:#fff; padding:18px; border-radius:10px; width:92%; max-width:480px; max-height:85vh; overflow-y:auto; }
         
         #sosAlertBanner { display:none; background:#ffe4e6; border:2px solid #e11d48; color:#9f1239; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; }
-        #oilChangeAlertBanner { display:none; background:#fff1f2; border:2px solid #e11d48; color:#9f1239; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; font-weight:bold; }
         #locationRequestRepBanner { display:none; background:#eff6ff; border:2px solid #2563eb; color:#1e40af; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; text-align:center; animation: pulseReq 2s infinite; }
         
         @keyframes pulseReq {
@@ -79,12 +93,29 @@
             70% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
             100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
+
+        /* تنسيقات رول الطباعة الحرارية المباشرة لطابعات الـ POS (80mm / 58mm) */
+        @media print {
+            body * { visibility: hidden; }
+            #thermalPrintArea, #thermalPrintArea * { visibility: visible; }
+            #thermalPrintArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 78mm;
+                margin: 0;
+                padding: 4px;
+                color: #000;
+                background: #fff;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div id="sosAlertBanner"></div>
-    <div id="oilChangeAlertBanner"></div>
 
     <!-- 1. شاشة تسجيل الدخول -->
     <div id="loginView" class="card">
@@ -164,6 +195,12 @@
             <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
         </div>
 
+        <!-- شريط حالة الباركود اللحظي -->
+        <div class="barcode-status-bar">
+            <span>📟 قارئ الباركود: <b style="color:#059669;">جاهز ونشط تلقائياً (Scan & Auto-Add)</b></span>
+            <span id="barcodeLastScanned" style="font-size:10.5px; color:#1e293b;">آخر مسح: جاهز للاستقبال</span>
+        </div>
+
         <!-- تنبيه طلب الموقع اللحظي للمندوب عند إرسال المدير/مدير الحركة طلباً -->
         <div id="locationRequestRepBanner"></div>
 
@@ -185,7 +222,7 @@
         <!-- أزرار التبويبات -->
         <div class="tab-menu" id="tabMenuContainer">
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
-            <div id="tabWarehouse" class="tab-btn" onclick="switchTab('warehouse')" style="background:#fef3c7; color:#92400e;">📦 المخزن</div>
+            <div id="tabWarehouse" class="tab-btn" onclick="switchTab('warehouse')" style="background:#fef3c7; color:#92400e;">📦 المخزن وتزويد الأصناف</div>
             <div id="tabAttendanceLog" class="tab-btn" onclick="switchTab('attendanceLog')" style="display:none; background:#ecfdf5; color:#065f46;">📋 سجل الحضور</div>
             <div id="tabClientsManage" class="tab-btn" onclick="switchTab('clientsManage')" style="display:none; background:#ecfdf5; color:#065f46;">👥 إدارة العملاء</div>
             <div id="tabPendingOrders" class="tab-btn" onclick="switchTab('pendingOrders')" style="display:none; background:#fef3c7; color:#92400e;">🔔 طلبات العملاء <span id="badgePendingCount" class="badge-notify" style="display:none;">0</span></div>
@@ -202,34 +239,10 @@
             <div id="tabCustomCode" class="tab-btn" onclick="switchTab('customCode')" style="display:none; background:#fae8ff; color:#86198f;">💻 حقن وتعديل الأكواد</div>
         </div>
 
-        <!-- الحاوية الديناميكية العامة للأكواد المحقونة -->
-        <div id="customDynamicContainer"></div>
-
         <!-- أ) فاتورة جديدة -->
         <div id="sectionInvoice" style="overflow: visible;">
             <div id="delegateTodaySummary" style="background:#e0f2fe; border:1px solid #bae6fd; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; color:#0369a1;">
                 <b>📌 ملخص مبيعاتك اليوم:</b> <span id="todaySummaryText">0 فواتير | 0.00 ج.م</span>
-            </div>
-
-            <!-- بيان إلزامي: اختيار السيارة وقراءة العداد قبل التحرك -->
-            <div id="vehicleMandatoryBox" style="background:#fffbeb; border:2px solid #f59e0b; padding:12px; border-radius:8px; margin-bottom:12px;">
-                <div style="font-weight:bold; color:#b45309; font-size:13px; margin-bottom:8px;">🚗 بيانات السيارة وقراءة العداد (بيان إلزامي قبل الخروج):</div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label style="color:#78350f;">السيارة المستخدمة:</label>
-                        <select id="invoiceVehicleSelect" onchange="onVehicleSelectChange()" style="background:#fff; font-weight:bold;">
-                            <option value="">-- اختر السيارة --</option>
-                            <option value="dababa">الدبابة</option>
-                            <option value="bike1">بايك 1</option>
-                            <option value="bike2">بايك 2</option>
-                        </select>
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label style="color:#78350f;">قراءة عداد السيارة الحالية (كم):</label>
-                        <input type="number" id="invoiceOdometerInput" placeholder="أدخل قراءة العداد..." min="0" step="1" oninput="checkCurrentVehicleOilLimit()">
-                    </div>
-                </div>
-                <div id="vehicleOilStatusText" style="font-size:11px; margin-top:6px; color:#475569; font-weight:bold;"></div>
             </div>
 
             <input type="hidden" id="editInvoiceId" value="">
@@ -259,30 +272,42 @@
                 <div class="form-group" style="flex: 1;"><label>التاريخ:</label><input type="date" id="invoiceDate" class="readonly-input"></div>
             </div>
 
+            <!-- حقل مسح باركود إضافي يدوي -->
+            <div class="form-group" style="display:flex; gap:6px; margin-bottom: 8px;">
+                <input type="text" id="manualBarcodeInput" placeholder="🔍 امسح أو اكتب الباركود واضغط Enter..." style="border: 2px dashed #0284c7; background: #f0f9ff; font-weight: bold;" onkeydown="handleManualBarcodeKey(event)">
+                <button class="btn btn-primary" style="width: auto; margin-top:0; padding:0 15px;" onclick="processBarcodeString(document.getElementById('manualBarcodeInput').value)">إضافة</button>
+            </div>
+
             <div id="productsList"></div>
 
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
 
-            <button class="btn btn-bluetooth" onclick="printViaRawBT()">🖨️ طباعة عبر RawBT (بلوتوث) وحفظ اللوكيشن</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <button class="btn btn-thermal" onclick="printDirectThermalDesktop()">🖨️ طباعة طابعة حرارية (EXE / USB)</button>
+                <button class="btn btn-bluetooth" onclick="printViaRawBT()">📱 طباعة RawBT (بلوتوث)</button>
+            </div>
             <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة مع تثبيت لوكيشن المحل</button>
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
-        <!-- ب) تبويب المخزن -->
+        <!-- ب) تبويب المخزن وتزويد الأصناف -->
         <div id="sectionWarehouse" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">📦 المخزن العام وإدارة البضاعة (بالكرتونة):</h4>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="margin:0; font-size:14px; color:#1e293b;">📦 المخزن العام وإدارة البضاعة (بالكرتونة):</h4>
+                <button class="btn btn-success" style="width:auto; margin:0; padding:6px 12px; font-size:12px;" onclick="openScanNewProductModal()">📷 مسح وإضافة صنف جديد</button>
+            </div>
             
-            <div id="warehouseAdminControls" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:8px; margin-bottom:12px;">
-                <h5 style="margin:0 0 8px 0; color:#166534; font-size:13px;">➕ إضافة صنف جديد للنظام والمخزن:</h5>
+            <div id="warehouseAdminControls" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; padding:12px; border-radius:8px; margin-bottom:12px;">
+                <h5 style="margin:0 0 8px 0; color:#166534; font-size:13px;">➕ إضافة صنف جديد للنظام وحفظه بالباركود:</h5>
                 <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:6px; margin-bottom:6px;">
                     <div class="form-group" style="margin-bottom:0;"><label>اسم الصنف:</label><input type="text" id="newWarehouseProdName" placeholder="اسم الصنف الجديد..."></div>
-                    <div class="form-group" style="margin-bottom:0;"><label>كود الصنف:</label><input type="text" id="newWarehouseProdCode" placeholder="كود الصنف..."></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>كود الباركود (امسح بالماسح هنا):</label><input type="text" id="newWarehouseProdCode" placeholder="كود الصنف / الباركود..."></div>
                 </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
                     <div class="form-group" style="margin-bottom:0;"><label>الرصيد الافتتاحي (كرتونة):</label><input type="number" id="newWarehouseProdStock" placeholder="0" min="0" step="0.1"></div>
-                    <div class="form-group" style="margin-bottom:0;"><label>سعر الكرتونة الافتراضي:</label><input type="number" id="newWarehouseProdPrice" value="23925"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>سعر الكرتونة الافتراضي (ج.م):</label><input type="number" id="newWarehouseProdPrice" value="23925"></div>
                 </div>
-                <button class="btn btn-success" onclick="addNewProductItemToWarehouse()">➕ حفظ وإضافة الصنف للمخزن</button>
+                <button class="btn btn-success" onclick="addNewProductItemToWarehouse()">➕ حفظ وإضافة الصنف للمخزن والفواتير</button>
             </div>
 
             <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; margin-bottom:12px;">
@@ -291,7 +316,7 @@
                     <select id="selectWarehouseProductIn"></select>
                     <input type="number" id="qtyWarehouseProductIn" placeholder="عدد الكراتين..." min="0.1" step="0.1">
                 </div>
-                <button class="btn btn-primary" onclick="addStockToWarehouseDirect()">📥 إضافة الوارد للمخزن</button>
+                <button class="btn btn-primary" onclick="addStockToWarehouseDirect()">📥 إضافة الوارد وتحديث رصيد المخزن</button>
             </div>
 
             <div style="overflow-x:auto;">
@@ -299,7 +324,7 @@
                     <thead>
                         <tr>
                             <th>الصنف</th>
-                            <th>كود الصنف</th>
+                            <th>كود الصنف / الباركود</th>
                             <th>الرصيد المتاح (كرتونة)</th>
                             <th>ما يعادل روابط</th>
                             <th>سعر الكرتونة</th>
@@ -401,7 +426,6 @@
                         <thead>
                             <tr>
                                 <th>المندوب والسيارة</th>
-                                <th>آخر قراءة عداد</th>
                                 <th>آخر اتصال</th>
                                 <th>حالة الاتصال</th>
                                 <th style="min-width:130px;">الزرار 1: طلب الموقع</th>
@@ -499,39 +523,56 @@
             <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير (قابل لتعديل المدير الشامل):</h4>
             <div style="overflow-x: auto;">
                 <table class="report-table">
-                    <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>السيارة</th><th>العداد</th><th>المندوب</th><th>الإجمالي</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+                    <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>القرية/المركز</th><th>المندوب</th><th>الإجمالي</th><th>الحالة</th><th>الإجراءات والتعديل</th></tr></thead>
                     <tbody id="savedInvoicesBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- ط) التقارير الشاملة -->
+        <!-- ط) التقارير الشاملة المتقدمة (تصفية الخطوط، العملاء، المناديب، وتصدير إكسيل) -->
         <div id="sectionReport" style="display: none;">
             <div class="filter-box" id="reportFilterBoxContainer">
-                <h4 style="margin-top:0;">📊 تقارير المبيعات من تاريخ إلى تاريخ:</h4>
-                <div style="display: flex; gap: 8px; margin-bottom: 8px;" id="adminReportSelectWrapper">
-                    <div class="form-group" style="flex:1;">
-                        <label>اختر المندوب (للمدير فقط):</label>
-                        <select id="reportDelegateSelect" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
-                            <option value="ALL">📋 كل المناديب</option>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h4 style="margin:0; color:#0f172a; font-size:14px;">📊 تقارير المبيعات والتصفية المتقدمة:</h4>
+                    <button class="btn btn-success" style="width:auto; margin:0; padding:6px 14px; font-size:12px;" onclick="exportReportToExcel()">📥 تصدير التقرير بالكامل (Excel)</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>🛣️ خط السير:</label>
+                        <select id="reportRouteSelect" style="font-size:12px; padding:7px; font-weight:bold; color:#1e3a8a;" onchange="onReportRouteChange()">
+                            <option value="ALL">🛣️ كافة الخطوط</option>
                         </select>
                     </div>
-                    <div class="form-group" style="flex:1;">
-                        <label>اختر العميل:</label>
-                        <select id="reportClientSelect" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
-                            <option value="ALL">🏪 كل العملاء</option>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>🏪 العميل / المحل:</label>
+                        <select id="reportClientSelect" style="font-size:12px; padding:7px;" onchange="renderDailyReport()">
+                            <option value="ALL">👥 كافة العملاء</option>
                         </select>
                     </div>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <div class="form-group" style="flex:1;"><label>من تاريخ:</label><input type="date" id="filterFromDate" onchange="renderDailyReport()"></div>
-                    <div class="form-group" style="flex:1;"><label>إلى تاريخ:</label><input type="date" id="filterToDate" onchange="renderDailyReport()"></div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;" id="adminReportSelectWrapper">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>👤 المندوب:</label>
+                        <select id="reportDelegateSelect" style="font-size:12px; padding:7px;" onchange="renderDailyReport()">
+                            <option value="ALL">📋 كافة المناديب</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>📅 من تاريخ:</label>
+                        <input type="date" id="filterFromDate" onchange="renderDailyReport()">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>📅 إلى تاريخ:</label>
+                        <input type="date" id="filterToDate" onchange="renderDailyReport()">
+                    </div>
                 </div>
             </div>
             
             <div class="stat-grid" style="margin-bottom:12px;">
                 <div class="stat-card" style="background:#f0fdf4; border-color:#bbf7d0;">
-                    <div class="title" style="color:#166534;">💰 إجمالي مبيعات الفترة:</div>
+                    <div class="title" style="color:#166534;">💰 إجمالي مبيعات التقرير:</div>
                     <div class="val" style="color:#15803d; font-size:16px;"><span id="repTotalAmount">0.00</span> ج.م</div>
                     <div style="font-size:10px; color:#475569; margin-top:2px;">عدد الفواتير: <b id="repInvoiceCount">0</b></div>
                 </div>
@@ -541,13 +582,13 @@
                 </div>
             </div>
 
-            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">📦 تفصيل الأصناف المباعة:</h4>
+            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">📦 تفصيل الأصناف المباعة بالفترة:</h4>
             <div style="overflow-x:auto;">
-                <table class="report-table">
+                <table class="report-table" style="background:#fff;">
                     <thead>
                         <tr>
                             <th>الصنف</th>
-                            <th>كود الصنف</th>
+                            <th>كود الصنف / الباركود</th>
                             <th>المباع بالكرتونة والرابطة</th>
                             <th>إجمالي الروابط</th>
                             <th>ما يعادل كراتين</th>
@@ -557,10 +598,20 @@
                 </table>
             </div>
 
-            <h4 style="font-size: 14px; color: #1e293b; margin-top: 17px; margin-bottom: 4px;">📋 تفاصيل الفواتير:</h4>
+            <h4 style="font-size: 13px; color: #1e293b; margin-top: 17px; margin-bottom: 4px;">📋 تفاصيل فواتير التقرير:</h4>
             <div style="overflow-x:auto;">
-                <table class="report-table">
-                    <thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>القرية/المركز</th><th>المندوب</th><th>الإجمالي</th></tr></thead>
+                <table class="report-table" style="background:#fff;">
+                    <thead>
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>التاريخ</th>
+                            <th>العميل</th>
+                            <th>الخط</th>
+                            <th>القرية/المركز</th>
+                            <th>المندوب</th>
+                            <th>الإجمالي</th>
+                        </tr>
+                    </thead>
                     <tbody id="repInvoicesTableBody"></tbody>
                 </table>
             </div>
@@ -695,34 +746,6 @@
         <!-- س) الإعدادات ولوحة المدير للتحكم بكل شيء -->
         <div id="sectionSettings" style="display: none;">
             
-            <!-- لوحة متابعة عدادات السيارات وغيار الزيت (1500 كم) -->
-            <div id="adminVehiclesOilControlBox" style="display:none; background:#fffbeb; border:1.5px solid #f59e0b; padding:14px; border-radius:10px; margin-bottom:14px;">
-                <h4 style="margin-top:0; font-size:14px; color:#b45309;">🚗 متابعة أسطول السيارات وقراءات العداد وغيار الزيت (1500 كم):</h4>
-                <div style="overflow-x:auto;">
-                    <table class="report-table" style="background:#fff;">
-                        <thead>
-                            <tr>
-                                <th>السيارة</th>
-                                <th>قراءة العداد الحالية</th>
-                                <th>عداد آخر غيار زيت</th>
-                                <th>المسافة المقطوعة</th>
-                                <th>حالة الزيت</th>
-                                <th>تسجيل غيار زيت جديد (تصفير الـ 1500)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="vehiclesOilTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- لوحة توحيد ودمج كافة مسميات خطوط السير للعملاء -->
-            <div id="adminUnifyRoutesBox" style="display:none; background:#f0fdf4; border:1.5px solid #16a34a; padding:12px; border-radius:8px; margin-bottom:14px;">
-                <h4 style="margin-top:0; font-size:13px; color:#166534;">🛣️ توحيد ودمج خطوط السير في قاعدة البيانات:</h4>
-                <p style="font-size:11.5px; color:#334155; margin:4px 0 8px 0;">يقوم هذا الزر بدمج المسميات المختلفة تلقائياً (مثل دمج «شبين الكوم» مع «خط شبين الكوم») لجميع العملاء المسجلين دفعة واحدة.</p>
-                <button class="btn btn-success" style="font-size:12px; padding:8px;" onclick="adminFixAndUnifyAllRoutes()">⚡ توحيد ودمج جميع خطوط السير للعملاء الآن</button>
-            </div>
-
-            <!-- لوحة المدير لتعديل بيانات النظام الأساسية والواتساب والأسعار -->
             <div id="adminSystemControlBox" style="display:none; background:#f8fafc; border:1.5px solid #0284c7; padding:14px; border-radius:10px; margin-bottom:14px;">
                 <h4 style="margin-top:0; font-size:14px; color:#0369a1;">⚙️ الإعدادات العامة للنظام ورقم الواتساب (للمدير فقط):</h4>
                 <div class="form-group"><label>اسم الشركة / النشاط الرئيسي:</label><input type="text" id="sysInputName" placeholder="BLACK HORSE"></div>
@@ -736,14 +759,12 @@
                 <button class="btn btn-primary" onclick="saveSystemSettingsDirect()">💾 حفظ وتحديث إعدادات النظام بالكامل</button>
             </div>
 
-            <!-- لوحة تعيين خطوط السير للمناديب -->
             <div id="adminRepRoutesControlBox" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; padding:12px; border-radius:8px; margin-bottom:12px;">
                 <h4 style="margin-top:0; font-size:13px; color:#1e40af;">🛣️ تعيين وتحديد خطوط السير للمناديب:</h4>
                 <div id="repRoutesInputsList"></div>
                 <button class="btn btn-primary" style="margin-top:6px;" onclick="saveAllRepRoutesDirect()">💾 حفظ وتحديث خطوط المناديب</button>
             </div>
 
-            <!-- لوحة المدير لإدارة وتعديل كل حسابات الموظفين -->
             <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
                 <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px; margin-bottom:10px;">
                     <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف جديد:</h5>
@@ -799,16 +820,48 @@
                 </div>
 
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                    <button class="btn btn-primary" style="flex:1; background:#9333ea;" onclick="saveAndApplyCustomCode()">💾 حفظ في السحابة وتطبيق دائم فوراً</button>
+                    <button class="btn btn-primary" style="flex:1; background:#9333ea;" onclick="saveAndApplyCustomCode()">💾 حفظ في السحابة وتطبيق فوراً</button>
                     <button class="btn btn-warning" style="flex:1;" onclick="executeCustomCodeLiveOnly()">⚡ تجربة الكود مؤقتاً</button>
                     <button class="btn btn-danger" style="width:auto; margin-top:6px; background:#dc2626;" onclick="clearCustomCode()">🗑️ مسح الكود</button>
                 </div>
             </div>
+
+            <div id="customDynamicContainer" style="margin-top:15px;"></div>
         </div>
 
     </div>
 
-    <!-- 4. النوافذ المنبثقة (Modals) للتعديل الشامل -->
+    <!-- 4. النوافذ المنبثقة (Modals) للتعديل الشامل والتسجيل الفوري بالباركود -->
+
+    <!-- نافذة إضافة صنف جديد بالباركود الفوري -->
+    <div id="quickAddBarcodeModal" class="modal-bg">
+        <div class="modal-content" style="border: 2px solid #10b981;">
+            <h3 style="margin-top:0; color:#166534; font-size:16px;">📷 تسجيل وحفظ صنف جديد بالباركود</h3>
+            <div style="font-size:11.5px; color:#475569; margin-bottom:10px;">تم قراءة كود الباركود بنجاح. أدخل اسم الصنف وبياناته للحفظ فوراً بالنظام:</div>
+            
+            <div class="form-group">
+                <label>كود الباركود المقروء:</label>
+                <input type="text" id="modalScanBarcodeCode" style="font-weight:bold; color:#0284c7; background:#f1f5f9;">
+            </div>
+            <div class="form-group">
+                <label>اسم الصنف:</label>
+                <input type="text" id="modalScanBarcodeName" placeholder="مثال: مالبورو أحمر / وينستون أزرق...">
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <div class="form-group">
+                    <label>الرصيد الافتتاحي (كرتونة):</label>
+                    <input type="number" id="modalScanBarcodeStock" value="10" min="0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>سعر الكرتونة الافتراضي:</label>
+                    <input type="number" id="modalScanBarcodePrice" value="23925">
+                </div>
+            </div>
+
+            <button class="btn btn-success" onclick="saveQuickScannedProduct()">💾 حفظ الصنف وإدراجه فوراً</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeQuickAddBarcodeModal()">إلغاء</button>
+        </div>
+    </div>
 
     <!-- نافذة تعديل الفاتورة بالكامل للمدير -->
     <div id="editInvoiceModal" class="modal-bg">
@@ -818,8 +871,6 @@
             <div class="form-group"><label>رقم الفاتورة:</label><input type="text" id="modalEditInvNo"></div>
             <div class="form-group"><label>تاريخ الفاتورة:</label><input type="date" id="modalEditInvDate"></div>
             <div class="form-group"><label>اسم العميل:</label><input type="text" id="modalEditInvClient"></div>
-            <div class="form-group"><label>السيارة:</label><input type="text" id="modalEditInvVehicle"></div>
-            <div class="form-group"><label>قراءة العداد (كم):</label><input type="number" id="modalEditInvOdometer"></div>
             <div class="form-group"><label>القرية / المركز:</label><input type="text" id="modalEditInvVillage"></div>
             <div class="form-group"><label>خط السير:</label><input type="text" id="modalEditInvRoute"></div>
             <div class="form-group"><label>المندوب المسجل:</label><input type="text" id="modalEditInvDelegate" class="readonly-input" readonly></div>
@@ -833,18 +884,6 @@
             </div>
             <button class="btn btn-success" onclick="saveEditedInvoice()">💾 حفظ وتحديث الفاتورة</button>
             <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditInvoiceModal()">إلغاء</button>
-        </div>
-    </div>
-
-    <!-- نافذة تسجيل غيار زيت جديد للمدير -->
-    <div id="oilChangeModal" class="modal-bg">
-        <div class="modal-content">
-            <h3 style="margin-top:0; color:#b45309; font-size:15px;">🛢️ تسجيل غيار زيت جديد</h3>
-            <input type="hidden" id="modalOilVehicleKey">
-            <div class="form-group"><label>اسم السيارة:</label><input type="text" id="modalOilVehicleName" class="readonly-input" readonly></div>
-            <div class="form-group"><label>قراءة العداد الحالية عند غيار الزيت (كم):</label><input type="number" id="modalOilNewKm" placeholder="أدخل قراءة العداد الحالية..."></div>
-            <button class="btn btn-success" onclick="confirmOilChangeReset()">✅ تأكيد غيار الزيت واحتساب 1500 كم جديدة</button>
-            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeOilChangeModal()">إلغاء</button>
         </div>
     </div>
 
@@ -878,7 +917,7 @@
             <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات الصنف في المخزن</h3>
             <input type="hidden" id="modalEditProdOrigCode">
             <div class="form-group"><label>اسم الصنف:</label><input type="text" id="modalEditProdName"></div>
-            <div class="form-group"><label>كود الصنف:</label><input type="text" id="modalEditProdCode"></div>
+            <div class="form-group"><label>كود الصنف / الباركود:</label><input type="text" id="modalEditProdCode"></div>
             <div class="form-group"><label>رصيد المخزن المتاح (كرتونة):</label><input type="number" id="modalEditProdStock" step="0.1"></div>
             <div class="form-group"><label>سعر الكرتونة الافتراضي (ج.م):</label><input type="number" id="modalEditProdPrice"></div>
             <button class="btn btn-success" onclick="saveEditedProduct()">💾 حفظ وتحديث الصنف</button>
@@ -939,6 +978,9 @@
         </div>
     </div>
 
+    <!-- نافذة رول الطباعة الحرارية المخفية لطابعات الـ POS عبر الكمبيوتر -->
+    <div id="thermalPrintArea" style="display:none;"></div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyARUfzp3O79n5pOONzY13pHcV6uoaMXd9s",
@@ -965,12 +1007,6 @@
         };
 
         let systemSettings = { ...defaultSettings };
-
-        const defaultVehicles = {
-            "dababa": { id: "dababa", name: "الدبابة", currentKm: 0, lastOilKm: 0, interval: 1500 },
-            "bike1": { id: "bike1", name: "بايك 1", currentKm: 0, lastOilKm: 0, interval: 1500 },
-            "bike2": { id: "bike2", name: "بايك 2", currentKm: 0, lastOilKm: 0, interval: 1500 }
-        };
 
         const defaultCarStock = { "1500000000": 10, "1500000002": 10, "1500000004": 10, "1500000005": 10, "1500000008": 10, "1500000009": 10, "1500000010": 10, "1500000146": 10 };
         const defaultDelegates = {
@@ -1018,7 +1054,6 @@
         let cloudLocations = {};
         let cloudAttendance = [];
         let cloudLocationRequests = {};
-        let cloudVehicles = { ...defaultVehicles };
 
         let currentDelegate = null;
         let currentPortalCustomer = null;
@@ -1026,25 +1061,7 @@
         let clientInputTimer = null;
         let latestCoords = null;
         let tempRegCoords = null;
-
-        // دالة تنظيف وتوحيد الحروف العربية لمطابقة الأسماء بدقة
-        function normalizeArabicText(text) {
-            if (!text) return "";
-            return String(text)
-                .trim()
-                .toLowerCase()
-                .replace(/[أإآ]/g, 'ا')
-                .replace(/ة/g, 'ه')
-                .replace(/ى/g, 'ي')
-                .replace(/\s+/g, ' ');
-        }
-
-        // دالة تنظيف وتوحيد مسميات خطوط السير
-        function normalizeRouteName(route) {
-            if (!route) return "";
-            let clean = route.trim().replace(/^خط\s+/, '').trim();
-            return clean ? "خط " + clean : "";
-        }
+        let currentActiveTab = 'invoice';
 
         function cleanPhoneStr(p) {
             if(!p) return "";
@@ -1055,20 +1072,451 @@
             return (systemSettings && systemSettings.whatsapp) ? String(systemSettings.whatsapp).replace(/\D/g, '') : "201011112764";
         }
 
-        // الاستماع لإعدادات النظام العامة
+        // ==================== 1. محرك الباركود الفوري للأجهزة الخارجية ====================
+        let barcodeBuffer = "";
+        let lastKeyTime = Date.now();
+
+        function playBeep(success = true) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = success ? 'sine' : 'sawtooth';
+                osc.frequency.setValueAtTime(success ? 1200 : 350, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + (success ? 0.12 : 0.28));
+            } catch(e) {}
+        }
+
+        window.addEventListener('keydown', (e) => {
+            const activeElem = document.activeElement;
+            const activeTag = activeElem ? activeElem.tagName.toLowerCase() : '';
+            
+            // استثناء الكتابة داخل حقول النصوص العادية باستثناء حقل الباركود المخصص
+            if (activeTag === 'input' && activeElem.id !== 'manualBarcodeInput' && activeElem.id !== 'newWarehouseProdCode') {
+                return;
+            }
+
+            const currentTime = Date.now();
+            if (currentTime - lastKeyTime > 120) {
+                barcodeBuffer = "";
+            }
+            lastKeyTime = currentTime;
+
+            if (e.key === 'Enter') {
+                if (barcodeBuffer.length >= 2) {
+                    processBarcodeString(barcodeBuffer.trim());
+                    barcodeBuffer = "";
+                    e.preventDefault();
+                }
+            } else if (e.key.length === 1) {
+                barcodeBuffer += e.key;
+            }
+        });
+
+        function handleManualBarcodeKey(e) {
+            if (e.key === 'Enter') {
+                processBarcodeString(e.target.value.trim());
+                e.target.value = '';
+            }
+        }
+
+        function processBarcodeString(scannedCode) {
+            if (!scannedCode) return;
+            const statusLabel = document.getElementById('barcodeLastScanned');
+            
+            // البحث عن الصنف في قاعدة بيانات الأصناف
+            const prodIdx = products.findIndex(p => String(p.code).trim() === String(scannedCode).trim());
+
+            if (prodIdx !== -1) {
+                const prod = products[prodIdx];
+                playBeep(true);
+                
+                if (currentActiveTab === 'warehouse') {
+                    const selectIn = document.getElementById('selectWarehouseProductIn');
+                    if (selectIn) selectIn.value = prod.code;
+                    const qtyIn = document.getElementById('qtyWarehouseProductIn');
+                    if (qtyIn) {
+                        qtyIn.value = (parseFloat(qtyIn.value) || 0) + 1;
+                        qtyIn.focus();
+                    }
+                    if (statusLabel) statusLabel.innerText = `📦 تم تحديد الصنف بالمخزن: ${prod.name}`;
+                } else {
+                    const qtyInput = document.getElementById(`qty_${prodIdx}`);
+                    if (qtyInput) {
+                        qtyInput.value = (parseFloat(qtyInput.value) || 0) + 1;
+                        calcTotals();
+                        if (statusLabel) statusLabel.innerText = `✅ تم مسح وإضافة: ${prod.name}`;
+                    } else {
+                        alert(`✅ تم قراءة الصنف: ${prod.name}`);
+                    }
+                }
+            } else {
+                playBeep(false);
+                if (statusLabel) statusLabel.innerText = `⚠️ باركود جديد غير مسجل: (${scannedCode})`;
+                openQuickAddBarcodeModal(scannedCode);
+            }
+        }
+
+        function openQuickAddBarcodeModal(code = '') {
+            document.getElementById('modalScanBarcodeCode').value = code;
+            document.getElementById('modalScanBarcodeName').value = '';
+            document.getElementById('modalScanBarcodeStock').value = '10';
+            document.getElementById('modalScanBarcodePrice').value = systemSettings.defaultCartonPrice || 23925;
+            document.getElementById('quickAddBarcodeModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('modalScanBarcodeName').focus(), 200);
+        }
+
+        function openScanNewProductModal() {
+            let code = prompt("قم بمسح الباركود الآن أو كتابته يدوياً:");
+            if (code) openQuickAddBarcodeModal(code.trim());
+        }
+
+        function closeQuickAddBarcodeModal() {
+            document.getElementById('quickAddBarcodeModal').style.display = 'none';
+        }
+
+        function saveQuickScannedProduct() {
+            const code = document.getElementById('modalScanBarcodeCode').value.trim();
+            const name = document.getElementById('modalScanBarcodeName').value.trim();
+            const stock = parseFloat(document.getElementById('modalScanBarcodeStock').value) || 0;
+            const price = parseFloat(document.getElementById('modalScanBarcodePrice').value) || (systemSettings.defaultCartonPrice || 23925);
+
+            if (!code || !name) {
+                alert("❌ يرجى إدخال اسم الصنف وكود الباركود.");
+                return;
+            }
+
+            let existing = products.find(p => p.code === code);
+            if (existing) {
+                existing.name = name;
+                existing.stock = stock;
+                existing.price = price;
+            } else {
+                products.push({ name, code, stock, price });
+            }
+
+            db.ref('productsList').set(products).then(() => {
+                alert(`🎉 تم حفظ وتزويد الصنف (${name}) بنجاح في النظام!`);
+                closeQuickAddBarcodeModal();
+                initSalesForm();
+                renderWarehouseTable();
+                
+                const newIdx = products.findIndex(p => p.code === code);
+                if (newIdx !== -1 && document.getElementById(`qty_${newIdx}`)) {
+                    document.getElementById(`qty_${newIdx}`).value = 1;
+                    calcTotals();
+                }
+            });
+        }
+
+        // ==================== 2. محرك الطباعة الحرارية للكمبيوتر (POS Thermal 80mm/58mm) ====================
+        function printDirectThermalDesktop(specificInv = null) {
+            const rec = specificInv || getFormDataForReceipt();
+            if (!rec) return;
+
+            const printArea = document.getElementById('thermalPrintArea');
+            let cName = systemSettings.companyName || "BLACK HORSE";
+            let cTax = systemSettings.taxInfo || "ت.ض: 474386335 | س.ت: 76027";
+
+            let itemsRows = '';
+            rec.items.forEach(it => {
+                itemsRows += `
+                    <tr>
+                        <td style="text-align:right; font-weight:bold;">${it.name}</td>
+                        <td style="text-align:center;">${it.qty}</td>
+                        <td style="text-align:center;">${it.price}</td>
+                        <td style="text-align:left;">${it.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            printArea.innerHTML = `
+                <div style="text-align:center; font-family:'Courier New', monospace; width:75mm; margin:auto; direction:rtl;">
+                    <h2 style="margin:0; font-size:18px;">${cName}</h2>
+                    <p style="margin:2px 0; font-size:11px;">${systemSettings.companySubtitle || 'موزع معتمد'}</p>
+                    <div style="font-size:9.5px; border-bottom:1px dashed #000; padding-bottom:4px;">${cTax}</div>
+                    
+                    <table style="width:100%; font-size:11px; margin:4px 0;">
+                        <tr><td>التاريخ: ${rec.date}</td><td style="text-align:left;">فاتورة: #${rec.invNo}</td></tr>
+                        <tr><td>العميل: ${rec.client}</td><td style="text-align:left;">المندوب: ${rec.delegateName || ''}</td></tr>
+                    </table>
+
+                    <table style="width:100%; font-size:11px; border-top:1px dashed #000; border-bottom:1px dashed #000; margin:4px 0;">
+                        <thead>
+                            <tr style="border-bottom:1px solid #000;">
+                                <th style="text-align:right;">الصنف</th>
+                                <th>كمية</th>
+                                <th>سعر</th>
+                                <th style="text-align:left;">إجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>${itemsRows}</tbody>
+                    </table>
+
+                    <div style="font-size:14px; font-weight:bold; margin:6px 0; text-align:left;">
+                        الإجمالي الكلي: ${rec.total.toFixed(2)} ج.م
+                    </div>
+                    
+                    <div style="font-size:10px; text-align:center; margin-top:8px; border-top:1px dashed #000; padding-top:4px;">
+                        شكراً لتعاملكم معنا
+                    </div>
+                </div>
+            `;
+
+            printArea.style.display = 'block';
+            window.print();
+            setTimeout(() => { printArea.style.display = 'none'; }, 1000);
+        }
+
+        function getFormDataForReceipt() {
+            const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
+            const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
+            const invDate = document.getElementById('invoiceDate').value;
+            let grand = 0, items = [];
+
+            products.forEach((p, idx) => {
+                const q = parseFloat(document.getElementById(`qty_${idx}`)?.value) || 0;
+                const pr = parseFloat(document.getElementById(`price_${idx}`)?.value) || 0;
+                if (q > 0) {
+                    const tot = q * pr;
+                    items.push({ name: p.name, qty: q, price: pr, total: tot });
+                    grand += tot;
+                }
+            });
+
+            if (items.length === 0) {
+                alert("يرجى إضافة صنف واحد على الأقل للطباعة.");
+                return null;
+            }
+
+            return {
+                invNo, date: invDate, client, delegateName: currentDelegate ? currentDelegate.name : '',
+                total: grand, items
+            };
+        }
+
+        // ==================== 3. معالجة وتوحيد الخطوط والعملاء والقوائم المنسدلة ====================
+        function cleanRouteText(r) {
+            if (!r) return "";
+            return String(r).trim().replace(/^خط\s+/, '').trim().toLowerCase();
+        }
+
+        function isRouteMatch(clientRoute, selectedRoute) {
+            if (!selectedRoute || selectedRoute === 'ALL') return true;
+            if (!clientRoute) return false;
+            
+            let cR = String(clientRoute).trim().toLowerCase();
+            let sR = String(selectedRoute).trim().toLowerCase();
+            if (cR === sR) return true;
+            
+            let cleanC = cleanRouteText(clientRoute);
+            let cleanS = cleanRouteText(selectedRoute);
+            if (cleanC && cleanS) {
+                if (cleanC === cleanS || cleanC.includes(cleanS) || cleanS.includes(cleanC)) return true;
+            }
+            return false;
+        }
+
+        function getAllAvailableRoutes() {
+            let routes = new Set();
+            
+            if (cloudClientsRoutes && typeof cloudClientsRoutes === 'object') {
+                Object.values(cloudClientsRoutes).forEach(r => {
+                    if (r && typeof r === 'string' && r.trim()) routes.add(r.trim());
+                });
+            }
+            
+            if (portalCustomersDB && typeof portalCustomersDB === 'object') {
+                Object.values(portalCustomersDB).forEach(c => {
+                    if (c) {
+                        if (c.route && typeof c.route === 'string' && c.route.trim()) routes.add(c.route.trim());
+                        if (c.village && typeof c.village === 'string' && c.village.trim()) routes.add("خط " + c.village.trim());
+                    }
+                });
+            }
+            
+            if (Array.isArray(cloudSales)) {
+                cloudSales.forEach(s => {
+                    if (s) {
+                        if (s.route && typeof s.route === 'string' && s.route.trim() && s.route !== 'ALL') routes.add(s.route.trim());
+                        if (s.village && typeof s.village === 'string' && s.village.trim()) routes.add("خط " + s.village.trim());
+                    }
+                });
+            }
+            
+            return Array.from(routes).filter(Boolean);
+        }
+
+        function getAllAvailableClients() {
+            let clientsMap = {};
+
+            function addClient(name, code, route, village) {
+                if (!name || typeof name !== 'string') return;
+                name = name.trim();
+                if (!name) return;
+                
+                if (!clientsMap[name]) {
+                    clientsMap[name] = {
+                        name: name,
+                        code: code || 'C-Auto',
+                        route: route || (village ? "خط " + village : ""),
+                        village: village || ''
+                    };
+                } else {
+                    if (!clientsMap[name].route && route) clientsMap[name].route = route;
+                    if (!clientsMap[name].village && village) clientsMap[name].village = village;
+                    if ((!clientsMap[name].code || clientsMap[name].code === 'C-Auto') && code) clientsMap[name].code = code;
+                }
+            }
+
+            if (portalCustomersDB && typeof portalCustomersDB === 'object') {
+                Object.values(portalCustomersDB).forEach(c => {
+                    if (c && c.name) {
+                        addClient(c.name, c.clientCode, c.route || (c.village ? "خط " + c.village : ""), c.village);
+                    }
+                });
+            }
+
+            if (cloudClients && typeof cloudClients === 'object') {
+                for (let name in cloudClients) {
+                    let r = cloudClientsRoutes ? cloudClientsRoutes[name] : '';
+                    addClient(name, cloudClients[name], r, '');
+                }
+            }
+
+            if (Array.isArray(cloudSales)) {
+                cloudSales.forEach(s => {
+                    if (s && s.client) {
+                        let r = s.route || (s.village ? "خط " + s.village : "");
+                        addClient(s.client, s.clientCode, r, s.village);
+                    }
+                });
+            }
+
+            return Object.values(clientsMap);
+        }
+
+        function refreshAllRoutesAndClientsDropdowns() {
+            populateRoutesList();
+            updateClientsDatalist();
+            populateReportRoutesSelect();
+            updateReportClientsSelect();
+        }
+
+        function populateRoutesList() {
+            const selectRoute = document.getElementById('selectRouteFilter');
+            if (!selectRoute) return;
+
+            let currentVal = selectRoute.value || 'ALL';
+            let routes = getAllAvailableRoutes();
+
+            let html = '<option value="ALL">🛣️ عرض كل الخطوط (كل العملاء)</option>';
+            routes.forEach(route => {
+                html += `<option value="${route}">📍 ${route}</option>`;
+            });
+
+            selectRoute.innerHTML = html;
+            if (routes.includes(currentVal) || currentVal === 'ALL') selectRoute.value = currentVal;
+            else selectRoute.value = 'ALL';
+        }
+
+        function updateClientsDatalist() {
+            const sel = document.getElementById('selectExistingClient');
+            if (!sel) return;
+
+            const selectedRoute = document.getElementById('selectRouteFilter')?.value || 'ALL';
+            sel.innerHTML = '<option value="">📋 عميل مسجل...</option>';
+
+            let allClients = getAllAvailableClients();
+
+            allClients.forEach(item => {
+                if (isRouteMatch(item.route, selectedRoute)) {
+                    let routeDisplay = item.route ? ` [${item.route}]` : '';
+                    sel.innerHTML += `<option value="${item.name}">${item.name} (${item.code})${routeDisplay}</option>`;
+                }
+            });
+        }
+
+        function onRouteFilterChange() { 
+            updateClientsDatalist(); 
+            document.getElementById('clientName').value = '';
+            document.getElementById('lblClientCode').innerText = '--';
+            document.getElementById('lblClientRoute').innerText = '--';
+        }
+
+        function onVillageInputSyncRoute() {
+            const villageVal = document.getElementById('clientVillage')?.value.trim();
+            const clientVal = document.getElementById('clientName')?.value.trim();
+            if(!villageVal) return;
+
+            const guessedRoute = "خط " + villageVal;
+            const selectRoute = document.getElementById('selectRouteFilter');
+            
+            let exists = Array.from(selectRoute.options).some(opt => opt.value === guessedRoute || opt.value === villageVal);
+            if(!exists) selectRoute.innerHTML += `<option value="${guessedRoute}">📍 ${guessedRoute}</option>`;
+
+            if(clientVal) {
+                cloudClientsRoutes[clientVal] = guessedRoute;
+                db.ref('clientsRoutes/' + clientVal).set(guessedRoute).catch(() => {});
+                document.getElementById('lblClientRoute').innerText = guessedRoute;
+            }
+        }
+
+        function populateReportRoutesSelect() {
+            const repRouteSel = document.getElementById('reportRouteSelect');
+            if (!repRouteSel) return;
+
+            let currentVal = repRouteSel.value || 'ALL';
+            let routes = getAllAvailableRoutes();
+
+            let html = '<option value="ALL">🛣️ كافة الخطوط</option>';
+            routes.forEach(route => {
+                html += `<option value="${route}">📍 ${route}</option>`;
+            });
+
+            repRouteSel.innerHTML = html;
+            if (routes.includes(currentVal) || currentVal === 'ALL') repRouteSel.value = currentVal;
+            else repRouteSel.value = 'ALL';
+        }
+
+        function updateReportClientsSelect() {
+            const repClientSel = document.getElementById('reportClientSelect');
+            if (!repClientSel) return;
+
+            const selectedRoute = document.getElementById('reportRouteSelect')?.value || 'ALL';
+            let currentClientVal = repClientSel.value || 'ALL';
+            repClientSel.innerHTML = '<option value="ALL">👥 كافة العملاء</option>';
+
+            let allClients = getAllAvailableClients();
+
+            allClients.forEach(item => {
+                if (isRouteMatch(item.route, selectedRoute)) {
+                    let rTag = item.route ? ` [${item.route}]` : '';
+                    repClientSel.innerHTML += `<option value="${item.name}">${item.name}${rTag}</option>`;
+                }
+            });
+
+            if (Array.from(repClientSel.options).some(o => o.value === currentClientVal)) {
+                repClientSel.value = currentClientVal;
+            } else {
+                repClientSel.value = 'ALL';
+            }
+        }
+
+        function onReportRouteChange() {
+            updateReportClientsSelect();
+            renderDailyReport();
+        }
+
+        // ==================== استماع السحابة وتطبيق الإعدادات ====================
         db.ref('systemSettings').on('value', (s) => {
             if(s.val()) systemSettings = { ...defaultSettings, ...s.val() };
             else db.ref('systemSettings').set(defaultSettings);
             applySystemBranding();
-        });
-
-        // الاستماع لحالة السيارات والعدادات
-        db.ref('vehicles').on('value', (s) => {
-            if(s.val()) cloudVehicles = { ...defaultVehicles, ...s.val() };
-            else db.ref('vehicles').set(defaultVehicles);
-            renderVehiclesOilTable();
-            checkGlobalOilChangeAlerts();
-            checkCurrentVehicleOilLimit();
         });
 
         function applySystemBranding() {
@@ -1128,6 +1576,8 @@
         db.ref('sales').on('value', (s) => { 
             cloudSales = s.val() ? Object.values(s.val()) : []; 
             renderSavedInvoices();
+            refreshAllRoutesAndClientsDropdowns();
+            renderDailyReport();
         });
 
         db.ref('delegates').on('value', (s) => { 
@@ -1139,15 +1589,12 @@
         
         db.ref('clients').on('value', (s) => { 
             cloudClients = s.val() || {}; 
-            populateRoutesList();
-            updateClientsDatalist(); 
-            updateReportClientsSelect(); 
+            refreshAllRoutesAndClientsDropdowns();
         });
 
         db.ref('clientsRoutes').on('value', (s) => {
             cloudClientsRoutes = s.val() || {};
-            populateRoutesList();
-            updateClientsDatalist();
+            refreshAllRoutesAndClientsDropdowns();
         });
 
         db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
@@ -1163,8 +1610,7 @@
 
         db.ref('portalCustomers').on('value', (s) => { 
             portalCustomersDB = s.val() || {}; 
-            populateRoutesList();
-            updateClientsDatalist();
+            refreshAllRoutesAndClientsDropdowns();
             renderAdminPortalCustomersTable();
         });
 
@@ -1187,398 +1633,26 @@
             renderDelegatesTrackingTable();
         });
 
-        // تشغيل الأكواد المخصصة عبر إضافة سكريبت فعلي في الـ DOM
         db.ref('customInjectedCode').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 if (data.html) {
                     const container = document.getElementById('customDynamicContainer');
                     if (container) container.innerHTML = data.html;
-                } else {
-                    const container = document.getElementById('customDynamicContainer');
-                    if (container) container.innerHTML = '';
                 }
-
                 if (data.js) {
-                    let oldScript = document.getElementById('injectedJsNode');
-                    if (oldScript) oldScript.remove();
-
-                    let newScript = document.createElement('script');
-                    newScript.id = 'injectedJsNode';
-                    newScript.text = data.js;
-                    document.body.appendChild(newScript);
-                }
-
-                const htmlField = document.getElementById('customHtmlInput');
-                const jsField = document.getElementById('customJsInput');
-                if (htmlField && !htmlField.matches(':focus')) htmlField.value = data.html || '';
-                if (jsField && !jsField.matches(':focus')) jsField.value = data.js || '';
-            }
-        });
-
-        function saveAndApplyCustomCode() {
-            const customHtml = document.getElementById('customHtmlInput').value;
-            const customJs = document.getElementById('customJsInput').value;
-
-            db.ref('customInjectedCode').set({
-                html: customHtml,
-                js: customJs,
-                updatedAt: new Date().toISOString()
-            }).then(() => {
-                alert("✅ تم حفظ وتطبيق الأكواد بنجاح في قاعدة البيانات بشكل دائم!");
-            }).catch(err => {
-                alert("❌ خطأ أثناء الحفظ: " + err.message);
-            });
-        }
-
-        function executeCustomCodeLiveOnly() {
-            const customHtml = document.getElementById('customHtmlInput').value;
-            const customJs = document.getElementById('customJsInput').value;
-
-            if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
-            if (customJs) {
-                try {
-                    let tempScript = document.createElement('script');
-                    tempScript.text = customJs;
-                    document.body.appendChild(tempScript);
-                    alert("⚡ تم تشغيل الكود تجريبياً في جلستك الحالية.");
-                } catch (e) {
-                    alert("❌ خطأ في كود الـ JS:\n" + e.message);
-                }
-            }
-        }
-
-        function clearCustomCode() {
-            if (!confirm("⚠️ هل أنت متأكد من مسح كافة الأكواد المخصصة من النظام؟")) return;
-            db.ref('customInjectedCode').remove().then(() => {
-                document.getElementById('customHtmlInput').value = '';
-                document.getElementById('customJsInput').value = '';
-                document.getElementById('customDynamicContainer').innerHTML = '';
-                let oldScript = document.getElementById('injectedJsNode');
-                if (oldScript) oldScript.remove();
-                alert("✅ تم مسح الأكواد المخصصة بنجاح.");
-            });
-        }
-
-        // ==================== دوال عدادات السيارات وتنبيه غيار الزيت ====================
-        function onVehicleSelectChange() {
-            const vKey = document.getElementById('invoiceVehicleSelect').value;
-            const odoInput = document.getElementById('invoiceOdometerInput');
-            if(!vKey) {
-                odoInput.value = '';
-                document.getElementById('vehicleOilStatusText').innerText = '';
-                return;
-            }
-            const car = cloudVehicles[vKey];
-            if(car && car.currentKm) {
-                odoInput.placeholder = `آخر قراءة مسجلة: ${car.currentKm} كم`;
-            }
-            checkCurrentVehicleOilLimit();
-        }
-
-        function checkCurrentVehicleOilLimit() {
-            const vKey = document.getElementById('invoiceVehicleSelect')?.value;
-            const odoVal = parseFloat(document.getElementById('invoiceOdometerInput')?.value) || 0;
-            const statusDiv = document.getElementById('vehicleOilStatusText');
-            if(!statusDiv || !vKey) return;
-
-            const car = cloudVehicles[vKey];
-            if(!car) return;
-
-            const lastOil = parseFloat(car.lastOilKm) || 0;
-            const effectiveKm = odoVal > 0 ? odoVal : (car.currentKm || 0);
-            const driven = effectiveKm - lastOil;
-            const limit = car.interval || 1500;
-            const remaining = limit - driven;
-
-            if(driven >= limit) {
-                statusDiv.innerHTML = `<span style="color:#dc2626;">🚨 تنبيه صيانة: قطعت السيارة (${driven} كم) منذ آخر غيار زيت وتجاوزت الحد المسموح (${limit} كم)! يجب تغيير الزيت فوراً.</span>`;
-            } else {
-                statusDiv.innerHTML = `<span style="color:#16a34a;">🟢 حالة الزيت جيدة: قطعت (${driven} كم)، المتبقي حتى غيار الزيت القادم: (${remaining} كم).</span>`;
-            }
-        }
-
-        function checkGlobalOilChangeAlerts() {
-            const banner = document.getElementById('oilChangeAlertBanner');
-            if(!banner) return;
-
-            let alerts = [];
-            for(let key in cloudVehicles) {
-                let v = cloudVehicles[key];
-                let driven = (parseFloat(v.currentKm) || 0) - (parseFloat(v.lastOilKm) || 0);
-                let limit = v.interval || 1500;
-                if(driven >= limit) {
-                    alerts.push(`🚨 <b>تحذير صيانة عاجل:</b> سيارة (<b>${v.name}</b>) قطعت <b>${driven} كم</b> وتجاوزت مسافة غيار الزيت المقررة (<b>${limit} كم</b>) - يلزم غيار الزيت وتصفير العداد!`);
-                }
-            }
-
-            if(alerts.length > 0) {
-                banner.style.display = 'block';
-                banner.innerHTML = alerts.join('<hr style="margin:6px 0; border:0; border-top:1px solid #fecdd3;">');
-            } else {
-                banner.style.display = 'none';
-            }
-        }
-
-        function renderVehiclesOilTable() {
-            const tbody = document.getElementById('vehiclesOilTableBody');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            for(let key in cloudVehicles) {
-                let v = cloudVehicles[key];
-                let curKm = parseFloat(v.currentKm) || 0;
-                let lastOil = parseFloat(v.lastOilKm) || 0;
-                let driven = curKm - lastOil;
-                let limit = v.interval || 1500;
-                let remaining = limit - driven;
-
-                let statusBadge = driven >= limit 
-                    ? `<span style="color:#dc2626; font-weight:bold; background:#ffe4e6; padding:2px 6px; border-radius:4px;">🚨 يلزم غيار زيت (${driven} كم)</span>`
-                    : `<span style="color:#16a34a; font-weight:bold;">🟢 سليم (متبقي ${remaining} كم)</span>`;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${v.name}</b></td>
-                        <td style="font-weight:bold; color:#2563eb;">${curKm} كم</td>
-                        <td>${lastOil} كم</td>
-                        <td><b>${driven} كم</b></td>
-                        <td>${statusBadge}</td>
-                        <td>
-                            <button class="btn btn-warning" style="padding:4px 8px; font-size:11px; width:auto; margin:0;" onclick="openOilChangeModal('${key}')">🛢️ تسجيل غيار زيت</button>
-                        </td>
-                    </tr>`;
-            }
-        }
-
-        function openOilChangeModal(vKey) {
-            let v = cloudVehicles[vKey];
-            if(!v) return;
-            document.getElementById('modalOilVehicleKey').value = vKey;
-            document.getElementById('modalOilVehicleName').value = v.name;
-            document.getElementById('modalOilNewKm').value = v.currentKm || '';
-            document.getElementById('oilChangeModal').style.display = 'flex';
-        }
-
-        function closeOilChangeModal() {
-            document.getElementById('oilChangeModal').style.display = 'none';
-        }
-
-        function confirmOilChangeReset() {
-            const vKey = document.getElementById('modalOilVehicleKey').value;
-            const newKm = parseFloat(document.getElementById('modalOilNewKm').value);
-
-            if(isNaN(newKm) || newKm < 0) {
-                alert("❌ يرجى كتابة قراءة صحيحة للعداد عند غيار الزيت.");
-                return;
-            }
-
-            if(!cloudVehicles[vKey]) cloudVehicles[vKey] = { ...defaultVehicles[vKey] };
-            cloudVehicles[vKey].lastOilKm = newKm;
-            if(newKm > (cloudVehicles[vKey].currentKm || 0)) {
-                cloudVehicles[vKey].currentKm = newKm;
-            }
-
-            db.ref('vehicles/' + vKey).set(cloudVehicles[vKey]).then(() => {
-                alert(`✅ تم تسجيل غيار الزيت لسيارة (${cloudVehicles[vKey].name}) عند قراءة عداد [${newKm} كم] وتصفير احتساب الـ 1500 كم بنجاح!`);
-                closeOilChangeModal();
-                renderVehiclesOilTable();
-                checkGlobalOilChangeAlerts();
-            });
-        }
-
-        // ==================== توحيد خطوط السير والعملاء ====================
-        function populateRoutesList() {
-            const selectRoute = document.getElementById('selectRouteFilter');
-            if (!selectRoute) return;
-
-            let currentVal = selectRoute.value || 'ALL';
-            let routesSet = new Set();
-
-            for (let name in cloudClientsRoutes) {
-                if (cloudClientsRoutes[name]) {
-                    let norm = normalizeRouteName(cloudClientsRoutes[name]);
-                    if (norm) routesSet.add(norm);
-                }
-            }
-
-            for (let uid in portalCustomersDB) {
-                let r = portalCustomersDB[uid].route;
-                if (r) {
-                    let norm = normalizeRouteName(r);
-                    if (norm) routesSet.add(norm);
-                }
-            }
-
-            let html = '<option value="ALL">🛣️ عرض كل الخطوط (كل العملاء)</option>';
-            routesSet.forEach(route => {
-                html += `<option value="${route}">📍 ${route}</option>`;
-            });
-
-            selectRoute.innerHTML = html;
-            selectRoute.value = routesSet.has(currentVal) || currentVal === 'ALL' ? currentVal : 'ALL';
-        }
-
-        function onRouteFilterChange() { updateClientsDatalist(); }
-
-        function onVillageInputSyncRoute() {
-            const villageVal = document.getElementById('clientVillage')?.value.trim();
-            const clientVal = document.getElementById('clientName')?.value.trim();
-            if(!villageVal) return;
-
-            const guessedRoute = normalizeRouteName(villageVal);
-            const selectRoute = document.getElementById('selectRouteFilter');
-            
-            let exists = Array.from(selectRoute.options).some(opt => opt.value === guessedRoute);
-            if(!exists) selectRoute.innerHTML += `<option value="${guessedRoute}">📍 ${guessedRoute}</option>`;
-
-            if(clientVal) {
-                cloudClientsRoutes[clientVal] = guessedRoute;
-                db.ref('clientsRoutes/' + clientVal).set(guessedRoute).catch(() => {});
-                document.getElementById('lblClientRoute').innerText = guessedRoute;
-            }
-        }
-
-        function updateClientsDatalist() {
-            const sel = document.getElementById('selectExistingClient');
-            if (!sel) return;
-
-            const selectedRoute = document.getElementById('selectRouteFilter')?.value || 'ALL';
-            const normSelected = normalizeRouteName(selectedRoute);
-            sel.innerHTML = '<option value="">📋 عميل مسجل...</option>';
-
-            for (let cName in cloudClients) {
-                let rawRoute = cloudClientsRoutes[cName] || '';
-                
-                if (!rawRoute) {
-                    for (let uid in portalCustomersDB) {
-                        if (portalCustomersDB[uid].name === cName && portalCustomersDB[uid].route) {
-                            rawRoute = portalCustomersDB[uid].route;
-                            break;
-                        }
+                    try {
+                        new Function(data.js)();
+                    } catch (err) {
+                        console.error("خطأ أثناء تشغيل كود JavaScript المخصص:", err);
                     }
                 }
-
-                let normClientRoute = normalizeRouteName(rawRoute);
-
-                if (selectedRoute === 'ALL' || (normClientRoute && normClientRoute === normSelected)) {
-                    let routeTag = normClientRoute ? ` [${normClientRoute}]` : '';
-                    sel.innerHTML += `<option value="${cName}">${cName} (${cloudClients[cName]})${routeTag}</option>`;
-                }
+                const htmlField = document.getElementById('customHtmlInput');
+                const jsField = document.getElementById('customJsInput');
+                if (htmlField && !htmlField.value) htmlField.value = data.html || '';
+                if (jsField && !jsField.value) jsField.value = data.js || '';
             }
-            updateReportClientsSelect();
-        }
-
-        function adminFixAndUnifyAllRoutes() {
-            if (!confirm("هل تريد توحيد كافة مسميات الخطوط المسجلة للعملاء تلقائياً (مثل دمج 'شبين الكوم' مع 'خط شبين الكوم')؟")) return;
-
-            for (let name in cloudClientsRoutes) {
-                cloudClientsRoutes[name] = normalizeRouteName(cloudClientsRoutes[name]);
-            }
-            for (let uid in portalCustomersDB) {
-                if (portalCustomersDB[uid].route) {
-                    portalCustomersDB[uid].route = normalizeRouteName(portalCustomersDB[uid].route);
-                }
-            }
-
-            Promise.all([
-                db.ref('clientsRoutes').set(cloudClientsRoutes),
-                db.ref('portalCustomers').set(portalCustomersDB)
-            ]).then(() => {
-                alert("✅ تم توحيد ودمج جميع خطوط السير في قاعدة البيانات بنجاح!");
-                populateRoutesList();
-                updateClientsDatalist();
-            });
-        }
-
-        // ==================== استعلام مسحوبات العميل الشاملة ====================
-        function onClientNameInput() {
-            clearTimeout(clientInputTimer);
-            const val = document.getElementById('clientName').value.trim();
-            const lblCode = document.getElementById('lblClientCode');
-            const lblRoute = document.getElementById('lblClientRoute');
-            const historyBox = document.getElementById('clientMonthlyHistory');
-            
-            if (!val) { 
-                lblCode.innerText = "--"; 
-                if (lblRoute) lblRoute.innerText = "--";
-                historyBox.style.display = 'none'; 
-                return; 
-            }
-
-            const normVal = normalizeArabicText(val);
-
-            // البحث عن كود العميل وخط السير
-            let foundCode = "--";
-            let foundRoute = "--";
-
-            for (let cName in cloudClients) {
-                if (normalizeArabicText(cName) === normVal) {
-                    foundCode = cloudClients[cName];
-                    foundRoute = cloudClientsRoutes[cName] || "--";
-                    break;
-                }
-            }
-
-            for (let uid in portalCustomersDB) {
-                let cust = portalCustomersDB[uid];
-                if (normalizeArabicText(cust.name) === normVal || (cust.clientCode && cust.clientCode.toLowerCase() === val.toLowerCase())) {
-                    foundCode = cust.clientCode || foundCode;
-                    foundRoute = cust.route || foundRoute;
-                    break;
-                }
-            }
-
-            lblCode.innerText = foundCode !== "--" ? foundCode : "عميل جديد (تلقائي)";
-            if (lblRoute) lblRoute.innerText = normalizeRouteName(foundRoute) || "--";
-
-            clientInputTimer = setTimeout(() => {
-                // 1. جلب فواتير القطاعي (cloudSales)
-                let retailSales = cloudSales.filter(s => {
-                    if (s.status === 'cancelled') return false;
-                    let matchName = s.client && normalizeArabicText(s.client) === normVal;
-                    let matchCode = (foundCode !== "--" && s.clientCode && s.clientCode === foundCode);
-                    return matchName || matchCode;
-                });
-
-                // 2. جلب مسحوبات الجملة والمحلات (cloudShops)
-                let wholesaleSales = (cloudShops || []).filter(s => {
-                    let matchName = s.name && normalizeArabicText(s.name) === normVal;
-                    let matchCode = (foundCode !== "--" && s.clientCode && s.clientCode === foundCode);
-                    return matchName || matchCode;
-                });
-
-                let totalRetail = retailSales.reduce((sum, i) => sum + (parseFloat(i.total) || 0), 0);
-                let totalWholesale = wholesaleSales.reduce((sum, i) => sum + (parseFloat(i.totalPrice) || 0), 0);
-                let totalZimam = wholesaleSales.reduce((sum, i) => sum + (parseFloat(i.zimam) || 0), 0);
-                let grandTotal = totalRetail + totalWholesale;
-
-                if (retailSales.length > 0 || wholesaleSales.length > 0) {
-                    let details = [];
-                    
-                    retailSales.forEach(i => {
-                        details.push(`📝 فاتورة قطاعي #${i.invNo}: ${parseFloat(i.total).toFixed(2)} ج.م (${i.date})`);
-                    });
-
-                    wholesaleSales.forEach(i => {
-                        details.push(`🏪 جملة/محلات: ${parseFloat(i.totalPrice).toFixed(2)} ج.م (مديونية: ${parseFloat(i.zimam).toFixed(2)} ج.م) (${i.date || 'سابق'})`);
-                    });
-
-                    historyBox.style.display = 'block';
-                    historyBox.innerHTML = `
-                        <div style="font-weight:bold; margin-bottom:4px; font-size:12px;">
-                            📊 إجمالي مسحوبات العميل: <span style="color:#15803d;">${grandTotal.toFixed(2)} ج.م</span>
-                            ${totalZimam > 0 ? ` | <span style="color:#dc2626;">المديونية الحالية: ${totalZimam.toFixed(2)} ج.م</span>` : ''}
-                        </div>
-                        <div style="font-size:10.5px; line-height:1.6; max-height:85px; overflow-y:auto; background:#fff; padding:6px; border-radius:4px; border:1px solid #fde047;">
-                            ${details.join('<br>')}
-                        </div>
-                    `;
-                } else {
-                    historyBox.style.display = 'none';
-                }
-            }, 250);
-        }
+        });
 
         function renderRepRoutesInputs() {
             const cont = document.getElementById('repRoutesInputsList');
@@ -1606,8 +1680,7 @@
             }
             db.ref('delegates').set(cloudDelegates).then(() => {
                 alert("✅ تم حفظ وتحديث خطوط السير المخصصة للمناديب بنجاح!");
-                populateRoutesList();
-                updateClientsDatalist();
+                refreshAllRoutesAndClientsDropdowns();
             });
         }
 
@@ -1672,7 +1745,6 @@
             });
         }
 
-        // ==================== تعديل أصناف المخزن ====================
         function renderWarehouseTable() {
             const tbody = document.getElementById('warehouseStockTableBody');
             const selectIn = document.getElementById('selectWarehouseProductIn');
@@ -1699,14 +1771,14 @@
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${p.name}</b></td>
-                        <td><small style="color:#64748b;">${p.code}</small></td>
+                        <td><code style="color:#0284c7; font-weight:bold;">${p.code}</code></td>
                         <td style="font-weight:bold; color:#16a34a; font-size:12px;">${stockCartons} كرتونة</td>
                         <td>${totalRibbons} رابطة</td>
                         <td>${(p.price || systemSettings.defaultCartonPrice || 23925).toLocaleString()} ج.م</td>
                         <td>${actionsBtn}</td>
                     </tr>`;
 
-                if(selectIn) selectIn.innerHTML += `<option value="${p.code}">${p.name} (الرصيد: ${stockCartons} ك)</option>`;
+                if(selectIn) selectIn.innerHTML += `<option value="${p.code}">${p.name} (${p.code})</option>`;
                 if(selectCar) selectCar.innerHTML += `<option value="${p.code}">${p.name} (بالمخزن: ${stockCartons} ك)</option>`;
             });
         }
@@ -1763,6 +1835,8 @@
                 document.getElementById('newWarehouseProdName').value = '';
                 document.getElementById('newWarehouseProdCode').value = '';
                 document.getElementById('newWarehouseProdStock').value = '0';
+                renderWarehouseTable();
+                initSalesForm();
             });
         }
 
@@ -1783,6 +1857,7 @@
                 db.ref('productsList').set(products).then(() => {
                     alert(`✅ تم إضافة ${qty} كرتونة إلى رصيد المخزن.`);
                     document.getElementById('qtyWarehouseProductIn').value = '';
+                    renderWarehouseTable();
                 });
             }
         }
@@ -2072,8 +2147,6 @@
                     let lng = loc ? loc.lng : null;
                     let lastTime = loc ? (loc.updatedAt || 'اليوم') : 'غير متصل';
 
-                    let lastOdoText = (del.lastOdometer && del.lastVehicle) ? `🚗 ${del.lastVehicle} (${del.lastOdometer} كم)` : '-';
-
                     let sosBadge = (loc && loc.sos) ? '<span style="color:#e11d48; font-weight:bold;">🚨 استغاثة SOS!</span>' : (lat ? '<span style="color:#16a34a; font-weight:bold;">متصل 🟢</span>' : '<span style="color:#64748b;">غير متصل ⚪</span>');
                     
                     let reqStatusHtml = '';
@@ -2092,7 +2165,6 @@
                     tbody.innerHTML += `
                         <tr>
                             <td><b>${del.name}</b> (${code})</td>
-                            <td><b style="color:#0284c7; font-size:11px;">${lastOdoText}</b></td>
                             <td>${lastTime}</td>
                             <td>${sosBadge}</td>
                             <td>${btnRequest}</td>
@@ -2101,7 +2173,7 @@
                 }
             }
 
-            if (!hasRows) tbody.innerHTML = `<tr><td colspan="6">لا يوجد مناديب مسجلين حالياً.</td></tr>`;
+            if (!hasRows) tbody.innerHTML = `<tr><td colspan="5">لا يوجد مناديب مسجلين حالياً.</td></tr>`;
         }
 
         function renderClientsMapTable() {
@@ -2211,9 +2283,8 @@
             db.ref('clients').set(cloudClients).catch(e => {});
 
             if(route) {
-                let normR = normalizeRouteName(route);
-                cloudClientsRoutes[name] = normR;
-                db.ref('clientsRoutes/' + name).set(normR).catch(e => {});
+                cloudClientsRoutes[name] = route;
+                db.ref('clientsRoutes/' + name).set(route).catch(e => {});
             }
 
             if (tempRegCoords) {
@@ -2227,7 +2298,7 @@
                 email: email || (phoneInput+"@blackhorse.com"),
                 pass: password,
                 phone: fullPhone,
-                route: normalizeRouteName(route),
+                route: route,
                 address: address,
                 village: village,
                 customerType: 'pending',
@@ -2323,7 +2394,7 @@
             setupUserTabs();
             switchTab('invoice');
             initSalesForm();
-            populateRoutesList();
+            refreshAllRoutesAndClientsDropdowns();
 
             if(currentDelegate.role === 'delegate') {
                 document.getElementById('sosButtonContainer').style.display = 'block';
@@ -2682,7 +2753,7 @@
 
                 tableRowsHtml += `
                     <tr>
-                        <td style="text-align: right; font-weight: bold; padding: 6px 4px; font-size: 12px; color: #0f172a;">${p.name}</td>
+                        <td style="text-align: right; font-weight: bold; padding: 6px 4px; font-size: 12px; color: #0f172a;">${p.name}<br><small style="color:#64748b;">${p.code}</small></td>
                         <td style="padding: 4px; font-size: 10px; color: ${stockRibbons > 0 ? '#16a34a':'#dc2626'}; font-weight: bold;">${cartonsVal} ك و ${ribbonsVal} ر</td>
                         <td style="padding: 4px;"><input type="number" id="qty_${idx}" min="0" placeholder="0" oninput="calcTotals()" style="width: 100%; padding: 5px; text-align: center; font-weight: bold; border: 1px solid #0284c7; border-radius: 4px; font-size: 13px;"></td>
                         <td style="padding: 4px;"><input type="number" id="price_${idx}" value="${defaultRibbonPrice}" oninput="calcTotals()" style="width: 100%; padding: 5px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;"></td>
@@ -2695,7 +2766,7 @@
                     <table class="report-table" style="background: #fff;">
                         <thead>
                             <tr style="background: #0f172a; color: #fff;">
-                                <th style="padding: 6px; text-align: right; font-size: 11px;">الصنف</th>
+                                <th style="padding: 6px; text-align: right; font-size: 11px;">الصنف والباركود</th>
                                 <th style="padding: 6px; font-size: 10px;">سيارتك</th>
                                 <th style="padding: 6px; width: 85px; font-size: 11px;">الكمية (رابطة)</th>
                                 <th style="padding: 6px; width: 75px; font-size: 11px;">السعر</th>
@@ -2723,25 +2794,6 @@
 
         async function createInvoiceObject() {
             if(!currentDelegate || currentDelegate.role === 'viewer') return null;
-
-            // التحقق الإلزامي من اختيار السيارة وقراءة العداد
-            const vehicleKey = document.getElementById('invoiceVehicleSelect').value;
-            const odometerReading = parseFloat(document.getElementById('invoiceOdometerInput').value);
-
-            if(!vehicleKey) {
-                alert("❌ بيان إلزامي: يرجى اختيار السيارة التي سوف تتحرك بها (الدبابة، بايك 1، بايك 2).");
-                document.getElementById('invoiceVehicleSelect').focus();
-                return null;
-            }
-
-            if(isNaN(odometerReading) || odometerReading <= 0) {
-                alert("❌ بيان إلزامي: يرجى إدخال قراءة عداد السيارة الحالية قبل الخروج وحفظ الفاتورة.");
-                document.getElementById('invoiceOdometerInput').focus();
-                return null;
-            }
-
-            const vehicleName = cloudVehicles[vehicleKey]?.name || vehicleKey;
-
             const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const village = document.getElementById('clientVillage').value.trim() || "";
             const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
@@ -2805,22 +2857,14 @@
 
             if(cloudDelegates[targetDelCode]) {
                 cloudDelegates[targetDelCode].carStock = carStock;
-                cloudDelegates[targetDelCode].lastVehicle = vehicleName;
-                cloudDelegates[targetDelCode].lastOdometer = odometerReading;
-                db.ref('delegates/' + targetDelCode).set(cloudDelegates[targetDelCode]).catch(e => {});
+                db.ref('delegates').set(cloudDelegates).catch(e => {});
             }
-
-            // تحديث قراءة العداد للسيارة في السحابة
-            if(!cloudVehicles[vehicleKey]) cloudVehicles[vehicleKey] = { ...defaultVehicles[vehicleKey] };
-            cloudVehicles[vehicleKey].currentKm = odometerReading;
-            db.ref('vehicles/' + vehicleKey).set(cloudVehicles[vehicleKey]).catch(e => {});
 
             let recordId = String(Date.now());
             const salesRecord = {
                 id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
                 delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
                 client: client, village: village, route: route, clientCode: clientCode,
-                vehicleKey: vehicleKey, vehicleName: vehicleName, odometer: odometerReading,
                 total: grand, totalQty: totalRibbonsCount, status: 'active', items: itemsSoldList,
                 location: locObj,
                 clientLocation: clientLoc
@@ -2838,7 +2882,7 @@
             let cName = systemSettings.companyName || "BLACK HORSE";
             let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
 
-            let receiptText = `     [ ${cName} ]\nشركة ${cName} - موزع معتمد\n${cTax}\n------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالسيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}------------------------\nالمنتج    سعر/كمية  إجمالي\n------------------------\n`;
+            let receiptText = `     [ ${cName} ]\nشركة ${cName} - موزع معتمد\n${cTax}\n------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}------------------------\nالمنتج    سعر/كمية  إجمالي\n------------------------\n`;
             rec.items.forEach(it => { receiptText += `${it.name}\n          ${it.qtyText || (it.price+'/'+it.qty)}  ${it.total.toFixed(2)}\n`; });
             receiptText += `------------------------\nالإجمالي:        ${rec.total.toFixed(2)}\n------------------------\n\n\n`;
 
@@ -2851,7 +2895,7 @@
             }, 700);
 
             if(!specificInv && currentDelegate) {
-                alert("✅ تم حفظ الفاتورة وتحديث عداد السيارة وخصم الكمية بنجاح!");
+                alert("✅ تم حفظ الفاتورة، خصم الكمية، وتثبيت موقع المحل بنجاح!");
                 initSalesForm();
             }
         }
@@ -2859,7 +2903,7 @@
         async function saveAndEmailOnly() {
             const rec = await createInvoiceObject();
             if(rec) {
-                alert("✅ تم حفظ الفاتورة وتحديث عداد السيارة وتثبيت موقع العميل GPS بنجاح!");
+                alert("✅ تم حفظ الفاتورة وتثبيت موقع العميل GPS في حساب المدير بنجاح!");
                 initSalesForm();
             }
         }
@@ -2882,7 +2926,6 @@
             }
         }
 
-        // ==================== تعديل الفواتير السابقة للمدير ====================
         function renderSavedInvoices() {
             const tbody = document.getElementById('savedInvoicesBody');
             if(!tbody) return;
@@ -2903,24 +2946,25 @@
                 return true;
             });
 
-            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="9">لا توجد فواتير مطابقة.</td></tr>`; return; }
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="8">لا توجد فواتير مطابقة.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
                 let isCancelled = (inv.status === 'cancelled');
                 let statusBadge = isCancelled ? `<span style="color:#dc2626; font-weight:bold;">ملغاة</span>` : `<span style="color:#16a34a; font-weight:bold;">نشطة</span>`;
                 
-                let actionButtons = `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️</button> `;
+                let actionButtons = `<button class="btn btn-thermal" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printDirectThermalDesktop(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ حراري</button> `;
+                actionButtons += `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">📱 BT</button> `;
                 actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="viewInvoiceDetails('${inv.id}')">👁️</button> `;
                 
                 if (isAdm) {
-                    actionButtons += `<button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openEditInvoiceModal('${inv.id}')">✏️ تعديل</button> `;
+                    actionButtons += `<button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openEditInvoiceModal('${inv.id}')">✏️</button> `;
                 }
 
                 if(!isCancelled && (isAdm || (currentDelegate && inv.delegateCode === currentDelegate.code))) {
                     actionButtons += `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="cancelInvoice('${inv.id}')">❌</button>`;
                 }
 
-                tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td><b>${inv.vehicleName || '-'}</b></td><td>${inv.odometer ? inv.odometer + ' كم' : '-'}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
+                tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td>${inv.village || '-'}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
             });
         }
 
@@ -2932,8 +2976,6 @@
             document.getElementById('modalEditInvNo').value = inv.invNo || '';
             document.getElementById('modalEditInvDate').value = inv.date || '';
             document.getElementById('modalEditInvClient').value = inv.client || '';
-            document.getElementById('modalEditInvVehicle').value = inv.vehicleName || '';
-            document.getElementById('modalEditInvOdometer').value = inv.odometer || '';
             document.getElementById('modalEditInvVillage').value = inv.village || '';
             document.getElementById('modalEditInvRoute').value = inv.route || '';
             document.getElementById('modalEditInvDelegate').value = inv.delegateName || '';
@@ -2953,8 +2995,6 @@
             inv.invNo = document.getElementById('modalEditInvNo').value.trim();
             inv.date = document.getElementById('modalEditInvDate').value;
             inv.client = document.getElementById('modalEditInvClient').value.trim();
-            inv.vehicleName = document.getElementById('modalEditInvVehicle').value.trim();
-            inv.odometer = parseFloat(document.getElementById('modalEditInvOdometer').value) || 0;
             inv.village = document.getElementById('modalEditInvVillage').value.trim();
             inv.route = document.getElementById('modalEditInvRoute').value.trim();
             inv.total = parseFloat(document.getElementById('modalEditInvTotal').value) || 0;
@@ -2989,53 +3029,86 @@
                     </div>`;
             }
 
-            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>السيارة:</b> ${inv.vehicleName || 'عام'} (عداد: ${inv.odometer || '-'} كم)<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>الخط:</b> ${inv.route || 'غير محدد'}<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
+            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>الخط:</b> ${inv.route || 'غير محدد'}<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
             document.getElementById('invoiceModal').style.display = 'flex';
         }
 
         function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
 
-        function renderDailyReport() {
+        // ==================== 4. محرك التقارير المتقدمة وفلترة الخطوط والمندوب والتصدير لإكسيل ====================
+        function getFilteredReportSales() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
             const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
-            const selClient = document.getElementById('reportClientSelect')?.value;
+            const selRoute = document.getElementById('reportRouteSelect')?.value || 'ALL';
+            const selClient = document.getElementById('reportClientSelect')?.value || 'ALL';
             const fromDate = document.getElementById('filterFromDate')?.value;
             const toDate = document.getElementById('filterToDate')?.value;
+
+            return cloudSales.filter(s => {
+                if (s.status === 'cancelled') return false;
+                if (currentDelegate && !isAdm && s.delegateCode !== currentDelegate.code) return false;
+                if (isAdm && selDel && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
+                
+                // فلتر خط السير
+                if (selRoute !== 'ALL') {
+                    let sRoute = s.route || (cloudClientsRoutes ? cloudClientsRoutes[s.client] : '') || '';
+                    if (!isRouteMatch(sRoute, selRoute)) return false;
+                }
+
+                // فلتر العميل
+                if (selClient !== 'ALL' && (!s.client || s.client.trim().toLowerCase() !== selClient.trim().toLowerCase())) return false;
+
+                // فلتر التاريخ
+                if (fromDate && s.date < fromDate) return false;
+                if (toDate && s.date > toDate) return false;
+
+                return true;
+            });
+        }
+
+        function renderDailyReport() {
+            const filtered = getFilteredReportSales();
 
             let totalMoney = 0;
             let qMap = {};
             products.forEach(p => qMap[p.code] = 0);
 
-            let filtered = cloudSales.filter(s => {
-                if(s.status === 'cancelled') return false;
-                if(currentDelegate && !isAdm && s.delegateCode !== currentDelegate.code) return false;
-                if(isAdm && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
-                if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
-                if(fromDate && s.date < fromDate) return false;
-                if(toDate && s.date > toDate) return false;
-                return true;
-            });
-
             const invTb = document.getElementById('repInvoicesTableBody');
-            if(invTb) {
+            if (invTb) {
                 invTb.innerHTML = '';
-                filtered.forEach(s => {
-                    totalMoney += s.total;
-                    if(s.items) {
-                        s.items.forEach(it => { 
-                            if(qMap[it.code] !== undefined) qMap[it.code] += (it.unit === 'كرتونة' ? it.qty * 50 : it.qty); 
-                        });
-                    }
-                    invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td>${s.village || '-'}</td><td>${s.delegateName}</td><td><b>${s.total}</b> ج.م</td></tr>`;
-                });
+                if (filtered.length === 0) {
+                    invTb.innerHTML = `<tr><td colspan="7">لا توجد مبيعات مطابقة لمعايير البحث المحددة.</td></tr>`;
+                } else {
+                    filtered.forEach(s => {
+                        totalMoney += (parseFloat(s.total) || 0);
+                        if (s.items) {
+                            s.items.forEach(it => { 
+                                if (qMap[it.code] !== undefined) {
+                                    qMap[it.code] += (it.unit === 'كرتونة' ? (it.qty * 50) : it.qty);
+                                } 
+                            });
+                        }
+                        let routeName = s.route || (cloudClientsRoutes ? cloudClientsRoutes[s.client] : '') || '-';
+                        invTb.innerHTML += `
+                            <tr>
+                                <td><b>#${s.invNo}</b></td>
+                                <td>${s.date}</td>
+                                <td><b>${s.client}</b></td>
+                                <td><span style="color:#16a34a; font-weight:bold;">${routeName}</span></td>
+                                <td>${s.village || '-'}</td>
+                                <td>${s.delegateName}</td>
+                                <td><b>${s.total.toFixed(2)}</b> ج.م</td>
+                            </tr>`;
+                    });
+                }
             }
 
-            document.getElementById('repTotalAmount').innerText = totalMoney.toFixed(2);
+            document.getElementById('repTotalAmount').innerText = totalMoney.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             document.getElementById('repInvoiceCount').innerText = filtered.length;
             
             let totalAllRibbons = 0;
             const prodTb = document.getElementById('repProductsBody');
-            if(prodTb) {
+            if (prodTb) {
                 prodTb.innerHTML = '';
                 products.forEach(p => {
                     let totalRibbons = qMap[p.code] || 0;
@@ -3057,9 +3130,77 @@
 
             let overallCartons = Math.floor(totalAllRibbons / 50);
             let overallRemRibbons = totalAllRibbons % 50;
-            if(document.getElementById('repTotalCartonsSum')) {
+            if (document.getElementById('repTotalCartonsSum')) {
                 document.getElementById('repTotalCartonsSum').innerText = `${overallCartons} كرتونة و ${overallRemRibbons} رابطة`;
             }
+        }
+
+        function exportReportToExcel() {
+            const filteredSales = getFilteredReportSales();
+
+            if (filteredSales.length === 0) {
+                alert("⚠️ لا توجد بيانات في الفترة والفلاتر المحددة لتصديرها.");
+                return;
+            }
+
+            const fromDate = document.getElementById('filterFromDate')?.value || 'البداية';
+            const toDate = document.getElementById('filterToDate')?.value || 'اليوم';
+
+            // الشيت 1: تفاصيل الفواتير المسجلة
+            let invoicesData = [];
+            filteredSales.forEach(s => {
+                let itemsStr = s.items ? s.items.map(it => `${it.name} (${it.qty} ${it.unit || 'رابطة'})`).join(' + ') : '-';
+                invoicesData.push({
+                    "رقم الفاتورة": s.invNo,
+                    "التاريخ": s.date,
+                    "اسم العميل": s.client,
+                    "كود العميل": s.clientCode || '',
+                    "خط السير": s.route || (cloudClientsRoutes ? cloudClientsRoutes[s.client] : '') || '',
+                    "القرية / المركز": s.village || '',
+                    "المندوب": s.delegateName || '',
+                    "الأصناف المباعة": itemsStr,
+                    "إجمالي الفاتورة (ج.م)": s.total
+                });
+            });
+
+            // الشيت 2: ملخص كميات الأصناف المباعة
+            let qMap = {};
+            products.forEach(p => qMap[p.code] = 0);
+            filteredSales.forEach(s => {
+                if (s.items) {
+                    s.items.forEach(it => {
+                        if (qMap[it.code] !== undefined) {
+                            qMap[it.code] += (it.unit === 'كرتونة' ? (it.qty * 50) : it.qty);
+                        }
+                    });
+                }
+            });
+
+            let productsSummaryData = [];
+            products.forEach(p => {
+                let ribbons = qMap[p.code] || 0;
+                let cartons = Math.floor(ribbons / 50);
+                let remRibbons = ribbons % 50;
+                productsSummaryData.push({
+                    "اسم الصنف": p.name,
+                    "كود الصنف / الباركود": p.code,
+                    "المباع (كرتونة ورابطة)": `${cartons} كرتونة و ${remRibbons} رابطة`,
+                    "إجمالي الروابط": ribbons,
+                    "ما يعادل كراتين": (ribbons / 50).toFixed(2),
+                    "سعر الكرتونة": p.price || systemSettings.defaultCartonPrice || 23925
+                });
+            });
+
+            const wb = XLSX.utils.book_new();
+            
+            const wsInvoices = XLSX.utils.json_to_sheet(invoicesData);
+            const wsProducts = XLSX.utils.json_to_sheet(productsSummaryData);
+
+            XLSX.utils.book_append_sheet(wb, wsInvoices, "فواتير المبيعات");
+            XLSX.utils.book_append_sheet(wb, wsProducts, "ملخص حركة الأصناف");
+
+            const fileName = `تقرير_مبيعات_${(systemSettings.companyName || "بلاك_هورس")}_${fromDate}_إلى_${toDate}.xlsx`;
+            XLSX.writeFile(wb, fileName);
         }
 
         function setupUserTabs() {
@@ -3089,15 +3230,13 @@
             document.getElementById('tabLmInvoices').style.display = (isAdm || isAccounting) ? 'block' : 'none';
             document.getElementById('tabCustomCode').style.display = isAdm ? 'block' : 'none';
             
-            document.getElementById('adminVehiclesOilControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
-            document.getElementById('adminUnifyRoutesBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminSystemControlBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminCarSetupBox').style.display = (isAdm || isStore || isFleet) ? 'block' : 'none';
             document.getElementById('adminRepRoutesControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             document.getElementById('adminDelegateFilterBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             
             if(document.getElementById('adminReportSelectWrapper')) {
-                document.getElementById('adminReportSelectWrapper').style.display = (isAdm || isFleet) ? 'flex' : 'none';
+                document.getElementById('adminReportSelectWrapper').style.display = (isAdm || isFleet) ? 'grid' : 'none';
             }
 
             if(isAdm) {
@@ -3109,6 +3248,7 @@
         }
 
         function switchTab(tabKey) {
+            currentActiveTab = tabKey;
             const tabsMap = {
                 'invoice': { btn: 'tabNewInvoice', sec: 'sectionInvoice' },
                 'warehouse': { btn: 'tabWarehouse', sec: 'sectionWarehouse' },
@@ -3142,18 +3282,65 @@
                 if(targetSec) targetSec.style.display = 'block';
             }
 
-            if(tabKey === 'warehouse') renderWarehouseTable();
-            if(tabKey === 'attendanceLog') renderAttendanceLogTable();
-            if(tabKey === 'clientsManage') renderAdminPortalCustomersTable();
-            if(tabKey === 'pendingOrders') renderAdminPendingOrdersTable();
-            if(tabKey === 'saved') renderSavedInvoices();
-            if(tabKey === 'report') renderDailyReport();
-            if(tabKey === 'carStock') renderCarStockTable();
+            if(tabKey === 'invoice') { refreshAllRoutesAndClientsDropdowns(); }
+            if(tabKey === 'warehouse') { renderWarehouseTable(); }
+            if(tabKey === 'attendanceLog') { renderAttendanceLogTable(); }
+            if(tabKey === 'clientsManage') { renderAdminPortalCustomersTable(); }
+            if(tabKey === 'pendingOrders') { renderAdminPendingOrdersTable(); }
+            if(tabKey === 'saved') { renderSavedInvoices(); }
+            if(tabKey === 'report') { refreshAllRoutesAndClientsDropdowns(); renderDailyReport(); }
+            if(tabKey === 'carStock') { renderCarStockTable(); }
             if(tabKey === 'tracking') { renderDelegatesTrackingTable(); renderClientsMapTable(); }
-            if(tabKey === 'menof') renderMenofTable();
-            if(tabKey === 'shops') renderShopsTable();
+            if(tabKey === 'menof') { renderMenofTable(); }
+            if(tabKey === 'shops') { renderShopsTable(); }
             if(tabKey === 'lmInvoices') { initLmFormInputs(); renderLmTable(); }
-            if(tabKey === 'settings') { applySystemBranding(); renderAdminUsersTable(); renderVehiclesOilTable(); }
+            if(tabKey === 'settings') { applySystemBranding(); renderAdminUsersTable(); }
+        }
+
+        function saveAndApplyCustomCode() {
+            const customHtml = document.getElementById('customHtmlInput').value;
+            const customJs = document.getElementById('customJsInput').value;
+
+            db.ref('customInjectedCode').set({
+                html: customHtml,
+                js: customJs,
+                updatedAt: new Date().toISOString()
+            }).then(() => {
+                alert("✅ تم حفظ وتطبيق الأكواد بنجاح في قاعدة البيانات!");
+                if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
+                if (customJs) {
+                    try {
+                        new Function(customJs)();
+                    } catch (e) {
+                        alert("⚠️ تحذير: يوجد خطأ برمجي في كود الـ JS:\n" + e.message);
+                    }
+                }
+            });
+        }
+
+        function executeCustomCodeLiveOnly() {
+            const customHtml = document.getElementById('customHtmlInput').value;
+            const customJs = document.getElementById('customJsInput').value;
+
+            if (customHtml) document.getElementById('customDynamicContainer').innerHTML = customHtml;
+            if (customJs) {
+                try {
+                    new Function(customJs)();
+                    alert("⚡ تم تشغيل الكود تجريبياً في جلستك الحالية فقط.");
+                } catch (e) {
+                    alert("❌ خطأ في كود الـ JS:\n" + e.message);
+                }
+            }
+        }
+
+        function clearCustomCode() {
+            if (!confirm("⚠️ هل أنت متأكد من مسح كافة الأكواد المخصصة من النظام؟")) return;
+            db.ref('customInjectedCode').remove().then(() => {
+                document.getElementById('customHtmlInput').value = '';
+                document.getElementById('customJsInput').value = '';
+                document.getElementById('customDynamicContainer').innerHTML = '';
+                alert("✅ تم مسح الأكواد المخصصة بنجاح.");
+            });
         }
 
         function updateDelegatesSelects() {
@@ -3170,16 +3357,9 @@
 
             if(selFilter) selFilter.innerHTML = '<option value="ALL">📋 عرض كل المناديب</option>' + str;
             if(selStock) selStock.innerHTML = str;
-            if(repDelSel && currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.code === 'admin' || currentDelegate.role === 'fleet')) {
-                repDelSel.innerHTML = '<option value="ALL">📋 كل المناديب</option>' + str;
+            if(repDelSel) {
+                repDelSel.innerHTML = '<option value="ALL">📋 كافة المناديب</option>' + str;
             }
-        }
-
-        function updateReportClientsSelect() {
-            const repClientSel = document.getElementById('reportClientSelect');
-            if(!repClientSel) return;
-            repClientSel.innerHTML = '<option value="ALL">🏪 كل العملاء</option>';
-            for(let cName in cloudClients) repClientSel.innerHTML += `<option value="${cName}">${cName}</option>`;
         }
 
         function updateDelegateTodaySummary() {
@@ -3219,6 +3399,45 @@
                 }
                 onClientNameInput();
             }
+        }
+
+        function onClientNameInput() {
+            clearTimeout(clientInputTimer);
+            const val = document.getElementById('clientName').value.trim();
+            const lblCode = document.getElementById('lblClientCode');
+            const lblRoute = document.getElementById('lblClientRoute');
+            const historyBox = document.getElementById('clientMonthlyHistory');
+            
+            if(!val) { 
+                lblCode.innerText = "--"; 
+                if(lblRoute) lblRoute.innerText = "--";
+                historyBox.style.display = 'none'; 
+                return; 
+            }
+
+            let foundRoute = (cloudClientsRoutes ? cloudClientsRoutes[val] : "") || "--";
+            for(let uid in portalCustomersDB) {
+                if(portalCustomersDB[uid].name === val && portalCustomersDB[uid].route) {
+                    foundRoute = portalCustomersDB[uid].route;
+                    break;
+                }
+            }
+            if(lblRoute) lblRoute.innerText = foundRoute;
+
+            if(cloudClients[val]) lblCode.innerText = cloudClients[val];
+            else lblCode.innerText = "عميل جديد (تلقائي)";
+
+            clientInputTimer = setTimeout(() => {
+                let clientSales = cloudSales.filter(s => s.client && s.client.toLowerCase() === val.toLowerCase() && s.status !== 'cancelled');
+                if(clientSales.length > 0) {
+                    let totalMonth = clientSales.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+                    let details = clientSales.map(i => `فاتورة #${i.invNo}: ${i.total} ج.م (${i.date})`).join(' | ');
+                    historyBox.style.display = 'block';
+                    historyBox.innerHTML = `<b>📊 مبيعات العميل النشطة:</b> إجمالي الصافي = ${totalMonth.toFixed(2)} ج.م<br><span style="font-size:10px;">${details}</span>`;
+                } else {
+                    historyBox.style.display = 'none';
+                }
+            }, 300);
         }
 
         function calcRatioLoading() {
@@ -3550,7 +3769,6 @@
             db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
         }
 
-        // ==================== تعديل وإدارة حسابات الموظفين ====================
         function createNewUserAccount() {
             const code = document.getElementById('newAccCode').value.trim();
             const name = document.getElementById('newAccName').value.trim();
@@ -3648,7 +3866,6 @@
             });
         }
 
-        // ==================== تعديل بيانات العملاء ====================
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
@@ -3703,7 +3920,7 @@
             const oldName = c.name;
             const newName = document.getElementById('modalEditCustName').value.trim();
             const code = document.getElementById('modalEditCustCode').value.trim();
-            const route = normalizeRouteName(document.getElementById('modalEditCustRoute').value.trim());
+            const route = document.getElementById('modalEditCustRoute').value.trim();
             const village = document.getElementById('modalEditCustVillage').value.trim();
             const phone = document.getElementById('modalEditCustPhone').value.trim();
             const pass = document.getElementById('modalEditCustPass').value.trim();
@@ -3736,14 +3953,13 @@
             alert("✅ تم تعديل وتحديث بيانات العميل بنجاح!");
             closeEditCustomerModal();
             renderAdminPortalCustomersTable();
-            populateRoutesList();
-            updateClientsDatalist();
+            refreshAllRoutesAndClientsDropdowns();
         }
 
         function adminDirectAddCustomer() {
             const name = document.getElementById('adminDirectName').value.trim();
             const code = document.getElementById('adminDirectCode').value.trim() || ("C-" + Math.floor(1000 + Math.random() * 9000));
-            const route = normalizeRouteName(document.getElementById('adminDirectRoute').value.trim());
+            const route = document.getElementById('adminDirectRoute').value.trim();
             const village = document.getElementById('adminDirectVillage').value.trim();
             const phone = document.getElementById('adminDirectPhone').value.trim();
             const pass = document.getElementById('adminDirectPass').value.trim() || "123456";
@@ -3768,6 +3984,7 @@
             document.getElementById('adminDirectPhone').value = '';
             document.getElementById('adminDirectPass').value = '';
             renderAdminPortalCustomersTable();
+            refreshAllRoutesAndClientsDropdowns();
         }
 
         function adminDeleteCustomer(uid, name) {
@@ -3783,6 +4000,7 @@
             db.ref('clientsLocations/' + name).remove();
 
             renderAdminPortalCustomersTable();
+            refreshAllRoutesAndClientsDropdowns();
         }
 
         function toggleSelectAllClients(master) {
@@ -3809,6 +4027,7 @@
             });
 
             renderAdminPortalCustomersTable();
+            refreshAllRoutesAndClientsDropdowns();
         }
 
         function exportClientsFast() {
@@ -3850,7 +4069,7 @@
                 rows.forEach((r, idx) => {
                     let name = r["اسم العميل"] || r["العميل"] || r["Name"] || ("عميل " + idx);
                     let code = r["الكود الثابت"] || r["الكود"] || r["Code"] || ("C-" + (1000 + idx));
-                    let route = normalizeRouteName(r["خط السير"] || r["الخط"] || r["Route"] || "خط عام");
+                    let route = r["خط السير"] || r["الخط"] || r["Route"] || "خط عام";
                     let village = r["القرية"] || r["المركز"] || "";
                     let phone = r["التليفون"] || r["الموبايل"] || "";
                     let type = r["الفئة"] || "retail";
@@ -3867,8 +4086,7 @@
                 db.ref('clientsRoutes').set(cloudClientsRoutes).then(() => {
                     alert(`🎉 تم استيراد وتحديث ${rows.length} عميل بنجاح!`);
                     renderAdminPortalCustomersTable();
-                    populateRoutesList();
-                    updateClientsDatalist();
+                    refreshAllRoutesAndClientsDropdowns();
                 });
             };
             reader.readAsArrayBuffer(file);
