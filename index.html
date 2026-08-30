@@ -551,6 +551,15 @@
 
         <!-- ط) التقارير الشاملة -->
         <div id="sectionReport" style="display: none;">
+            <!-- خانة بحث المدير وتصدير الإكسيل (تظهر للمدير فقط) -->
+            <div id="adminReportManagerBox" style="display:none; background:#fdf4ff; border:1.5px solid #f0abfc; padding:12px; border-radius:8px; margin-bottom:14px;">
+                <h5 style="margin:0 0 8px 0; color:#86198f; font-size:13px;">👑 لوحة المدير الخاصة بالتقارير:</h5>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <input type="text" id="adminReportSearchInput" placeholder="🔍 بحث المدير السريع (اسم العميل، رقم الفاتورة، المندوب)..." oninput="renderDailyReport()" style="flex:2; padding:8px; border:2px solid #d946ef; border-radius:6px; font-size:12px; background:#fff;">
+                    <button class="btn btn-success" style="flex:1; margin-top:0; padding:8px; font-size:12px;" onclick="exportClientWithdrawalsExcel()">📥 تصدير مسحوبات العملاء (Excel)</button>
+                </div>
+            </div>
+
             <div class="filter-box" id="reportFilterBoxContainer">
                 <h4 style="margin-top:0;">📊 تقارير المبيعات من تاريخ إلى تاريخ:</h4>
                 <div style="display: flex; gap: 8px; margin-bottom: 8px;" id="adminReportSelectWrapper">
@@ -636,7 +645,6 @@
         </div>
 
         <!-- ك) حساب النسب -->
-               <!-- ك) حساب النسب -->
         <div id="sectionRatios" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل (تحديد النوع لكل صنف):</h4>
             <div class="filter-box">
@@ -1134,128 +1142,163 @@
         }
 
         // ==================== 1. محرك البلوتوث المباشر للطابعات الحرارية ====================
-        // ==================== 1. طباعة مباشرة عبر تطبيق RawBT (متوافق مع APK والموبايل) ====================
-async function printViaRawBT(specificInv = null) {
-    const rec = specificInv || (await createInvoiceObject());
-    if (!rec) return;
+        // طباعة مباشرة عبر تطبيق RawBT (متوافق مع APK والموبايل)
+        async function printViaRawBT(specificInv = null) {
+            const rec = specificInv || (await createInvoiceObject());
+            if (!rec) return;
 
-    let cName = systemSettings.companyName || "BLACK HORSE";
-    let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
+            let cName = systemSettings.companyName || "BLACK HORSE";
+            let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
 
-    // تجهيز نص الإيصال المنسق لطابعات الـ 58mm و 80mm
-    let receiptText = `      ${cName}\n`;
-    receiptText += `${systemSettings.companySubtitle || 'شركة بلاك هورس - موزع معتمد'}\n`;
-    receiptText += `${cTax}\n`;
-    receiptText += `--------------------------------\n`;
-    receiptText += `التاريخ: ${rec.date}\n`;
-    receiptText += `فاتورة رقم: #${rec.invNo}\n`;
-    receiptText += `السيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\n`;
-    receiptText += `العميل: ${rec.client}\n`;
-    if (rec.village) receiptText += `القرية: ${rec.village}\n`;
-    if (rec.delegateName) receiptText += `المندوب: ${rec.delegateName}\n`;
-    receiptText += `--------------------------------\n`;
-    receiptText += `المنتج          الكمية  السعر  الإجمالي\n`;
-    receiptText += `--------------------------------\n`;
+            let receiptText = `      ${cName}\n`;
+            receiptText += `${systemSettings.companySubtitle || 'شركة بلاك هورس - موزع معتمد'}\n`;
+            receiptText += `${cTax}\n`;
+            receiptText += `--------------------------------\n`;
+            receiptText += `التاريخ: ${rec.date}\n`;
+            receiptText += `فاتورة رقم: #${rec.invNo}\n`;
+            receiptText += `السيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\n`;
+            receiptText += `العميل: ${rec.client}\n`;
+            if (rec.village) receiptText += `القرية: ${rec.village}\n`;
+            if (rec.delegateName) receiptText += `المندوب: ${rec.delegateName}\n`;
+            receiptText += `--------------------------------\n`;
+            receiptText += `المنتج          الكمية  السعر  الإجمالي\n`;
+            receiptText += `--------------------------------\n`;
 
-    rec.items.forEach(it => {
-        let nameLine = (it.name || '').substring(0, 16).padEnd(16, ' ');
-        let qStr = String(it.qty).padStart(4, ' ');
-        let pStr = String(it.price).padStart(6, ' ');
-        let totStr = it.total.toFixed(2).padStart(8, ' ');
-        receiptText += `${nameLine} ${qStr} ${pStr} ${totStr}\n`;
-    });
+            rec.items.forEach(it => {
+                let nameLine = (it.name || '').substring(0, 16).padEnd(16, ' ');
+                let qStr = String(it.qty).padStart(4, ' ');
+                let pStr = String(it.price).padStart(6, ' ');
+                let totStr = it.total.toFixed(2).padStart(8, ' ');
+                receiptText += `${nameLine} ${qStr} ${pStr} ${totStr}\n`;
+            });
 
-    receiptText += `--------------------------------\n`;
-    receiptText += `الإجمالي الكلي:        ${rec.total.toFixed(2)} ج.م\n`;
-    receiptText += `--------------------------------\n`;
-    receiptText += `        شكراً لتعاملكم معنا\n\n\n\n`;
+            receiptText += `--------------------------------\n`;
+            receiptText += `الإجمالي الكلي:        ${rec.total.toFixed(2)} ج.م\n`;
+            receiptText += `--------------------------------\n`;
+            receiptText += `        شكراً لتعاملكم معنا\n\n\n\n`;
 
-    const encodedText = encodeURIComponent(receiptText);
+            const encodedText = encodeURIComponent(receiptText);
+            const intentUrl = `intent://rawbt/print?text=${encodedText}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+            const fallbackUrl = `rawbt:${encodedText}`;
 
-    // الرابط المباشر لتطبيق RawBT عبر الـ Intent والأندرويد
-    const intentUrl = `intent://rawbt/print?text=${encodedText}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-    const fallbackUrl = `rawbt:${encodedText}`;
-
-    try {
-        // محاولة الفتح عبر Scheme المباشر أولاً ليعمل داخل الـ WebView و APK
-        window.location.href = fallbackUrl;
-    } catch (e) {
-        window.location.href = intentUrl;
-    }
-
-    // بديل إضافي في حالة منع الـ WebView للروابط المباشرة
-    setTimeout(() => {
-        if (document.visibilityState === 'visible') {
             try {
+                window.location.href = fallbackUrl;
+            } catch (e) {
                 window.location.href = intentUrl;
-            } catch (err) {}
-        }
-    }, 600);
-
-    if (!specificInv && currentDelegate) {
-        initSalesForm();
-    }
-}
-
-// ==================== 2. طباعة بلوتوث مباشرة بدون تطبيقات وسيطة (ESC/POS) ====================
-async function printDirectBluetoothESC(specificInv = null) {
-    const rec = specificInv || (await createInvoiceObject());
-    if (!rec) return;
-
-    let char = window.bluetoothPrinterChar;
-    if (!char || !window.bluetoothPrinterDevice || !window.bluetoothPrinterDevice.gatt.connected) {
-        char = await connectDirectBluetoothThermal();
-        if (!char) return;
-    }
-
-    try {
-        let cName = systemSettings.companyName || "BLACK HORSE";
-        let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
-
-        let receiptText = `     [ ${cName} ]\n${systemSettings.companySubtitle || 'شركة بلاك هورس - موزع معتمد'}\n${cTax}\n--------------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالسيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}--------------------------------\nالمنتج          الكمية  السعر  الإجمالي\n--------------------------------\n`;
-        
-        rec.items.forEach(it => {
-            let nameLine = it.name.padEnd(16, ' ').substring(0, 16);
-            let qStr = String(it.qty).padStart(4, ' ');
-            let pStr = String(it.price).padStart(6, ' ');
-            let totStr = it.total.toFixed(2).padStart(8, ' ');
-            receiptText += `${nameLine} ${qStr} ${pStr} ${totStr}\n`;
-        });
-        
-        receiptText += `--------------------------------\nالإجمالي الكلي:        ${rec.total.toFixed(2)} ج.م\n--------------------------------\n       شكراً لتعاملكم معنا\n\n\n\n`;
-
-        // أوامر ESC/POS للتهيئة والقص
-        const encoder = new TextEncoder();
-        const initCmd = new Uint8Array([0x1B, 0x40]); // تهيئة الطابعة
-        const textBytes = encoder.encode(receiptText);
-        const cutCmd = new Uint8Array([0x1D, 0x56, 0x41, 0x00]); // قص الورق
-
-        const fullPayload = new Uint8Array(initCmd.length + textBytes.length + cutCmd.length);
-        fullPayload.set(initCmd, 0);
-        fullPayload.set(textBytes, initCmd.length);
-        fullPayload.set(cutCmd, initCmd.length + textBytes.length);
-
-        // إرسال البيانات على أجزاء (Chunks) لتفادي انقطاع اتصال البلوتوث
-        const CHUNK_SIZE = 100;
-        for (let i = 0; i < fullPayload.length; i += CHUNK_SIZE) {
-            const chunk = fullPayload.slice(i, i + CHUNK_SIZE);
-            if (char.properties.writeWithoutResponse) {
-                await char.writeValueWithoutResponse(chunk);
-            } else {
-                await char.writeValue(chunk);
             }
-            await new Promise(r => setTimeout(r, 25));
+
+            setTimeout(() => {
+                if (document.visibilityState === 'visible') {
+                    try {
+                        window.location.href = intentUrl;
+                    } catch (err) {}
+                }
+            }, 600);
+
+            if (!specificInv && currentDelegate) {
+                initSalesForm();
+            }
         }
 
-        alert("✅ تم إرسال أمر الطباعة بنجاح إلى الطابعة الحرارية مباشرة!");
-        if (!specificInv && currentDelegate) {
-            initSalesForm();
+        // طباعة بلوتوث مباشرة بدون تطبيقات وسيطة (ESC/POS)
+        async function printDirectBluetoothESC(specificInv = null) {
+            const rec = specificInv || (await createInvoiceObject());
+            if (!rec) return;
+
+            let char = window.bluetoothPrinterChar;
+            if (!char || !window.bluetoothPrinterDevice || !window.bluetoothPrinterDevice.gatt.connected) {
+                char = await connectDirectBluetoothThermal();
+                if (!char) return;
+            }
+
+            try {
+                let cName = systemSettings.companyName || "BLACK HORSE";
+                let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
+
+                let receiptText = `     [ ${cName} ]\n${systemSettings.companySubtitle || 'شركة بلاك هورس - موزع معتمد'}\n${cTax}\n--------------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالسيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}--------------------------------\nالمنتج          الكمية  السعر  الإجمالي\n--------------------------------\n`;
+                
+                rec.items.forEach(it => {
+                    let nameLine = it.name.padEnd(16, ' ').substring(0, 16);
+                    let qStr = String(it.qty).padStart(4, ' ');
+                    let pStr = String(it.price).padStart(6, ' ');
+                    let totStr = it.total.toFixed(2).padStart(8, ' ');
+                    receiptText += `${nameLine} ${qStr} ${pStr} ${totStr}\n`;
+                });
+                
+                receiptText += `--------------------------------\nالإجمالي الكلي:        ${rec.total.toFixed(2)} ج.م\n--------------------------------\n       شكراً لتعاملكم معنا\n\n\n\n`;
+
+                const encoder = new TextEncoder();
+                const initCmd = new Uint8Array([0x1B, 0x40]);
+                const textBytes = encoder.encode(receiptText);
+                const cutCmd = new Uint8Array([0x1D, 0x56, 0x41, 0x00]);
+
+                const fullPayload = new Uint8Array(initCmd.length + textBytes.length + cutCmd.length);
+                fullPayload.set(initCmd, 0);
+                fullPayload.set(textBytes, initCmd.length);
+                fullPayload.set(cutCmd, initCmd.length + textBytes.length);
+
+                const CHUNK_SIZE = 100;
+                for (let i = 0; i < fullPayload.length; i += CHUNK_SIZE) {
+                    const chunk = fullPayload.slice(i, i + CHUNK_SIZE);
+                    if (char.properties.writeWithoutResponse) {
+                        await char.writeValueWithoutResponse(chunk);
+                    } else {
+                        await char.writeValue(chunk);
+                    }
+                    await new Promise(r => setTimeout(r, 25));
+                }
+
+                alert("✅ تم إرسال أمر الطباعة بنجاح إلى الطابعة الحرارية مباشرة!");
+                if (!specificInv && currentDelegate) {
+                    initSalesForm();
+                }
+            } catch (err) {
+                console.error("Print Error:", err);
+                alert("❌ حدث خطأ أثناء إرسال أمر الطباعة: " + err.message);
+            }
         }
-    } catch (err) {
-        console.error("Print Error:", err);
-        alert("❌ حدث خطأ أثناء إرسال أمر الطباعة: " + err.message);
-    }
-}
+
+        async function connectDirectBluetoothThermal() {
+            try {
+                if (!navigator.bluetooth) {
+                    alert("⚠️ البلوتوث المباشر غير مدعوم في هذا المتصفح. استخدم زر RawBT للطباعة السريعة.");
+                    return null;
+                }
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { namePrefix: 'XP-' }, { namePrefix: 'MPT-' }, { namePrefix: 'RP-' },
+                        { namePrefix: 'Printer' }, { namePrefix: 'Bluetooth' }
+                    ],
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', '49535343-fe7d-4ae5-8fa9-9fafd205e455', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2']
+                });
+
+                const server = await device.gatt.connect();
+                let targetService = null;
+                const services = await server.getPrimaryServices();
+                for (let s of services) {
+                    targetService = s;
+                    break;
+                }
+
+                if (!targetService) throw new Error("تعذر العثور على قناة الطباعة الحرارية.");
+                const characteristics = await targetService.getCharacteristics();
+                let char = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+
+                window.bluetoothPrinterDevice = device;
+                window.bluetoothPrinterChar = char;
+
+                const stDiv = document.getElementById('btPrinterStatus');
+                if (stDiv) {
+                    stDiv.style.display = 'block';
+                    stDiv.innerText = `✅ متصل بطابعة: ${device.name}`;
+                }
+                alert(`✅ تم الاقتران بنجاح مع الطابعة: ${device.name}`);
+                return char;
+            } catch (e) {
+                console.warn("Bluetooth Connect Error:", e);
+                return null;
+            }
+        }
 
         // ==================== 2. محرك الباركود الفوري للأجهزة الخارجية ====================
         let barcodeBuffer = "";
@@ -1766,7 +1809,6 @@ async function printDirectBluetoothESC(specificInv = null) {
                 if (jsField && !jsField.value) jsField.value = data.js || '';
             }
         });
-
         // ==================== 6. معالجة وتحديث خطوط السير والفلترة ====================
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
@@ -2998,7 +3040,6 @@ async function printDirectBluetoothESC(specificInv = null) {
         async function createInvoiceObject() {
             if(!currentDelegate || currentDelegate.role === 'viewer') return null;
 
-            // التحقق الإلزامي من اختيار السيارة وقراءة العداد
             const vehicleKey = document.getElementById('invoiceVehicleSelect').value;
             const odometerReading = parseFloat(document.getElementById('invoiceOdometerInput').value);
 
@@ -3083,7 +3124,6 @@ async function printDirectBluetoothESC(specificInv = null) {
                 db.ref('delegates/' + targetDelCode).set(cloudDelegates[targetDelCode]).catch(e => {});
             }
 
-            // فحص وتثبيت قراءة العداد وتحديثه في السحابة مرة واحدة فقط لكل تاريخ يومي
             if (!cloudVehicles[vehicleKey]) cloudVehicles[vehicleKey] = { ...defaultVehicles[vehicleKey] };
             if (!cloudVehicles[vehicleKey].dailyLogs) cloudVehicles[vehicleKey].dailyLogs = {};
 
@@ -3108,31 +3148,6 @@ async function printDirectBluetoothESC(specificInv = null) {
             cloudSales.push(salesRecord);
             await db.ref('sales').set(Object.assign({}, cloudSales));
             return salesRecord;
-        }
-
-        async function printViaRawBT(specificInv = null) {
-            const rec = specificInv || (await createInvoiceObject());
-            if(!rec) return;
-
-            let cName = systemSettings.companyName || "BLACK HORSE";
-            let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
-
-            let receiptText = `     [ ${cName} ]\nشركة ${cName} - موزع معتمد\n${cTax}\n------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالسيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}------------------------\nالمنتج    سعر/كمية  إجمالي\n------------------------\n`;
-            rec.items.forEach(it => { receiptText += `${it.name}\n          ${it.qtyText || (it.price+'/'+it.qty)}  ${it.total.toFixed(2)}\n`; });
-            receiptText += `------------------------\nالإجمالي:        ${rec.total.toFixed(2)}\n------------------------\n\n\n`;
-
-            const encodedText = encodeURIComponent(receiptText);
-            try { window.location.href = `intent://rawbt/print?text=${encodedText}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`; } catch (e) {}
-            setTimeout(() => {
-                if (document.visibilityState === 'visible') {
-                    try { window.location.href = `rawbt://print?text=${encodedText}`; } catch (e) {}
-                }
-            }, 700);
-
-            if(!specificInv && currentDelegate) {
-                alert("✅ تم حفظ الفاتورة وتحديث عداد السيارة وخصم الكمية بنجاح!");
-                initSalesForm();
-            }
         }
 
         async function saveAndEmailOnly() {
@@ -3275,12 +3290,16 @@ async function printDirectBluetoothESC(specificInv = null) {
 
         function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
 
+        // دالة عرض التقارير الشاملة مع دعم بحث المدير اللحظي
         function renderDailyReport() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
             const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
             const selClient = document.getElementById('reportClientSelect')?.value;
             const fromDate = document.getElementById('filterFromDate')?.value;
             const toDate = document.getElementById('filterToDate')?.value;
+            
+            // جلب قيمة بحث المدير إن وجد
+            const managerSearchVal = (isAdm && document.getElementById('adminReportSearchInput')) ? document.getElementById('adminReportSearchInput').value.trim().toLowerCase() : '';
 
             let totalMoney = 0;
             let qMap = {};
@@ -3293,6 +3312,16 @@ async function printDirectBluetoothESC(specificInv = null) {
                 if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
                 if(fromDate && s.date < fromDate) return false;
                 if(toDate && s.date > toDate) return false;
+
+                // فلترة بحث المدير الإضافية اللحظية
+                if(managerSearchVal) {
+                    const matchClient = s.client && s.client.toLowerCase().includes(managerSearchVal);
+                    const matchInvNo = s.invNo && String(s.invNo).includes(managerSearchVal);
+                    const matchDelegate = s.delegateName && s.delegateName.toLowerCase().includes(managerSearchVal);
+                    const matchRoute = s.route && s.route.toLowerCase().includes(managerSearchVal);
+                    if(!matchClient && !matchInvNo && !matchDelegate && !matchRoute) return false;
+                }
+
                 return true;
             });
 
@@ -3342,6 +3371,81 @@ async function printDirectBluetoothESC(specificInv = null) {
             }
         }
 
+// ==================== دالة تصدير مسحوبات العملاء إلى Excel ====================
+function exportClientWithdrawalsExcel() {
+    const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
+    const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
+    const selClient = document.getElementById('reportClientSelect')?.value || 'ALL';
+    const fromDate = document.getElementById('filterFromDate')?.value;
+    const toDate = document.getElementById('filterToDate')?.value;
+    const managerSearchVal = (isAdm && document.getElementById('adminReportSearchInput')) ? document.getElementById('adminReportSearchInput').value.trim().toLowerCase() : '';
+
+    // تصفية الفواتير بناءً على الفلاتر النشطة (كل العملاء أو عميل محدد + التواريخ والبحث)
+    let filtered = cloudSales.filter(s => {
+        if(s.status === 'cancelled') return false;
+        if(currentDelegate && !isAdm && s.delegateCode !== currentDelegate.code) return false;
+        if(isAdm && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
+        if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
+        if(fromDate && s.date < fromDate) return false;
+        if(toDate && s.date > toDate) return false;
+
+        if(managerSearchVal) {
+            const matchClient = s.client && s.client.toLowerCase().includes(managerSearchVal);
+            const matchInvNo = s.invNo && String(s.invNo).includes(managerSearchVal);
+            const matchDelegate = s.delegateName && s.delegateName.toLowerCase().includes(managerSearchVal);
+            const matchRoute = s.route && s.route.toLowerCase().includes(managerSearchVal);
+            if(!matchClient && !matchInvNo && !matchDelegate && !matchRoute) return false;
+        }
+
+        return true;
+    });
+
+    if(filtered.length === 0) {
+        alert("⚠️ لا توجد فواتير أو مسحوبات مطابقة للبيانات المحددة للتصدير.");
+        return;
+    }
+
+    // تجهيز كل حركة سحب / فاتورة كسطر تفصيلي في الإكسيل
+    let excelRows = filtered.map((s, idx) => {
+        let itemsSummary = s.items ? s.items.map(it => `${it.name} (${it.qty} ${it.unit || 'رابطة'})`).join(' + ') : '-';
+        let totalRibbons = s.totalQty || 0;
+        let cartons = Math.floor(totalRibbons / 50);
+        let ribbons = totalRibbons % 50;
+        let qtyDisplay = cartons > 0 ? `${cartons} كرتونة و ${ribbons} رابطة` : `${ribbons} رابطة`;
+
+        return {
+            "م": idx + 1,
+            "رقم الفاتورة": "#" + s.invNo,
+            "تاريخ الفاتورة": s.date,
+            "اسم العميل / المحل": s.client || 'عميل نقدي',
+            "كود العميل": s.clientCode || '-',
+            "خط السير": s.route || '-',
+            "القرية / المركز": s.village || '-',
+            "المندوب": s.delegateName || '-',
+            "الأصناف المسحوبة": itemsSummary,
+            "إجمالي المسحوبات": qtyDisplay,
+            "ما يعادل كراتين": (totalRibbons / 50).toFixed(2),
+            "قيمة الفاتورة (ج.م)": (s.total || 0).toFixed(2)
+        };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(excelRows);
+    const wb = XLSX.utils.book_new();
+    const sheetName = selClient === 'ALL' ? "كل المسحوبات" : `مسحوبات ${selClient.substring(0, 20)}`;
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+    if (!ws['!views']) ws['!views'] = [];
+    ws['!views'].push({ rightToLeft: true });
+
+    const today = new Date().toISOString().slice(0, 10);
+    const fileName = selClient === 'ALL' 
+        ? `تقرير_كافة_مسحوبات_العملاء_${today}.xlsx` 
+        : `مسحوبات_العميل_${selClient}_${today}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+}
+
+
         function setupUserTabs() {
             if(currentPortalCustomer) return;
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
@@ -3369,6 +3473,10 @@ async function printDirectBluetoothESC(specificInv = null) {
             document.getElementById('tabLmInvoices').style.display = (isAdm || isAccounting) ? 'block' : 'none';
             document.getElementById('tabCustomCode').style.display = isAdm ? 'block' : 'none';
             
+            // إظهار لوحة المدير في التقارير للمدير فقط
+            const managerReportBox = document.getElementById('adminReportManagerBox');
+            if(managerReportBox) managerReportBox.style.display = isAdm ? 'block' : 'none';
+
             document.getElementById('adminVehiclesOilControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             document.getElementById('adminSystemControlBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminCarSetupBox').style.display = (isAdm || isStore || isFleet) ? 'block' : 'none';
@@ -3646,7 +3754,7 @@ async function printDirectBluetoothESC(specificInv = null) {
             }, 300);
         }
 
-                function calcRatioLoading() {
+        function calcRatioLoading() {
             const totalTarget = parseFloat(document.getElementById('totalCartonsTarget')?.value) || 0;
             const resultBox = document.getElementById('ratioResultBox');
             if(!resultBox) return;
@@ -3663,7 +3771,6 @@ async function printDirectBluetoothESC(specificInv = null) {
                 { name: "سوبر 94", val: parseFloat(document.getElementById('ratioSuperVal')?.value) || 0, type: document.getElementById('ratioSuperType')?.value || 'percent' }
             ];
 
-            // 1. حساب الأصناف المحددة بنسبة مئوية (%) أولاً
             let totalPercentCartons = 0;
             items.forEach(it => {
                 if (it.type === 'percent' && it.val > 0) {
@@ -3674,7 +3781,6 @@ async function printDirectBluetoothESC(specificInv = null) {
                 }
             });
 
-            // 2. حساب المتبقي لتوزيعه على أصناف النسبة العددية (صنف لصنف)
             let remainingCartons = Math.max(0, totalTarget - totalPercentCartons);
             let sumRatioWeights = 0;
             items.forEach(it => {
@@ -3683,14 +3789,12 @@ async function printDirectBluetoothESC(specificInv = null) {
                 }
             });
 
-            // 3. توزيع الكراتين على أصناف النسبة العددية
             items.forEach(it => {
                 if (it.type === 'ratio') {
                     it.cartons = (it.val > 0 && sumRatioWeights > 0) ? (remainingCartons * (it.val / sumRatioWeights)) : 0;
                 }
             });
 
-            // 4. عرض النتائج التفصيلية
             let outputHtml = `<b>📦 تفصيل كميات التحميل لإجمالي (${totalTarget} كرتونة):</b><br>`;
             items.forEach(it => {
                 let c = it.cartons || 0;
@@ -3705,7 +3809,6 @@ async function printDirectBluetoothESC(specificInv = null) {
 
             resultBox.innerHTML = outputHtml;
         }
-
 
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
@@ -4363,4 +4466,3 @@ async function printDirectBluetoothESC(specificInv = null) {
     </script>
 </body>
 </html>
-b
