@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://meet.jit.si/external_api.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
         body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
@@ -38,6 +39,19 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+        }
+
+        .voice-nav-bar {
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
         }
 
         .form-group { margin-bottom: 12px; }
@@ -195,6 +209,11 @@
             <span id="barcodeLastScanned" style="font-size:10.5px; color:#1e293b;">آخر مسح: جاهز للاستقبال</span>
         </div>
 
+        <div id="voiceNavBar" class="voice-nav-bar" style="display:none;">
+            <span>🔊 التوجيه الصوتي للسيارة: <b id="voiceNavStatus">جاهز للملاحة</b></span>
+            <span id="carSpeedometer" style="color:#fde047;">السرعة: 0 كم/س</span>
+        </div>
+
         <div id="locationRequestRepBanner"></div>
 
         <div id="selfAttendanceBox" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
@@ -275,7 +294,10 @@
                         <option value="">📋 عميل مسجل...</option>
                     </select>
                 </div>
-                <div style="font-size: 11px; color: #64748b; margin-top: 3px;">كود العميل الثابت: <b id="lblClientCode" style="color:#2563eb;">--</b> | الخط: <b id="lblClientRoute" style="color:#16a34a;">--</b></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px;">
+                    <div style="font-size: 11px; color: #64748b;">كود العميل: <b id="lblClientCode" style="color:#2563eb;">--</b> | الخط: <b id="lblClientRoute" style="color:#16a34a;">--</b></div>
+                    <button type="button" class="btn btn-info" style="width:auto; margin:0; padding:2px 8px; font-size:10.5px;" onclick="startVoiceNavToCurrentClient()">🔊 بدء ملاحة صوتية للعميل</button>
+                </div>
                 <div id="clientMonthlyHistory" class="client-history-box"></div>
             </div>
 
@@ -436,20 +458,23 @@
             </div>
         </div>
 
-        <!-- هـ) تتبع المناديب والسيارات والمحلات -->
+        <!-- هـ) تتبع المناديب والسيارات والمحلات (مع كاميرات السيارات ومكالمات الدعم) -->
         <div id="sectionTracking" style="display: none;">
             <div class="filter-box" style="background:#ecfdf5; border-color:#a7f3d0; margin-bottom:12px;">
-                <h4 style="margin:0 0 6px 0; color:#065f46;">📍 تتبع المناديب والسيارات لحظياً (Live Fleet Tracking):</h4>
+                <h4 style="margin:0 0 6px 0; color:#065f46;">📍 تتبع المناديب والسيارات لحظياً (Live Fleet Tracking & Dashcam):</h4>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
                             <tr>
                                 <th>المندوب والسيارة</th>
-                                <th>آخر قراءة عداد</th>
+                                <th>قراءة العداد والسرعة</th>
                                 <th>آخر اتصال</th>
                                 <th>حالة الاتصال</th>
-                                <th style="min-width:130px;">الزرار 1: طلب الموقع</th>
-                                <th style="min-width:150px;">الزرار 2: فتح الموقع فوراً</th>
+                                <th style="min-width:110px;">طلب الموقع</th>
+                                <th style="min-width:120px;">الخريطة الحية</th>
+                                <th style="min-width:110px;">كاميرا السيارة</th>
+                                <th style="min-width:110px;">🎙️ المايك اللحظي</th>
+                                <th style="min-width:110px;">دعم شاشة</th>
                             </tr>
                         </thead>
                         <tbody id="delegatesTrackingTableBody"></tbody>
@@ -551,12 +576,11 @@
 
         <!-- ط) التقارير الشاملة -->
         <div id="sectionReport" style="display: none;">
-            <!-- خانة بحث المدير وتصدير الإكسيل (تظهر للمدير فقط) -->
             <div id="adminReportManagerBox" style="display:none; background:#fdf4ff; border:1.5px solid #f0abfc; padding:12px; border-radius:8px; margin-bottom:14px;">
                 <h5 style="margin:0 0 8px 0; color:#86198f; font-size:13px;">👑 لوحة المدير الخاصة بالتقارير:</h5>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                     <input type="text" id="adminReportSearchInput" placeholder="🔍 بحث المدير السريع (اسم العميل، رقم الفاتورة، المندوب)..." oninput="renderDailyReport()" style="flex:2; padding:8px; border:2px solid #d946ef; border-radius:6px; font-size:12px; background:#fff;">
-                    <button class="btn btn-success" style="flex:1; margin-top:0; padding:8px; font-size:12px;" onclick="exportClientWithdrawalsExcel()">📥 تصدير مسحوبات العملاء (Excel)</button>
+                    <button class="btn btn-success" style="flex:1; margin-top:0; padding:8px; font-size:12px;" onclick="exportClientWithdrawalsExcel()">📥 تصدير كافة المسحوبات (Excel)</button>
                 </div>
             </div>
 
@@ -653,7 +677,6 @@
                     <input type="number" id="totalCartonsTarget" placeholder="مثال: 30" oninput="calcRatioLoading()" style="font-size:14px; font-weight:bold; border:2px solid #2563eb;">
                 </div>
 
-                <!-- 1. كليوباترا -->
                 <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
                     <span style="font-size:12px; font-weight:bold;">كليوباترا عادية:</span>
                     <input type="number" id="ratioCleopatraVal" value="2" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
@@ -663,7 +686,6 @@
                     </select>
                 </div>
 
-                <!-- 2. بوكس -->
                 <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
                     <span style="font-size:12px; font-weight:bold;">كيلوبترا بوكس:</span>
                     <input type="number" id="ratioBoxVal" value="1" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
@@ -673,7 +695,6 @@
                     </select>
                 </div>
 
-                <!-- 3. براون -->
                 <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
                     <span style="font-size:12px; font-weight:bold;">كليوباترا براون:</span>
                     <input type="number" id="ratioBrownVal" value="0" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
@@ -683,7 +704,6 @@
                     </select>
                 </div>
 
-                <!-- 4. سوبر 94 -->
                 <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
                     <span style="font-size:12px; font-weight:bold;">سوبر 94:</span>
                     <input type="number" id="ratioSuperVal" value="0" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
@@ -883,6 +903,38 @@
     </div>
 
     <!-- Modals -->
+    <!-- نافذة الدعم المباشر ومشاركة الشاشة ومكالمات المايك -->
+    <div id="remoteSupportModal" class="modal-bg" style="z-index: 2000;">
+        <div class="modal-content" style="max-width: 95%; width: 750px; height: 85vh; display: flex; flex-direction: column; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h4 style="margin: 0; color: #1e293b; font-size: 14px;">💻 جلسة الاتصال اللاسلكي والدعم المباشر</h4>
+                <button class="btn btn-danger" style="width: auto; margin: 0; padding: 4px 10px; font-size: 11px;" onclick="closeRemoteSupportModal()">❌ إنهاء المكالمة</button>
+            </div>
+            <div id="jitsiMeetContainer" style="flex: 1; width: 100%; border-radius: 8px; overflow: hidden; background: #0f172a;"></div>
+        </div>
+    </div>
+
+    <!-- نافذة كاميرا السيارة المباشرة (Dashcam Live) -->
+    <div id="dashcamModal" class="modal-bg" style="z-index: 2000;">
+        <div class="modal-content" style="max-width: 95%; width: 680px; padding: 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 id="dashcamModalTitle" style="margin:0; color:#0f172a; font-size:14px;">📷 كاميرا السيارة والبث المباشر</h4>
+                <button class="btn btn-danger" style="width:auto; margin:0; padding:4px 8px; font-size:11px;" onclick="closeDashcamModal()">إغلاق</button>
+            </div>
+            <div id="dashcamVideoWrapper" style="width:100%; height:320px; background:#000; border-radius:8px; overflow:hidden; position:relative; display:flex; justify-content:center; align-items:center;">
+                <video id="dashcamVideoElem" autoplay playsinline controls style="width:100%; height:100%; object-fit:contain;"></video>
+                <div id="dashcamStatusOverlay" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:#fff; padding:3px 8px; border-radius:4px; font-size:11px;">جاري تشغيل الكاميرا...</div>
+            </div>
+            <div style="margin-top:10px;">
+                <label style="font-size:11px; font-weight:bold;">رابط بث كاميرا السيارة الخارجية (IP / RTSP / Stream URL):</label>
+                <div style="display:flex; gap:6px; margin-top:4px;">
+                    <input type="text" id="dashcamExternalUrlInput" placeholder="http://192.168.1.100:8080/video أو رابط البث...">
+                    <button class="btn btn-primary" style="width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="saveAndPlayCustomDashcamStream()">تشغيل وحفظ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="quickAddBarcodeModal" class="modal-bg">
         <div class="modal-content" style="border: 2px solid #10b981;">
             <h3 style="margin-top:0; color:#166534; font-size:16px;">📷 تسجيل وحفظ صنف جديد بالباركود</h3>
@@ -1115,6 +1167,7 @@
         let cloudAttendance = [];
         let cloudLocationRequests = {};
         let cloudVehicles = { ...defaultVehicles };
+        let cloudDashcamStreams = {};
 
         let currentDelegate = null;
         let currentPortalCustomer = null;
@@ -1123,6 +1176,11 @@
         let latestCoords = null;
         let tempRegCoords = null;
         let currentActiveTab = 'invoice';
+        let jitsiApiInstance = null;
+        let currentDashcamTarget = null;
+        let activeNavInterval = null;
+        let wakeLock = null;
+        let alertedClients = new Set();
 
         window.bluetoothPrinterDevice = null;
         window.bluetoothPrinterChar = null;
@@ -1141,8 +1199,287 @@
             return (systemSettings && systemSettings.whatsapp) ? String(systemSettings.whatsapp).replace(/\D/g, '') : "201011112764";
         }
 
+        // ==================== محرك الـ GPS الصوتي وملاحة السيارة ====================
+        function speakArabicVoiceNav(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ar-SA';
+                utterance.rate = 0.95;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function calcGeoDistanceKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        async function keepScreenAwake() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.warn("WakeLock Error:", err.message);
+            }
+        }
+
+        function processAutoVoiceNavigationAndSpeed(coords) {
+            if (!coords || !coords.lat) return;
+
+            const speed = coords.speed || 0;
+            if (speed > 90) {
+                speakArabicVoiceNav("تنبيه: تجاوزت السرعة المقررة للسيارة. يرجى القيادة بحذر.");
+            }
+
+            for (let clientName in cloudClientsLocations) {
+                let loc = cloudClientsLocations[clientName];
+                if (loc && loc.lat && loc.lng && !alertedClients.has(clientName)) {
+                    let distKm = calcGeoDistanceKm(coords.lat, coords.lng, loc.lat, loc.lng);
+                    let distMeters = Math.round(distKm * 1000);
+
+                    if (distMeters <= 150) {
+                        alertedClients.add(clientName);
+                        speakArabicVoiceNav(`انتبه، أنت تقترب من محل ${clientName}، على بُعد ${distMeters} متر.`);
+                        setTimeout(() => { alertedClients.delete(clientName); }, 1800000);
+                        break;
+                    }
+                }
+            }
+        }
+
+        function startVoiceNavToCurrentClient() {
+            const clientName = document.getElementById('clientName')?.value.trim();
+            if(!clientName) {
+                alert("يرجى اختيار أو كتابة اسم العميل أولاً.");
+                return;
+            }
+
+            let loc = cloudClientsLocations[clientName];
+            if (!loc) {
+                for(let uid in portalCustomersDB) {
+                    if (portalCustomersDB[uid].name === clientName && portalCustomersDB[uid].location) {
+                        loc = portalCustomersDB[uid].location;
+                        break;
+                    }
+                }
+            }
+
+            if (!loc || !loc.lat || !loc.lng) {
+                alert(`⚠️ لم يتم تسجيل موقع GPS لمحل العميل (${clientName}) بعد.`);
+                return;
+            }
+
+            const navBar = document.getElementById('voiceNavBar');
+            const navStatus = document.getElementById('voiceNavStatus');
+            if(navBar) navBar.style.display = 'flex';
+            if(navStatus) navStatus.innerText = `جاري الملاحة إلى ${clientName}...`;
+
+            speakArabicVoiceNav(`تم تفعيل الملاحة الصوتية إلى محل ${clientName}. تحرك بأمان.`);
+
+            if (activeNavInterval) clearInterval(activeNavInterval);
+            activeNavInterval = setInterval(() => {
+                if (latestCoords && latestCoords.lat) {
+                    const distKm = calcGeoDistanceKm(latestCoords.lat, latestCoords.lng, loc.lat, loc.lng);
+                    const distMeters = Math.round(distKm * 1000);
+
+                    if (distMeters <= 40) {
+                        speakArabicVoiceNav(`لقد وصلت إلى وجهتك، محل ${clientName}.`);
+                        if(navStatus) navStatus.innerText = `وصلت إلى ${clientName}`;
+                        clearInterval(activeNavInterval);
+                        activeNavInterval = null;
+                    } else if (distMeters <= 300) {
+                        if(navStatus) navStatus.innerText = `اقتربت من ${clientName} (متبقي ${distMeters} متر)`;
+                    } else {
+                        if(navStatus) navStatus.innerText = `المسافة إلى ${clientName}: ${(distKm).toFixed(1)} كم`;
+                    }
+                }
+            }, 6000);
+        }
+
+        // ==================== كاميرا السيارة والبث المباشر (Dashcam) ====================
+        function openDashcamLive(delCode, delName) {
+            currentDashcamTarget = delCode;
+            document.getElementById('dashcamModalTitle').innerText = `📷 كاميرا سيارة المندوب: ${delName}`;
+            document.getElementById('dashcamModal').style.display = 'flex';
+
+            const videoElem = document.getElementById('dashcamVideoElem');
+            const statusOverlay = document.getElementById('dashcamStatusOverlay');
+            const urlInput = document.getElementById('dashcamExternalUrlInput');
+
+            const savedStreamUrl = cloudDashcamStreams[delCode]?.url || '';
+            if(urlInput) urlInput.value = savedStreamUrl;
+
+            if (savedStreamUrl) {
+                videoElem.src = savedStreamUrl;
+                statusOverlay.innerText = "بث مباشر عبر IP Camera";
+                videoElem.play().catch(() => {});
+            } else if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && delCode === currentDelegate?.code) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+                    .then(stream => {
+                        videoElem.srcObject = stream;
+                        statusOverlay.innerText = "بث كاميرا الهاتف كـ Dashcam";
+                    })
+                    .catch(err => {
+                        statusOverlay.innerText = "أدخل رابط بث الكاميرا الخارجية";
+                    });
+            } else {
+                statusOverlay.innerText = "أدخل رابط بث الكاميرا الخارجية للسيارة";
+            }
+        }
+
+        function saveAndPlayCustomDashcamStream() {
+            const url = document.getElementById('dashcamExternalUrlInput')?.value.trim();
+            if(!url || !currentDashcamTarget) return;
+
+            db.ref('dashcamStreams/' + currentDashcamTarget).set({
+                url: url,
+                updatedAt: new Date().toISOString()
+            }).then(() => {
+                const videoElem = document.getElementById('dashcamVideoElem');
+                videoElem.srcObject = null;
+                videoElem.src = url;
+                videoElem.play().catch(e => console.warn(e));
+                document.getElementById('dashcamStatusOverlay').innerText = "تم حفظ وتشغيل البث المباشر";
+                alert("✅ تم ضبط رابط كاميرا السيارة بنجاح!");
+            });
+        }
+
+        function closeDashcamModal() {
+            const videoElem = document.getElementById('dashcamVideoElem');
+            if(videoElem) {
+                if(videoElem.srcObject) {
+                    videoElem.srcObject.getTracks().forEach(track => track.stop());
+                    videoElem.srcObject = null;
+                }
+                videoElem.src = '';
+            }
+            document.getElementById('dashcamModal').style.display = 'none';
+        }
+
+        // ==================== الاتصال الصوتي اللاسلكي المباشر والرد التلقائي (WebRTC) ====================
+        function startVoiceIntercomWithRep(repCode, repName) {
+            const roomName = `BH_Voice_${repCode}_${Date.now().toString().slice(-4)}`;
+            db.ref('voiceIntercomRequests/' + repCode).set({
+                roomName: roomName,
+                caller: currentDelegate ? currentDelegate.name : "المدير",
+                timestamp: Date.now(),
+                status: 'calling'
+            });
+            openVoiceOnlyModal(roomName, `🎙️ تحدث مع: ${repName}`);
+        }
+
+        function openVoiceOnlyModal(roomName, titleText, isRep = false) {
+            document.getElementById('remoteSupportModal').style.display = 'flex';
+            const container = document.getElementById('jitsiMeetContainer');
+            container.innerHTML = '';
+
+            const options = {
+                roomName: roomName,
+                width: "100%",
+                height: "100%",
+                parentNode: container,
+                userInfo: { displayName: titleText },
+                configOverwrite: {
+                    startWithAudioMuted: false,
+                    startWithVideoMuted: true,
+                    disableVideo: true,
+                    prejoinPageEnabled: false,
+                    enableLayerSuspension: true
+                },
+                interfaceConfigOverwrite: {
+                    TOOLBAR_BUTTONS: ['microphone', 'hangup']
+                }
+            };
+
+            jitsiApiInstance = new JitsiMeetExternalAPI("meet.jit.si", options);
+            jitsiApiInstance.addEventListeners({
+                videoConferenceLeft: closeRemoteSupportModal
+            });
+        }
+
+        function listenToVoiceIntercomForRep() {
+            if (!currentDelegate || currentDelegate.role !== 'delegate') return;
+
+            db.ref('voiceIntercomRequests/' + currentDelegate.code).on('value', (snapshot) => {
+                const req = snapshot.val();
+                if (req && req.status === 'calling' && (Date.now() - req.timestamp < 30000)) {
+                    speakArabicVoiceNav("تم فتح الاتصال اللاسلكي المباشر مع المدير.");
+                    openVoiceOnlyModal(req.roomName, `المندوب: ${currentDelegate.name}`, true);
+                    db.ref('voiceIntercomRequests/' + currentDelegate.code + '/status').set('connected');
+                }
+            });
+        }
+
+        // ==================== مكالمات الدعم ومشاركة الشاشة عن بُعد (WebRTC / Zoom) ====================
+        function startRemoteSessionWithRep(repCode, repName) {
+            const roomName = `BH_Support_${repCode}_${Date.now().toString().slice(-4)}`;
+            db.ref('remoteSupportRequests/' + repCode).set({
+                roomName: roomName,
+                requestedBy: currentDelegate ? currentDelegate.name : "المدير",
+                timestamp: Date.now(),
+                status: 'active'
+            });
+            openRemoteMeetFrame(roomName, `المدير - دعم ${repName}`);
+        }
+
+        function openRemoteMeetFrame(roomName, displayName) {
+            document.getElementById('remoteSupportModal').style.display = 'flex';
+            const container = document.getElementById('jitsiMeetContainer');
+            container.innerHTML = '';
+
+            const options = {
+                roomName: roomName,
+                width: "100%",
+                height: "100%",
+                parentNode: container,
+                userInfo: { displayName: displayName },
+                configOverwrite: {
+                    startWithAudioMuted: false,
+                    startWithVideoMuted: false,
+                    disableDeepLinking: true
+                },
+                interfaceConfigOverwrite: {
+                    TOOLBAR_BUTTONS: ['microphone', 'camera', 'desktop', 'chat', 'hangup', 'videoquality']
+                }
+            };
+
+            jitsiApiInstance = new JitsiMeetExternalAPI("meet.jit.si", options);
+            jitsiApiInstance.addEventListeners({
+                videoConferenceLeft: closeRemoteSupportModal
+            });
+        }
+
+        function closeRemoteSupportModal() {
+            if (jitsiApiInstance) {
+                jitsiApiInstance.dispose();
+                jitsiApiInstance = null;
+            }
+            document.getElementById('remoteSupportModal').style.display = 'none';
+        }
+
+        function listenToRemoteSupportForRep() {
+            if (!currentDelegate || currentDelegate.role !== 'delegate') return;
+
+            db.ref('remoteSupportRequests/' + currentDelegate.code).on('value', (snapshot) => {
+                const req = snapshot.val();
+                if (req && req.status === 'active' && (Date.now() - req.timestamp < 120000)) {
+                    if (confirm(`📞 المدير (${req.requestedBy}) يطلب بدء مكالمة شاشة ودعم فني مباشر معك الآن.\nهل تريد الانضمام؟`)) {
+                        openRemoteMeetFrame(req.roomName, `المندوب: ${currentDelegate.name}`);
+                        db.ref('remoteSupportRequests/' + currentDelegate.code + '/status').set('joined');
+                    }
+                }
+            });
+        }
+
         // ==================== 1. محرك البلوتوث المباشر للطابعات الحرارية ====================
-        // طباعة مباشرة عبر تطبيق RawBT (متوافق مع APK والموبايل)
         async function printViaRawBT(specificInv = null) {
             const rec = specificInv || (await createInvoiceObject());
             if (!rec) return;
@@ -1189,9 +1526,7 @@
 
             setTimeout(() => {
                 if (document.visibilityState === 'visible') {
-                    try {
-                        window.location.href = intentUrl;
-                    } catch (err) {}
+                    try { window.location.href = intentUrl; } catch (err) {}
                 }
             }, 600);
 
@@ -1200,7 +1535,6 @@
             }
         }
 
-        // طباعة بلوتوث مباشرة بدون تطبيقات وسيطة (ESC/POS)
         async function printDirectBluetoothESC(specificInv = null) {
             const rec = specificInv || (await createInvoiceObject());
             if (!rec) return;
@@ -1354,7 +1688,6 @@
         function processBarcodeString(scannedCode) {
             if (!scannedCode) return;
             const statusLabel = document.getElementById('barcodeLastScanned');
-            
             const prodIdx = products.findIndex(p => String(p.code).trim() === String(scannedCode).trim());
 
             if (prodIdx !== -1) {
@@ -1542,6 +1875,10 @@
             renderVehiclesOilTable();
             checkGlobalOilChangeAlerts();
             checkCurrentVehicleOilLimit();
+        });
+
+        db.ref('dashcamStreams').on('value', (s) => {
+            cloudDashcamStreams = s.val() || {};
         });
 
         function applySystemBranding() {
@@ -1809,6 +2146,7 @@
                 if (jsField && !jsField.value) jsField.value = data.js || '';
             }
         });
+
         // ==================== 6. معالجة وتحديث خطوط السير والفلترة ====================
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
@@ -2164,7 +2502,11 @@
                 }
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        const coords = { 
+                            lat: pos.coords.latitude, 
+                            lng: pos.coords.longitude,
+                            speed: pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0
+                        };
                         latestCoords = coords;
                         resolve(coords);
                     },
@@ -2180,6 +2522,8 @@
         function startTrackingDelegateLocation() {
             if (!navigator.geolocation || !currentDelegate || currentDelegate.role !== 'delegate') return;
             
+            keepScreenAwake();
+
             getCurrentGpsCoords().then(coords => {
                 if(coords) {
                     const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
@@ -2187,6 +2531,7 @@
                         name: currentDelegate.name,
                         lat: coords.lat,
                         lng: coords.lng,
+                        speed: coords.speed || 0,
                         updatedAt: timeStr,
                         timestamp: Date.now()
                     }).catch(() => {});
@@ -2197,21 +2542,31 @@
 
             watchPositionId = navigator.geolocation.watchPosition(
                 (pos) => {
-                    latestCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    const spd = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
+                    latestCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude, speed: spd };
                     const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                    
+                    const spdElem = document.getElementById('carSpeedometer');
+                    if (spdElem) spdElem.innerText = `السرعة: ${spd} كم/س`;
+
+                    processAutoVoiceNavigationAndSpeed(latestCoords);
+
                     db.ref('locations/' + currentDelegate.code).update({
                         name: currentDelegate.name,
                         lat: pos.coords.latitude,
                         lng: pos.coords.longitude,
+                        speed: spd,
                         updatedAt: timeStr,
                         timestamp: Date.now()
                     }).catch(() => {});
                 },
                 () => {},
-                { enableHighAccuracy: false, maximumAge: 20000, timeout: 10000 }
+                { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
             );
 
             listenToLocationRequestsForRep();
+            listenToRemoteSupportForRep();
+            listenToVoiceIntercomForRep();
         }
 
         function listenToLocationRequestsForRep() {
@@ -2243,6 +2598,7 @@
                         name: currentDelegate.name,
                         lat: coords.lat,
                         lng: coords.lng,
+                        speed: coords.speed || 0,
                         updatedAt: timeStr,
                         timestamp: Date.now()
                     });
@@ -2365,6 +2721,7 @@
                     let lat = loc ? loc.lat : null;
                     let lng = loc ? loc.lng : null;
                     let lastTime = loc ? (loc.updatedAt || 'اليوم') : 'غير متصل';
+                    let speedText = loc && loc.speed ? `${loc.speed} كم/س` : '0 كم/س';
 
                     let lastOdoText = (del.lastOdometer && del.lastVehicle) ? `🚗 ${del.lastVehicle} (${del.lastOdometer} كم)` : '-';
 
@@ -2372,30 +2729,37 @@
                     
                     let reqStatusHtml = '';
                     if (req && req.status === 'pending') {
-                        reqStatusHtml = `<div style="font-size:9.5px; color:#d97706; font-weight:bold; margin-top:2px;">⏳ جاري انتظار الاستجابة...</div>`;
+                        reqStatusHtml = `<div style="font-size:9.5px; color:#d97706; font-weight:bold; margin-top:2px;">⏳ انتظار التحديث...</div>`;
                     }
 
                     let btnRequest = canRequestLocation 
-                        ? `<button class="btn btn-warning" style="padding:5px 8px; font-size:11px; width:auto; margin:0;" onclick="requestRepLocation('${code}', '${del.name}')">📡 طلب الموقع</button>${reqStatusHtml}`
-                        : '<span style="color:#94a3b8; font-size:10px;">للمدير والحركة فقط</span>';
+                        ? `<button class="btn btn-warning" style="padding:4px 6px; font-size:10px; width:auto; margin:0;" onclick="requestRepLocation('${code}', '${del.name}')">📡 طلب موقع</button>${reqStatusHtml}`
+                        : '-';
 
                     let btnOpenDirect = (lat && lng) 
-                        ? `<button class="btn btn-primary" style="padding:5px 8px; font-size:11px; width:auto; margin:0;" onclick="openRepLiveMap('${code}', '${del.name}')">🗺️ فتح موقع المندوب والسيارة</button>`
-                        : `<button class="btn btn-info" style="padding:5px 8px; font-size:11px; width:auto; margin:0; background:#94a3b8;" onclick="openRepLiveMap('${code}', '${del.name}')">🗺️ فتح الموقع (بانتظار GPS)</button>`;
+                        ? `<button class="btn btn-primary" style="padding:4px 6px; font-size:10px; width:auto; margin:0;" onclick="openRepLiveMap('${code}', '${del.name}')">🗺️ خريطة حية</button>`
+                        : `<button class="btn btn-info" style="padding:4px 6px; font-size:10px; width:auto; margin:0; background:#94a3b8;" onclick="openRepLiveMap('${code}', '${del.name}')">🗺️ خريطة</button>`;
+
+                    let btnDashcam = `<button class="btn btn-info" style="padding:4px 6px; font-size:10px; width:auto; margin:0;" onclick="openDashcamLive('${code}', '${del.name}')">📷 كاميرا</button>`;
+                    let btnVoice = `<button class="btn" style="background:#059669; color:#fff; padding:4px 6px; font-size:10px; width:auto; margin:0;" onclick="startVoiceIntercomWithRep('${code}', '${del.name}')">🎙️ فتح المايك</button>`;
+                    let btnRemote = `<button class="btn" style="background:#9333ea; color:#fff; padding:4px 6px; font-size:10px; width:auto; margin:0;" onclick="startRemoteSessionWithRep('${code}', '${del.name}')">💻 دعم شاشة</button>`;
 
                     tbody.innerHTML += `
                         <tr>
                             <td><b>${del.name}</b> (${code})</td>
-                            <td><b style="color:#0284c7; font-size:11px;">${lastOdoText}</b></td>
+                            <td><b style="color:#0284c7; font-size:11px;">${lastOdoText}</b><br><small style="color:#16a34a; font-weight:bold;">⚡ ${speedText}</small></td>
                             <td>${lastTime}</td>
                             <td>${sosBadge}</td>
                             <td>${btnRequest}</td>
                             <td>${btnOpenDirect}</td>
+                            <td>${btnDashcam}</td>
+                            <td>${btnVoice}</td>
+                            <td>${btnRemote}</td>
                         </tr>`;
                 }
             }
 
-            if (!hasRows) tbody.innerHTML = `<tr><td colspan="6">لا يوجد مناديب مسجلين حالياً.</td></tr>`;
+            if (!hasRows) tbody.innerHTML = `<tr><td colspan="9">لا يوجد مناديب مسجلين حالياً.</td></tr>`;
         }
 
         function renderClientsMapTable() {
@@ -3107,6 +3471,7 @@
                 locObj = {
                     lat: freshCoords.lat,
                     lng: freshCoords.lng,
+                    speed: freshCoords.speed || 0,
                     mapUrl: `https://maps.google.com/?q=${freshCoords.lat},${freshCoords.lng}`
                 };
             }
@@ -3290,7 +3655,7 @@
 
         function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
 
-        // دالة عرض التقارير الشاملة مع دعم بحث المدير اللحظي
+        // ==================== دالة عرض التقارير الشاملة مع دعم بحث المدير اللحظي ====================
         function renderDailyReport() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
             const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
@@ -3298,7 +3663,6 @@
             const fromDate = document.getElementById('filterFromDate')?.value;
             const toDate = document.getElementById('filterToDate')?.value;
             
-            // جلب قيمة بحث المدير إن وجد
             const managerSearchVal = (isAdm && document.getElementById('adminReportSearchInput')) ? document.getElementById('adminReportSearchInput').value.trim().toLowerCase() : '';
 
             let totalMoney = 0;
@@ -3313,7 +3677,6 @@
                 if(fromDate && s.date < fromDate) return false;
                 if(toDate && s.date > toDate) return false;
 
-                // فلترة بحث المدير الإضافية اللحظية
                 if(managerSearchVal) {
                     const matchClient = s.client && s.client.toLowerCase().includes(managerSearchVal);
                     const matchInvNo = s.invNo && String(s.invNo).includes(managerSearchVal);
@@ -3371,80 +3734,77 @@
             }
         }
 
-// ==================== دالة تصدير مسحوبات العملاء إلى Excel ====================
-function exportClientWithdrawalsExcel() {
-    const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
-    const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
-    const selClient = document.getElementById('reportClientSelect')?.value || 'ALL';
-    const fromDate = document.getElementById('filterFromDate')?.value;
-    const toDate = document.getElementById('filterToDate')?.value;
-    const managerSearchVal = (isAdm && document.getElementById('adminReportSearchInput')) ? document.getElementById('adminReportSearchInput').value.trim().toLowerCase() : '';
+        // ==================== دالة تصدير مسحوبات العملاء إلى Excel ====================
+        function exportClientWithdrawalsExcel() {
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
+            const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
+            const selClient = document.getElementById('reportClientSelect')?.value || 'ALL';
+            const fromDate = document.getElementById('filterFromDate')?.value;
+            const toDate = document.getElementById('filterToDate')?.value;
+            const managerSearchVal = (isAdm && document.getElementById('adminReportSearchInput')) ? document.getElementById('adminReportSearchInput').value.trim().toLowerCase() : '';
 
-    // تصفية الفواتير بناءً على الفلاتر النشطة (كل العملاء أو عميل محدد + التواريخ والبحث)
-    let filtered = cloudSales.filter(s => {
-        if(s.status === 'cancelled') return false;
-        if(currentDelegate && !isAdm && s.delegateCode !== currentDelegate.code) return false;
-        if(isAdm && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
-        if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
-        if(fromDate && s.date < fromDate) return false;
-        if(toDate && s.date > toDate) return false;
+            let filtered = cloudSales.filter(s => {
+                if(s.status === 'cancelled') return false;
+                if(currentDelegate && !isAdm && s.delegateCode !== currentDelegate.code) return false;
+                if(isAdm && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
+                if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
+                if(fromDate && s.date < fromDate) return false;
+                if(toDate && s.date > toDate) return false;
 
-        if(managerSearchVal) {
-            const matchClient = s.client && s.client.toLowerCase().includes(managerSearchVal);
-            const matchInvNo = s.invNo && String(s.invNo).includes(managerSearchVal);
-            const matchDelegate = s.delegateName && s.delegateName.toLowerCase().includes(managerSearchVal);
-            const matchRoute = s.route && s.route.toLowerCase().includes(managerSearchVal);
-            if(!matchClient && !matchInvNo && !matchDelegate && !matchRoute) return false;
+                if(managerSearchVal) {
+                    const matchClient = s.client && s.client.toLowerCase().includes(managerSearchVal);
+                    const matchInvNo = s.invNo && String(s.invNo).includes(managerSearchVal);
+                    const matchDelegate = s.delegateName && s.delegateName.toLowerCase().includes(managerSearchVal);
+                    const matchRoute = s.route && s.route.toLowerCase().includes(managerSearchVal);
+                    if(!matchClient && !matchInvNo && !matchDelegate && !matchRoute) return false;
+                }
+
+                return true;
+            });
+
+            if(filtered.length === 0) {
+                alert("⚠️ لا توجد فواتير أو مسحوبات مطابقة للبيانات المحددة للتصدير.");
+                return;
+            }
+
+            let excelRows = filtered.map((s, idx) => {
+                let itemsSummary = s.items ? s.items.map(it => `${it.name} (${it.qty} ${it.unit || 'رابطة'})`).join(' + ') : '-';
+                let totalRibbons = s.totalQty || 0;
+                let cartons = Math.floor(totalRibbons / 50);
+                let ribbons = totalRibbons % 50;
+                let qtyDisplay = cartons > 0 ? `${cartons} كرتونة و ${ribbons} رابطة` : `${ribbons} رابطة`;
+
+                return {
+                    "م": idx + 1,
+                    "رقم الفاتورة": "#" + s.invNo,
+                    "تاريخ الفاتورة": s.date,
+                    "اسم العميل / المحل": s.client || 'عميل نقدي',
+                    "كود العميل": s.clientCode || '-',
+                    "خط السير": s.route || '-',
+                    "القرية / المركز": s.village || '-',
+                    "المندوب": s.delegateName || '-',
+                    "الأصناف المسحوبة": itemsSummary,
+                    "إجمالي المسحوبات": qtyDisplay,
+                    "ما يعادل كراتين": (totalRibbons / 50).toFixed(2),
+                    "قيمة الفاتورة (ج.م)": (s.total || 0).toFixed(2)
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(excelRows);
+            const wb = XLSX.utils.book_new();
+            const sheetName = selClient === 'ALL' ? "كل المسحوبات" : `مسحوبات ${selClient.substring(0, 20)}`;
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+            if (!ws['!views']) ws['!views'] = [];
+            ws['!views'].push({ rightToLeft: true });
+
+            const today = new Date().toISOString().slice(0, 10);
+            const fileName = selClient === 'ALL' 
+                ? `تقرير_كافة_مسحوبات_العملاء_${today}.xlsx` 
+                : `مسحوبات_العميل_${selClient}_${today}.xlsx`;
+
+            XLSX.writeFile(wb, fileName);
         }
-
-        return true;
-    });
-
-    if(filtered.length === 0) {
-        alert("⚠️ لا توجد فواتير أو مسحوبات مطابقة للبيانات المحددة للتصدير.");
-        return;
-    }
-
-    // تجهيز كل حركة سحب / فاتورة كسطر تفصيلي في الإكسيل
-    let excelRows = filtered.map((s, idx) => {
-        let itemsSummary = s.items ? s.items.map(it => `${it.name} (${it.qty} ${it.unit || 'رابطة'})`).join(' + ') : '-';
-        let totalRibbons = s.totalQty || 0;
-        let cartons = Math.floor(totalRibbons / 50);
-        let ribbons = totalRibbons % 50;
-        let qtyDisplay = cartons > 0 ? `${cartons} كرتونة و ${ribbons} رابطة` : `${ribbons} رابطة`;
-
-        return {
-            "م": idx + 1,
-            "رقم الفاتورة": "#" + s.invNo,
-            "تاريخ الفاتورة": s.date,
-            "اسم العميل / المحل": s.client || 'عميل نقدي',
-            "كود العميل": s.clientCode || '-',
-            "خط السير": s.route || '-',
-            "القرية / المركز": s.village || '-',
-            "المندوب": s.delegateName || '-',
-            "الأصناف المسحوبة": itemsSummary,
-            "إجمالي المسحوبات": qtyDisplay,
-            "ما يعادل كراتين": (totalRibbons / 50).toFixed(2),
-            "قيمة الفاتورة (ج.م)": (s.total || 0).toFixed(2)
-        };
-    });
-
-    const ws = XLSX.utils.json_to_sheet(excelRows);
-    const wb = XLSX.utils.book_new();
-    const sheetName = selClient === 'ALL' ? "كل المسحوبات" : `مسحوبات ${selClient.substring(0, 20)}`;
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-
-    if (!ws['!views']) ws['!views'] = [];
-    ws['!views'].push({ rightToLeft: true });
-
-    const today = new Date().toISOString().slice(0, 10);
-    const fileName = selClient === 'ALL' 
-        ? `تقرير_كافة_مسحوبات_العملاء_${today}.xlsx` 
-        : `مسحوبات_العميل_${selClient}_${today}.xlsx`;
-
-    XLSX.writeFile(wb, fileName);
-}
-
 
         function setupUserTabs() {
             if(currentPortalCustomer) return;
@@ -3473,7 +3833,6 @@ function exportClientWithdrawalsExcel() {
             document.getElementById('tabLmInvoices').style.display = (isAdm || isAccounting) ? 'block' : 'none';
             document.getElementById('tabCustomCode').style.display = isAdm ? 'block' : 'none';
             
-            // إظهار لوحة المدير في التقارير للمدير فقط
             const managerReportBox = document.getElementById('adminReportManagerBox');
             if(managerReportBox) managerReportBox.style.display = isAdm ? 'block' : 'none';
 
@@ -3630,6 +3989,10 @@ function exportClientWithdrawalsExcel() {
             if(watchPositionId && navigator.geolocation) {
                 navigator.geolocation.clearWatch(watchPositionId);
                 watchPositionId = null;
+            }
+            if(activeNavInterval) {
+                clearInterval(activeNavInterval);
+                activeNavInterval = null;
             }
             currentDelegate = null;
             currentPortalCustomer = null;
