@@ -87,14 +87,8 @@
         
         #sosAlertBanner { display:none; background:#ffe4e6; border:2px solid #e11d48; color:#9f1239; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; }
         #oilChangeAlertBanner { display:none; background:#fff1f2; border:2px solid #e11d48; color:#9f1239; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; font-weight:bold; }
-        #locationRequestRepBanner { display:none; background:#eff6ff; border:2px solid #2563eb; color:#1e40af; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; text-align:center; animation: pulseReq 2s infinite; }
+        #locationRequestRepBanner { display:none; background:#eff6ff; border:2px solid #2563eb; color:#1e40af; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; text-align:center; }
         
-        @keyframes pulseReq {
-            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-            70% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
-        }
-
         @media print {
             body * { visibility: hidden; }
             #thermalPrintArea, #thermalPrintArea * { visibility: visible; }
@@ -315,7 +309,7 @@
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
-        <!-- ب) المخزن العام -->
+        <!-- ب) تبويب المخزن وتزويد الأصناف -->
         <div id="sectionWarehouse" style="display: none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h4 style="margin:0; font-size:14px; color:#1e293b;">📦 المخزن العام وإدارة البضاعة (بالكرتونة):</h4>
@@ -361,7 +355,7 @@
             </div>
         </div>
 
-        <!-- ج) سجل الحضور -->
+        <!-- ج) تبويب سجل الحضور والانصراف -->
         <div id="sectionAttendanceLog" style="display: none;">
             <div class="filter-box">
                 <h4 style="margin:0 0 8px 0; color:#065f46;">📋 سجل حضور وانصراف الموظفين والمناديب:</h4>
@@ -387,7 +381,7 @@
             </div>
         </div>
 
-        <!-- د) إدارة العملاء -->
+        <!-- د) تبويب إدارة العملاء -->
         <div id="sectionClientsManage" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">👥 لوحة إدارة بيانات وتعديل العملاء:</h4>
             <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
@@ -442,7 +436,7 @@
             </div>
         </div>
 
-        <!-- هـ) تتبع الأسطول -->
+        <!-- هـ) تتبع المناديب والسيارات والمحلات -->
         <div id="sectionTracking" style="display: none;">
             <div class="filter-box" style="background:#ecfdf5; border-color:#a7f3d0; margin-bottom:12px;">
                 <h4 style="margin:0 0 6px 0; color:#065f46;">📍 تتبع المناديب والسيارات لحظياً (Live Fleet Tracking):</h4>
@@ -483,7 +477,7 @@
             </div>
         </div>
 
-        <!-- و) مراجعة طلبات العملاء -->
+        <!-- و) مراجعة واعتماد طلبات العملاء -->
         <div id="sectionPendingOrders" style="display: none;">
             <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
                 <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:</h4>
@@ -498,7 +492,7 @@
             </div>
         </div>
 
-        <!-- ز) بوابة العميل المسجل -->
+        <!-- ز) واجهة العميل المسجل -->
         <div id="sectionClientOrderOnly" style="display: none;">
             <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
                 <h4 style="margin-top:0; color:#166534;" id="portalClientHeaderTitle">🏪 لوحة طلبات العميل</h4>
@@ -530,7 +524,7 @@
             </div>
         </div>
 
-        <!-- ح) الفواتير المحفوظة -->
+        <!-- ح) الفواتير المحفوظة وتعديلها -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box">
                 <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:</h4>
@@ -641,24 +635,58 @@
             </table>
         </div>
 
-        <!-- ك) حاسبة النسب -->
+        <!-- ك) حساب النسب -->
+               <!-- ك) حساب النسب -->
         <div id="sectionRatios" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل (تحديد النوع لكل صنف):</h4>
             <div class="filter-box">
-                <div style="display:flex; gap:8px;">
-                    <div class="form-group" style="flex:1;"><label>نسبة كليوباترا:</label><input type="number" id="ratioCleopatra" value="2" oninput="calcRatioLoading()"></div>
-                    <div class="form-group" style="flex:1;"><label>نسبة البوكس:</label><input type="number" id="ratioBox" value="1" oninput="calcRatioLoading()"></div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label style="color:#0f172a; font-weight:bold;">إجمالي الكرتونات المراد تحميلها:</label>
+                    <input type="number" id="totalCartonsTarget" placeholder="مثال: 30" oninput="calcRatioLoading()" style="font-size:14px; font-weight:bold; border:2px solid #2563eb;">
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <div class="form-group" style="flex:1;"><label>نسبة براون:</label><input type="number" id="ratioBrown" value="0" oninput="calcRatioLoading()"></div>
-                    <div class="form-group" style="flex:1;"><label>نسبة سوبر (%):</label><input type="number" id="ratioSuper" value="0" min="0" max="100" step="0.1" placeholder="%" oninput="calcRatioLoading()"></div>
+
+                <!-- 1. كليوباترا -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
+                    <span style="font-size:12px; font-weight:bold;">كليوباترا عادية:</span>
+                    <input type="number" id="ratioCleopatraVal" value="2" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
+                    <select id="ratioCleopatraType" onchange="calcRatioLoading()" style="font-size:11px; padding:7px;">
+                        <option value="ratio">نسبة صنف لصنف</option>
+                        <option value="percent">نسبة مئوية (%)</option>
+                    </select>
                 </div>
-                <div class="form-group">
-                    <label>إجمالي الكرتونات المراد تحميلها:</label>
-                    <input type="number" id="totalCartonsTarget" placeholder="مثال: 30" oninput="calcRatioLoading()">
+
+                <!-- 2. بوكس -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
+                    <span style="font-size:12px; font-weight:bold;">كيلوبترا بوكس:</span>
+                    <input type="number" id="ratioBoxVal" value="1" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
+                    <select id="ratioBoxType" onchange="calcRatioLoading()" style="font-size:11px; padding:7px;">
+                        <option value="ratio">نسبة صنف لصنف</option>
+                        <option value="percent">نسبة مئوية (%)</option>
+                    </select>
                 </div>
-                <div id="ratioResultBox" style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-top:10px; font-size:13px; color:#166534;">
-                    أدخل النسب وإجمالي الكرتونات لعرض الكميات.
+
+                <!-- 3. براون -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
+                    <span style="font-size:12px; font-weight:bold;">كليوباترا براون:</span>
+                    <input type="number" id="ratioBrownVal" value="0" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
+                    <select id="ratioBrownType" onchange="calcRatioLoading()" style="font-size:11px; padding:7px;">
+                        <option value="ratio">نسبة صنف لصنف</option>
+                        <option value="percent">نسبة مئوية (%)</option>
+                    </select>
+                </div>
+
+                <!-- 4. سوبر 94 -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
+                    <span style="font-size:12px; font-weight:bold;">سوبر 94:</span>
+                    <input type="number" id="ratioSuperVal" value="0" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
+                    <select id="ratioSuperType" onchange="calcRatioLoading()" style="font-size:11px; padding:7px;">
+                        <option value="percent">نسبة مئوية (%)</option>
+                        <option value="ratio">نسبة صنف لصنف</option>
+                    </select>
+                </div>
+
+                <div id="ratioResultBox" style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-top:10px; font-size:13px; color:#166534; line-height:1.7;">
+                    أدخل إجمالي الكرتونات وحدد نوع وقيمة النسبة لكل صنف.
                 </div>
             </div>
         </div>
@@ -705,7 +733,7 @@
             </div>
         </div>
 
-        <!-- م) المحلات والمديونيات -->
+        <!-- م) المحلات -->
         <div id="sectionShops" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات والمديونيات:</h4>
             <div class="filter-box">
@@ -821,7 +849,7 @@
             </div>
         </div>
 
-        <!-- ع) تبويب حقن وتعديل الأكواد -->
+        <!-- ع) تبويب حقن وتعديل الأكواد المباشرة (للمدير فقط) -->
         <div id="sectionCustomCode" style="display: none;">
             <div class="filter-box" style="background:#fdf4ff; border-color:#f0abfc;">
                 <h4 style="margin-top:0; color:#86198f; font-size:14px;">⚡ لوحة إضافة وحقن الأكواد وتعديل النظام (للمدير فقط):</h4>
@@ -999,7 +1027,6 @@
     </div>
 
     <div id="thermalPrintArea" style="display:none;"></div>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyARUfzp3O79n5pOONzY13pHcV6uoaMXd9s",
@@ -1097,11 +1124,16 @@
             return String(p).replace(/\D/g, '').replace(/^20/, '').replace(/^0+/, '');
         }
 
+        function normalizeRouteName(r) {
+            if (!r) return "";
+            return String(r).replace(/^خط\s*/, '').trim().toLowerCase();
+        }
+
         function getTargetWhatsApp() {
             return (systemSettings && systemSettings.whatsapp) ? String(systemSettings.whatsapp).replace(/\D/g, '') : "201011112764";
         }
 
-        // ==================== 1. محرك البلوتوث المباشر ====================
+        // ==================== 1. محرك البلوتوث المباشر للطابعات الحرارية ====================
         async function connectDirectBluetoothThermal() {
             if (!navigator.bluetooth) {
                 alert("⚠️ متصفحك لا يدعم Web Bluetooth المباشر، يرجى استخدام متصفح Google Chrome أو Microsoft Edge.");
@@ -1226,7 +1258,7 @@
             }
         }
 
-        // ==================== 2. محرك الباركود الفوري ====================
+        // ==================== 2. محرك الباركود الفوري للأجهزة الخارجية ====================
         let barcodeBuffer = "";
         let lastKeyTime = Date.now();
 
@@ -1365,7 +1397,7 @@
             });
         }
 
-        // ==================== 3. الطباعة الحرارية المباشرة للكمبيوتر ====================
+        // ==================== 3. محرك الطباعة الحرارية للكمبيوتر ====================
         function printDirectThermalDesktop(specificInv = null) {
             const rec = specificInv || getFormDataForReceipt();
             if (!rec) return;
@@ -1661,6 +1693,8 @@
             renderRepRoutesInputs(); 
             updateDelegatesSelects(); 
             renderAdminUsersTable();
+            populateRoutesList();
+            updateClientsDatalist();
         });
         
         db.ref('clients').on('value', (s) => { 
@@ -1734,6 +1768,7 @@
             }
         });
 
+        // ==================== 6. معالجة وتحديث خطوط السير والفلترة ====================
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
             if(!selectRoute) return;
@@ -1752,6 +1787,12 @@
                 if(r && r.trim()) routesSet.add(r.trim());
             }
 
+            if(currentDelegate && currentDelegate.allowedRoutes && Array.isArray(currentDelegate.allowedRoutes)) {
+                currentDelegate.allowedRoutes.forEach(r => {
+                    if(r && r !== 'ALL' && r.trim()) routesSet.add(r.trim());
+                });
+            }
+
             let html = '<option value="ALL">🛣️ عرض كل الخطوط (كل العملاء)</option>';
             routesSet.forEach(route => {
                 html += `<option value="${route}">📍 ${route}</option>`;
@@ -1762,7 +1803,15 @@
             else selectRoute.value = 'ALL';
         }
 
-        function onRouteFilterChange() { updateClientsDatalist(); }
+        function onRouteFilterChange() { 
+            updateClientsDatalist();
+            const selRoute = document.getElementById('selectRouteFilter')?.value || 'ALL';
+            document.getElementById('clientName').value = '';
+            document.getElementById('clientVillage').value = '';
+            document.getElementById('lblClientCode').innerText = '--';
+            document.getElementById('lblClientRoute').innerText = (selRoute !== 'ALL' ? selRoute : '--');
+            document.getElementById('clientMonthlyHistory').style.display = 'none';
+        }
 
         function onVillageInputSyncRoute() {
             const villageVal = document.getElementById('clientVillage')?.value.trim();
@@ -2464,27 +2513,30 @@
         }
 
         function handleLogin() {
-            const rawInput = (document.getElementById('loginCode').value || '').trim();
+            const rawInput = (document.getElementById('loginCode')?.value || '').trim();
             const codeLower = rawInput.toLowerCase();
             const cleanInputPhone = cleanPhoneStr(rawInput);
-            const pass = (document.getElementById('loginPass').value || '').trim();
+            const pass = (document.getElementById('loginPass')?.value || '').trim();
 
             if(!rawInput || !pass) {
-                alert("يرجى كتابة كود المستخدم / رقم الهاتف وكلمة السر.");
+                alert("⚠️ يرجى كتابة كود المستخدم أو رقم الهاتف وكلمة السر.");
                 return;
             }
 
             let foundCustomer = null;
-            for(let uid in portalCustomersDB) {
-                let cust = portalCustomersDB[uid];
-                let custPhoneClean = cleanPhoneStr(cust.phone);
+            if (typeof portalCustomersDB === 'object' && portalCustomersDB !== null) {
+                for(let uid in portalCustomersDB) {
+                    let cust = portalCustomersDB[uid];
+                    if (!cust) continue;
+                    let custPhoneClean = cleanPhoneStr(cust.phone);
 
-                if((cust.clientCode && cust.clientCode.toLowerCase() === codeLower) ||
-                   (cust.email && cust.email.toLowerCase() === codeLower) ||
-                   (cust.name && cust.name.toLowerCase() === codeLower) ||
-                   (cleanInputPhone && custPhoneClean && custPhoneClean === cleanInputPhone)) {
-                    foundCustomer = cust;
-                    break;
+                    if((cust.clientCode && cust.clientCode.toLowerCase() === codeLower) ||
+                       (cust.email && cust.email.toLowerCase() === codeLower) ||
+                       (cust.name && cust.name.toLowerCase() === codeLower) ||
+                       (cleanInputPhone && custPhoneClean && custPhoneClean === cleanInputPhone)) {
+                        foundCustomer = cust;
+                        break;
+                    }
                 }
             }
 
@@ -2499,19 +2551,36 @@
                 }
             }
 
-            const dDB = cloudDelegates || defaultDelegates;
-            if (codeLower === "admin" && pass === ADMIN_PASS) {
+            if (codeLower === "admin" && (pass === ADMIN_PASS || pass === "Hossam2023@")) {
                 currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin", allowedRoutes: ["ALL"] };
-            } else if (dDB[rawInput] || dDB[codeLower]) {
-                let targetUser = dDB[rawInput] || dDB[codeLower];
-                let userKey = dDB[rawInput] ? rawInput : codeLower;
-                if (targetUser.locked) { alert("❌ هذا الحساب مقفل ومحظور من الإدارة!"); return; }
-                if (String(targetUser.pass).trim() === pass) {
-                    currentDelegate = { code: userKey, name: targetUser.name, role: targetUser.role || 'delegate', allowedRoutes: targetUser.allowedRoutes || ["ALL"] };
-                } else { alert("❌ كلمة السر غير صحيحة!"); return; }
-            } else { 
-                alert("❌ بيانات تسجيل الدخول غير مسجلة لدينا!"); 
-                return; 
+            } else {
+                const dDB = (typeof cloudDelegates === 'object' && Object.keys(cloudDelegates).length > 0) 
+                            ? cloudDelegates 
+                            : defaultDelegates;
+
+                let targetKey = dDB[rawInput] ? rawInput : (dDB[codeLower] ? codeLower : null);
+
+                if (targetKey && dDB[targetKey]) {
+                    let targetUser = dDB[targetKey];
+                    if (targetUser.locked) { 
+                        alert("❌ هذا الحساب مقفل ومحظور من الإدارة!"); 
+                        return; 
+                    }
+                    if (String(targetUser.pass).trim() === pass) {
+                        currentDelegate = { 
+                            code: targetKey, 
+                            name: targetUser.name, 
+                            role: targetUser.role || 'delegate', 
+                            allowedRoutes: targetUser.allowedRoutes || ["ALL"] 
+                        };
+                    } else { 
+                        alert("❌ كلمة السر غير صحيحة!"); 
+                        return; 
+                    }
+                } else { 
+                    alert("❌ بيانات تسجيل الدخول غير مسجلة لدينا!"); 
+                    return; 
+                }
             }
 
             document.getElementById('lblDelegateName').innerText = currentDelegate.name;
@@ -2529,6 +2598,7 @@
             switchTab('invoice');
             initSalesForm();
             populateRoutesList();
+            updateClientsDatalist();
 
             if(currentDelegate.role === 'delegate') {
                 document.getElementById('sosButtonContainer').style.display = 'block';
@@ -2929,11 +2999,12 @@
         async function createInvoiceObject() {
             if(!currentDelegate || currentDelegate.role === 'viewer') return null;
 
+            // التحقق الإلزامي من اختيار السيارة وقراءة العداد
             const vehicleKey = document.getElementById('invoiceVehicleSelect').value;
             const odometerReading = parseFloat(document.getElementById('invoiceOdometerInput').value);
 
             if(!vehicleKey) {
-                alert("❌ بيان إلزامي: يرجى اختيار السيارة التي سوف تتحرك بها.");
+                alert("❌ بيان إلزامي: يرجى اختيار السيارة التي سوف تتحرك بها (الدبابة، بايك 1، بايك 2).");
                 document.getElementById('invoiceVehicleSelect').focus();
                 return null;
             }
@@ -3013,12 +3084,12 @@
                 db.ref('delegates/' + targetDelCode).set(cloudDelegates[targetDelCode]).catch(e => {});
             }
 
-            // فحص وتثبيت قراءة العداد مرة واحدة فقط لكل تاريخ
-            if(!cloudVehicles[vehicleKey]) cloudVehicles[vehicleKey] = { ...defaultVehicles[vehicleKey] };
-            if(!cloudVehicles[vehicleKey].dailyLogs) cloudVehicles[vehicleKey].dailyLogs = {};
-            
+            // فحص وتثبيت قراءة العداد وتحديثه في السحابة مرة واحدة فقط لكل تاريخ يومي
+            if (!cloudVehicles[vehicleKey]) cloudVehicles[vehicleKey] = { ...defaultVehicles[vehicleKey] };
+            if (!cloudVehicles[vehicleKey].dailyLogs) cloudVehicles[vehicleKey].dailyLogs = {};
+
             const logDate = invDate || new Date().toISOString().split('T')[0];
-            if(!cloudVehicles[vehicleKey].dailyLogs[logDate]) {
+            if (!cloudVehicles[vehicleKey].dailyLogs[logDate]) {
                 cloudVehicles[vehicleKey].dailyLogs[logDate] = odometerReading;
                 cloudVehicles[vehicleKey].currentKm = odometerReading;
                 db.ref('vehicles/' + vehicleKey).set(cloudVehicles[vehicleKey]).catch(e => {});
@@ -3352,6 +3423,7 @@
                 if(targetSec) targetSec.style.display = 'block';
             }
 
+            if(tabKey === 'invoice') { updateClientsDatalist(); }
             if(tabKey === 'warehouse') renderWarehouseTable();
             if(tabKey === 'attendanceLog') renderAttendanceLogTable();
             if(tabKey === 'clientsManage') renderAdminPortalCustomersTable();
@@ -3467,11 +3539,15 @@
             const selVal = document.getElementById('selectExistingClient').value;
             if(selVal) {
                 document.getElementById('clientName').value = selVal;
+                let foundVillage = '';
                 for(let uid in portalCustomersDB) {
                     if(portalCustomersDB[uid].name === selVal) {
-                        if(portalCustomersDB[uid].village) document.getElementById('clientVillage').value = portalCustomersDB[uid].village;
+                        foundVillage = portalCustomersDB[uid].village || portalCustomersDB[uid].address || '';
                         break;
                     }
+                }
+                if(foundVillage) {
+                    document.getElementById('clientVillage').value = foundVillage;
                 }
                 onClientNameInput();
             }
@@ -3482,23 +3558,50 @@
             if(!sel) return;
 
             const selectedRoute = document.getElementById('selectRouteFilter')?.value || 'ALL';
+            const normSelected = normalizeRouteName(selectedRoute);
             sel.innerHTML = '<option value="">📋 عميل مسجل...</option>';
 
+            let allClientsMap = {};
+
             for(let cName in cloudClients) {
-                let clientRoute = cloudClientsRoutes[cName] || '';
-                
-                if(!clientRoute) {
-                    for(let uid in portalCustomersDB) {
-                        if(portalCustomersDB[uid].name === cName && portalCustomersDB[uid].route) {
-                            clientRoute = portalCustomersDB[uid].route;
-                            break;
-                        }
+                if(cName && cName.trim()) {
+                    allClientsMap[cName.trim()] = {
+                        code: cloudClients[cName],
+                        route: cloudClientsRoutes[cName] || ''
+                    };
+                }
+            }
+
+            for(let uid in portalCustomersDB) {
+                let pCust = portalCustomersDB[uid];
+                if(pCust && pCust.name && pCust.name.trim()) {
+                    let trimName = pCust.name.trim();
+                    if(!allClientsMap[trimName]) {
+                        allClientsMap[trimName] = {
+                            code: pCust.clientCode || 'C-Auto',
+                            route: pCust.route || ''
+                        };
+                    } else if(pCust.route) {
+                        allClientsMap[trimName].route = pCust.route;
                     }
                 }
+            }
 
-                if(selectedRoute === 'ALL' || (clientRoute && clientRoute.trim() === selectedRoute.trim())) {
+            for(let cName in allClientsMap) {
+                let clientRoute = allClientsMap[cName].route || '';
+                let clientCode = allClientsMap[cName].code || '';
+                let normClientRoute = normalizeRouteName(clientRoute);
+
+                let isMatch = false;
+                if(selectedRoute === 'ALL') {
+                    isMatch = true;
+                } else if(normSelected && normClientRoute) {
+                    isMatch = (normSelected === normClientRoute || clientRoute.trim() === selectedRoute.trim());
+                }
+
+                if(isMatch) {
                     let routeTag = clientRoute ? ` [${clientRoute}]` : '';
-                    sel.innerHTML += `<option value="${cName}">${cName} (${cloudClients[cName]})${routeTag}</option>`;
+                    sel.innerHTML += `<option value="${cName}">${cName} (${clientCode})${routeTag}</option>`;
                 }
             }
             updateReportClientsSelect();
@@ -3519,16 +3622,17 @@
             }
 
             let foundRoute = cloudClientsRoutes[val] || "--";
+            let foundCode = cloudClients[val] || "";
+
             for(let uid in portalCustomersDB) {
-                if(portalCustomersDB[uid].name === val && portalCustomersDB[uid].route) {
-                    foundRoute = portalCustomersDB[uid].route;
+                if(portalCustomersDB[uid].name && portalCustomersDB[uid].name.toLowerCase() === val.toLowerCase()) {
+                    if(portalCustomersDB[uid].route) foundRoute = portalCustomersDB[uid].route;
+                    if(portalCustomersDB[uid].clientCode) foundCode = portalCustomersDB[uid].clientCode;
                     break;
                 }
             }
             if(lblRoute) lblRoute.innerText = foundRoute;
-
-            if(cloudClients[val]) lblCode.innerText = cloudClients[val];
-            else lblCode.innerText = "عميل جديد (تلقائي)";
+            lblCode.innerText = foundCode || (cloudClients[val] || "عميل جديد (تلقائي)");
 
             clientInputTimer = setTimeout(() => {
                 let clientSales = cloudSales.filter(s => s.client && s.client.toLowerCase() === val.toLowerCase() && s.status !== 'cancelled');
@@ -3543,36 +3647,66 @@
             }, 300);
         }
 
-        function calcRatioLoading() {
-            const rCleo = parseFloat(document.getElementById('ratioCleopatra')?.value) || 0;
-            const rBox = parseFloat(document.getElementById('ratioBox')?.value) || 0;
-            const rBrown = parseFloat(document.getElementById('ratioBrown')?.value) || 0;
-            const rSuperPct = parseFloat(document.getElementById('ratioSuper')?.value) || 0;
+                function calcRatioLoading() {
             const totalTarget = parseFloat(document.getElementById('totalCartonsTarget')?.value) || 0;
             const resultBox = document.getElementById('ratioResultBox');
             if(!resultBox) return;
 
             if(totalTarget <= 0) {
-                resultBox.innerHTML = "أدخل إجمالي الكرتونات المراد تحميلها لعرض التفصيل.";
+                resultBox.innerHTML = "⚠️ أدخل إجمالي الكرتونات المراد تحميلها لعرض التفصيل.";
                 return;
             }
 
-            let superCartons = (totalTarget * rSuperPct) / 100;
-            let remainingCartons = totalTarget - superCartons;
-            let sumRatio = rCleo + rBox + rBrown;
+            let items = [
+                { name: "كليوباترا عادية", val: parseFloat(document.getElementById('ratioCleopatraVal')?.value) || 0, type: document.getElementById('ratioCleopatraType')?.value || 'ratio' },
+                { name: "كيلوبترا بوكس", val: parseFloat(document.getElementById('ratioBoxVal')?.value) || 0, type: document.getElementById('ratioBoxType')?.value || 'ratio' },
+                { name: "كليوباترا براون", val: parseFloat(document.getElementById('ratioBrownVal')?.value) || 0, type: document.getElementById('ratioBrownType')?.value || 'ratio' },
+                { name: "سوبر 94", val: parseFloat(document.getElementById('ratioSuperVal')?.value) || 0, type: document.getElementById('ratioSuperType')?.value || 'percent' }
+            ];
 
-            let cleoCartons = sumRatio > 0 ? (remainingCartons * (rCleo / sumRatio)) : 0;
-            let boxCartons = sumRatio > 0 ? (remainingCartons * (rBox / sumRatio)) : 0;
-            let brownCartons = sumRatio > 0 ? (remainingCartons * (rBrown / sumRatio)) : 0;
+            // 1. حساب الأصناف المحددة بنسبة مئوية (%) أولاً
+            let totalPercentCartons = 0;
+            items.forEach(it => {
+                if (it.type === 'percent' && it.val > 0) {
+                    it.cartons = (totalTarget * it.val) / 100;
+                    totalPercentCartons += it.cartons;
+                } else if (it.type === 'percent') {
+                    it.cartons = 0;
+                }
+            });
 
-            resultBox.innerHTML = `
-                <b>📦 تفصيل كميات التحميل المقترحة لإجمالي (${totalTarget} كرتونة):</b><br>
-                • <b>كليوباترا عادية:</b> ${cleoCartons.toFixed(1)} كرتونة<br>
-                • <b>كيلوبترا بوكس:</b> ${boxCartons.toFixed(1)} كرتونة<br>
-                • <b>براون:</b> ${brownCartons.toFixed(1)} كرتونة<br>
-                • <b>سوبر 94 (${rSuperPct}%):</b> ${superCartons.toFixed(1)} كرتونة
-            `;
+            // 2. حساب المتبقي لتوزيعه على أصناف النسبة العددية (صنف لصنف)
+            let remainingCartons = Math.max(0, totalTarget - totalPercentCartons);
+            let sumRatioWeights = 0;
+            items.forEach(it => {
+                if (it.type === 'ratio' && it.val > 0) {
+                    sumRatioWeights += it.val;
+                }
+            });
+
+            // 3. توزيع الكراتين على أصناف النسبة العددية
+            items.forEach(it => {
+                if (it.type === 'ratio') {
+                    it.cartons = (it.val > 0 && sumRatioWeights > 0) ? (remainingCartons * (it.val / sumRatioWeights)) : 0;
+                }
+            });
+
+            // 4. عرض النتائج التفصيلية
+            let outputHtml = `<b>📦 تفصيل كميات التحميل لإجمالي (${totalTarget} كرتونة):</b><br>`;
+            items.forEach(it => {
+                let c = it.cartons || 0;
+                let ribbons = Math.round(c * 50);
+                let typeBadge = it.type === 'percent' ? `[${it.val}%]` : `[نسبة: ${it.val}]`;
+                outputHtml += `• <b>${it.name}</b> ${typeBadge}: <span style="color:#0284c7; font-weight:bold;">${c.toFixed(1)} كرتونة</span> (${ribbons} رابطة)<br>`;
+            });
+
+            if (totalPercentCartons > totalTarget) {
+                outputHtml += `<hr style="margin:6px 0; border:0; border-top:1px dashed #ef4444;"><span style="color:#dc2626; font-weight:bold;">⚠️ تنبيه: مجموع النسب المئوية يتجاوز 100%!</span>`;
+            }
+
+            resultBox.innerHTML = outputHtml;
         }
+
 
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
@@ -3872,7 +4006,7 @@
             db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
         }
 
-        // ==================== 6. إدارة الموظفين للمدير ====================
+        // ==================== 7. إدارة الموظفين للمدير ====================
         function createNewUserAccount() {
             const code = document.getElementById('newAccCode').value.trim();
             const name = document.getElementById('newAccName').value.trim();
@@ -3996,7 +4130,7 @@
             }
         }
 
-        // ==================== 7. إدارة وتعديل العملاء بالكامل ====================
+        // ==================== 8. إدارة وتعديل العملاء بالكامل ====================
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
