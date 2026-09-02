@@ -719,9 +719,9 @@
             </div>
         </div>
 
-        <!-- ل) تبويب منوف (التحميل + الذمامات الشهرية التراكمية) -->
+        <!-- ل) تبويب منوف (التحميل الشهري + الذمامات الشهرية التراكمية مع الإكسيل) -->
         <div id="sectionMenof" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 شحنات وتفريغ منوف وكشف الذمامات الشهرية:</h4>
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 مخزن وشحنات منوف وكشف التحميل والذمم الشهرية:</h4>
             
             <div class="filter-box">
                 <h5 style="margin:0 0 8px 0; color:#0f172a;">📥 تسجيل شحنة منوف جديدة / إيداع:</h5>
@@ -738,24 +738,61 @@
                 <button class="btn btn-success" onclick="saveMenofLoad()">💾 حفظ شحنة منوف</button>
             </div>
 
+            <!-- شريط فلترة الشهر لتحميلات منوف -->
+            <div class="filter-box" style="background:#eff6ff; border:1.5px solid #3b82f6; margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div style="flex:1; min-width:200px;">
+                        <label style="font-weight:bold; font-size:12px; color:#1e40af;">📅 اختر الشهر لعرض تحميلات منوف:</label>
+                        <input type="month" id="menofMonthFilter" onchange="renderMenofTable()" style="font-weight:bold; font-size:13px; background:#fff;">
+                    </div>
+                    <div style="display:flex; gap:6px; align-items:flex-end;">
+                        <button class="btn btn-primary" style="width:auto; margin:0; padding:8px 12px; font-size:11px;" onclick="renderMenofTable()">🔄 تحديث</button>
+                        <button class="btn btn-warning" style="width:auto; margin:0; padding:8px 12px; font-size:11px;" onclick="document.getElementById('menofMonthFilter').value=''; renderMenofTable();">📋 كل الشهور</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="stat-grid" style="margin-bottom:10px;">
-                <div class="stat-card"><div class="title">إجمالي الكراتين</div><div class="val" id="menofTotalCartonsCount">0</div></div>
-                <div class="stat-card"><div class="title">إجمالي البضاعة</div><div class="val" id="menofTotalGoodsSum">0</div></div>
-                <div class="stat-card"><div class="title">إجمالي الإيداعات</div><div class="val" id="menofTotalDepositsSum">0</div></div>
-                <div class="stat-card"><div class="title">صافي ذمة منوف</div><div class="val" id="menofNetZimamTotal">0</div></div>
+                <div class="stat-card" style="background:#f0f9ff;"><div class="title" style="color:#0369a1;">إجمالي كراتين الشهر</div><div class="val" id="menofTotalCartonsCount" style="color:#0284c7;">0 كرتونة</div></div>
+                <div class="stat-card" style="background:#faf5ff;"><div class="title" style="color:#7e22ce;">إجمالي بضاعة الشهر</div><div class="val" id="menofTotalGoodsSum" style="color:#9333ea;">0 ج.م</div></div>
+                <div class="stat-card" style="background:#f0fdf4;"><div class="title" style="color:#166534;">إجمالي إيداعات الشهر</div><div class="val" id="menofTotalDepositsSum" style="color:#16a34a;">0 ج.م</div></div>
+                <div class="stat-card" style="background:#fff1f2;"><div class="title" style="color:#9f1239;">صافي ذمة منوف للشهر</div><div class="val" id="menofNetZimamTotal" style="color:#dc2626;">0 ج.م</div></div>
+            </div>
+
+            <!-- جدول ملخص مقارنة تحميل كل شهر -->
+            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px; margin-bottom:15px;">
+                <h5 style="margin:0 0 6px 0; color:#0f172a;">📊 ملخص التحميل الشهري لمنوف (مقارنة شهور السنة):</h5>
+                <div style="overflow-x:auto;">
+                    <table class="report-table">
+                        <thead style="background:#1e293b; color:#fff;">
+                            <tr>
+                                <th>الشهر</th>
+                                <th>إجمالي الكراتين المحملة</th>
+                                <th>قيمة البضاعة</th>
+                                <th>المسدد (إيداعات)</th>
+                                <th>صافي الذمة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="menofMonthlySummaryBody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div style="overflow-x:auto; margin-bottom:20px;">
-                <h5 style="margin:0 0 6px 0;">📋 سجل شحنات وإيداعات منوف:</h5>
+                <h5 style="margin:0 0 6px 0;">📋 تفاصيل شحنات الشهر المختار:</h5>
                 <table class="report-table">
                     <thead><tr><th>التاريخ</th><th>الكراتين</th><th>البضاعة</th><th>الإيداع</th><th>الذمة</th><th>إجراءات</th></tr></thead>
                     <tbody id="menofTableBody"></tbody>
                 </table>
             </div>
 
-            <!-- الفلترة الشهرية ودفتر الأستاذ للذمامات -->
+            <!-- الفلترة الشهرية ودفتر الأستاذ للذمامات مع دعم الإكسيل -->
             <div class="filter-box" style="background:#f8fafc; border:2px solid #0284c7; margin-top:15px;">
-                <h4 style="margin:0 0 10px 0; color:#0369a1;">🗓️ كشف وتصفية الذمامات الشهرية (ترحيل وتجميع تلقائي):</h4>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                    <h4 style="margin:0; color:#0369a1;">🗓️ كشف وتصفية الذمامات الشهرية (ترحيل وتجميع تلقائي):</h4>
+                    <button class="btn btn-success" style="width:auto; margin:0; padding:8px 14px; font-size:12px;" onclick="exportDebtsToExcel()">📥 تصدير كشف التصفية بالكامل (Excel)</button>
+                </div>
+                
                 <div style="display:grid; grid-template-columns: 1.2fr 1fr auto; gap:6px; align-items:flex-end;">
                     <div>
                         <label style="font-size:11px; font-weight:bold;">اختر الشهر:</label>
@@ -1222,6 +1259,7 @@
         let cloudLocationRequests = {};
         let cloudVehicles = { ...defaultVehicles };
         let cloudDashcamStreams = {};
+        let currentMonthDebtsLedger = []; // مصفوفة لتخزين كشف الذمم الحالي لتصديره لإكسيل
 
         let currentDelegate = null;
         let currentPortalCustomer = null;
@@ -1418,7 +1456,7 @@
             document.getElementById('dashcamModal').style.display = 'none';
         }
 
-        // ==================== الاتصال الصوتي واللاسلكي المباشر ====================
+        // ==================== الاتصال الصوتي واللاسلكي ====================
         function startVoiceIntercomWithRep(repCode, repName) {
             const roomName = `BH_Voice_${repCode}_${Date.now().toString().slice(-4)}`;
             db.ref('voiceIntercomRequests/' + repCode).set({
@@ -3715,7 +3753,7 @@
 
         function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
 
-        // ==================== التقارير وتصدير Excel ====================
+        // ==================== التقارير وتصدير مسحوبات العملاء Excel ====================
         function renderDailyReport() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
             const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
@@ -4232,7 +4270,7 @@
             resultBox.innerHTML = outputHtml;
         }
 
-        // ==================== مخزن وشحنات منوف ====================
+        // ==================== مخزن وتحميلات منوف شهر بشهر ====================
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit')?.value) || 0;
@@ -4286,35 +4324,87 @@
 
         function renderMenofTable() {
             const tbody = document.getElementById('menofTableBody');
+            const summaryTbody = document.getElementById('menofMonthlySummaryBody');
             if(!tbody) return;
             tbody.innerHTML = '';
+            if(summaryTbody) summaryTbody.innerHTML = '';
 
-            let totalCartons = 0, totalDeposits = 0, totalGoods = 0, netZimam = 0;
+            let selectedMonth = document.getElementById('menofMonthFilter')?.value;
+            if (!selectedMonth && document.getElementById('menofMonthFilter')) {
+                selectedMonth = new Date().toISOString().slice(0, 7);
+                document.getElementById('menofMonthFilter').value = selectedMonth;
+            }
+
+            let monthCartons = 0, monthDeposits = 0, monthGoods = 0, monthZimam = 0;
+            const monthlyStats = {};
 
             cloudMenofLoads.forEach(m => {
-                totalCartons += (parseFloat(m.cartons) || 0);
-                totalDeposits += (parseFloat(m.deposit) || 0);
-                totalGoods += (parseFloat(m.totalGoods) || 0);
-                netZimam += (parseFloat(m.zimam) || 0);
+                const mDate = m.date || '';
+                const mMonth = mDate.slice(0, 7);
+                const cartons = parseFloat(m.cartons) || 0;
+                const deposit = parseFloat(m.deposit) || 0;
+                const goods = parseFloat(m.totalGoods) || 0;
+                const zimam = parseFloat(m.zimam) || (deposit - goods);
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${m.date}</td>
-                        <td><b>${m.cartons}</b></td>
-                        <td>${(m.totalGoods || 0).toLocaleString()} ج.م</td>
-                        <td style="color:#16a34a; font-weight:bold;">${(m.deposit || 0).toLocaleString()} ج.م</td>
-                        <td style="color:${m.zimam >= 0 ? '#15803d' : '#dc2626'}; font-weight:bold;">${(m.zimam || 0).toLocaleString()} ج.م</td>
-                        <td>
-                            <button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="editMenofLoad('${m.id}')">✏️</button>
-                            <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="deleteMenofLoad('${m.id}')">🗑️</button>
-                        </td>
-                    </tr>`;
+                if (mMonth) {
+                    if (!monthlyStats[mMonth]) {
+                        monthlyStats[mMonth] = { cartons: 0, goods: 0, deposit: 0, zimam: 0 };
+                    }
+                    monthlyStats[mMonth].cartons += cartons;
+                    monthlyStats[mMonth].goods += goods;
+                    monthlyStats[mMonth].deposit += deposit;
+                    monthlyStats[mMonth].zimam += zimam;
+                }
+
+                if (!selectedMonth || mMonth === selectedMonth) {
+                    monthCartons += cartons;
+                    monthDeposits += deposit;
+                    monthGoods += goods;
+                    monthZimam += zimam;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${m.date}</td>
+                            <td><b style="color:#0284c7;">${m.cartons}</b></td>
+                            <td>${(goods).toLocaleString()} ج.م</td>
+                            <td style="color:#16a34a; font-weight:bold;">${(deposit).toLocaleString()} ج.م</td>
+                            <td style="color:${zimam >= 0 ? '#15803d' : '#dc2626'}; font-weight:bold;">${(zimam).toLocaleString()} ج.م</td>
+                            <td>
+                                <button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="editMenofLoad('${m.id}')">✏️</button>
+                                <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0 2px;" onclick="deleteMenofLoad('${m.id}')">🗑️</button>
+                            </td>
+                        </tr>`;
+                }
             });
 
-            if(document.getElementById('menofTotalCartonsCount')) document.getElementById('menofTotalCartonsCount').innerText = totalCartons;
-            if(document.getElementById('menofTotalDepositsSum')) document.getElementById('menofTotalDepositsSum').innerText = totalDeposits.toLocaleString();
-            if(document.getElementById('menofTotalGoodsSum')) document.getElementById('menofTotalGoodsSum').innerText = totalGoods.toLocaleString();
-            if(document.getElementById('menofNetZimamTotal')) document.getElementById('menofNetZimamTotal').innerText = netZimam.toLocaleString();
+            if (tbody.innerHTML === '') {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:#64748b;">لا توجد شحنات مسجلة لشهر (${selectedMonth || 'المحدد'}).</td></tr>`;
+            }
+
+            if(document.getElementById('menofTotalCartonsCount')) document.getElementById('menofTotalCartonsCount').innerText = `${monthCartons} كرتونة`;
+            if(document.getElementById('menofTotalGoodsSum')) document.getElementById('menofTotalGoodsSum').innerText = `${monthGoods.toLocaleString()} ج.م`;
+            if(document.getElementById('menofTotalDepositsSum')) document.getElementById('menofTotalDepositsSum').innerText = `${monthDeposits.toLocaleString()} ج.م`;
+            if(document.getElementById('menofNetZimamTotal')) document.getElementById('menofNetZimamTotal').innerText = `${monthZimam.toLocaleString()} ج.م`;
+
+            if (summaryTbody) {
+                const sortedMonths = Object.keys(monthlyStats).sort().reverse();
+                if (sortedMonths.length === 0) {
+                    summaryTbody.innerHTML = `<tr><td colspan="5">لا توجد بيانات شحنات مسجلة حتى الآن.</td></tr>`;
+                } else {
+                    sortedMonths.forEach(mon => {
+                        const st = monthlyStats[mon];
+                        const isCurrentSelected = (mon === selectedMonth);
+                        summaryTbody.innerHTML += `
+                            <tr style="${isCurrentSelected ? 'background:#e0f2fe; font-weight:bold;' : ''}">
+                                <td><b>${mon}</b> ${isCurrentSelected ? '⭐ (المحدد)' : ''}</td>
+                                <td style="color:#0284c7; font-weight:bold;">${st.cartons} كرتونة</td>
+                                <td>${st.goods.toLocaleString()} ج.م</td>
+                                <td style="color:#16a34a; font-weight:bold;">${st.deposit.toLocaleString()} ج.م</td>
+                                <td style="color:${st.zimam >= 0 ? '#15803d' : '#dc2626'}; font-weight:bold;">${st.zimam.toLocaleString()} ج.م</td>
+                            </tr>`;
+                    });
+                }
+            }
         }
 
         function deleteMenofLoad(id) {
@@ -4323,12 +4413,14 @@
             db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => renderMenofTable());
         }
 
-        // ==================== نظام الذمامات الشهرية والترحيل والتجميع ====================
+        // ==================== دفتر الأستاذ للذمامات والترحيل الشهري والتصدير ====================
         window.addEventListener('DOMContentLoaded', () => {
             const today = new Date();
             const currentMonthStr = today.toISOString().slice(0, 7);
             const selMonthInput = document.getElementById('selectedMonth');
             if (selMonthInput) selMonthInput.value = currentMonthStr;
+            const menofMonthInput = document.getElementById('menofMonthFilter');
+            if (menofMonthInput) menofMonthInput.value = currentMonthStr;
             loadMonthlyDebts();
         });
 
@@ -4342,6 +4434,7 @@
             const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999).getTime();
 
             const clientsLedger = {};
+            currentMonthDebtsLedger = [];
 
             cloudShops.forEach(s => {
                 if (branch !== "الكل") {
@@ -4430,6 +4523,8 @@
                 grandPaid += client.monthPaid;
                 grandClosing += client.closingBalance;
 
+                currentMonthDebtsLedger.push(client);
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><b>${client.name}</b></td>
@@ -4474,6 +4569,39 @@
             printArea.style.display = 'block';
             window.print();
             setTimeout(() => { printArea.style.display = 'none'; }, 1000);
+        }
+
+        // دالة تصدير كشف التصفية الشامل للذمامات إلى شيت Excel
+        function exportDebtsToExcel() {
+            const selectedMonth = document.getElementById('selectedMonth')?.value || 'الشهر_الحالي';
+            const branch = document.getElementById('branchFilter')?.value || 'منوف';
+
+            if (!currentMonthDebtsLedger || currentMonthDebtsLedger.length === 0) {
+                alert("⚠️ لا توجد حسابات أو ذمم لعرضها وتصديرها لهذا الشهر.");
+                return;
+            }
+
+            let excelData = currentMonthDebtsLedger.map((c, idx) => {
+                return {
+                    "م": idx + 1,
+                    "اسم العميل / المحل": c.name,
+                    "الرصيد السابق المرحل (ج.م)": c.previousBalance.toFixed(2),
+                    "مسحوبات الشهر (ج.م)": c.monthSales.toFixed(2),
+                    "مسدد وتحصيلات الشهر (ج.م)": c.monthPaid.toFixed(2),
+                    "صافي الرصيد المرحل للشهر القادم (ج.م)": c.closingBalance.toFixed(2),
+                    "حالة المديونية": c.closingBalance > 0 ? "عليه ذمة" : (c.closingBalance < 0 ? "له رصيد دائن" : "خالص تماماً")
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `تصفية_${selectedMonth}`);
+
+            if (!ws['!views']) ws['!views'] = [];
+            ws['!views'].push({ rightToLeft: true });
+
+            const fileName = `كشف_تصفية_الذمامات_قطاع_${branch}_${selectedMonth}.xlsx`;
+            XLSX.writeFile(wb, fileName);
         }
 
         // ==================== حسابات المحلات (الجملة) ====================
