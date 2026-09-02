@@ -718,66 +718,74 @@
                 </div>
             </div>
         </div>
+<!-- شريط البحث والفلترة الشهرية -->
+<div class="filter-card p-3 mb-3 bg-light rounded border">
+  <div class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <label class="form-label fw-bold">اختر الشهر:</label>
+      <input type="month" id="selectedMonth" class="form-control" onchange="loadMonthlyDebts()">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label fw-bold">الفرع / المخزن:</label>
+      <select id="branchFilter" class="form-select" onchange="loadMonthlyDebts()">
+        <option value="منوف" selected>منوف</option>
+        <option value="الكل">كل الفروع</option>
+      </select>
+    </div>
+    <div class="col-md-4 text-end mt-auto">
+      <button class="btn btn-primary" onclick="loadMonthlyDebts()">
+        <i class="fa fa-sync"></i> تحديث الحسابات
+      </button>
+    </div>
+  </div>
+</div>
 
-        <!-- ل) التحميل من منوف -->
-        <div id="sectionMenof" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 سجل تحميلات منوف والذمم التراكمية:</h4>
-            
-            <div class="stat-grid">
-                <div class="stat-card" style="border-color:#bae6fd; background:#f0f9ff;">
-                    <div class="title">📦 إجمالي عدد الكراتين:</div>
-                    <div class="val" style="color:#0284c7;"><span id="menofTotalCartonsCount">0</span> كرتونة</div>
-                </div>
-                <div class="stat-card" style="border-color:#bbf7d0; background:#f0fdf4;">
-                    <div class="title">💵 إجمالي الإيداعات:</div>
-                    <div class="val" style="color:#16a34a;"><span id="menofTotalDepositsSum">0.00</span> ج.م</div>
-                </div>
-                <div class="stat-card" style="border-color:#fde68a; background:#fffbeb;">
-                    <div class="title">🛒 إجمالي البضاعة:</div>
-                    <div class="val" style="color:#b45309;"><span id="menofTotalGoodsSum">0.00</span> ج.م</div>
-                </div>
-                <div class="stat-card" style="border-color:#a7f3d0; background:#ecfdf5;">
-                    <div class="title">💰 صافي الذمم (ليك):</div>
-                    <div class="val" style="color:#15803d;"><span id="menofNetZimamTotal">0.00</span> ج.م</div>
-                </div>
-            </div>
+<!-- كروت إجماليات الشهر (تجميع الذمم) -->
+<div class="row g-2 mb-3 text-center">
+  <div class="col-md-3">
+    <div class="card bg-secondary text-white p-2">
+      <small>إجمالي الرصيد المرحّل (سابق)</small>
+      <h5 id="totalPreviousBalance">0.00 ج.م</h5>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-danger text-white p-2">
+      <small>إجمالي مسحوبات الشهر</small>
+      <h5 id="totalMonthSales">0.00 ج.م</h5>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-success text-white p-2">
+      <small>إجمالي تحصيلات الشهر</small>
+      <h5 id="totalMonthPaid">0.00 ج.م</h5>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-dark text-white p-2">
+      <small>صافي الذمم المتبقية (تُرحّل)</small>
+      <h5 id="totalClosingBalance">0.00 ج.م</h5>
+    </div>
+  </div>
+</div>
 
-            <div class="filter-box">
-                <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ تسجيل / تعديل شحنة تحميل منوف:</h5>
-                <input type="hidden" id="editMenofId" value="">
-                <div class="form-group"><label>تاريخ التحميل:</label><input type="date" id="menofDate"></div>
-                <div class="form-group"><label>عدد الكرتونات المحملة:</label><input type="number" id="menofCartons" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي سعر الكرتونات: <b id="menofTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
-                <div class="form-group"><label>قيمة الإيداع المالي المدفوع:</label><input type="number" id="menofDeposit" placeholder="0" oninput="calcMenofTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px; color:#16a34a;">الذمم التراكمية لهذه الشحنة: <b id="menofZimam">0.00</b> ج.م</div>
-                <button class="btn btn-success" onclick="saveMenofLoad()">تسجيل / تحديث شحنة منوف</button>
-            </div>
-            
-            <div style="overflow-x:auto;">
-                <table class="report-table">
-                    <thead><tr><th>التاريخ</th><th>الكرتونات</th><th>إجمالي البضاعة</th><th>الإيداع</th><th>الذمم (ليك)</th><th>الإجراءات والتعديل</th></tr></thead>
-                    <tbody id="menofTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- م) المحلات -->
-        <div id="sectionShops" style="display: none;">
-            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات والمديونيات:</h4>
-            <div class="filter-box">
-                <input type="hidden" id="editShopId" value="">
-                <div class="form-group"><label>اسم المحل:</label><input type="text" id="shopNameInput" placeholder="اكتب اسم المحل..."></div>
-                <div class="form-group"><label>عدد كرتونات البضاعة للمحل:</label><input type="number" id="shopCartons" placeholder="0" oninput="calcShopTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px;">إجمالي قيمة البضاعة: <b id="shopTotalPrice" style="color:#16a34a;">0.00</b> ج.م</div>
-                <div class="form-group"><label>المبلغ المسدد (الإيداع):</label><input type="number" id="shopPaidVal" placeholder="0" oninput="calcShopTotal()"></div>
-                <div style="font-size: 12px; margin-bottom: 8px; color:#dc2626;">المديونية (الذمم المتبقية): <b id="shopZimam">0.00</b> ج.م</div>
-                <button class="btn btn-primary" onclick="saveShopTransaction()">حفظ / تحديث معاملة المحل</button>
-            </div>
-            <table class="report-table">
-                <thead><tr><th>المحل</th><th>الكرتونات</th><th>إجمالي البضاعة</th><th>المسدد</th><th>المديونية</th><th>الإجراءات والتعديل</th></tr></thead>
-                <tbody id="shopsTableBody"></tbody>
-            </table>
-        </div>
+<!-- جدول الذمامات الشهرية بالتفصيل -->
+<div class="table-responsive">
+  <table class="table table-bordered table-striped text-center align-middle" id="debtsTable">
+    <thead class="table-dark">
+      <tr>
+        <th>العميل</th>
+        <th>رصيد مرحل (سابق)</th>
+        <th>مسحوبات الشهر</th>
+        <th>مسدد الشهر</th>
+        <th>الرصيد المتبقي (المرحل)</th>
+        <th>إجراءات</th>
+      </tr>
+    </thead>
+    <tbody id="debtsTableBody">
+      <!-- هيتملي بالجافاسكريبت تلقائياً -->
+    </tbody>
+  </table>
+</div>
 
         <!-- ن) فواتير LM -->
         <div id="sectionLmInvoices" style="display: none;">
@@ -4262,26 +4270,113 @@
             cloudMenofLoads = cloudMenofLoads.filter(m => String(m.id) !== String(id));
             db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => renderMenofTable());
         }
+// تعيين الشهر الحالي تلقائياً عند فتح الصفحة
+window.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  const currentMonthStr = today.toISOString().slice(0, 7); // YYYY-MM
+  document.getElementById('selectedMonth').value = currentMonthStr;
+  loadMonthlyDebts();
+});
 
-        function calcShopTotal() {
-            const cartons = parseFloat(document.getElementById('shopCartons')?.value) || 0;
-            const paid = parseFloat(document.getElementById('shopPaidVal')?.value) || 0;
-            const price = systemSettings.defaultCartonPrice || 23925;
-            const totalPrice = cartons * price;
-            const zimam = totalPrice - paid;
+async function loadMonthlyDebts() {
+  const selectedMonth = document.getElementById('selectedMonth').value; // مثلا "2026-09"
+  const branch = document.getElementById('branchFilter').value;
+  
+  if (!selectedMonth) return;
 
-            document.getElementById('shopTotalPrice').innerText = totalPrice.toLocaleString() + " ج.م";
-            document.getElementById('shopZimam').innerText = zimam.toLocaleString() + " ج.م";
-        }
+  const [year, month] = selectedMonth.split('-').map(Number);
+  
+  // حساب بداية ونهاية الشهر المختار
+  const startOfMonth = new Date(year, month - 1, 1).getTime();
+  const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999).getTime();
 
-        function saveShopTransaction() {
-            const editId = document.getElementById('editShopId').value;
-            const name = document.getElementById('shopNameInput').value.trim();
-            const cartons = parseFloat(document.getElementById('shopCartons').value) || 0;
-            const paid = parseFloat(document.getElementById('shopPaidVal').value) || 0;
-            const price = systemSettings.defaultCartonPrice || 23925;
-            const totalPrice = cartons * price;
-            const zimam = totalPrice - paid;
+  // جلب العمليات (فواتير وتحصيلات) من Firebase
+  // نفترض المسار: ref(db, 'transactions') أو 'invoices'
+  const transSnapshot = await firebase.database().ref('transactions').once('value');
+  const transactions = transSnapshot.val() || {};
+
+  // كائن لتجميع حسابات العملاء
+  const clientsLedger = {};
+
+  // تجهيز العملاء التابعين لمنوف
+  Object.values(transactions).forEach(tx => {
+    // فلترة الفرع (إذا كان التحديد خاص بمنوف)
+    if (branch !== "الكل" && tx.branch !== branch && tx.warehouse !== branch) {
+      return;
+    }
+
+    const clientName = tx.clientName || 'عميل غير محدد';
+    const txTime = new Date(tx.date || tx.createdAt).getTime();
+    const invoiceTotal = parseFloat(tx.totalAmount || tx.amount || 0); // المسحوبات
+    const paidAmount = parseFloat(tx.paid || 0);                     // المسدد
+
+    if (!clientsLedger[clientName]) {
+      clientsLedger[clientName] = {
+        name: clientName,
+        previousBalance: 0, // الرصيد المرحل من قبل هذا الشهر
+        monthSales: 0,      // مسحوبات هذا الشهر
+        monthPaid: 0,       // مسددات هذا الشهر
+        closingBalance: 0   // الرصيد النهائي
+      };
+    }
+
+    // 1. إذا كانت الحركة قبل بداية الشهر المختار = تدخل في الرصيد المرحل
+    if (txTime < startOfMonth) {
+      clientsLedger[clientName].previousBalance += (invoiceTotal - paidAmount);
+    } 
+    // 2. إذا كانت الحركة تقع داخل الشهر المختار
+    else if (txTime >= startOfMonth && txTime <= endOfMonth) {
+      clientsLedger[clientName].monthSales += invoiceTotal;
+      clientsLedger[clientName].monthPaid += paidAmount;
+    }
+  });
+
+  // حساب الرصيد النهائي لكل عميل والتجميع العام
+  let grandPrevious = 0;
+  let grandSales = 0;
+  let grandPaid = 0;
+  let grandClosing = 0;
+
+  const tbody = document.getElementById('debtsTableBody');
+  tbody.innerHTML = '';
+
+  Object.values(clientsLedger).forEach(client => {
+    // الرصيد الختامي = المرحل + مسحوبات الشهر - سداد الشهر
+    client.closingBalance = client.previousBalance + client.monthSales - client.monthPaid;
+
+    // عدم إظهار الحساب لو أصفار تماماً في الشهر
+    if (client.previousBalance === 0 && client.monthSales === 0 && client.monthPaid === 0) {
+      return;
+    }
+
+    grandPrevious += client.previousBalance;
+    grandSales += client.monthSales;
+    grandPaid += client.monthPaid;
+    grandClosing += client.closingBalance;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="fw-bold">${client.name}</td>
+      <td class="${client.previousBalance > 0 ? 'text-danger' : ''}">${client.previousBalance.toFixed(2)} ج.م</td>
+      <td class="text-primary">${client.monthSales.toFixed(2)} ج.م</td>
+      <td class="text-success">${client.monthPaid.toFixed(2)} ج.م</td>
+      <td class="fw-bold ${client.closingBalance > 0 ? 'table-warning text-danger' : ''}">${client.closingBalance.toFixed(2)} ج.م</td>
+      <td>
+        <button class="btn btn-sm btn-outline-dark" onclick="printClientStatement('${client.name}', '${selectedMonth}')">
+          طباعة كشف
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // تحديث كروت الإجماليات
+  document.getElementById('totalPreviousBalance').innerText = `${grandPrevious.toFixed(2)} ج.م`;
+  document.getElementById('totalMonthSales').innerText = `${grandSales.toFixed(2)} ج.م`;
+  document.getElementById('totalMonthPaid').innerText = `${grandPaid.toFixed(2)} ج.م`;
+  document.getElementById('totalClosingBalance').innerText = `${grandClosing.toFixed(2)} ج.م`;
+}
+
 
             if(!name) { alert("أدخل اسم المحل."); return; }
 
