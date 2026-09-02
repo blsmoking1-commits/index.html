@@ -1,3 +1,1146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة المبيعات والتتبع الشامل - شركة بلاك هورس</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://meet.jit.si/external_api.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+        body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
+        .card { max-width: 800px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .text-center { text-align: center; }
+        
+        .logo-box {
+            background: #0f172a;
+            color: #fff;
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .logo-box h1 { margin: 0; font-size: 22px; letter-spacing: 0.5px; }
+        .logo-box p { margin: 4px 0 0 0; font-size: 11px; color: #38bdf8; font-weight: bold; }
+        .tax-info { font-size: 9.5px; color: #94a3b8; margin-top: 6px; }
+
+        .barcode-status-bar {
+            background: #ecfdf5;
+            border: 1px solid #10b981;
+            color: #065f46;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .voice-nav-bar {
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #334155; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+        .readonly-input { background-color: #f1f5f9; color: #64748b; font-weight: bold; }
+
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; margin-top: 6px; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-success { background: #16a34a; color: white; }
+        .btn-info { background: #0284c7; color: white; }
+        .btn-whatsapp { background: #25d366; color: white; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-bluetooth { background: #7c3aed; color: white; }
+        .btn-thermal { background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; }
+        .btn-warning { background: #d97706; color: white; }
+        .btn-fleet { background: #0891b2; color: white; }
+        .btn-sos { background: #e11d48; color: white; animation: pulseSos 1.5s infinite; font-size: 14px; font-weight: bold; }
+        
+        @keyframes pulseSos {
+            0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+        }
+
+        .tab-menu { display: flex; gap: 3px; margin-bottom: 15px; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 8px 4px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold; font-size: 10px; border-radius: 6px; cursor: pointer; text-align: center; white-space: nowrap; }
+        .tab-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+
+        .delegate-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; }
+        
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+        .report-table th, .report-table td { border: 1px solid #cbd5e1; padding: 6px; text-align: center; }
+        .report-table th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; }
+        .grand-box { background: #0f172a; color: #fff; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; margin: 12px 0; }
+        .filter-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+        .client-history-box { background: #fef08a; padding: 8px; border-radius: 6px; font-size: 11px; margin-top: 6px; display: none; color: #713f12; }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .stat-card { background: #fff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center; }
+        .stat-card .title { font-size: 10.5px; color: #64748b; margin-bottom: 2px; }
+        .stat-card .val { font-size: 13px; font-weight: bold; color: #0f172a; }
+
+        .badge-notify { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 9px; margin-right: 4px; }
+        .modal-bg { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
+        .modal-content { background:#fff; padding:18px; border-radius:10px; width:92%; max-width:480px; max-height:85vh; overflow-y:auto; }
+        
+        #sosAlertBanner { display:none; background:#ffe4e6; border:2px solid #e11d48; color:#9f1239; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; }
+        #oilChangeAlertBanner { display:none; background:#fff1f2; border:2px solid #e11d48; color:#9f1239; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; font-weight:bold; }
+        #locationRequestRepBanner { display:none; background:#eff6ff; border:2px solid #2563eb; color:#1e40af; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; text-align:center; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #thermalPrintArea, #thermalPrintArea * { visibility: visible; }
+            #thermalPrintArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 78mm;
+                margin: 0;
+                padding: 4px;
+                color: #000;
+                background: #fff;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sosAlertBanner"></div>
+    <div id="oilChangeAlertBanner"></div>
+
+    <!-- 1. شاشة تسجيل الدخول -->
+    <div id="loginView" class="card">
+        <div class="logo-box">
+            <h1 id="loginHeaderName">BLACK HORSE</h1>
+            <p id="loginHeaderSubtitle">شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية</p>
+            <div class="tax-info" id="loginHeaderTax">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027</div>
+        </div>
+        
+        <div id="loginMainForm">
+            <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل الدخول للنظام</h3>
+            <div class="form-group">
+                <label>كود المستخدم / الإيميل / رقم الهاتف / اسم المحل:</label>
+                <input type="text" id="loginCode" placeholder="أدخل الكود، الإيميل، الموبايل، أو اسم المحل...">
+            </div>
+            <div class="form-group">
+                <label>كلمة السر:</label>
+                <input type="password" id="loginPass" placeholder="أدخل كلمة السر...">
+            </div>
+            <button class="btn btn-primary" onclick="handleLogin()">دخول للنظام ➔</button>
+            <div style="display:flex; justify-content:space-between; margin-top:8px; gap:6px;">
+                <button class="btn btn-info" style="flex:1; margin-top:0; font-size:11px;" onclick="showCustomerRegisterScreen()">👤 تسجيل عميل جديد</button>
+                <button class="btn btn-warning" style="flex:1; margin-top:0; font-size:11px;" onclick="openForgotPasswordModal()">🔑 نسيت كلمة السر؟</button>
+            </div>
+        </div>
+
+        <div id="customerRegisterScreen" style="display:none;">
+            <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل حساب عميل جديد</h3>
+            <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="regClientName" placeholder="أدخل اسم المحل..."></div>
+            <div class="form-group"><label>البريد الإلكتروني:</label><input type="email" id="regClientEmail" placeholder="example@domain.com"></div>
+            <div class="form-group"><label>كلمة السر لحسابك:</label><input type="password" id="regClientPass" placeholder="أدخل كلمة السر..."></div>
+            <div class="form-group">
+                <label>رقم التليفون:</label>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" value="+20" readonly class="readonly-input" style="width: 65px; text-align: center;">
+                    <input type="text" id="regClientPhone" placeholder="1012345678" style="flex: 1;" maxlength="10">
+                </div>
+            </div>
+            <div class="form-group"><label>خط السير / الخط:</label><input type="text" id="regClientRoute" placeholder="مثال: خط سنتريس / خط أشمون..."></div>
+            <div class="form-group"><label>عنوان المحل بالتفصيل:</label><input type="text" id="regClientAddress" placeholder="المدينة، الشارع..."></div>
+            <div class="form-group"><label>القرية / المركز:</label><input type="text" id="regClientVillage" placeholder="مثال: أشمون / سنتريس..."></div>
+            
+            <button type="button" class="btn btn-info" style="margin-bottom:8px; font-size:11px;" onclick="captureCustomerGpsLocation()">📍 تحديد موقع المحل الحالي بالـ GPS</button>
+            <div id="regGpsStatus" style="font-size:10.5px; color:#0284c7; margin-bottom:8px; font-weight:bold;">لم يتم تحديد موقع GPS للمحل بعد</div>
+            
+            <div style="font-size: 11px; color: #475569; margin-bottom: 10px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                ℹ️ بعد التسجيل، يقوم المدير باعتماد وتفعيل حسابك وتحديد فئتك وتعيين الكود الثابت لمحلك.
+            </div>
+            
+            <button class="btn btn-success" onclick="registerCustomerWithEmail()">إتمام التسجيل والحفظ</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:8px;" onclick="backToLoginMain()">← رجوع لتسجيل الدخول</button>
+        </div>
+    </div>
+
+    <!-- 2. نافذة نسيت كلمة السر -->
+    <div id="forgotPassModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:16px;">🔑 استعادة كلمة السر</h3>
+            <div class="filter-box" style="margin-bottom:10px;">
+                <label style="font-size:11px; font-weight:bold;">1) إرسال رابط التعيين للبريد الإلكتروني:</label>
+                <input type="email" id="forgotEmailInput" placeholder="أدخل بريدك الإلكتروني المسجل..." style="margin-top:4px;">
+                <button class="btn btn-primary" style="padding:7px; font-size:11px;" onclick="sendEmailPasswordReset()">📧 إرسال رابط التعيين</button>
+            </div>
+            <div class="filter-box" style="background:#f0fdf4; border-color:#bbf7d0;">
+                <label style="font-size:11px; font-weight:bold; color:#166534;">2) طلب المساعدة من المدير على واتساب:</label>
+                <input type="text" id="forgotClientNameInput" placeholder="اسم المحل أو رقم تليفونك..." style="margin-top:4px;">
+                <button class="btn btn-whatsapp" style="padding:7px; font-size:11px;" onclick="requestResetFromAdminWhatsApp()">📲 مراسلة المدير على واتساب</button>
+            </div>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:8px;" onclick="closeForgotPasswordModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- 3. شاشة العمل والتنقل الرئيسية -->
+    <div id="salesView" class="card" style="display: none;">
+        <div class="delegate-info">
+            <span>👤 المستخدم: <span id="lblDelegateName" style="color: #2563eb;">--</span> (<span id="lblDelegateRoleText">مندوب</span>)</span>
+            <span style="cursor: pointer; color: #ef4444;" onclick="handleLogout()">تسجيل خروج</span>
+        </div>
+
+        <div class="barcode-status-bar">
+            <span>📟 قارئ الباركود: <b style="color:#059669;">جاهز ونشط تلقائياً (Scan & Auto-Add)</b></span>
+            <span id="barcodeLastScanned" style="font-size:10.5px; color:#1e293b;">آخر مسح: جاهز للاستقبال</span>
+        </div>
+
+        <div id="voiceNavBar" class="voice-nav-bar" style="display:none;">
+            <span>🔊 التوجيه الصوتي للسيارة: <b id="voiceNavStatus">جاهز للملاحة</b></span>
+            <span id="carSpeedometer" style="color:#fde047;">السرعة: 0 كم/س</span>
+        </div>
+
+        <div id="locationRequestRepBanner"></div>
+
+        <div id="selfAttendanceBox" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:11.5px; font-weight:bold; color:#1e293b;">
+                📌 حالتك اليوم: <span id="lblMyAttendanceStatus" style="color:#64748b;">لم تسجل</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+                <button class="btn btn-success" style="width:auto; margin:0; padding:5px 10px; font-size:11px;" onclick="recordMyAttendance('حضور')">✅ تسجيل حضور</button>
+                <button class="btn btn-danger" style="width:auto; margin:0; padding:5px 10px; font-size:11px; background:#64748b;" onclick="recordMyAttendance('انصراف')">🚪 انصراف</button>
+            </div>
+        </div>
+
+        <div id="sosButtonContainer" style="display:none; margin-bottom:12px;">
+            <button class="btn btn-sos" onclick="triggerSosAlert()">🚨 استغاثة طوارئ SOS (إرسال الموقع للمدير)</button>
+        </div>
+
+        <div class="tab-menu" id="tabMenuContainer">
+            <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
+            <div id="tabWarehouse" class="tab-btn" onclick="switchTab('warehouse')" style="background:#fef3c7; color:#92400e;">📦 المخزن وتزويد الأصناف</div>
+            <div id="tabAttendanceLog" class="tab-btn" onclick="switchTab('attendanceLog')" style="display:none; background:#ecfdf5; color:#065f46;">📋 سجل الحضور</div>
+            <div id="tabClientsManage" class="tab-btn" onclick="switchTab('clientsManage')" style="display:none; background:#ecfdf5; color:#065f46;">👥 إدارة العملاء</div>
+            <div id="tabPendingOrders" class="tab-btn" onclick="switchTab('pendingOrders')" style="display:none; background:#fef3c7; color:#92400e;">🔔 طلبات العملاء <span id="badgePendingCount" class="badge-notify" style="display:none;">0</span></div>
+            <div id="tabClientOrderOnly" class="tab-btn" onclick="switchTab('clientOrderOnly')" style="display:none; background:#e0f2fe; color:#0369a1;">📦 طلب فاتورة</div>
+            <div id="tabSavedInvoices" class="tab-btn" onclick="switchTab('saved')">📂 الفواتير</div>
+            <div id="tabDailyReport" class="tab-btn" onclick="switchTab('report')">📊 التقارير</div>
+            <div id="tabCarStock" class="tab-btn" onclick="switchTab('carStock')">🚚 السيارة والجرد</div>
+            <div id="tabTracking" class="tab-btn" onclick="switchTab('tracking')" style="display:none; background:#ecfdf5; color:#065f46;">📍 تتبع المناديب والأسطول</div>
+            <div id="tabRatios" class="tab-btn" onclick="switchTab('ratios')" style="background:#e0f2fe;">⚖️ النسب</div>
+            <div id="tabMenof" class="tab-btn" onclick="switchTab('menof')" style="display:none; background:#dbeafe;">🏭 منوف (التحميل والذمم)</div>
+            <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
+            <div id="tabLmInvoices" class="tab-btn" onclick="switchTab('lmInvoices')" style="display:none; background:#fef3c7;">🚬 فواتير LM</div>
+            <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات والتحكم</div>
+            <div id="tabCustomCode" class="tab-btn" onclick="switchTab('customCode')" style="display:none; background:#fae8ff; color:#86198f;">💻 حقن وتعديل الأكواد</div>
+        </div>
+
+        <div id="customDynamicContainer"></div>
+
+        <!-- أ) فاتورة جديدة -->
+        <div id="sectionInvoice" style="overflow: visible;">
+            <div id="delegateTodaySummary" style="background:#e0f2fe; border:1px solid #bae6fd; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; color:#0369a1;">
+                <b>📌 ملخص مبيعاتك اليوم:</b> <span id="todaySummaryText">0 فواتير | 0.00 ج.م</span>
+            </div>
+
+            <div id="vehicleMandatoryBox" style="background:#fffbeb; border:2px solid #f59e0b; padding:12px; border-radius:8px; margin-bottom:12px;">
+                <div style="font-weight:bold; color:#b45309; font-size:13px; margin-bottom:8px;">🚗 بيانات السيارة وقراءة العداد (بيان إلزامي قبل الخروج):</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="color:#78350f;">السيارة المستخدمة:</label>
+                        <select id="invoiceVehicleSelect" onchange="onVehicleSelectChange()" style="background:#fff; font-weight:bold;">
+                            <option value="">-- اختر السيارة --</option>
+                            <option value="dababa">الدبابة</option>
+                            <option value="bike1">بايك 1</option>
+                            <option value="bike2">بايك 2</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="color:#78350f;">قراءة عداد السيارة الحالية (كم):</label>
+                        <input type="number" id="invoiceOdometerInput" placeholder="أدخل قراءة العداد..." min="0" step="1" oninput="checkCurrentVehicleOilLimit()">
+                    </div>
+                </div>
+                <div id="vehicleOilStatusText" style="font-size:11px; margin-top:6px; color:#475569; font-weight:bold;"></div>
+            </div>
+
+            <input type="hidden" id="editInvoiceId" value="">
+            
+            <div class="form-group" style="background:#eff6ff; border:1px solid #bfdbfe; padding:8px 10px; border-radius:8px;">
+                <label style="color:#1e40af; font-size:12px;">🛣️ خط السير (لعرض العملاء المسجلين بالخط):</label>
+                <select id="selectRouteFilter" onchange="onRouteFilterChange()" style="font-weight:bold; font-size:12.5px; color:#1e3a8a; background:#fff;">
+                    <option value="ALL">🛣️ عرض كل الخطوط (كل العملاء)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>اسم العميل / المحل:</label>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="text" id="clientName" placeholder="اكتب اسم العميل مباشرة هنا..." oninput="onClientNameInput()" style="flex: 2; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
+                    <select id="selectExistingClient" onchange="pickExistingClient()" style="flex: 1.3; padding: 9px 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11px; background: #f8fafc; color: #334155;">
+                        <option value="">📋 عميل مسجل...</option>
+                    </select>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px;">
+                    <div style="font-size: 11px; color: #64748b;">كود العميل: <b id="lblClientCode" style="color:#2563eb;">--</b> | الخط: <b id="lblClientRoute" style="color:#16a34a;">--</b></div>
+                    <button type="button" class="btn btn-info" style="width:auto; margin:0; padding:2px 8px; font-size:10.5px;" onclick="startVoiceNavToCurrentClient()">🔊 بدء ملاحة صوتية للعميل</button>
+                </div>
+                <div id="clientMonthlyHistory" class="client-history-box"></div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+                <div class="form-group" style="flex: 1;"><label>القرية / المركز (يُضاف تلقائياً للخط):</label><input type="text" id="clientVillage" placeholder="مثال: سدود / أشمون..." oninput="onVillageInputSyncRoute()"></div>
+                <div class="form-group" style="flex: 1;"><label>رقم الفاتورة:</label><input type="text" id="invoiceNo" value="1001"></div>
+                <div class="form-group" style="flex: 1;"><label>التاريخ:</label><input type="date" id="invoiceDate" class="readonly-input"></div>
+            </div>
+
+            <div class="form-group" style="display:flex; gap:6px; margin-bottom: 8px;">
+                <input type="text" id="manualBarcodeInput" placeholder="🔍 امسح أو اكتب الباركود واضغط Enter..." style="border: 2px dashed #0284c7; background: #f0f9ff; font-weight: bold;" onkeydown="handleManualBarcodeKey(event)">
+                <button class="btn btn-primary" style="width: auto; margin-top:0; padding:0 15px;" onclick="processBarcodeString(document.getElementById('manualBarcodeInput').value)">إضافة</button>
+            </div>
+
+            <div id="productsList"></div>
+
+            <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <button class="btn btn-thermal" onclick="printDirectThermalDesktop()">🖨️ طباعة طابعة حرارية (EXE / USB)</button>
+                <button class="btn btn-bluetooth" onclick="printViaRawBT()">📱 طباعة RawBT (بلوتوث)</button>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:6px;">
+                <button class="btn" style="background:#059669; color:#fff; margin-top:0;" onclick="connectDirectBluetoothThermal()">🔍 تعرف واقتران بطابعة حرارية (Bluetooth)</button>
+                <button class="btn" style="background:#0d9488; color:#fff; margin-top:0;" onclick="printDirectBluetoothESC()">⚡ طباعة حرارية مباشرة (ESC/POS)</button>
+            </div>
+            <div id="btPrinterStatus" style="font-size:11px; text-align:center; color:#059669; font-weight:bold; margin-top:4px; display:none;"></div>
+
+            <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة مع تثبيت لوكيشن المحل</button>
+            <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
+        </div>
+
+        <!-- ب) تبويب المخزن وتزويد الأصناف -->
+        <div id="sectionWarehouse" style="display: none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="margin:0; font-size:14px; color:#1e293b;">📦 المخزن العام وإدارة البضاعة (بالكرتونة):</h4>
+                <button class="btn btn-success" style="width:auto; margin:0; padding:6px 12px; font-size:12px;" onclick="openScanNewProductModal()">📷 مسح وإضافة صنف جديد</button>
+            </div>
+            
+            <div id="warehouseAdminControls" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; padding:12px; border-radius:8px; margin-bottom:12px;">
+                <h5 style="margin:0 0 8px 0; color:#166534; font-size:13px;">➕ إضافة صنف جديد للنظام وحفظه بالباركود:</h5>
+                <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:6px; margin-bottom:6px;">
+                    <div class="form-group" style="margin-bottom:0;"><label>اسم الصنف:</label><input type="text" id="newWarehouseProdName" placeholder="اسم الصنف الجديد..."></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>كود الباركود (امسح بالماسح هنا):</label><input type="text" id="newWarehouseProdCode" placeholder="كود الصنف / الباركود..."></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+                    <div class="form-group" style="margin-bottom:0;"><label>الرصيد الافتتاحي (كرتونة):</label><input type="number" id="newWarehouseProdStock" placeholder="0" min="0" step="0.1"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>سعر الكرتونة الافتراضي (ج.م):</label><input type="number" id="newWarehouseProdPrice" value="23925"></div>
+                </div>
+                <button class="btn btn-success" onclick="addNewProductItemToWarehouse()">➕ حفظ وإضافة الصنف للمخزن والفواتير</button>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; margin-bottom:12px;">
+                <h5 style="margin:0 0 8px 0; color:#0f172a; font-size:13px;">📥 وارد بضاعة جديد للمخزن (زيادة رصيد):</h5>
+                <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:6px; margin-bottom:6px;">
+                    <select id="selectWarehouseProductIn"></select>
+                    <input type="number" id="qtyWarehouseProductIn" placeholder="عدد الكراتين..." min="0.1" step="0.1">
+                </div>
+                <button class="btn btn-primary" onclick="addStockToWarehouseDirect()">📥 إضافة الوارد وتحديث رصيد المخزن</button>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table class="report-table" style="background:#fff;">
+                    <thead>
+                        <tr>
+                            <th>الصنف</th>
+                            <th>كود الصنف / الباركود</th>
+                            <th>الرصيد المتاح (كرتونة)</th>
+                            <th>ما يعادل روابط</th>
+                            <th>سعر الكرتونة</th>
+                            <th>إجراءات وتعديل</th>
+                        </tr>
+                    </thead>
+                    <tbody id="warehouseStockTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ج) تبويب سجل الحضور والانصراف -->
+        <div id="sectionAttendanceLog" style="display: none;">
+            <div class="filter-box">
+                <h4 style="margin:0 0 8px 0; color:#065f46;">📋 سجل حضور وانصراف الموظفين والمناديب:</h4>
+                <div style="display:flex; gap:8px;">
+                    <div class="form-group" style="flex:1; margin-bottom:0;"><label>من تاريخ:</label><input type="date" id="attFilterFrom" onchange="renderAttendanceLogTable()"></div>
+                    <div class="form-group" style="flex:1; margin-bottom:0;"><label>إلى تاريخ:</label><input type="date" id="attFilterTo" onchange="renderAttendanceLogTable()"></div>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="report-table" style="background:#fff;">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>الموظف / المندوب</th>
+                            <th>الكود</th>
+                            <th>نوع التسجيل</th>
+                            <th>التوقيت</th>
+                            <th>الموقع GPS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceLogTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- د) تبويب إدارة العملاء -->
+        <div id="sectionClientsManage" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">👥 لوحة إدارة بيانات وتعديل العملاء:</h4>
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
+                <h5 style="margin:0 0 8px 0; color:#0f172a; font-size:13px;">📊 استيراد وتصدير شيت Excel:</h5>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn btn-success" style="flex:1; margin-top:0; font-size:12px;" onclick="exportClientsFast()">📥 تصدير العملاء فوراً (Excel/CSV)</button>
+                    <button class="btn btn-info" style="flex:1; margin-top:0; font-size:12px;" onclick="document.getElementById('excelFileInput').click()">📤 رفع شيت Excel (استبدال الشيت القديم)</button>
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="importClientsFromExcel(event)">
+                </div>
+            </div>
+
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:6px; margin-bottom:12px;">
+                <h5 style="margin:0 0 8px 0; color:#166534; font-size:13px;">➕ إضافة عميل جديد وتعيين كوده الثابت وخط السير:</h5>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                    <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="adminDirectName" placeholder="اسم المحل..."></div>
+                    <div class="form-group"><label>الكود الثابت:</label><input type="text" id="adminDirectCode" placeholder="مثال: C-101"></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                    <div class="form-group"><label>خط السير / الخط:</label><input type="text" id="adminDirectRoute" placeholder="مثال: خط سنتريس..."></div>
+                    <div class="form-group"><label>القرية / المركز:</label><input type="text" id="adminDirectVillage" placeholder="أشمون / سنتريس..."></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                    <div class="form-group"><label>رقم التليفون:</label><input type="text" id="adminDirectPhone" placeholder="1012345678"></div>
+                    <div class="form-group"><label>كلمة السر:</label><input type="text" id="adminDirectPass" placeholder="كلمة السر..."></div>
+                    <div class="form-group"><label>الفئة:</label><select id="adminDirectType"><option value="retail">قطاعي</option><option value="wholesale">جملة</option></select></div>
+                </div>
+                <button class="btn btn-success" onclick="adminDirectAddCustomer()">✅ حفظ وتفعيل حساب العميل فوراً</button>
+            </div>
+
+            <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:10px; border-radius:6px; margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <h5 style="margin:0; color:#1e40af; font-size:13px;">👑 قائمة العملاء المسجلين (قابلة للتعديل الشامل):</h5>
+                    <button class="btn btn-danger" style="width:auto; margin:0; padding:5px 10px; font-size:11px;" onclick="deleteSelectedClients()">🗑️ مسح العملاء المحددين</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr>
+                                <th style="width: 25px;"><input type="checkbox" id="selectAllClientsCheckbox" onchange="toggleSelectAllClients(this)"></th>
+                                <th>اسم العميل</th>
+                                <th>الكود الثابت</th>
+                                <th>الخط / السير</th>
+                                <th>بيانات الاتصال والقرية</th>
+                                <th>الفئة</th>
+                                <th>كلمة السر</th>
+                                <th>إجراءات وتعديل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminPortalCustomersBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- هـ) تتبع المناديب والسيارات والمحلات -->
+        <div id="sectionTracking" style="display: none;">
+            <div class="filter-box" style="background:#ecfdf5; border-color:#a7f3d0; margin-bottom:12px;">
+                <h4 style="margin:0 0 6px 0; color:#065f46;">📍 تتبع المناديب والسيارات لحظياً (Live Fleet Tracking & Dashcam):</h4>
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr>
+                                <th>المندوب والسيارة</th>
+                                <th>قراءة العداد والسرعة</th>
+                                <th>آخر اتصال</th>
+                                <th>حالة الاتصال</th>
+                                <th style="min-width:110px;">طلب الموقع</th>
+                                <th style="min-width:120px;">الخريطة الحية</th>
+                                <th style="min-width:110px;">كاميرا السيارة</th>
+                                <th style="min-width:110px;">🎙️ المايك اللحظي</th>
+                                <th style="min-width:110px;">دعم شاشة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="delegatesTrackingTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="filter-box" style="background:#eff6ff; border-color:#bfdbfe;">
+                <h4 style="margin:0 0 6px 0; color:#1e40af;">🏪 مواقع محلات العملاء المسجلة على الخريطة:</h4>
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr>
+                                <th>اسم المحل</th>
+                                <th>الكود</th>
+                                <th>الخط</th>
+                                <th>القرية / العنوان</th>
+                                <th>موقع المحل على الخريطة</th>
+                                <th>تحديث الموقع</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsMapTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- و) مراجعة واعتماد طلبات العملاء -->
+        <div id="sectionPendingOrders" style="display: none;">
+            <div class="filter-box" style="background:#fffbeb; border:1px solid #fde68a;">
+                <h4 style="margin:0 0 6px 0; color:#92400e;">🔔 طلبات العملاء الجديدة بانتظار الموافقة:</h4>
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr><th>التاريخ</th><th>اسم العميل</th><th>النوع</th><th>الأصناف المطلوبة</th><th>الإجمالي</th><th>المديونية</th><th>الإجراءات</th></tr>
+                        </thead>
+                        <tbody id="adminPendingOrdersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ز) واجهة العميل المسجل -->
+        <div id="sectionClientOrderOnly" style="display: none;">
+            <div class="filter-box" style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                <h4 style="margin-top:0; color:#166534;" id="portalClientHeaderTitle">🏪 لوحة طلبات العميل</h4>
+                <div id="clientApprovalBanner" style="display:none; padding:8px; border-radius:6px; margin-bottom:10px; font-weight:bold; font-size:12px;"></div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+                    <div><label style="font-size:11px; font-weight:bold;">اسم المحل:</label><input type="text" id="viewClientName" class="readonly-input" readonly></div>
+                    <div><label style="font-size:11px; font-weight:bold;">كود المحل الثابت:</label><input type="text" id="viewClientCode" class="readonly-input" readonly style="color:#2563eb; font-weight:bold;"></div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+                    <div><label style="font-size:11px; font-weight:bold;">القرية / المركز:</label><input type="text" id="viewClientVillage" class="readonly-input" readonly></div>
+                    <div><label style="font-size:11px; font-weight:bold;">نوع الحساب المعتمد:</label><input type="text" id="viewClientType" class="readonly-input" readonly style="color:#16a34a; font-weight:bold;"></div>
+                </div>
+
+                <div id="portalProductsContainer" style="margin-top:10px;"></div>
+                <div id="portalTotalsContainer" style="margin-top:10px;"></div>
+                <button id="btnSubmitPortalOrder" class="btn btn-whatsapp" onclick="submitPortalClientOrder()" style="margin-top:10px;">⚡ إرسال طلب الفاتورة للمدير للموافقة عليها</button>
+            </div>
+
+            <div class="filter-box" style="background:#fff; border:1px solid #cbd5e1; margin-top:10px;">
+                <h4 style="margin-top:0; color:#1e293b; font-size:13px;">📋 سجل طلباتك المرسلة وحالتها:</h4>
+                <div style="overflow-x:auto;">
+                    <table class="report-table">
+                        <thead><tr><th>التاريخ</th><th>النوع</th><th>الأصناف المطلوبة</th><th>الإجمالي</th><th>حالة موافقة المدير</th></tr></thead>
+                        <tbody id="clientOrdersStatusTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ح) الفواتير المحفوظة وتعديلها -->
+        <div id="sectionSaved" style="display: none;">
+            <div class="filter-box">
+                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:</h4>
+                <div id="adminDelegateFilterBox" style="display:none; margin-bottom:8px;">
+                    <label style="font-size:11px;">المندوب:</label>
+                    <select id="filterDelegateSelect" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
+                        <option value="ALL">📋 عرض كل المناديب</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <div class="form-group" style="flex:1; margin-bottom:0;"><label style="font-size:10px;">من تاريخ:</label><input type="date" id="savedFilterFrom" style="padding:6px; font-size:11px;" onchange="renderSavedInvoices()"></div>
+                    <div class="form-group" style="flex:1; margin-bottom:0;"><label style="font-size:10px;">إلى تاريخ:</label><input type="date" id="savedFilterTo" style="padding:6px; font-size:11px;" onchange="renderSavedInvoices()"></div>
+                </div>
+            </div>
+
+            <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير (قابل لتعديل المدير الشامل):</h4>
+            <div style="overflow-x: auto;">
+                <table class="report-table">
+                    <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>السيارة</th><th>العداد</th><th>المندوب</th><th>الإجمالي</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+                    <tbody id="savedInvoicesBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ط) التقارير الشاملة -->
+        <div id="sectionReport" style="display: none;">
+            <div id="adminReportManagerBox" style="display:none; background:#fdf4ff; border:1.5px solid #f0abfc; padding:12px; border-radius:8px; margin-bottom:14px;">
+                <h5 style="margin:0 0 8px 0; color:#86198f; font-size:13px;">👑 لوحة المدير الخاصة بالتقارير:</h5>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <input type="text" id="adminReportSearchInput" placeholder="🔍 بحث المدير السريع (اسم العميل، رقم الفاتورة، المندوب)..." oninput="renderDailyReport()" style="flex:2; padding:8px; border:2px solid #d946ef; border-radius:6px; font-size:12px; background:#fff;">
+                    <button class="btn btn-success" style="flex:1; margin-top:0; padding:8px; font-size:12px;" onclick="exportClientWithdrawalsExcel()">📥 تصدير كافة المسحوبات (Excel)</button>
+                </div>
+            </div>
+
+            <div class="filter-box" id="reportFilterBoxContainer">
+                <h4 style="margin-top:0;">📊 تقارير المبيعات من تاريخ إلى تاريخ:</h4>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;" id="adminReportSelectWrapper">
+                    <div class="form-group" style="flex:1;">
+                        <label>اختر المندوب (للمدير فقط):</label>
+                        <select id="reportDelegateSelect" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
+                            <option value="ALL">📋 كل المناديب</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>اختر العميل:</label>
+                        <select id="reportClientSelect" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
+                            <option value="ALL">🏪 كل العملاء</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <div class="form-group" style="flex:1;"><label>من تاريخ:</label><input type="date" id="filterFromDate" onchange="renderDailyReport()"></div>
+                    <div class="form-group" style="flex:1;"><label>إلى تاريخ:</label><input type="date" id="filterToDate" onchange="renderDailyReport()"></div>
+                </div>
+            </div>
+            
+            <div class="stat-grid" style="margin-bottom:12px;">
+                <div class="stat-card" style="background:#f0fdf4; border-color:#bbf7d0;">
+                    <div class="title" style="color:#166534;">💰 إجمالي مبيعات الفترة:</div>
+                    <div class="val" style="color:#15803d; font-size:16px;"><span id="repTotalAmount">0.00</span> ج.م</div>
+                    <div style="font-size:10px; color:#475569; margin-top:2px;">عدد الفواتير: <b id="repInvoiceCount">0</b></div>
+                </div>
+                <div class="stat-card" style="background:#eff6ff; border-color:#bfdbfe;">
+                    <div class="title" style="color:#1e40af;">📦 إجمالي الكميات المباعة:</div>
+                    <div class="val" style="color:#2563eb; font-size:14px;"><span id="repTotalCartonsSum">0 كرتونة و 0 رابطة</span></div>
+                </div>
+            </div>
+
+            <h4 style="font-size: 12px; color: #1e293b; margin: 12px 0 4px 0;">📦 تفصيل الأصناف المباعة:</h4>
+            <div style="overflow-x:auto;">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>الصنف</th>
+                            <th>كود الباركود</th>
+                            <th>المباع بالكرتونة والرابطة</th>
+                            <th>إجمالي الروابط</th>
+                            <th>ما يعادل كراتين</th>
+                        </tr>
+                    </thead>
+                    <tbody id="repProductsBody"></tbody>
+                </table>
+            </div>
+
+            <h4 style="font-size: 14px; color: #1e293b; margin-top: 17px; margin-bottom: 4px;">📋 تفاصيل الفواتير:</h4>
+            <div style="overflow-x:auto;">
+                <table class="report-table">
+                    <thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>القرية/المركز</th><th>المندوب</th><th>الإجمالي</th></tr></thead>
+                    <tbody id="repInvoicesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ي) رصيد السيارة وجرد كل مندوب -->
+        <div id="sectionCarStock" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚚 رصيد سيارة المندوب الحالي:</h4>
+            
+            <div id="adminCarSetupBox" style="display:none; background:#eff6ff; padding:10px; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:10px;">
+                <h5 style="margin:0 0 6px 0; color:#1e40af;">⚙️ تحويل بضاعة لسيارة مندوب (يخصم من المخزن) / رد بضاعة:</h5>
+                <label style="font-size:11px; font-weight:bold;">اختر المندوب:</label>
+                <select id="selectDelegateForStock" style="margin-bottom:8px; font-size:12px;" onchange="renderCarStockTable()"></select>
+                
+                <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:6px; margin-bottom:8px;">
+                    <div><label style="font-size:10px;">الصنف:</label><select id="selectTransferProductCar"></select></div>
+                    <div><label style="font-size:10px;">عدد الكراتين:</label><input type="number" id="qtyTransferProductCar" placeholder="0" min="0.1" step="0.1"></div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn btn-primary" style="flex:1;" onclick="addStockToCarFromWarehouse()">🚚 إضافة للسيارة (خصم من المخزن)</button>
+                    <button class="btn btn-warning" style="flex:1;" onclick="returnStockFromCarToWarehouse()">🔄 رد البضاعة إلى المخزن</button>
+                </div>
+            </div>
+
+            <table class="report-table">
+                <thead><tr><th>الصنف</th><th>الرصيد المتبقي بالسيارة</th></tr></thead>
+                <tbody id="carStockTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- ك) حساب النسب -->
+        <div id="sectionRatios" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">⚖️ حاسبة النسب للتحميل:</h4>
+            <div class="filter-box">
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label style="color:#0f172a; font-weight:bold;">إجمالي الكرتونات المراد تحميلها:</label>
+                    <input type="number" id="totalCartonsTarget" placeholder="مثال: 30" oninput="calcRatioLoading()" style="font-size:14px; font-weight:bold; border:2px solid #2563eb;">
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
+                    <span style="font-size:12px; font-weight:bold;">كليوباترا عادية:</span>
+                    <input type="number" id="ratioCleopatraVal" value="2" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
+                    <select id="ratioCleopatraType" onchange="calcRatioLoading()" style="font-size:11px; padding:7px;">
+                        <option value="ratio">نسبة صنف لصنف</option>
+                        <option value="percent">نسبة مئوية (%)</option>
+                    </select>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
+                    <span style="font-size:12px; font-weight:bold;">كيلوبترا بوكس:</span>
+                    <input type="number" id="ratioBoxVal" value="1" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
+                    <select id="ratioBoxType" onchange="calcRatioLoading()" style="font-size:11px; padding:7px;">
+                        <option value="ratio">نسبة صنف لصنف</option>
+                        <option value="percent">نسبة مئوية (%)</option>
+                    </select>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
+                    <span style="font-size:12px; font-weight:bold;">كليوباترا براون:</span>
+                    <input type="number" id="ratioBrownVal" value="0" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
+                    <select id="ratioBrownType" onchange="calcRatioLoading()" style="font-size:11px; padding:7px;">
+                        <option value="ratio">نسبة صنف لصنف</option>
+                        <option value="percent">نسبة مئوية (%)</option>
+                    </select>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
+                    <span style="font-size:12px; font-weight:bold;">سوبر 94:</span>
+                    <input type="number" id="ratioSuperVal" value="0" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
+                    <select id="ratioSuperType" onchange="calcRatioLoading()" style="font-size:11px; padding:7px;">
+                        <option value="percent">نسبة مئوية (%)</option>
+                        <option value="ratio">نسبة صنف لصنف</option>
+                    </select>
+                </div>
+
+                <div id="ratioResultBox" style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-top:10px; font-size:13px; color:#166534; line-height:1.7;">
+                    أدخل إجمالي الكرتونات وحدد نوع وقيمة النسبة لكل صنف.
+                </div>
+            </div>
+        </div>
+
+        <!-- ل) تبويب منوف (التحميل + الذمامات الشهرية التراكمية) -->
+        <div id="sectionMenof" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏭 شحنات وتفريغ منوف وكشف الذمامات الشهرية:</h4>
+            
+            <div class="filter-box">
+                <h5 style="margin:0 0 8px 0; color:#0f172a;">📥 تسجيل شحنة منوف جديدة / إيداع:</h5>
+                <input type="hidden" id="editMenofId" value="">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
+                    <div><label>تاريخ الشحنة:</label><input type="date" id="menofDate"></div>
+                    <div><label>عدد الكراتين:</label><input type="number" id="menofCartons" placeholder="0" min="0" oninput="calcMenofTotal()"></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
+                    <div><label>المبلغ المودع (ج.م):</label><input type="number" id="menofDeposit" placeholder="0" min="0" oninput="calcMenofTotal()"></div>
+                    <div><label>سعر البضاعة الإجمالي:</label><span id="menofTotalPrice" style="display:block; padding:9px; font-weight:bold; color:#2563eb;">0 ج.م</span></div>
+                </div>
+                <div style="font-weight:bold; margin-bottom:8px;">صافي الذمة: <span id="menofZimam" style="color:#dc2626;">0 ج.م</span></div>
+                <button class="btn btn-success" onclick="saveMenofLoad()">💾 حفظ شحنة منوف</button>
+            </div>
+
+            <div class="stat-grid" style="margin-bottom:10px;">
+                <div class="stat-card"><div class="title">إجمالي الكراتين</div><div class="val" id="menofTotalCartonsCount">0</div></div>
+                <div class="stat-card"><div class="title">إجمالي البضاعة</div><div class="val" id="menofTotalGoodsSum">0</div></div>
+                <div class="stat-card"><div class="title">إجمالي الإيداعات</div><div class="val" id="menofTotalDepositsSum">0</div></div>
+                <div class="stat-card"><div class="title">صافي ذمة منوف</div><div class="val" id="menofNetZimamTotal">0</div></div>
+            </div>
+
+            <div style="overflow-x:auto; margin-bottom:20px;">
+                <h5 style="margin:0 0 6px 0;">📋 سجل شحنات وإيداعات منوف:</h5>
+                <table class="report-table">
+                    <thead><tr><th>التاريخ</th><th>الكراتين</th><th>البضاعة</th><th>الإيداع</th><th>الذمة</th><th>إجراءات</th></tr></thead>
+                    <tbody id="menofTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- الفلترة الشهرية ودفتر الأستاذ للذمامات -->
+            <div class="filter-box" style="background:#f8fafc; border:2px solid #0284c7; margin-top:15px;">
+                <h4 style="margin:0 0 10px 0; color:#0369a1;">🗓️ كشف وتصفية الذمامات الشهرية (ترحيل وتجميع تلقائي):</h4>
+                <div style="display:grid; grid-template-columns: 1.2fr 1fr auto; gap:6px; align-items:flex-end;">
+                    <div>
+                        <label style="font-size:11px; font-weight:bold;">اختر الشهر:</label>
+                        <input type="month" id="selectedMonth" onchange="loadMonthlyDebts()" style="font-weight:bold;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:bold;">المخزن / الفرع:</label>
+                        <select id="branchFilter" onchange="loadMonthlyDebts()">
+                            <option value="منوف" selected>منوف</option>
+                            <option value="الكل">كل المحافظة والفروع</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" style="margin:0; padding:9px 15px;" onclick="loadMonthlyDebts()">🔄 تحديث</button>
+                    </div>
+                </div>
+
+                <div class="stat-grid" style="margin-top:12px;">
+                    <div class="stat-card" style="background:#f1f5f9;">
+                        <div class="title">إجمالي الرصيد السابق المرحل:</div>
+                        <div class="val" id="totalPreviousBalance" style="color:#475569;">0.00 ج.م</div>
+                    </div>
+                    <div class="stat-card" style="background:#eff6ff;">
+                        <div class="title">إجمالي مسحوبات هذا الشهر:</div>
+                        <div class="val" id="totalMonthSales" style="color:#2563eb;">0.00 ج.م</div>
+                    </div>
+                    <div class="stat-card" style="background:#f0fdf4;">
+                        <div class="title">إجمالي تحصيلات هذا الشهر:</div>
+                        <div class="val" id="totalMonthPaid" style="color:#16a34a;">0.00 ج.م</div>
+                    </div>
+                    <div class="stat-card" style="background:#fef2f2; border-color:#fca5a5;">
+                        <div class="title" style="color:#991b1b;">صافي الذمم المرحل للشهر القادم:</div>
+                        <div class="val" id="totalClosingBalance" style="color:#dc2626; font-size:15px;">0.00 ج.م</div>
+                    </div>
+                </div>
+
+                <div style="overflow-x:auto; margin-top:10px;">
+                    <table class="report-table" style="background:#fff;" id="debtsTable">
+                        <thead style="background:#0f172a; color:#fff;">
+                            <tr>
+                                <th>اسم العميل / المحل</th>
+                                <th>رصيد سابق مرحل</th>
+                                <th>مسحوبات الشهر</th>
+                                <th>مسدد الشهر</th>
+                                <th>الرصيد النهائي المرحّل</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="debtsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- م) تبويب حسابات المحلات -->
+        <div id="sectionShops" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🏪 حسابات المحلات (الجملة والذمم):</h4>
+            <div class="filter-box">
+                <input type="hidden" id="editShopId" value="">
+                <div class="form-group"><label>اسم المحل:</label><input type="text" id="shopNameInput" placeholder="اسم المحل..."></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
+                    <div class="form-group" style="margin-bottom:0;"><label>عدد الكراتين:</label><input type="number" id="shopCartons" placeholder="0" min="0" oninput="calcShopTotal()"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>المبلغ المدفوع (ج.م):</label><input type="number" id="shopPaidVal" placeholder="0" min="0" oninput="calcShopTotal()"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:bold; font-size:12px;">
+                    <span>إجمالي البضاعة: <b id="shopTotalPrice" style="color:#2563eb;">0 ج.م</b></span>
+                    <span>المديونية (الذمة): <b id="shopZimamVal" style="color:#dc2626;">0 ج.م</b></span>
+                </div>
+                <button class="btn btn-success" onclick="saveShopRecord()">💾 حفظ معاملة المحل</button>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table class="report-table">
+                    <thead><tr><th>المحل</th><th>الكراتين</th><th>الإجمالي</th><th>المدفوع</th><th>الذمة</th><th>إجراءات</th></tr></thead>
+                    <tbody id="shopsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ن) فواتير LM -->
+        <div id="sectionLmInvoices" style="display: none;">
+            <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🚬 فواتير LM:</h4>
+            <div class="filter-box">
+                <input type="hidden" id="editLmId" value="">
+                <div class="form-group">
+                    <label>اختر الفاتورة:</label>
+                    <select id="lmInvoiceType"><option value="mohamed">فاتورة محمد</option><option value="hossam">فاتورة حسام</option></select>
+                </div>
+                <div class="form-group"><label>قيمة الإيداع المالي:</label><input type="number" id="lmDeposit" placeholder="0"></div>
+                <div id="lmItemsContainer"></div>
+                <button class="btn btn-success" style="margin-top:10px;" onclick="saveLmInvoice()">حفظ / تحديث فاتورة LM</button>
+            </div>
+            <table class="report-table">
+                <thead><tr><th>النوع</th><th>الإيداع</th><th>التكلفة</th><th>البيع</th><th>المكسب / الخسارة</th><th>الإجراءات والتعديل</th></tr></thead>
+                <tbody id="lmInvoicesTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- س) الإعدادات والتحكم -->
+        <div id="sectionSettings" style="display: none;">
+            <div id="adminVehiclesOilControlBox" style="display:none; background:#fffbeb; border:1.5px solid #f59e0b; padding:14px; border-radius:10px; margin-bottom:14px;">
+                <h4 style="margin-top:0; font-size:14px; color:#b45309;">🚗 متابعة أسطول السيارات وقراءات العداد وغيار الزيت (1500 كم):</h4>
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr>
+                                <th>السيارة</th>
+                                <th>قراءة العداد الحالية</th>
+                                <th>عداد آخر غيار زيت</th>
+                                <th>المسافة المقطوعة</th>
+                                <th>حالة الزيت</th>
+                                <th>تسجيل غيار زيت جديد (تصفير الـ 1500)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vehiclesOilTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="adminSystemControlBox" style="display:none; background:#f8fafc; border:1.5px solid #0284c7; padding:14px; border-radius:10px; margin-bottom:14px;">
+                <h4 style="margin-top:0; font-size:14px; color:#0369a1;">⚙️ الإعدادات العامة للنظام ورقم الواتساب (للمدير فقط):</h4>
+                <div class="form-group"><label>اسم الشركة / النشاط الرئيسي:</label><input type="text" id="sysInputName" placeholder="BLACK HORSE"></div>
+                <div class="form-group"><label>الشعار / الوصف الفرعي:</label><input type="text" id="sysInputSubtitle" placeholder="شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية"></div>
+                <div class="form-group"><label>بيانات السجل والضرائب والنشاط:</label><input type="text" id="sysInputTax" placeholder="كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027"></div>
+                <div class="form-group"><label>رقم الواتساب الرسمي (بدون مسافات مثل: 201011112764):</label><input type="text" id="sysInputWa" placeholder="201011112764"></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                    <div class="form-group"><label>سعر كرتونة الجملة الافتراضي (ج.م):</label><input type="number" id="sysInputCartonPrice" value="23925"></div>
+                    <div class="form-group"><label>سعر رابطة القطاعي الافتراضي (ج.م):</label><input type="number" id="sysInputRibbonPrice" value="480"></div>
+                </div>
+                <button class="btn btn-primary" onclick="saveSystemSettingsDirect()">💾 حفظ وتحديث إعدادات النظام بالكامل</button>
+            </div>
+
+            <div id="adminRepRoutesControlBox" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; padding:12px; border-radius:8px; margin-bottom:12px;">
+                <h4 style="margin-top:0; font-size:13px; color:#1e40af;">🛣️ تعيين وتحديد خطوط السير للمناديب:</h4>
+                <div id="repRoutesInputsList"></div>
+                <button class="btn btn-primary" style="margin-top:6px;" onclick="saveAllRepRoutesDirect()">💾 حفظ وتحديث خطوط المناديب</button>
+            </div>
+
+            <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px; margin-bottom:10px;">
+                    <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف جديد:</h5>
+                    <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: fleet1 أو hr1 أو store1 أو 103"></div>
+                    <div class="form-group"><label>اسم الموظف:</label><input type="text" id="newAccName" placeholder="اسم الموظف..."></div>
+                    <div class="form-group"><label>كلمة السر:</label><input type="password" id="newAccPass"></div>
+                    <div class="form-group">
+                        <label>نوع الحساب والصلاحية:</label>
+                        <select id="newAccRole">
+                            <option value="delegate">مندوب مبيعات</option>
+                            <option value="fleet">مدير الحركة والأسطول</option>
+                            <option value="store">مسؤول المخزن</option>
+                            <option value="hr">مسؤول الموارد البشرية (HR)</option>
+                            <option value="accounting">الحسابات</option>
+                            <option value="viewer">مشاهد فقط</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="createNewUserAccount()">إنشاء حساب الموظف</button>
+                </div>
+
+                <h5 style="margin:0 0 6px 0; color:#1e293b;">👥 قائمة الموظفين المسجلين (تعديل، تغيير باسورد، قفل):</h5>
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff;">
+                        <thead>
+                            <tr><th>الكود</th><th>الاسم</th><th>الصلاحية</th><th>كلمة السر</th><th>الحالة</th><th>إجراءات وتعديل</th></tr>
+                        </thead>
+                        <tbody id="adminUsersListTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" style="box-shadow:none; border:1px solid #cbd5e1; padding:12px;">
+                <h4 style="margin-top:0; font-size:14px; color:#1e293b;">🔑 تغيير كلمة السر لحسابك:</h4>
+                <div class="form-group"><label>كلمة السر الحالية:</label><input type="password" id="currentPassInput"></div>
+                <div class="form-group"><label>كلمة السر الجديدة:</label><input type="password" id="newPassInput"></div>
+                <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر</button>
+            </div>
+        </div>
+
+        <!-- ع) تبويب حقن وتعديل الأكواد المباشرة (للمدير فقط) -->
+        <div id="sectionCustomCode" style="display: none;">
+            <div class="filter-box" style="background:#fdf4ff; border-color:#f0abfc;">
+                <h4 style="margin-top:0; color:#86198f; font-size:14px;">⚡ لوحة إضافة وحقن الأكواد وتعديل النظام (للمدير فقط):</h4>
+                
+                <div class="form-group">
+                    <label style="color:#701a75;">1) كود HTML المخصص (تبويبات، أزرار، عناصر إضافية):</label>
+                    <textarea id="customHtmlInput" rows="5" placeholder="اكتب أو الصق كود الـ HTML هنا..." style="font-family:monospace; font-size:12px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label style="color:#701a75;">2) كود JavaScript المخصص (وظائف، دوال، عمليات ربط):</label>
+                    <textarea id="customJsInput" rows="6" placeholder="اكتب كود الـ JavaScript هنا..." style="font-family:monospace; font-size:12px; direction:ltr; text-align:left;"></textarea>
+                </div>
+
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" style="flex:1; background:#9333ea;" onclick="saveAndApplyCustomCode()">💾 حفظ في السحابة وتطبيق دائم فوراً</button>
+                    <button class="btn btn-warning" style="flex:1;" onclick="executeCustomCodeLiveOnly()">⚡ تجربة الكود مؤقتاً</button>
+                    <button class="btn btn-danger" style="width:auto; margin-top:6px; background:#dc2626;" onclick="clearCustomCode()">🗑️ مسح الكود</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="remoteSupportModal" class="modal-bg" style="z-index: 2000;">
+        <div class="modal-content" style="max-width: 95%; width: 750px; height: 85vh; display: flex; flex-direction: column; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h4 style="margin: 0; color: #1e293b; font-size: 14px;">💻 جلسة الاتصال اللاسلكي والدعم المباشر</h4>
+                <button class="btn btn-danger" style="width: auto; margin: 0; padding: 4px 10px; font-size: 11px;" onclick="closeRemoteSupportModal()">❌ إنهاء المكالمة</button>
+            </div>
+            <div id="jitsiMeetContainer" style="flex: 1; width: 100%; border-radius: 8px; overflow: hidden; background: #0f172a;"></div>
+        </div>
+    </div>
+
+    <div id="dashcamModal" class="modal-bg" style="z-index: 2000;">
+        <div class="modal-content" style="max-width: 95%; width: 680px; padding: 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 id="dashcamModalTitle" style="margin:0; color:#0f172a; font-size:14px;">📷 كاميرا السيارة والبث المباشر</h4>
+                <button class="btn btn-danger" style="width:auto; margin:0; padding:4px 8px; font-size:11px;" onclick="closeDashcamModal()">إغلاق</button>
+            </div>
+            <div id="dashcamVideoWrapper" style="width:100%; height:320px; background:#000; border-radius:8px; overflow:hidden; position:relative; display:flex; justify-content:center; align-items:center;">
+                <video id="dashcamVideoElem" autoplay playsinline controls style="width:100%; height:100%; object-fit:contain;"></video>
+                <div id="dashcamStatusOverlay" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:#fff; padding:3px 8px; border-radius:4px; font-size:11px;">جاري تشغيل الكاميرا...</div>
+            </div>
+            <div style="margin-top:10px;">
+                <label style="font-size:11px; font-weight:bold;">رابط بث كاميرا السيارة الخارجية (IP / RTSP / Stream URL):</label>
+                <div style="display:flex; gap:6px; margin-top:4px;">
+                    <input type="text" id="dashcamExternalUrlInput" placeholder="http://192.168.1.100:8080/video أو رابط البث...">
+                    <button class="btn btn-primary" style="width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="saveAndPlayCustomDashcamStream()">تشغيل وحفظ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="quickAddBarcodeModal" class="modal-bg">
+        <div class="modal-content" style="border: 2px solid #10b981;">
+            <h3 style="margin-top:0; color:#166534; font-size:16px;">📷 تسجيل وحفظ صنف جديد بالباركود</h3>
+            <div style="font-size:11.5px; color:#475569; margin-bottom:10px;">تم قراءة كود الباركود بنجاح. أدخل اسم الصنف وبياناته للحفظ فوراً بالنظام:</div>
+            
+            <div class="form-group">
+                <label>كود الباركود المقروء:</label>
+                <input type="text" id="modalScanBarcodeCode" style="font-weight:bold; color:#0284c7; background:#f1f5f9;">
+            </div>
+            <div class="form-group">
+                <label>اسم الصنف:</label>
+                <input type="text" id="modalScanBarcodeName" placeholder="مثال: مالبورو أحمر / وينستون أزرق...">
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <div class="form-group">
+                    <label>الرصيد الافتتاحي (كرتونة):</label>
+                    <input type="number" id="modalScanBarcodeStock" value="10" min="0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>سعر الكرتونة الافتراضي:</label>
+                    <input type="number" id="modalScanBarcodePrice" value="23925">
+                </div>
+            </div>
+
+            <button class="btn btn-success" onclick="saveQuickScannedProduct()">💾 حفظ الصنف وإدراجه فوراً</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeQuickAddBarcodeModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="editInvoiceModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات الفاتورة (للمدير)</h3>
+            <input type="hidden" id="modalEditInvId">
+            <div class="form-group"><label>رقم الفاتورة:</label><input type="text" id="modalEditInvNo"></div>
+            <div class="form-group"><label>تاريخ الفاتورة:</label><input type="date" id="modalEditInvDate"></div>
+            <div class="form-group"><label>اسم العميل:</label><input type="text" id="modalEditInvClient"></div>
+            <div class="form-group"><label>السيارة:</label><input type="text" id="modalEditInvVehicle"></div>
+            <div class="form-group"><label>قراءة العداد (كم):</label><input type="number" id="modalEditInvOdometer"></div>
+            <div class="form-group"><label>القرية / المركز:</label><input type="text" id="modalEditInvVillage"></div>
+            <div class="form-group"><label>خط السير:</label><input type="text" id="modalEditInvRoute"></div>
+            <div class="form-group"><label>المندوب المسجل:</label><input type="text" id="modalEditInvDelegate" class="readonly-input" readonly></div>
+            <div class="form-group"><label>إجمالي الفاتورة (ج.م):</label><input type="number" id="modalEditInvTotal" step="0.01"></div>
+            <div class="form-group">
+                <label>حالة الفاتورة:</label>
+                <select id="modalEditInvStatus">
+                    <option value="active">نشطة (مفعلة)</option>
+                    <option value="cancelled">ملغاة</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="saveEditedInvoice()">💾 حفظ وتحديث الفاتورة</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditInvoiceModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="oilChangeModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#b45309; font-size:15px;">🛢️ تسجيل غيار زيت جديد</h3>
+            <input type="hidden" id="modalOilVehicleKey">
+            <div class="form-group"><label>اسم السيارة:</label><input type="text" id="modalOilVehicleName" class="readonly-input" readonly></div>
+            <div class="form-group"><label>قراءة العداد الحالية عند غيار الزيت (كم):</label><input type="number" id="modalOilNewKm" placeholder="أدخل قراءة العداد الحالية..."></div>
+            <button class="btn btn-success" onclick="confirmOilChangeReset()">✅ تأكيد غيار الزيت واحتساب 1500 كم جديدة</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeOilChangeModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="editCustomerModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات العميل</h3>
+            <input type="hidden" id="modalEditCustUid">
+            <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="modalEditCustName"></div>
+            <div class="form-group"><label>الكود الثابت:</label><input type="text" id="modalEditCustCode"></div>
+            <div class="form-group"><label>خط السير:</label><input type="text" id="modalEditCustRoute"></div>
+            <div class="form-group"><label>القرية / العنوان:</label><input type="text" id="modalEditCustVillage"></div>
+            <div class="form-group"><label>رقم التليفون:</label><input type="text" id="modalEditCustPhone"></div>
+            <div class="form-group"><label>كلمة السر:</label><input type="text" id="modalEditCustPass"></div>
+            <div class="form-group">
+                <label>فئة الحساب:</label>
+                <select id="modalEditCustType">
+                    <option value="retail">قطاعي (بالرابطة)</option>
+                    <option value="wholesale">جملة (بالكرتونة)</option>
+                    <option value="pending">قيد الانتظار</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="saveEditedCustomer()">💾 حفظ وتحديث بيانات العميل</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditCustomerModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="editProductModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات الصنف في المخزن</h3>
+            <input type="hidden" id="modalEditProdOrigCode">
+            <div class="form-group"><label>اسم الصنف:</label><input type="text" id="modalEditProdName"></div>
+            <div class="form-group"><label>كود الصنف / الباركود:</label><input type="text" id="modalEditProdCode"></div>
+            <div class="form-group"><label>رصيد المخزن المتاح (كرتونة):</label><input type="number" id="modalEditProdStock" step="0.1"></div>
+            <div class="form-group"><label>سعر الكرتونة الافتراضي (ج.م):</label><input type="number" id="modalEditProdPrice"></div>
+            <button class="btn btn-success" onclick="saveEditedProduct()">💾 حفظ وتحديث الصنف</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditProductModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="editUserModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات الموظف / المندوب</h3>
+            <input type="hidden" id="modalEditUserOrigCode">
+            <div class="form-group"><label>كود المستخدم:</label><input type="text" id="modalEditUserCode" class="readonly-input" readonly></div>
+            <div class="form-group"><label>اسم الموظف:</label><input type="text" id="modalEditUserName"></div>
+            <div class="form-group"><label>كلمة السر:</label><input type="password" id="modalEditUserPass"></div>
+            <div class="form-group">
+                <label>نوع الحساب والصلاحية:</label>
+                <select id="modalEditUserRole">
+                    <option value="delegate">مندوب مبيعات</option>
+                    <option value="fleet">مدير الحركة والأسطول</option>
+                    <option value="store">مسؤول المخزن</option>
+                    <option value="hr">مسؤول الموارد البشرية (HR)</option>
+                    <option value="accounting">الحسابات</option>
+                    <option value="viewer">مشاهد فقط</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>حالة الحساب:</label>
+                <select id="modalEditUserLocked">
+                    <option value="false">مفعل ونشط</option>
+                    <option value="true">مقفل ومحظور</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="saveEditedUser()">💾 حفظ وتحديث بيانات الموظف</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditUserModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="invoiceModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b;">📄 محتوى الفاتورة</h3>
+            <div id="modalInvoiceContent" style="font-size:13px; line-height:1.6; margin-bottom:15px;"></div>
+            <button class="btn btn-primary" onclick="closeInvoiceModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <div id="shopPayModal" class="modal-bg">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1e293b; font-size:16px;">💳 سداد مديونية المحل</h3>
+            <input type="hidden" id="payShopId">
+            <div class="form-group"><label>اسم المحل:</label><input type="text" id="payShopName" class="readonly-input" readonly></div>
+            <div class="form-group"><label>المديونية الحالية:</label><input type="text" id="payShopCurrentZimam" class="readonly-input" readonly style="color:#dc2626; font-weight:bold;"></div>
+            <div class="form-group"><label>المبلغ المراد دفعه:</label><input type="number" id="payAmountInput" placeholder="أدخل المبلغ المدفوع..." min="0"></div>
+            <button class="btn btn-success" onclick="submitShopPayment()">تأكيد خصم المبلغ من المديونية</button>
+            <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeShopPayModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="thermalPrintArea" style="display:none;"></div>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyARUfzp3O79n5pOONzY13pHcV6uoaMXd9s",
