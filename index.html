@@ -301,14 +301,15 @@
                 <div id="clientMonthlyHistory" class="client-history-box"></div>
             </div>
 
-            <!-- حقل رقم العميل الإجباري والذكي -->
+            <!-- حقل رقم العميل الإجباري والذكي مع دليل الهاتف -->
             <div class="form-group" id="clientPhoneGroup" style="background:#fffbeb; border:1px dashed #f59e0b; padding:8px; border-radius:6px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <label style="margin:0; font-size:11.5px; color:#92400e;">📱 رقم هاتف العميل (إلزامي للعميل الجديد):</label>
+                    <label style="margin:0; font-size:11.5px; color:#92400e;">📱 رقم هاتف العميل (إلزامي وفريد):</label>
                     <span id="clientPhoneStatusBadge" style="font-size:10.5px; font-weight:bold; color:#b45309;">⚠️ مطلوب كتابة الرقم</span>
                 </div>
                 <div style="display:flex; gap:6px;">
-                    <input type="text" id="clientPhoneInput" placeholder="أدخل رقم الموبايل (مثال: 01012345678)..." maxlength="11" oninput="onClientPhoneInputChange()" style="font-weight:bold; font-size:12.5px;">
+                    <input type="tel" id="clientPhoneInput" placeholder="أدخل رقم الموبايل (مثال: 01012345678)..." maxlength="11" oninput="onClientPhoneInputChange()" style="flex:1; font-weight:bold; font-size:12.5px;">
+                    <button type="button" class="btn btn-info" style="width:auto; margin:0; padding:6px 12px; font-size:11px; white-space:nowrap;" onclick="pickContactFromPhone()">📇 دليل الهاتف</button>
                 </div>
             </div>
 
@@ -1320,6 +1321,96 @@
             return (systemSettings && systemSettings.whatsapp) ? String(systemSettings.whatsapp).replace(/\D/g, '') : "201011112764";
         }
 
+        // ==================== 1. التحقق من تكرار رقم هاتف العميل ====================
+        function findClientByPhone(phoneStr, currentClientName = "") {
+            const targetClean = cleanPhoneStr(phoneStr);
+            if (!targetClean || targetClean.length < 9) return null;
+
+            const normCurrent = (currentClientName || "").trim().toLowerCase();
+
+            // فحص جدول هواتف العملاء
+            if (typeof cloudClientsPhones === 'object' && cloudClientsPhones !== null) {
+                for (let cName in cloudClientsPhones) {
+                    if (cName.trim().toLowerCase() !== normCurrent) {
+                        if (cleanPhoneStr(cloudClientsPhones[cName]) === targetClean) {
+                            return cName;
+                        }
+                    }
+                }
+            }
+
+            // فحص عملاء البوابة
+            if (typeof portalCustomersDB === 'object' && portalCustomersDB !== null) {
+                for (let uid in portalCustomersDB) {
+                    let cust = portalCustomersDB[uid];
+                    if (cust && cust.name && cust.name.trim().toLowerCase() !== normCurrent) {
+                        if (cleanPhoneStr(cust.phone) === targetClean) {
+                            return cust.name;
+                        }
+                    }
+                }
+            }
+
+            // فحص الفواتير السابقة
+            if (Array.isArray(cloudSales)) {
+                for (let s of cloudSales) {
+                    if (s.client && s.client.trim().toLowerCase() !== normCurrent && s.phone) {
+                        if (cleanPhoneStr(s.phone) === targetClean) {
+                            return s.client;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // ==================== 2. رفع / اختيار رقم الهاتف من دليل هاتف الموبايل ====================
+        async function pickContactFromPhone() {
+            const isSupported = ('contacts' in navigator && 'ContactsManager' in window);
+            
+            if (!isSupported) {
+                alert("⚠️ ميزة سحب الأرقام من دليل الهاتف تتطلب فتح النظام عبر متصفح Google Chrome على الهاتف وتفعيل اتصال آمن (HTTPS).\nيمكنك كتابة الرقم يدوياً.");
+                return;
+            }
+
+            try {
+                const props = ['name', 'tel'];
+                const opts = { multiple: false };
+                const contacts = await navigator.contacts.select(props, opts);
+
+                if (contacts && contacts.length > 0) {
+                    const contact = contacts[0];
+                    if (contact.tel && contact.tel.length > 0) {
+                        let rawTel = contact.tel[0];
+                        let cleaned = rawTel.replace(/\D/g, '');
+                        if (cleaned.startsWith('20') && cleaned.length === 12) {
+                            cleaned = '0' + cleaned.substring(2);
+                        } else if (cleaned.length === 10 && !cleaned.startsWith('0')) {
+                            cleaned = '0' + cleaned;
+                        }
+
+                        const phoneField = document.getElementById('clientPhoneInput');
+                        if (phoneField) {
+                            phoneField.value = cleaned;
+                        }
+
+                        const clientInput = document.getElementById('clientName');
+                        if (clientInput && !clientInput.value.trim() && contact.name && contact.name.length > 0) {
+                            clientInput.value = contact.name[0];
+                            onClientNameInput();
+                        }
+
+                        onClientPhoneInputChange();
+                    } else {
+                        alert("⚠️ جهة الاتصال المختارة لا تحتوي على رقم هاتف.");
+                    }
+                }
+            } catch (err) {
+                console.warn("Contact Picker Cancelled / Error:", err);
+            }
+        }
+
         // ==================== محرك الـ GPS الصوتي والملاحة ====================
         function speakArabicVoiceNav(text) {
             if ('speechSynthesis' in window) {
@@ -1600,7 +1691,6 @@
         }
 
         // ==================== دوال الطباعة الذكية وحل التكرار ====================
-        // هذه الدوال تفحص أولاً إذا كانت الفاتورة الحالية قد تم حفظها، فتطبعها مباشرة دون إعادة تسجيل فاتورة ثانية
         async function triggerViaRawBT() {
             if (currentSavedInvoice) {
                 await printViaRawBT(currentSavedInvoice);
@@ -1776,6 +1866,7 @@
                 return null;
             }
         }
+
         // ==================== قارئ الباركود ====================
         let barcodeBuffer = "";
         let lastKeyTime = Date.now();
@@ -1975,7 +2066,7 @@
             window.print();
             setTimeout(() => { printArea.style.display = 'none'; }, 1000);
         }
-
+        // ==================== بداية الجزء الثاني (2/2) ====================
         // ==================== مزامنة Firebase ====================
         db.ref('systemSettings').on('value', (s) => {
             if(s.val()) systemSettings = { ...defaultSettings, ...s.val() };
@@ -3010,11 +3101,19 @@
             }
 
             const fullPhone = "+20" + phoneInput.replace(/^0+/, '');
+
+            // فحص تكرار الرقم عند تسجيل عميل جديد
+            const duplicateCheck = findClientByPhone(fullPhone, name);
+            if(duplicateCheck) {
+                alert(`❌ خطأ: رقم الهاتف مسجل بالفعل للعميل [ ${duplicateCheck} ]. يرجى استخدام رقم فريد.`);
+                return;
+            }
+
             const clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
             const uid = "cust_" + Date.now();
 
             cloudClients[name] = clientCode;
-            db.ref('clients').set(cloudClients).catch(() => {});
+            db.ref('clients/' + name).set(clientCode).catch(() => {});
 
             cloudClientsPhones[name] = fullPhone;
             db.ref('clientsPhones/' + name).set(fullPhone).catch(() => {});
@@ -3613,6 +3712,14 @@
 
             const finalPhone = existingPhone || clientPhone;
 
+            // 3. فحص منع تكرار رقم هاتف العميل مع أي عميل آخر
+            const duplicateOwner = findClientByPhone(finalPhone, client);
+            if (duplicateOwner) {
+                alert(`❌ خطأ: رقم الهاتف (${finalPhone}) مسجل بالفعل لعميل آخر باسم:\n[ ${duplicateOwner} ]\nلا يمكن تكرار نفس رقم الهاتف لأكثر من عميل.`);
+                document.getElementById('clientPhoneInput').focus();
+                return null;
+            }
+
             const vehicleName = cloudVehicles[vehicleKey]?.name || vehicleKey;
             const village = document.getElementById('clientVillage').value.trim() || "";
             const invNo = document.getElementById('invoiceNo').value.trim() || String(Math.floor(1000 + Math.random() * 9000));
@@ -3664,7 +3771,7 @@
 
             if (!hasItems) { alert("أدخل كمية لصنف واحد على الأقل!"); return null; }
 
-            // 3. منع التكرار المتطابق خلال 45 ثانية
+            // 4. منع التكرار المتطابق خلال 45 ثانية
             const nowTime = Date.now();
             if(nowTime - lastSavedInvoiceTimestamp < 45000 && currentSavedInvoice && currentSavedInvoice.client === client && Math.abs(currentSavedInvoice.total - grand) < 0.01) {
                 alert("⚠️ تم حفظ هذه الفاتورة بالفعل للتو منعاً للتكرار!");
@@ -4320,19 +4427,29 @@
             updateReportClientsSelect();
         }
 
-        // ==================== التحقق الذكي من رقم هاتف العميل ====================
+        // ==================== التحقق الذكي من رقم هاتف العميل والتكرار ====================
         function onClientPhoneInputChange() {
             const phoneInput = document.getElementById('clientPhoneInput');
             const badge = document.getElementById('clientPhoneStatusBadge');
+            const clientName = document.getElementById('clientName')?.value.trim() || "";
             if(!phoneInput || !badge) return;
 
             let val = phoneInput.value.trim();
-            if(val.length >= 10) {
-                badge.innerText = "✅ رقم مكتمل";
-                badge.style.color = "#16a34a";
-            } else {
+
+            if(val.length < 10) {
                 badge.innerText = "⚠️ مطلوب 11 رقم للموبايل";
                 badge.style.color = "#b45309";
+                return;
+            }
+
+            // فحص فوري للتكرار في قاعدة البيانات
+            const existingOwner = findClientByPhone(val, clientName);
+            if(existingOwner) {
+                badge.innerText = `❌ مكرر: مسجل باسم (${existingOwner})`;
+                badge.style.color = "#dc2626";
+            } else {
+                badge.innerText = "✅ رقم متاح وصحيح";
+                badge.style.color = "#16a34a";
             }
         }
 
@@ -5297,6 +5414,15 @@
 
             if(!newName) { alert("أدخل اسم العميل."); return; }
 
+            // فحص تكرار الرقم عند التعديل
+            if (phone) {
+                const duplicateOwner = findClientByPhone(phone, newName);
+                if (duplicateOwner) {
+                    alert(`❌ لا يمكن الحفظ: رقم الهاتف (${phone}) مسجل بالفعل لعميل آخر باسم:\n[ ${duplicateOwner} ]`);
+                    return;
+                }
+            }
+
             c.name = newName;
             c.clientCode = code;
             c.route = route;
@@ -5340,6 +5466,15 @@
             const type = document.getElementById('adminDirectType').value;
 
             if(!name) { alert("أدخل اسم العميل."); return; }
+
+            // فحص التكرار قبل الإضافة
+            if(phone) {
+                const duplicateOwner = findClientByPhone(phone, name);
+                if(duplicateOwner) {
+                    alert(`❌ لا يمكن الإضافة: رقم الهاتف (${phone}) مسجل بالفعل لعميل آخر باسم:\n[ ${duplicateOwner} ]`);
+                    return;
+                }
+            }
 
             const uid = "cust_" + Date.now();
             portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, pass, customerType: type };
