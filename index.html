@@ -100,7 +100,7 @@
         .modal-content { background:#fff; padding:18px; border-radius:10px; width:92%; max-width:480px; max-height:85vh; overflow-y:auto; }
         
         #sosAlertBanner { display:none; background:#ffe4e6; border:2px solid #e11d48; color:#9f1239; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; }
-        #oilChangeAlertBanner { display:none; background:#fff1f2; border:2px solid #e11d48; color:#9f1239; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; font-weight:bold; }
+        #oilChangeAlertBanner { display:none !important; }
         #locationRequestRepBanner { display:none; background:#eff6ff; border:2px solid #2563eb; color:#1e40af; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; text-align:center; }
         
         @media print {
@@ -1259,7 +1259,7 @@
         let cloudLocationRequests = {};
         let cloudVehicles = { ...defaultVehicles };
         let cloudDashcamStreams = {};
-        let currentMonthDebtsLedger = []; // مصفوفة لتخزين كشف الذمم الحالي لتصديره لإكسيل
+        let currentMonthDebtsLedger = [];
 
         let currentDelegate = null;
         let currentPortalCustomer = null;
@@ -2058,24 +2058,11 @@
         }
 
         function checkGlobalOilChangeAlerts() {
+            // تم إلغاء ظهور التنبيه في الواجهة الرئيسية برة تماماً بناءً على طلبك
             const banner = document.getElementById('oilChangeAlertBanner');
-            if(!banner) return;
-
-            let alerts = [];
-            for(let key in cloudVehicles) {
-                let v = cloudVehicles[key];
-                let driven = (parseFloat(v.currentKm) || 0) - (parseFloat(v.lastOilKm) || 0);
-                let limit = v.interval || 1500;
-                if(driven >= limit) {
-                    alerts.push(`🚨 <b>تحذير صيانة:</b> سيارة (<b>${v.name}</b>) قطعت <b>${driven} كم</b> وتجاوزت مسافة غيار الزيت المقررة (<b>${limit} كم</b>) - يلزم غيار الزيت فوراً!`);
-                }
-            }
-
-            if(alerts.length > 0) {
-                banner.style.display = 'block';
-                banner.innerHTML = alerts.join('<hr style="margin:6px 0; border:0; border-top:1px solid #fecdd3;">');
-            } else {
+            if(banner) {
                 banner.style.display = 'none';
+                banner.innerHTML = '';
             }
         }
 
@@ -2244,7 +2231,6 @@
                 if (jsField && !jsField.value) jsField.value = data.js || '';
             }
         });
-
         // ==================== إعداد خطوط السير والفلترة ====================
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
@@ -3556,7 +3542,7 @@
                     let cartonsVal = Math.floor(qRibbons / 50);
                     let remVal = qRibbons % 50;
                     let qtyStr = cartonsVal > 0 ? `Outer ${pr} / ${cartonsVal} كرتونة${remVal>0?` + ${remVal} رابطة`:''}` : `Outer ${pr} / ${qRibbons} رابطة`;
-                    itemsSoldList.push({ name: p.name, code: p.code, qty: qRibbons, qtyText: qtyStr, price: pr, total: tot });
+                    itemsSoldList.push({ name: p.name, code: p.code, qty: qRibbons, qtyText: qtyStr, price: pr, total: tot, unit: 'رابطة' });
                     carStock[p.code] = parseFloat(((carStock[p.code] || 0) - qCartonsNeeded).toFixed(4));
                 }
             }
@@ -3625,16 +3611,46 @@
             window.open(`https://api.whatsapp.com/send?phone=${getTargetWhatsApp()}&text=${encodeURIComponent("فاتورة مبيعات " + (systemSettings.companyName || "بلاك هورس"))}`, '_blank');
         }
 
+        // إلغاء الفاتورة واسترجاع كميات الأصناف تلقائياً لرصيد سيارة المندوب والجرد
         function cancelInvoice(id) {
-            if(!confirm("⚠️ هل أنت متأكد من إلغاء هذه الفاتورة؟")) return;
+            if(!confirm("⚠️ هل أنت متأكد من إلغاء هذه الفاتورة؟ سيتم إرجاع كميات الأصناف كاملة إلى رصيد السيارة والجرد.")) return;
             let targetInv = cloudSales.find(s => String(s.id) === String(id));
             if(targetInv) {
+                if(targetInv.status === 'cancelled') {
+                    alert("الفاتورة ملغاة بالفعل مسبقاً.");
+                    return;
+                }
+
                 targetInv.status = 'cancelled';
                 targetInv.total = 0;
+
+                // إرجاع البضاعة لسيارة المندوب والجرد
+                let delCode = targetInv.delegateCode;
+                if(delCode && cloudDelegates[delCode] && targetInv.items && targetInv.items.length > 0) {
+                    if(!cloudDelegates[delCode].carStock) {
+                        cloudDelegates[delCode].carStock = { ...defaultCarStock };
+                    }
+                    targetInv.items.forEach(it => {
+                        let qRibbons = parseFloat(it.qty) || 0;
+                        let qCartons = (it.unit === 'كرتونة') ? qRibbons : (qRibbons / 50);
+                        let pCode = it.code;
+                        if(!pCode) {
+                            let foundP = products.find(p => p.name === it.name);
+                            if(foundP) pCode = foundP.code;
+                        }
+                        if(pCode) {
+                            cloudDelegates[delCode].carStock[pCode] = parseFloat(((cloudDelegates[delCode].carStock[pCode] || 0) + qCartons).toFixed(4));
+                        }
+                    });
+                    db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock);
+                }
+
                 db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
-                    alert("✅ تم إلغاء الفاتورة.");
+                    alert("✅ تم إلغاء الفاتورة بنجاح وإعادة الكميات المباعة لرصيد السيارة وجرد المندوب!");
                     renderSavedInvoices();
                     renderDailyReport();
+                    renderCarStockTable();
+                    initSalesForm();
                 });
             }
         }
@@ -3708,6 +3724,9 @@
             let inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
 
+            const prevStatus = inv.status;
+            const newStatus = document.getElementById('modalEditInvStatus').value;
+
             inv.invNo = document.getElementById('modalEditInvNo').value.trim();
             inv.date = document.getElementById('modalEditInvDate').value;
             inv.client = document.getElementById('modalEditInvClient').value.trim();
@@ -3716,13 +3735,39 @@
             inv.village = document.getElementById('modalEditInvVillage').value.trim();
             inv.route = document.getElementById('modalEditInvRoute').value.trim();
             inv.total = parseFloat(document.getElementById('modalEditInvTotal').value) || 0;
-            inv.status = document.getElementById('modalEditInvStatus').value;
+            inv.status = newStatus;
+
+            // إذا تم تغيير الحالة إلى "ملغاة" عبر شاشة التعديل يتم إرجاع البضاعة
+            if (prevStatus !== 'cancelled' && newStatus === 'cancelled') {
+                inv.total = 0;
+                let delCode = inv.delegateCode;
+                if(delCode && cloudDelegates[delCode] && inv.items && inv.items.length > 0) {
+                    if(!cloudDelegates[delCode].carStock) {
+                        cloudDelegates[delCode].carStock = { ...defaultCarStock };
+                    }
+                    inv.items.forEach(it => {
+                        let qRibbons = parseFloat(it.qty) || 0;
+                        let qCartons = (it.unit === 'كرتونة') ? qRibbons : (qRibbons / 50);
+                        let pCode = it.code;
+                        if(!pCode) {
+                            let foundP = products.find(p => p.name === it.name);
+                            if(foundP) pCode = foundP.code;
+                        }
+                        if(pCode) {
+                            cloudDelegates[delCode].carStock[pCode] = parseFloat(((cloudDelegates[delCode].carStock[pCode] || 0) + qCartons).toFixed(4));
+                        }
+                    });
+                    db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock);
+                }
+            }
 
             db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
                 alert("✅ تم تعديل وحفظ بيانات الفاتورة بنجاح!");
                 closeEditInvoiceModal();
                 renderSavedInvoices();
                 renderDailyReport();
+                renderCarStockTable();
+                initSalesForm();
             });
         }
 
