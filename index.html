@@ -100,7 +100,7 @@
         .modal-content { background:#fff; padding:18px; border-radius:10px; width:92%; max-width:480px; max-height:85vh; overflow-y:auto; }
         
         #sosAlertBanner { display:none; background:#ffe4e6; border:2px solid #e11d48; color:#9f1239; padding:10px; border-radius:8px; margin-bottom:12px; font-size:12px; }
-        #oilChangeAlertBanner { display:none !important; }
+        #oilChangeAlertBanner { display:none; background:#fff1f2; border:2px solid #e11d48; color:#9f1239; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; font-weight:bold; }
         #locationRequestRepBanner { display:none; background:#eff6ff; border:2px solid #2563eb; color:#1e40af; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; text-align:center; }
         
         @media print {
@@ -157,10 +157,10 @@
             <div class="form-group"><label>البريد الإلكتروني:</label><input type="email" id="regClientEmail" placeholder="example@domain.com"></div>
             <div class="form-group"><label>كلمة السر لحسابك:</label><input type="password" id="regClientPass" placeholder="أدخل كلمة السر..."></div>
             <div class="form-group">
-                <label>رقم التليفون:</label>
+                <label>رقم التليفون (اختياري):</label>
                 <div style="display: flex; gap: 5px;">
                     <input type="text" value="+20" readonly class="readonly-input" style="width: 65px; text-align: center;">
-                    <input type="text" id="regClientPhone" placeholder="1012345678" style="flex: 1;" maxlength="10">
+                    <input type="text" id="regClientPhone" placeholder="1012345678 (اختياري)" style="flex: 1;" maxlength="10">
                 </div>
             </div>
             <div class="form-group"><label>خط السير / الخط:</label><input type="text" id="regClientRoute" placeholder="مثال: خط سنتريس / خط أشمون..."></div>
@@ -264,9 +264,6 @@
                         <label style="color:#78350f;">السيارة المستخدمة:</label>
                         <select id="invoiceVehicleSelect" onchange="onVehicleSelectChange()" style="background:#fff; font-weight:bold;">
                             <option value="">-- اختر السيارة --</option>
-                            <option value="dababa">الدبابة</option>
-                            <option value="bike1">بايك 1</option>
-                            <option value="bike2">بايك 2</option>
                         </select>
                     </div>
                     <div class="form-group" style="margin-bottom:0;">
@@ -280,7 +277,7 @@
             <input type="hidden" id="editInvoiceId" value="">
             
             <div class="form-group" style="background:#eff6ff; border:1px solid #bfdbfe; padding:8px 10px; border-radius:8px;">
-                <label style="color:#1e40af; font-size:12px;">🛣️ خط السير (لعرض العملاء المسجلين بالخط):</label>
+                <label style="color:#1e40af; font-size:12px;">🛣️ خط السير (تصفية وبحث العملاء حسب الخط):</label>
                 <select id="selectRouteFilter" onchange="onRouteFilterChange()" style="font-weight:bold; font-size:12.5px; color:#1e3a8a; background:#fff;">
                     <option value="ALL">🛣️ عرض كل الخطوط (كل العملاء)</option>
                 </select>
@@ -301,9 +298,20 @@
                 <div id="clientMonthlyHistory" class="client-history-box"></div>
             </div>
 
+            <!-- حقل رقم العميل الاختياري -->
+            <div class="form-group" id="clientPhoneGroup" style="background:#f8fafc; border:1px dashed #cbd5e1; padding:8px; border-radius:6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin:0; font-size:11.5px; color:#475569;">📱 رقم هاتف العميل (اختياري / غير إجباري):</label>
+                    <span id="clientPhoneStatusBadge" style="font-size:10.5px; font-weight:bold; color:#059669;">ℹ️ رقم الهاتف اختياري</span>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <input type="text" id="clientPhoneInput" placeholder="أدخل رقم الموبايل إذا توفر (مثال: 01012345678)..." maxlength="11" oninput="onClientPhoneInputChange()" style="font-weight:bold; font-size:12.5px;">
+                </div>
+            </div>
+
             <div style="display: flex; gap: 8px;">
                 <div class="form-group" style="flex: 1;"><label>القرية / المركز (يُضاف تلقائياً للخط):</label><input type="text" id="clientVillage" placeholder="مثال: سدود / أشمون..." oninput="onVillageInputSyncRoute()"></div>
-                <div class="form-group" style="flex: 1;"><label>رقم الفاتورة:</label><input type="text" id="invoiceNo" value="1001"></div>
+                <div class="form-group" style="flex: 1;"><label>رقم الفاتورة:</label><input type="text" id="invoiceNo" value="1001" readonly class="readonly-input"></div>
                 <div class="form-group" style="flex: 1;"><label>التاريخ:</label><input type="date" id="invoiceDate" class="readonly-input"></div>
             </div>
 
@@ -317,17 +325,17 @@
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-                <button class="btn btn-thermal" onclick="printDirectThermalDesktop()">🖨️ طباعة طابعة حرارية (EXE / USB)</button>
-                <button class="btn btn-bluetooth" onclick="printViaRawBT()">📱 طباعة RawBT (بلوتوث)</button>
+                <button id="btnThermalPrint" class="btn btn-thermal" onclick="triggerDirectThermalDesktop()">🖨️ طباعة طابعة حرارية (EXE / USB)</button>
+                <button id="btnRawbtPrint" class="btn btn-bluetooth" onclick="triggerViaRawBT()">📱 طباعة RawBT (بلوتوث)</button>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:6px;">
                 <button class="btn" style="background:#059669; color:#fff; margin-top:0;" onclick="connectDirectBluetoothThermal()">🔍 تعرف واقتران بطابعة حرارية (Bluetooth)</button>
-                <button class="btn" style="background:#0d9488; color:#fff; margin-top:0;" onclick="printDirectBluetoothESC()">⚡ طباعة حرارية مباشرة (ESC/POS)</button>
+                <button id="btnEscPrint" class="btn" style="background:#0d9488; color:#fff; margin-top:0;" onclick="triggerDirectBluetoothESC()">⚡ طباعة حرارية مباشرة (ESC/POS)</button>
             </div>
             <div id="btPrinterStatus" style="font-size:11px; text-align:center; color:#059669; font-weight:bold; margin-top:4px; display:none;"></div>
 
-            <button class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة مع تثبيت لوكيشن المحل</button>
+            <button id="btnSaveInvoiceMain" class="btn btn-success" onclick="saveAndEmailOnly()">💾 حفظ الفاتورة مع تثبيت لوكيشن المحل</button>
             <button class="btn btn-whatsapp" onclick="sendSingleInvoiceViaWhatsApp()">📲 إرسال واتساب</button>
         </div>
 
@@ -426,7 +434,7 @@
                     <div class="form-group"><label>القرية / المركز:</label><input type="text" id="adminDirectVillage" placeholder="أشمون / سنتريس..."></div>
                 </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-                    <div class="form-group"><label>رقم التليفون:</label><input type="text" id="adminDirectPhone" placeholder="1012345678"></div>
+                    <div class="form-group"><label>رقم التليفون (اختياري):</label><input type="text" id="adminDirectPhone" placeholder="1012345678 (اختياري)"></div>
                     <div class="form-group"><label>كلمة السر:</label><input type="text" id="adminDirectPass" placeholder="كلمة السر..."></div>
                     <div class="form-group"><label>الفئة:</label><select id="adminDirectType"><option value="retail">قطاعي</option><option value="wholesale">جملة</option></select></div>
                 </div>
@@ -549,15 +557,23 @@
             </div>
         </div>
 
-        <!-- ح) الفواتير المحفوظة وتعديلها -->
+        <!-- ح) الفواتير المحفوظة وتعديلها والبحث بالخط -->
         <div id="sectionSaved" style="display: none;">
             <div class="filter-box">
-                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية الفواتير:</h4>
-                <div id="adminDelegateFilterBox" style="display:none; margin-bottom:8px;">
-                    <label style="font-size:11px;">المندوب:</label>
-                    <select id="filterDelegateSelect" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
-                        <option value="ALL">📋 عرض كل المناديب</option>
-                    </select>
+                <h4 style="margin:0 0 6px 0; font-size:12px; color:#0f172a;">📂 تصفية وبحث الفواتير:</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+                    <div id="adminDelegateFilterBox" style="display:none; margin-bottom:0;">
+                        <label style="font-size:11px;">المندوب:</label>
+                        <select id="filterDelegateSelect" style="font-size:12px; padding:6px;" onchange="renderSavedInvoices()">
+                            <option value="ALL">📋 عرض كل المناديب</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="font-size:11px; color:#1e40af; font-weight:bold;">🛣️ بحث بـ خط السير:</label>
+                        <select id="savedFilterRoute" style="font-size:12px; padding:6px; font-weight:bold; color:#1e40af;" onchange="renderSavedInvoices()">
+                            <option value="ALL">🛣️ كل الخطوط</option>
+                        </select>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <div class="form-group" style="flex:1; margin-bottom:0;"><label style="font-size:10px;">من تاريخ:</label><input type="date" id="savedFilterFrom" style="padding:6px; font-size:11px;" onchange="renderSavedInvoices()"></div>
@@ -568,29 +584,35 @@
             <h4 style="margin: 0 0 10px 0; font-size: 13px;">📋 سجل الفواتير (قابل لتعديل المدير الشامل):</h4>
             <div style="overflow-x: auto;">
                 <table class="report-table">
-                    <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>السيارة</th><th>العداد</th><th>المندوب</th><th>الإجمالي</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+                    <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>الخط</th><th>السيارة</th><th>العداد</th><th>المندوب</th><th>الإجمالي</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
                     <tbody id="savedInvoicesBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- ط) التقارير الشاملة -->
+        <!-- ط) التقارير الشاملة مع البحث بالخط -->
         <div id="sectionReport" style="display: none;">
             <div id="adminReportManagerBox" style="display:none; background:#fdf4ff; border:1.5px solid #f0abfc; padding:12px; border-radius:8px; margin-bottom:14px;">
                 <h5 style="margin:0 0 8px 0; color:#86198f; font-size:13px;">👑 لوحة المدير الخاصة بالتقارير:</h5>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                    <input type="text" id="adminReportSearchInput" placeholder="🔍 بحث المدير السريع (اسم العميل، رقم الفاتورة، المندوب)..." oninput="renderDailyReport()" style="flex:2; padding:8px; border:2px solid #d946ef; border-radius:6px; font-size:12px; background:#fff;">
+                    <input type="text" id="adminReportSearchInput" placeholder="🔍 بحث المدير السريع (اسم العميل، رقم الفاتورة، المندوب، الخط)..." oninput="renderDailyReport()" style="flex:2; padding:8px; border:2px solid #d946ef; border-radius:6px; font-size:12px; background:#fff;">
                     <button class="btn btn-success" style="flex:1; margin-top:0; padding:8px; font-size:12px;" onclick="exportClientWithdrawalsExcel()">📥 تصدير كافة المسحوبات (Excel)</button>
                 </div>
             </div>
 
             <div class="filter-box" id="reportFilterBoxContainer">
-                <h4 style="margin-top:0;">📊 تقارير المبيعات من تاريخ إلى تاريخ:</h4>
+                <h4 style="margin-top:0;">📊 تقارير المبيعات وتصفية الخطوط:</h4>
                 <div style="display: flex; gap: 8px; margin-bottom: 8px;" id="adminReportSelectWrapper">
                     <div class="form-group" style="flex:1;">
                         <label>اختر المندوب (للمدير فقط):</label>
                         <select id="reportDelegateSelect" style="font-size:12px; padding:6px;" onchange="renderDailyReport()">
                             <option value="ALL">📋 كل المناديب</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label style="color:#1e40af; font-weight:bold;">اختر خط السير:</label>
+                        <select id="reportRouteSelect" style="font-size:12px; padding:6px; font-weight:bold; color:#1e40af;" onchange="renderDailyReport()">
+                            <option value="ALL">🛣️ كل الخطوط</option>
                         </select>
                     </div>
                     <div class="form-group" style="flex:1;">
@@ -637,7 +659,7 @@
             <h4 style="font-size: 14px; color: #1e293b; margin-top: 17px; margin-bottom: 4px;">📋 تفاصيل الفواتير:</h4>
             <div style="overflow-x:auto;">
                 <table class="report-table">
-                    <thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>القرية/المركز</th><th>المندوب</th><th>الإجمالي</th></tr></thead>
+                    <thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>الخط</th><th>القرية/المركز</th><th>المندوب</th><th>الإجمالي</th></tr></thead>
                     <tbody id="repInvoicesTableBody"></tbody>
                 </table>
             </div>
@@ -738,7 +760,6 @@
                 <button class="btn btn-success" onclick="saveMenofLoad()">💾 حفظ شحنة منوف</button>
             </div>
 
-            <!-- شريط فلترة الشهر لتحميلات منوف -->
             <div class="filter-box" style="background:#eff6ff; border:1.5px solid #3b82f6; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                     <div style="flex:1; min-width:200px;">
@@ -759,7 +780,6 @@
                 <div class="stat-card" style="background:#fff1f2;"><div class="title" style="color:#9f1239;">صافي ذمة منوف للشهر</div><div class="val" id="menofNetZimamTotal" style="color:#dc2626;">0 ج.م</div></div>
             </div>
 
-            <!-- جدول ملخص مقارنة تحميل كل شهر -->
             <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px; margin-bottom:15px;">
                 <h5 style="margin:0 0 6px 0; color:#0f172a;">📊 ملخص التحميل الشهري لمنوف (مقارنة شهور السنة):</h5>
                 <div style="overflow-x:auto;">
@@ -786,10 +806,9 @@
                 </table>
             </div>
 
-            <!-- الفلترة الشهرية ودفتر الأستاذ للذمامات مع دعم الإكسيل -->
             <div class="filter-box" style="background:#f8fafc; border:2px solid #0284c7; margin-top:15px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-                    <h4 style="margin:0; color:#0369a1;">🗓️ كشف وتصفية الذمامات الشهرية (ترحيل وتجميع تلقائي):</h4>
+                    <h4 style="margin:0; color:#0369a1;">🗓 كشف وتصفية الذمامات الشهرية (ترحيل وتجميع تلقائي):</h4>
                     <button class="btn btn-success" style="width:auto; margin:0; padding:8px 14px; font-size:12px;" onclick="exportDebtsToExcel()">📥 تصدير كشف التصفية بالكامل (Excel)</button>
                 </div>
                 
@@ -895,6 +914,17 @@
         <div id="sectionSettings" style="display: none;">
             <div id="adminVehiclesOilControlBox" style="display:none; background:#fffbeb; border:1.5px solid #f59e0b; padding:14px; border-radius:10px; margin-bottom:14px;">
                 <h4 style="margin-top:0; font-size:14px; color:#b45309;">🚗 متابعة أسطول السيارات وقراءات العداد وغيار الزيت (1500 كم):</h4>
+                
+                <div style="background:#fff; border:1px solid #fde68a; padding:10px; border-radius:8px; margin-bottom:12px;">
+                    <h5 style="margin:0 0 8px 0; color:#b45309; font-size:13px;">➕ إضافة سيارة جديدة للأسطول:</h5>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:6px; align-items:flex-end;">
+                        <div><label style="font-size:11px;">اسم السيارة:</label><input type="text" id="newVehicleName" placeholder="مثال: جامبو 1"></div>
+                        <div><label style="font-size:11px;">كود السيارة (إنجليزي):</label><input type="text" id="newVehicleKey" placeholder="مثال: jumbo1"></div>
+                        <div><label style="font-size:11px;">مسافة الزيت (كم):</label><input type="number" id="newVehicleInterval" value="1500"></div>
+                        <div><button class="btn btn-success" style="margin:0; padding:8px 12px; font-size:12px;" onclick="addNewVehicleToFleet()">➕ إضافة للأسطول</button></div>
+                    </div>
+                </div>
+
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
@@ -904,7 +934,7 @@
                                 <th>عداد آخر غيار زيت</th>
                                 <th>المسافة المقطوعة</th>
                                 <th>حالة الزيت</th>
-                                <th>تسجيل غيار زيت جديد (تصفير الـ 1500)</th>
+                                <th>إجراءات وتغيير الزيت</th>
                             </tr>
                         </thead>
                         <tbody id="vehiclesOilTableBody"></tbody>
@@ -1055,34 +1085,70 @@
         </div>
     </div>
 
+    <!-- نافذة تعديل الفاتورة المحدثة للمدير لشمل الأصناف والأسعار بالكامل -->
     <div id="editInvoiceModal" class="modal-bg">
-        <div class="modal-content">
-            <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️ تعديل بيانات الفاتورة (للمدير)</h3>
+        <div class="modal-content" style="max-width:550px;">
+            <h3 style="margin-top:0; color:#1e293b; font-size:15px;">✏️️ تعديل الفاتورة والأصناف والأسعار (خاص بالمدير)</h3>
             <input type="hidden" id="modalEditInvId">
-            <div class="form-group"><label>رقم الفاتورة:</label><input type="text" id="modalEditInvNo"></div>
-            <div class="form-group"><label>تاريخ الفاتورة:</label><input type="date" id="modalEditInvDate"></div>
-            <div class="form-group"><label>اسم العميل:</label><input type="text" id="modalEditInvClient"></div>
-            <div class="form-group"><label>السيارة:</label><input type="text" id="modalEditInvVehicle"></div>
-            <div class="form-group"><label>قراءة العداد (كم):</label><input type="number" id="modalEditInvOdometer"></div>
-            <div class="form-group"><label>القرية / المركز:</label><input type="text" id="modalEditInvVillage"></div>
-            <div class="form-group"><label>خط السير:</label><input type="text" id="modalEditInvRoute"></div>
-            <div class="form-group"><label>المندوب المسجل:</label><input type="text" id="modalEditInvDelegate" class="readonly-input" readonly></div>
-            <div class="form-group"><label>إجمالي الفاتورة (ج.م):</label><input type="number" id="modalEditInvTotal" step="0.01"></div>
-            <div class="form-group">
-                <label>حالة الفاتورة:</label>
-                <select id="modalEditInvStatus">
-                    <option value="active">نشطة (مفعلة)</option>
-                    <option value="cancelled">ملغاة</option>
-                </select>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <div class="form-group"><label>رقم الفاتورة:</label><input type="text" id="modalEditInvNo"></div>
+                <div class="form-group"><label>تاريخ الفاتورة:</label><input type="date" id="modalEditInvDate"></div>
             </div>
-            <button class="btn btn-success" onclick="saveEditedInvoice()">💾 حفظ وتحديث الفاتورة</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <div class="form-group"><label>اسم العميل:</label><input type="text" id="modalEditInvClient"></div>
+                <div class="form-group"><label>رقم هاتف العميل (اختياري):</label><input type="text" id="modalEditInvPhone" placeholder="اختياري"></div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <div class="form-group"><label>السيارة:</label><input type="text" id="modalEditInvVehicle"></div>
+                <div class="form-group"><label>قراءة العداد (كم):</label><input type="number" id="modalEditInvOdometer"></div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <div class="form-group"><label>القرية / المركز:</label><input type="text" id="modalEditInvVillage"></div>
+                <div class="form-group"><label>خط السير:</label><input type="text" id="modalEditInvRoute"></div>
+            </div>
+            <div class="form-group"><label>المندوب المسجل:</label><input type="text" id="modalEditInvDelegate" class="readonly-input" readonly></div>
+            
+            <!-- حقل جديد لتعديل أصناف الفاتورة وأسعارها بالكامل -->
+            <div class="form-group" style="background:#f0f9ff; border:1px solid #bae6fd; padding:10px; border-radius:8px; margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <label style="margin:0; color:#0369a1; font-weight:bold; font-size:12.5px;">📦 تعديل كميات وأسعار أصناف الفاتورة:</label>
+                    <button type="button" class="btn btn-info" style="width:auto; margin:0; padding:3px 8px; font-size:10.5px;" onclick="addNewRowToEditInvoiceModal()">➕ إضافة صنف جديد للفاتورة</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="report-table" style="background:#fff; margin-top:4px;">
+                        <thead>
+                            <tr style="background:#0284c7; color:#fff;">
+                                <th>اسم الصنف</th>
+                                <th style="width:70px;">الكمية</th>
+                                <th style="width:75px;">السعر (ج.م)</th>
+                                <th style="width:85px;">الإجمالي</th>
+                                <th style="width:35px;">حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalEditInvItemsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <div class="form-group"><label>إجمالي الفاتورة النهائي (ج.م):</label><input type="number" id="modalEditInvTotal" step="0.01" style="font-weight:bold; color:#16a34a; font-size:14px;"></div>
+                <div class="form-group">
+                    <label>حالة الفاتورة:</label>
+                    <select id="modalEditInvStatus">
+                        <option value="active">نشطة (مفعلة)</option>
+                        <option value="cancelled">ملغاة</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-success" onclick="saveEditedInvoice()">💾 حفظ وتحديث الفاتورة بالكامل</button>
             <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditInvoiceModal()">إلغاء</button>
         </div>
     </div>
 
     <div id="oilChangeModal" class="modal-bg">
         <div class="modal-content">
-            <h3 style="margin-top:0; color:#b45309; font-size:15px;">🛢️ تسجيل غيار زيت جديد</h3>
+            <h3 style="margin-top:0; color:#b45309; font-size:15px;">🛢️️ تسجيل غيار زيت جديد</h3>
             <input type="hidden" id="modalOilVehicleKey">
             <div class="form-group"><label>اسم السيارة:</label><input type="text" id="modalOilVehicleName" class="readonly-input" readonly></div>
             <div class="form-group"><label>قراءة العداد الحالية عند غيار الزيت (كم):</label><input type="number" id="modalOilNewKm" placeholder="أدخل قراءة العداد الحالية..."></div>
@@ -1099,7 +1165,7 @@
             <div class="form-group"><label>الكود الثابت:</label><input type="text" id="modalEditCustCode"></div>
             <div class="form-group"><label>خط السير:</label><input type="text" id="modalEditCustRoute"></div>
             <div class="form-group"><label>القرية / العنوان:</label><input type="text" id="modalEditCustVillage"></div>
-            <div class="form-group"><label>رقم التليفون:</label><input type="text" id="modalEditCustPhone"></div>
+            <div class="form-group"><label>رقم التليفون (اختياري):</label><input type="text" id="modalEditCustPhone" placeholder="اختياري"></div>
             <div class="form-group"><label>كلمة السر:</label><input type="text" id="modalEditCustPass"></div>
             <div class="form-group">
                 <label>فئة الحساب:</label>
@@ -1248,6 +1314,7 @@
         let cloudDelegates = defaultDelegates;
         let cloudClients = {};
         let cloudClientsRoutes = {};
+        let cloudClientsPhones = {};
         let cloudClientsLocations = {};
         let portalCustomersDB = {};
         let cloudPendingOrders = [];
@@ -1260,6 +1327,10 @@
         let cloudVehicles = { ...defaultVehicles };
         let cloudDashcamStreams = {};
         let currentMonthDebtsLedger = [];
+
+        let isInvoiceSaving = false;
+        let currentSavedInvoice = null;
+        let lastSavedInvoiceTimestamp = 0;
 
         let currentDelegate = null;
         let currentPortalCustomer = null;
@@ -1289,6 +1360,65 @@
 
         function getTargetWhatsApp() {
             return (systemSettings && systemSettings.whatsapp) ? String(systemSettings.whatsapp).replace(/\D/g, '') : "201011112764";
+        }
+
+        // ==================== تحديث قائمة اختيار السيارات ديناميكياً ====================
+        function updateVehicleSelectOptions() {
+            const select = document.getElementById('invoiceVehicleSelect');
+            if(!select) return;
+            const currentVal = select.value;
+            let optionsHtml = '<option value="">-- اختر السيارة --</option>';
+            
+            for(let key in cloudVehicles) {
+                let v = cloudVehicles[key];
+                optionsHtml += `<option value="${key}">${v.name}</option>`;
+            }
+            select.innerHTML = optionsHtml;
+            if(cloudVehicles[currentVal]) select.value = currentVal;
+        }
+
+        // ==================== إضافة وحذف سيارة من الأسطول ====================
+        function addNewVehicleToFleet() {
+            const name = document.getElementById('newVehicleName')?.value.trim();
+            let key = document.getElementById('newVehicleKey')?.value.trim().toLowerCase();
+            const interval = parseFloat(document.getElementById('newVehicleInterval')?.value) || 1500;
+
+            if(!name) { alert("❌ يرجى إدخال اسم السيارة."); return; }
+            if(!key) key = "car_" + Date.now();
+
+            if(cloudVehicles[key]) {
+                alert("❌ كود السيارة موجود مسبقاً، اختر كوداً آخر.");
+                return;
+            }
+
+            cloudVehicles[key] = {
+                id: key,
+                name: name,
+                currentKm: 0,
+                lastOilKm: 0,
+                interval: interval,
+                dailyLogs: {}
+            };
+
+            db.ref('vehicles/' + key).set(cloudVehicles[key]).then(() => {
+                alert(`✅ تم إضافة السيارة (${name}) للأسطول بنجاح!`);
+                document.getElementById('newVehicleName').value = '';
+                document.getElementById('newVehicleKey').value = '';
+                updateVehicleSelectOptions();
+                renderVehiclesOilTable();
+            });
+        }
+
+        function deleteVehicleFromFleet(vKey) {
+            if(!cloudVehicles[vKey]) return;
+            if(!confirm(`⚠️ هل أنت متأكد من حذف سيارة (${cloudVehicles[vKey].name}) نهائياً من الأسطول؟`)) return;
+
+            delete cloudVehicles[vKey];
+            db.ref('vehicles/' + vKey).remove().then(() => {
+                alert("✅ تم حذف السيارة من الأسطول بنجاح.");
+                updateVehicleSelectOptions();
+                renderVehiclesOilTable();
+            });
         }
 
         // ==================== محرك الـ GPS الصوتي والملاحة ====================
@@ -1570,9 +1700,36 @@
             });
         }
 
-        // ==================== طباعة البلوتوث والحراري ====================
+        // ==================== دوال الطباعة الذكية ====================
+        async function triggerViaRawBT() {
+            if (currentSavedInvoice) {
+                await printViaRawBT(currentSavedInvoice);
+            } else {
+                const rec = await createInvoiceObject();
+                if (rec) await printViaRawBT(rec);
+            }
+        }
+
+        async function triggerDirectThermalDesktop() {
+            if (currentSavedInvoice) {
+                printDirectThermalDesktop(currentSavedInvoice);
+            } else {
+                const rec = await createInvoiceObject();
+                if (rec) printDirectThermalDesktop(rec);
+            }
+        }
+
+        async function triggerDirectBluetoothESC() {
+            if (currentSavedInvoice) {
+                await printDirectBluetoothESC(currentSavedInvoice);
+            } else {
+                const rec = await createInvoiceObject();
+                if (rec) await printDirectBluetoothESC(rec);
+            }
+        }
+
         async function printViaRawBT(specificInv = null) {
-            const rec = specificInv || (await createInvoiceObject());
+            const rec = specificInv;
             if (!rec) return;
 
             let cName = systemSettings.companyName || "BLACK HORSE";
@@ -1586,7 +1743,9 @@
             receiptText += `فاتورة رقم: #${rec.invNo}\n`;
             receiptText += `السيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\n`;
             receiptText += `العميل: ${rec.client}\n`;
+            if (rec.phone) receiptText += `موبايل: ${rec.phone}\n`;
             if (rec.village) receiptText += `القرية: ${rec.village}\n`;
+            if (rec.route) receiptText += `الخط: ${rec.route}\n`;
             if (rec.delegateName) receiptText += `المندوب: ${rec.delegateName}\n`;
             receiptText += `--------------------------------\n`;
             receiptText += `المنتج          الكمية  السعر  الإجمالي\n`;
@@ -1620,14 +1779,10 @@
                     try { window.location.href = intentUrl; } catch (err) {}
                 }
             }, 600);
-
-            if (!specificInv && currentDelegate) {
-                initSalesForm();
-            }
         }
 
         async function printDirectBluetoothESC(specificInv = null) {
-            const rec = specificInv || (await createInvoiceObject());
+            const rec = specificInv;
             if (!rec) return;
 
             let char = window.bluetoothPrinterChar;
@@ -1640,7 +1795,7 @@
                 let cName = systemSettings.companyName || "BLACK HORSE";
                 let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
 
-                let receiptText = `     [ ${cName} ]\n${systemSettings.companySubtitle || 'شركة بلاك هورس - موزع معتمد'}\n${cTax}\n--------------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالسيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\nالعميل: ${rec.client}\n${rec.village ? `القرية: ${rec.village}\n`:''}--------------------------------\nالمنتج          الكمية  السعر  الإجمالي\n--------------------------------\n`;
+                let receiptText = `     [ ${cName} ]\n${systemSettings.companySubtitle || 'شركة بلاك هورس - موزع معتمد'}\n${cTax}\n--------------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالسيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\nالعميل: ${rec.client}\n${rec.phone ? `موبايل: ${rec.phone}\n`:''}${rec.village ? `القرية: ${rec.village}\n`:''}${rec.route ? `الخط: ${rec.route}\n`:''}--------------------------------\nالمنتج          الكمية  السعر  الإجمالي\n--------------------------------\n`;
                 
                 rec.items.forEach(it => {
                     let nameLine = it.name.padEnd(16, ' ').substring(0, 16);
@@ -1674,9 +1829,6 @@
                 }
 
                 alert("✅ تم إرسال أمر الطباعة بنجاح إلى الطابعة الحرارية مباشرة!");
-                if (!specificInv && currentDelegate) {
-                    initSalesForm();
-                }
             } catch (err) {
                 console.error("Print Error:", err);
                 alert("❌ حدث خطأ أثناء إرسال أمر الطباعة: " + err.message);
@@ -1806,7 +1958,7 @@
                 }
             } else {
                 playBeep(false);
-                if (statusLabel) statusLabel.innerText = `⚠️ باركود جديد غير مسجل: (${scannedCode})`;
+                if (statusLabel) statusLabel.innerText = `⚠ باركود جديد غير مسجل: (${scannedCode})`;
                 openQuickAddBarcodeModal(scannedCode);
             }
         }
@@ -1865,7 +2017,7 @@
 
         // ==================== طباعة حرارية لسطح المكتب ====================
         function printDirectThermalDesktop(specificInv = null) {
-            const rec = specificInv || getFormDataForReceipt();
+            const rec = specificInv;
             if (!rec) return;
 
             const printArea = document.getElementById('thermalPrintArea');
@@ -1894,6 +2046,8 @@
                         <tr><td>التاريخ: ${rec.date}</td><td style="text-align:left;">فاتورة: #${rec.invNo}</td></tr>
                         <tr><td>السيارة: ${rec.vehicleName || 'عام'}</td><td style="text-align:left;">عداد: ${rec.odometer || '-'} كم</td></tr>
                         <tr><td>العميل: ${rec.client}</td><td style="text-align:left;">المندوب: ${rec.delegateName || ''}</td></tr>
+                        ${rec.phone ? `<tr><td colspan="2">موبايل: ${rec.phone}</td></tr>` : ''}
+                        ${rec.route ? `<tr><td colspan="2">الخط: ${rec.route}</td></tr>` : ''}
                     </table>
 
                     <table style="width:100%; font-size:11px; border-top:1px dashed #000; border-bottom:1px dashed #000; margin:4px 0;">
@@ -1923,36 +2077,6 @@
             setTimeout(() => { printArea.style.display = 'none'; }, 1000);
         }
 
-        function getFormDataForReceipt() {
-            const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
-            const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
-            const invDate = document.getElementById('invoiceDate').value;
-            const vehicleKey = document.getElementById('invoiceVehicleSelect').value;
-            const odometer = document.getElementById('invoiceOdometerInput').value;
-            const vehicleName = cloudVehicles[vehicleKey]?.name || vehicleKey;
-            let grand = 0, items = [];
-
-            products.forEach((p, idx) => {
-                const q = parseFloat(document.getElementById(`qty_${idx}`)?.value) || 0;
-                const pr = parseFloat(document.getElementById(`price_${idx}`)?.value) || 0;
-                if (q > 0) {
-                    const tot = q * pr;
-                    items.push({ name: p.name, qty: q, price: pr, total: tot });
-                    grand += tot;
-                }
-            });
-
-            if (items.length === 0) {
-                alert("يرجى إضافة صنف واحد على الأقل للطباعة.");
-                return null;
-            }
-
-            return {
-                invNo, date: invDate, client, delegateName: currentDelegate ? currentDelegate.name : '',
-                vehicleName, odometer, total: grand, items
-            };
-        }
-
         // ==================== مزامنة Firebase ====================
         db.ref('systemSettings').on('value', (s) => {
             if(s.val()) systemSettings = { ...defaultSettings, ...s.val() };
@@ -1963,6 +2087,7 @@
         db.ref('vehicles').on('value', (s) => {
             if(s.val()) cloudVehicles = { ...defaultVehicles, ...s.val() };
             else db.ref('vehicles').set(defaultVehicles);
+            updateVehicleSelectOptions();
             renderVehiclesOilTable();
             checkGlobalOilChangeAlerts();
             checkCurrentVehicleOilLimit();
@@ -2019,7 +2144,7 @@
             });
         }
 
-        // ==================== عدادات السيارات ====================
+        // ==================== عدادات السيارات وغيار الزيت اليومي ====================
         function onVehicleSelectChange() {
             const vKey = document.getElementById('invoiceVehicleSelect').value;
             const odoInput = document.getElementById('invoiceOdometerInput');
@@ -2030,7 +2155,7 @@
             }
             const car = cloudVehicles[vKey];
             if(car && car.currentKm) {
-                odoInput.placeholder = `آخر قراءة: ${car.currentKm} كم`;
+                odoInput.placeholder = `آخر قراءة مسجلة: ${car.currentKm} كم`;
             }
             checkCurrentVehicleOilLimit();
         }
@@ -2058,11 +2183,24 @@
         }
 
         function checkGlobalOilChangeAlerts() {
-            // تم إلغاء ظهور التنبيه في الواجهة الرئيسية برة تماماً بناءً على طلبك
             const banner = document.getElementById('oilChangeAlertBanner');
-            if(banner) {
+            if(!banner) return;
+
+            let alerts = [];
+            for(let key in cloudVehicles) {
+                let v = cloudVehicles[key];
+                let driven = (parseFloat(v.currentKm) || 0) - (parseFloat(v.lastOilKm) || 0);
+                let limit = v.interval || 1500;
+                if(driven >= limit) {
+                    alerts.push(`🚨 <b>تحذير صيانة:</b> سيارة (<b>${v.name}</b>) قطعت <b>${driven} كم</b> وتجاوزت مسافة غيار الزيت المقررة (<b>${limit} كم</b>) - يلزم غيار الزيت فوراً!`);
+                }
+            }
+
+            if(alerts.length > 0) {
+                banner.style.display = 'block';
+                banner.innerHTML = alerts.join('<hr style="margin:6px 0; border:0; border-top:1px solid #fecdd3;">');
+            } else {
                 banner.style.display = 'none';
-                banner.innerHTML = '';
             }
         }
 
@@ -2070,6 +2208,8 @@
             const tbody = document.getElementById('vehiclesOilTableBody');
             if(!tbody) return;
             tbody.innerHTML = '';
+
+            const isAdm = (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
 
             for(let key in cloudVehicles) {
                 let v = cloudVehicles[key];
@@ -2083,6 +2223,8 @@
                     ? `<span style="color:#dc2626; font-weight:bold; background:#ffe4e6; padding:2px 6px; border-radius:4px;">🚨 يلزم غيار زيت (${driven} كم)</span>`
                     : `<span style="color:#16a34a; font-weight:bold;">🟢 سليم (متبقي ${remaining} كم)</span>`;
 
+                let deleteBtn = isAdm ? `<button class="btn btn-danger" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="deleteVehicleFromFleet('${key}')">🗑️ حذف</button>` : '';
+
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${v.name}</b></td>
@@ -2091,7 +2233,8 @@
                         <td><b>${driven} كم</b></td>
                         <td>${statusBadge}</td>
                         <td>
-                            <button class="btn btn-warning" style="padding:4px 8px; font-size:11px; width:auto; margin:0;" onclick="openOilChangeModal('${key}')">🛢️ تسجيل غيار زيت</button>
+                            <button class="btn btn-warning" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="openOilChangeModal('${key}')">🛢️ تسجيل غيار زيت</button>
+                            ${deleteBtn}
                         </td>
                     </tr>`;
             }
@@ -2168,6 +2311,10 @@
             updateClientsDatalist();
         });
 
+        db.ref('clientsPhones').on('value', (s) => {
+            cloudClientsPhones = s.val() || {};
+        });
+
         db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
         db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; renderMenofTable(); });
         
@@ -2231,12 +2378,14 @@
                 if (jsField && !jsField.value) jsField.value = data.js || '';
             }
         });
-        // ==================== إعداد خطوط السير والفلترة ====================
+
+        // ==================== إعداد وتغذية خطوط السير لكافة الشاشات ====================
         function populateRoutesList() {
             const selectRoute = document.getElementById('selectRouteFilter');
-            if(!selectRoute) return;
+            const savedRoute = document.getElementById('savedFilterRoute');
+            const reportRoute = document.getElementById('reportRouteSelect');
 
-            let currentVal = selectRoute.value || 'ALL';
+            let currentVal = selectRoute ? (selectRoute.value || 'ALL') : 'ALL';
             let routesSet = new Set();
 
             for(let name in cloudClientsRoutes) {
@@ -2250,20 +2399,40 @@
                 if(r && r.trim()) routesSet.add(r.trim());
             }
 
+            cloudSales.forEach(s => {
+                if(s.route && s.route.trim() && s.route !== 'ALL') {
+                    routesSet.add(s.route.trim());
+                }
+            });
+
             if(currentDelegate && currentDelegate.allowedRoutes && Array.isArray(currentDelegate.allowedRoutes)) {
                 currentDelegate.allowedRoutes.forEach(r => {
                     if(r && r !== 'ALL' && r.trim()) routesSet.add(r.trim());
                 });
             }
 
-            let html = '<option value="ALL">🛣️ عرض كل الخطوط (كل العملاء)</option>';
+            let htmlOptions = '<option value="ALL">🛣️ كل الخطوط</option>';
             routesSet.forEach(route => {
-                html += `<option value="${route}">📍 ${route}</option>`;
+                htmlOptions += `<option value="${route}">📍 ${route}</option>`;
             });
 
-            selectRoute.innerHTML = html;
-            if(routesSet.has(currentVal) || currentVal === 'ALL') selectRoute.value = currentVal;
-            else selectRoute.value = 'ALL';
+            if(selectRoute) {
+                selectRoute.innerHTML = '<option value="ALL">🛣️ عرض كل الخطوط (كل العملاء)</option>' + Array.from(routesSet).map(r => `<option value="${r}">📍 ${r}</option>`).join('');
+                if(routesSet.has(currentVal) || currentVal === 'ALL') selectRoute.value = currentVal;
+                else selectRoute.value = 'ALL';
+            }
+
+            if(savedRoute) {
+                let prevVal = savedRoute.value || 'ALL';
+                savedRoute.innerHTML = htmlOptions;
+                if(routesSet.has(prevVal)) savedRoute.value = prevVal;
+            }
+
+            if(reportRoute) {
+                let prevVal = reportRoute.value || 'ALL';
+                reportRoute.innerHTML = htmlOptions;
+                if(routesSet.has(prevVal)) reportRoute.value = prevVal;
+            }
         }
 
         function onRouteFilterChange() { 
@@ -2274,6 +2443,7 @@
             document.getElementById('lblClientCode').innerText = '--';
             document.getElementById('lblClientRoute').innerText = (selRoute !== 'ALL' ? selRoute : '--');
             document.getElementById('clientMonthlyHistory').style.display = 'none';
+            onClientNameInput();
         }
 
         function onVillageInputSyncRoute() {
@@ -2292,6 +2462,7 @@
                 db.ref('clientsRoutes/' + clientVal).set(guessedRoute).catch(() => {});
                 document.getElementById('lblClientRoute').innerText = guessedRoute;
             }
+            populateRoutesList();
         }
 
         function renderRepRoutesInputs() {
@@ -2931,6 +3102,7 @@
             document.getElementById('loginMainForm').style.display = 'block';
         }
 
+        // ==================== تسجيل العميل الإلكتروني (رقم الهاتف اختيارياً) ====================
         function registerCustomerWithEmail() {
             const name = document.getElementById('regClientName').value.trim();
             const email = document.getElementById('regClientEmail').value.trim().toLowerCase();
@@ -2940,17 +3112,22 @@
             const address = document.getElementById('regClientAddress').value.trim();
             const village = document.getElementById('regClientVillage').value.trim();
 
-            if(!name || !password || !phoneInput) {
-                alert("❌ يرجى إدخال اسم المحل، كلمة السر، ورقم التليفون.");
+            if(!name || !password) {
+                alert("❌ يرجى إدخال اسم المحل وكلمة السر للحساب على الأقل.");
                 return;
             }
 
-            const fullPhone = "+20" + phoneInput.replace(/^0+/, '');
+            const fullPhone = phoneInput ? ("+20" + phoneInput.replace(/^0+/, '')) : "";
             const clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
             const uid = "cust_" + Date.now();
 
             cloudClients[name] = clientCode;
             db.ref('clients').set(cloudClients).catch(() => {});
+
+            if (fullPhone) {
+                cloudClientsPhones[name] = fullPhone;
+                db.ref('clientsPhones/' + name).set(fullPhone).catch(() => {});
+            }
 
             if(route) {
                 cloudClientsRoutes[name] = route;
@@ -2965,7 +3142,7 @@
             const custData = {
                 uid: uid,
                 name: name,
-                email: email || (phoneInput+"@blackhorse.com"),
+                email: email || ((phoneInput || clientCode) + "@blackhorse.com"),
                 pass: password,
                 phone: fullPhone,
                 route: route,
@@ -3381,7 +3558,7 @@
                 cloudSales.push({
                     id: String(Date.now()), invNo: Math.floor(1000 + Math.random() * 9000), date: order.date,
                     delegateCode: "portal_client", delegateName: "طلب معتمد من بوابة العميل (قطاعي)",
-                    client: order.clientName, clientCode: order.clientCode || '', village: order.village || '',
+                    client: order.clientName, clientCode: order.clientCode || '', phone: order.phone || '', village: order.village || '',
                     route: order.route || '', total: order.grandTotal, totalQty: order.totalUnits || 1, status: 'active', items: order.items || [],
                     clientLocation: order.location || null
                 });
@@ -3410,6 +3587,8 @@
         function initSalesForm() {
             if(!currentDelegate || currentDelegate.role === 'viewer') return;
 
+            currentSavedInvoice = null;
+
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('invoiceDate');
             if(dateInput) {
@@ -3427,10 +3606,17 @@
             document.getElementById('invoiceNo').value = Math.floor(1000 + Math.random() * 9000);
             document.getElementById('clientName').value = '';
             document.getElementById('clientVillage').value = '';
+            document.getElementById('clientPhoneInput').value = '';
             document.getElementById('lblClientCode').innerText = '--';
             document.getElementById('lblClientRoute').innerText = '--';
             document.getElementById('clientMonthlyHistory').style.display = 'none';
             
+            const badge = document.getElementById('clientPhoneStatusBadge');
+            if(badge) {
+                badge.innerText = "ℹ️ رقم الهاتف اختياري";
+                badge.style.color = "#059669";
+            }
+
             const list = document.getElementById('productsList');
             if(!list) return;
 
@@ -3471,6 +3657,7 @@
                 </div>`;
             calcTotals();
             updateDelegateTodaySummary();
+            updateVehicleSelectOptions();
         }
 
         function calcTotals() {
@@ -3485,14 +3672,20 @@
             document.getElementById('grandTotal').innerText = grand.toFixed(2);
         }
 
+        // ==================== محرك إنشاء الفاتورة (رقم الهاتف اختيارياً) ====================
         async function createInvoiceObject() {
             if(!currentDelegate || currentDelegate.role === 'viewer') return null;
+
+            if (isInvoiceSaving) {
+                console.warn("⚠️ جاري حفظ فاتورة بالفعل... يرجى الانتظار");
+                return null;
+            }
 
             const vehicleKey = document.getElementById('invoiceVehicleSelect').value;
             const odometerReading = parseFloat(document.getElementById('invoiceOdometerInput').value);
 
             if(!vehicleKey) {
-                alert("❌ بيان إلزامي: يرجى اختيار السيارة التي سوف تتحرك بها (الدبابة، بايك 1، بايك 2).");
+                alert("❌ بيان إلزامي: يرجى اختيار السيارة التي سوف تتحرك بها.");
                 document.getElementById('invoiceVehicleSelect').focus();
                 return null;
             }
@@ -3503,10 +3696,29 @@
                 return null;
             }
 
+            const client = document.getElementById('clientName').value.trim();
+            if(!client) {
+                alert("❌ يرجى كتابة أو اختيار اسم العميل أولاً.");
+                document.getElementById('clientName').focus();
+                return null;
+            }
+
+            let existingPhone = cloudClientsPhones[client] || "";
+            if(!existingPhone) {
+                for(let uid in portalCustomersDB) {
+                    if(portalCustomersDB[uid].name === client && portalCustomersDB[uid].phone) {
+                        existingPhone = portalCustomersDB[uid].phone;
+                        break;
+                    }
+                }
+            }
+
+            let clientPhone = document.getElementById('clientPhoneInput').value.trim();
+            const finalPhone = existingPhone || clientPhone || "";
+
             const vehicleName = cloudVehicles[vehicleKey]?.name || vehicleKey;
-            const client = document.getElementById('clientName').value.trim() || "عميل نقدي";
             const village = document.getElementById('clientVillage').value.trim() || "";
-            const invNo = document.getElementById('invoiceNo').value.trim() || "1001";
+            const invNo = document.getElementById('invoiceNo').value.trim() || String(Math.floor(1000 + Math.random() * 9000));
             const invDate = document.getElementById('invoiceDate').value;
             const route = document.getElementById('selectRouteFilter').value;
 
@@ -3515,6 +3727,11 @@
                 clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
                 cloudClients[client] = clientCode;
                 db.ref('clients/' + client).set(clientCode).catch(() => {});
+            }
+
+            if(!existingPhone && clientPhone) {
+                cloudClientsPhones[client] = clientPhone;
+                db.ref('clientsPhones/' + client).set(clientPhone).catch(() => {});
             }
 
             let targetDelCode = currentDelegate.code;
@@ -3542,67 +3759,118 @@
                     let cartonsVal = Math.floor(qRibbons / 50);
                     let remVal = qRibbons % 50;
                     let qtyStr = cartonsVal > 0 ? `Outer ${pr} / ${cartonsVal} كرتونة${remVal>0?` + ${remVal} رابطة`:''}` : `Outer ${pr} / ${qRibbons} رابطة`;
-                    itemsSoldList.push({ name: p.name, code: p.code, qty: qRibbons, qtyText: qtyStr, price: pr, total: tot, unit: 'رابطة' });
+                    itemsSoldList.push({ name: p.name, code: p.code, qty: qRibbons, qtyText: qtyStr, price: pr, total: tot });
                     carStock[p.code] = parseFloat(((carStock[p.code] || 0) - qCartonsNeeded).toFixed(4));
                 }
             }
 
             if (!hasItems) { alert("أدخل كمية لصنف واحد على الأقل!"); return null; }
 
-            const freshCoords = await getCurrentGpsCoords();
-            let locObj = null;
-            if (freshCoords && freshCoords.lat) {
-                locObj = {
-                    lat: freshCoords.lat,
-                    lng: freshCoords.lng,
-                    speed: freshCoords.speed || 0,
-                    mapUrl: `https://maps.google.com/?q=${freshCoords.lat},${freshCoords.lng}`
+            const nowTime = Date.now();
+            if(nowTime - lastSavedInvoiceTimestamp < 45000 && currentSavedInvoice && currentSavedInvoice.client === client && Math.abs(currentSavedInvoice.total - grand) < 0.01) {
+                alert("⚠️ تم حفظ هذه الفاتورة بالفعل للتو منعاً للتكرار!");
+                return currentSavedInvoice;
+            }
+
+            isInvoiceSaving = true;
+
+            try {
+                const freshCoords = await getCurrentGpsCoords();
+                let locObj = null;
+                if (freshCoords && freshCoords.lat) {
+                    locObj = {
+                        lat: freshCoords.lat,
+                        lng: freshCoords.lng,
+                        speed: freshCoords.speed || 0,
+                        mapUrl: `https://maps.google.com/?q=${freshCoords.lat},${freshCoords.lng}`
+                    };
+                }
+
+                let clientLoc = locObj || cloudClientsLocations[client] || null;
+                if (locObj) {
+                    cloudClientsLocations[client] = locObj;
+                    db.ref('clientsLocations/' + client).set(locObj).catch(() => {});
+                }
+
+                if(cloudDelegates[targetDelCode]) {
+                    cloudDelegates[targetDelCode].carStock = carStock;
+                    cloudDelegates[targetDelCode].lastVehicle = vehicleName;
+                    cloudDelegates[targetDelCode].lastOdometer = odometerReading;
+                    db.ref('delegates/' + targetDelCode).set(cloudDelegates[targetDelCode]).catch(() => {});
+                }
+
+                if (!cloudVehicles[vehicleKey]) cloudVehicles[vehicleKey] = { ...defaultVehicles[vehicleKey] };
+                if (!cloudVehicles[vehicleKey].dailyLogs) cloudVehicles[vehicleKey].dailyLogs = {};
+
+                const logDate = invDate || new Date().toISOString().split('T')[0];
+                if (!cloudVehicles[vehicleKey].dailyLogs[logDate]) {
+                    cloudVehicles[vehicleKey].dailyLogs[logDate] = odometerReading;
+                    cloudVehicles[vehicleKey].currentKm = odometerReading;
+                    db.ref('vehicles/' + vehicleKey).set(cloudVehicles[vehicleKey]).catch(() => {});
+                } else if (odometerReading > (cloudVehicles[vehicleKey].currentKm || 0)) {
+                    cloudVehicles[vehicleKey].currentKm = odometerReading;
+                    db.ref('vehicles/' + vehicleKey + '/currentKm').set(odometerReading).catch(() => {});
+                }
+
+                let foundInPortal = false;
+                for(let uid in portalCustomersDB) {
+                    if(portalCustomersDB[uid].name && portalCustomersDB[uid].name.trim().toLowerCase() === client.toLowerCase()) {
+                        foundInPortal = true;
+                        break;
+                    }
+                }
+
+                if(!foundInPortal) {
+                    const newUid = "cust_" + Date.now();
+                    const newCustData = {
+                        uid: newUid,
+                        name: client,
+                        clientCode: clientCode,
+                        route: (route !== 'ALL' ? route : (cloudClientsRoutes[client] || '')),
+                        village: village || '',
+                        phone: finalPhone || '',
+                        pass: '123456',
+                        customerType: 'retail',
+                        location: clientLoc
+                    };
+                    portalCustomersDB[newUid] = newCustData;
+                    db.ref('portalCustomers/' + newUid).set(newCustData).then(() => {
+                        renderAdminPortalCustomersTable();
+                        updateClientsDatalist();
+                    }).catch(() => {});
+                }
+
+                let recordId = String(Date.now());
+                const salesRecord = {
+                    id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
+                    delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
+                    client: client, phone: finalPhone, village: village, route: (route !== 'ALL' ? route : (cloudClientsRoutes[client] || '')), clientCode: clientCode,
+                    vehicleKey: vehicleKey, vehicleName: vehicleName, odometer: odometerReading,
+                    total: grand, totalQty: totalRibbonsCount, status: 'active', items: itemsSoldList,
+                    location: locObj,
+                    clientLocation: clientLoc
                 };
+
+                cloudSales.push(salesRecord);
+                await db.ref('sales').set(Object.assign({}, cloudSales));
+                
+                currentSavedInvoice = salesRecord;
+                lastSavedInvoiceTimestamp = Date.now();
+
+                return salesRecord;
+            } finally {
+                isInvoiceSaving = false;
             }
-
-            let clientLoc = locObj || cloudClientsLocations[client] || null;
-            if (locObj) {
-                cloudClientsLocations[client] = locObj;
-                db.ref('clientsLocations/' + client).set(locObj).catch(() => {});
-            }
-
-            if(cloudDelegates[targetDelCode]) {
-                cloudDelegates[targetDelCode].carStock = carStock;
-                cloudDelegates[targetDelCode].lastVehicle = vehicleName;
-                cloudDelegates[targetDelCode].lastOdometer = odometerReading;
-                db.ref('delegates/' + targetDelCode).set(cloudDelegates[targetDelCode]).catch(() => {});
-            }
-
-            if (!cloudVehicles[vehicleKey]) cloudVehicles[vehicleKey] = { ...defaultVehicles[vehicleKey] };
-            if (!cloudVehicles[vehicleKey].dailyLogs) cloudVehicles[vehicleKey].dailyLogs = {};
-
-            const logDate = invDate || new Date().toISOString().split('T')[0];
-            if (!cloudVehicles[vehicleKey].dailyLogs[logDate]) {
-                cloudVehicles[vehicleKey].dailyLogs[logDate] = odometerReading;
-                cloudVehicles[vehicleKey].currentKm = odometerReading;
-                db.ref('vehicles/' + vehicleKey).set(cloudVehicles[vehicleKey]).catch(() => {});
-            }
-
-            let recordId = String(Date.now());
-            const salesRecord = {
-                id: recordId, invNo: invNo, date: invDate, delegateCode: targetDelCode,
-                delegateName: cloudDelegates[targetDelCode] ? cloudDelegates[targetDelCode].name : currentDelegate.name, 
-                client: client, village: village, route: route, clientCode: clientCode,
-                vehicleKey: vehicleKey, vehicleName: vehicleName, odometer: odometerReading,
-                total: grand, totalQty: totalRibbonsCount, status: 'active', items: itemsSoldList,
-                location: locObj,
-                clientLocation: clientLoc
-            };
-
-            cloudSales.push(salesRecord);
-            await db.ref('sales').set(Object.assign({}, cloudSales));
-            return salesRecord;
         }
 
         async function saveAndEmailOnly() {
+            if (currentSavedInvoice) {
+                alert("✅ الفاتورة محفوظة بالفعل في النظام!");
+                return;
+            }
             const rec = await createInvoiceObject();
             if(rec) {
-                alert("✅ تم حفظ الفاتورة وتحديث عداد السيارة وتثبيت موقع العميل GPS بنجاح!");
+                alert("✅ تم حفظ الفاتورة وتسجيل العميل تلقائياً بجدول إدارة العملاء وتثبيت عداد اليوم وموقع GPS بنجاح!");
                 initSalesForm();
             }
         }
@@ -3611,56 +3879,28 @@
             window.open(`https://api.whatsapp.com/send?phone=${getTargetWhatsApp()}&text=${encodeURIComponent("فاتورة مبيعات " + (systemSettings.companyName || "بلاك هورس"))}`, '_blank');
         }
 
-        // إلغاء الفاتورة واسترجاع كميات الأصناف تلقائياً لرصيد سيارة المندوب والجرد
         function cancelInvoice(id) {
-            if(!confirm("⚠️ هل أنت متأكد من إلغاء هذه الفاتورة؟ سيتم إرجاع كميات الأصناف كاملة إلى رصيد السيارة والجرد.")) return;
+            if(!confirm("⚠️ هل أنت متأكد من إلغاء هذه الفاتورة؟")) return;
             let targetInv = cloudSales.find(s => String(s.id) === String(id));
             if(targetInv) {
-                if(targetInv.status === 'cancelled') {
-                    alert("الفاتورة ملغاة بالفعل مسبقاً.");
-                    return;
-                }
-
                 targetInv.status = 'cancelled';
                 targetInv.total = 0;
-
-                // إرجاع البضاعة لسيارة المندوب والجرد
-                let delCode = targetInv.delegateCode;
-                if(delCode && cloudDelegates[delCode] && targetInv.items && targetInv.items.length > 0) {
-                    if(!cloudDelegates[delCode].carStock) {
-                        cloudDelegates[delCode].carStock = { ...defaultCarStock };
-                    }
-                    targetInv.items.forEach(it => {
-                        let qRibbons = parseFloat(it.qty) || 0;
-                        let qCartons = (it.unit === 'كرتونة') ? qRibbons : (qRibbons / 50);
-                        let pCode = it.code;
-                        if(!pCode) {
-                            let foundP = products.find(p => p.name === it.name);
-                            if(foundP) pCode = foundP.code;
-                        }
-                        if(pCode) {
-                            cloudDelegates[delCode].carStock[pCode] = parseFloat(((cloudDelegates[delCode].carStock[pCode] || 0) + qCartons).toFixed(4));
-                        }
-                    });
-                    db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock);
-                }
-
                 db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
-                    alert("✅ تم إلغاء الفاتورة بنجاح وإعادة الكميات المباعة لرصيد السيارة وجرد المندوب!");
+                    alert("✅ تم إلغاء الفاتورة.");
                     renderSavedInvoices();
                     renderDailyReport();
-                    renderCarStockTable();
-                    initSalesForm();
                 });
             }
         }
 
+        // ==================== الفواتير المحفوظة والبحث بالخط ====================
         function renderSavedInvoices() {
             const tbody = document.getElementById('savedInvoicesBody');
             if(!tbody) return;
             tbody.innerHTML = '';
 
             const selectedDel = document.getElementById('filterDelegateSelect')?.value;
+            const selectedRoute = document.getElementById('savedFilterRoute')?.value || 'ALL';
             const fromDate = document.getElementById('savedFilterFrom')?.value;
             const toDate = document.getElementById('savedFilterTo')?.value;
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
@@ -3670,34 +3910,40 @@
                     if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
                     if(isAdm && selectedDel && selectedDel !== 'ALL' && s.delegateCode !== selectedDel) return false;
                 }
+                if(selectedRoute !== 'ALL') {
+                    let sRoute = (s.route || cloudClientsRoutes[s.client] || '').trim();
+                    if(normalizeRouteName(sRoute) !== normalizeRouteName(selectedRoute)) return false;
+                }
                 if(fromDate && s.date < fromDate) return false;
                 if(toDate && s.date > toDate) return false;
                 return true;
             });
 
-            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="9">لا توجد فواتير مطابقة.</td></tr>`; return; }
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="10">لا توجد فواتير مطابقة للخط أو التاريخ المحدد.</td></tr>`; return; }
             
             filtered.slice().reverse().forEach(inv => {
                 let isCancelled = (inv.status === 'cancelled');
                 let statusBadge = isCancelled ? `<span style="color:#dc2626; font-weight:bold;">ملغاة</span>` : `<span style="color:#16a34a; font-weight:bold;">نشطة</span>`;
-                
+                let displayRoute = inv.route || cloudClientsRoutes[inv.client] || '-';
+
                 let actionButtons = `<button class="btn btn-thermal" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printDirectThermalDesktop(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ حراري</button> `;
                 actionButtons += `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">📱 RawBT</button> `;
-                actionButtons += `<button class="btn" style="background:#0d9488; color:#fff; padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printDirectBluetoothESC(cloudSales.find(x=>x.id==='${inv.id}'))">⚡ بلوتوث مباشر</button> `;
+                actionButtons += `<button class="btn" style="background:#0d9488; color:#fff; padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printDirectBluetoothESC(cloudSales.find(x=>x.id==='${inv.id}'))">⚡ بلوتوث</button> `;
                 actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="viewInvoiceDetails('${inv.id}')">👁️</button> `;
                 
                 if (isAdm) {
-                    actionButtons += `<button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openEditInvoiceModal('${inv.id}')">✏️ تعديل</button> `;
+                    actionButtons += `<button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openEditInvoiceModal('${inv.id}')">✏️ تعديل الأصناف</button> `;
                 }
 
                 if(!isCancelled && (isAdm || (currentDelegate && inv.delegateCode === currentDelegate.code))) {
                     actionButtons += `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="cancelInvoice('${inv.id}')">❌</button>`;
                 }
 
-                tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}</td><td><b>${inv.vehicleName || '-'}</b></td><td>${inv.odometer ? inv.odometer + ' كم' : '-'}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
+                tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}<br><small style="color:#64748b;">${inv.phone||''}</small></td><td><span style="color:#1e40af; font-weight:bold;">${displayRoute}</span></td><td><b>${inv.vehicleName || '-'}</b></td><td>${inv.odometer ? inv.odometer + ' كم' : '-'}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
             });
         }
 
+        // ==================== تعديل الأصناف والأسعار بالفاتورة للمدير ====================
         function openEditInvoiceModal(id) {
             let inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
@@ -3706,6 +3952,7 @@
             document.getElementById('modalEditInvNo').value = inv.invNo || '';
             document.getElementById('modalEditInvDate').value = inv.date || '';
             document.getElementById('modalEditInvClient').value = inv.client || '';
+            document.getElementById('modalEditInvPhone').value = inv.phone || '';
             document.getElementById('modalEditInvVehicle').value = inv.vehicleName || '';
             document.getElementById('modalEditInvOdometer').value = inv.odometer || '';
             document.getElementById('modalEditInvVillage').value = inv.village || '';
@@ -3714,7 +3961,98 @@
             document.getElementById('modalEditInvTotal').value = inv.total || 0;
             document.getElementById('modalEditInvStatus').value = inv.status || 'active';
 
+            renderEditInvoiceItemsTable(inv.items || []);
             document.getElementById('editInvoiceModal').style.display = 'flex';
+        }
+
+        function renderEditInvoiceItemsTable(items) {
+            const tbody = document.getElementById('modalEditInvItemsBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            if(!items || items.length === 0) {
+                tbody.innerHTML = `<tr id="noEditItemsRow"><td colspan="5" style="color:#64748b;">لا توجد أصناف في هذه الفاتورة. انقر على "إضافة صنف جديد".</td></tr>`;
+                return;
+            }
+
+            items.forEach((it) => {
+                tbody.appendChild(createEditInvoiceItemRow(it.name, it.qty, it.price, it.code));
+            });
+            calcEditInvoiceModalTotal();
+        }
+
+        function createEditInvoiceItemRow(name = '', qty = 1, price = 0, code = '') {
+            const tr = document.createElement('tr');
+            tr.className = 'edit-inv-item-row';
+            
+            let selectOptions = `<option value="">-- اختر الصنف --</option>`;
+            products.forEach(p => {
+                let selected = (p.name === name || p.code === code) ? 'selected' : '';
+                selectOptions += `<option value="${p.code}" data-name="${p.name}" data-price="${p.price || 480}" ${selected}>${p.name}</option>`;
+            });
+
+            tr.innerHTML = `
+                <td>
+                    <select class="edit-item-prod-select" onchange="onEditInvoiceProductChange(this)" style="width:100%; font-size:11px; padding:4px;">
+                        ${selectOptions}
+                    </select>
+                    <input type="hidden" class="edit-item-name" value="${name}">
+                    <input type="hidden" class="edit-item-code" value="${code}">
+                </td>
+                <td><input type="number" class="edit-item-qty" value="${qty}" min="0.1" step="0.1" oninput="calcEditInvoiceModalTotal()" style="width:100%; text-align:center; font-weight:bold; padding:4px;"></td>
+                <td><input type="number" class="edit-item-price" value="${price}" min="0" step="1" oninput="calcEditInvoiceModalTotal()" style="width:100%; text-align:center; padding:4px;"></td>
+                <td><input type="text" class="edit-item-total" value="${(qty * price).toFixed(2)}" readonly style="width:100%; text-align:center; font-weight:bold; background:#f1f5f9; padding:4px;"></td>
+                <td><button type="button" class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="removeRowFromEditInvoiceModal(this)">❌</button></td>
+            `;
+            return tr;
+        }
+
+        function onEditInvoiceProductChange(selectElem) {
+            const selectedOpt = selectElem.options[selectElem.selectedIndex];
+            const tr = selectElem.closest('tr');
+            if(!tr) return;
+
+            if(selectedOpt && selectedOpt.value) {
+                const pName = selectedOpt.getAttribute('data-name');
+                const pCode = selectedOpt.value;
+                const pPrice = parseFloat(selectedOpt.getAttribute('data-price')) || 480;
+
+                tr.querySelector('.edit-item-name').value = pName;
+                tr.querySelector('.edit-item-code').value = pCode;
+                tr.querySelector('.edit-item-price').value = pPrice;
+            }
+            calcEditInvoiceModalTotal();
+        }
+
+        function addNewRowToEditInvoiceModal() {
+            const tbody = document.getElementById('modalEditInvItemsBody');
+            const noRow = document.getElementById('noEditItemsRow');
+            if(noRow) noRow.remove();
+
+            const defaultProd = products[0] || { name: 'صنف', price: 480, code: '' };
+            tbody.appendChild(createEditInvoiceItemRow(defaultProd.name, 1, defaultProd.price, defaultProd.code));
+            calcEditInvoiceModalTotal();
+        }
+
+        function removeRowFromEditInvoiceModal(btn) {
+            const tr = btn.closest('tr');
+            if(tr) tr.remove();
+            calcEditInvoiceModalTotal();
+        }
+
+        function calcEditInvoiceModalTotal() {
+            let grand = 0;
+            const rows = document.querySelectorAll('.edit-inv-item-row');
+            rows.forEach(tr => {
+                const q = parseFloat(tr.querySelector('.edit-item-qty')?.value) || 0;
+                const p = parseFloat(tr.querySelector('.edit-item-price')?.value) || 0;
+                const tot = q * p;
+                if(tr.querySelector('.edit-item-total')) tr.querySelector('.edit-item-total').value = tot.toFixed(2);
+                grand += tot;
+            });
+            if(document.getElementById('modalEditInvTotal')) {
+                document.getElementById('modalEditInvTotal').value = grand.toFixed(2);
+            }
         }
 
         function closeEditInvoiceModal() { document.getElementById('editInvoiceModal').style.display = 'none'; }
@@ -3724,50 +4062,57 @@
             let inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
 
-            const prevStatus = inv.status;
-            const newStatus = document.getElementById('modalEditInvStatus').value;
-
             inv.invNo = document.getElementById('modalEditInvNo').value.trim();
             inv.date = document.getElementById('modalEditInvDate').value;
             inv.client = document.getElementById('modalEditInvClient').value.trim();
+            inv.phone = document.getElementById('modalEditInvPhone').value.trim();
             inv.vehicleName = document.getElementById('modalEditInvVehicle').value.trim();
             inv.odometer = parseFloat(document.getElementById('modalEditInvOdometer').value) || 0;
             inv.village = document.getElementById('modalEditInvVillage').value.trim();
             inv.route = document.getElementById('modalEditInvRoute').value.trim();
-            inv.total = parseFloat(document.getElementById('modalEditInvTotal').value) || 0;
-            inv.status = newStatus;
+            inv.status = document.getElementById('modalEditInvStatus').value;
 
-            // إذا تم تغيير الحالة إلى "ملغاة" عبر شاشة التعديل يتم إرجاع البضاعة
-            if (prevStatus !== 'cancelled' && newStatus === 'cancelled') {
-                inv.total = 0;
-                let delCode = inv.delegateCode;
-                if(delCode && cloudDelegates[delCode] && inv.items && inv.items.length > 0) {
-                    if(!cloudDelegates[delCode].carStock) {
-                        cloudDelegates[delCode].carStock = { ...defaultCarStock };
-                    }
-                    inv.items.forEach(it => {
-                        let qRibbons = parseFloat(it.qty) || 0;
-                        let qCartons = (it.unit === 'كرتونة') ? qRibbons : (qRibbons / 50);
-                        let pCode = it.code;
-                        if(!pCode) {
-                            let foundP = products.find(p => p.name === it.name);
-                            if(foundP) pCode = foundP.code;
-                        }
-                        if(pCode) {
-                            cloudDelegates[delCode].carStock[pCode] = parseFloat(((cloudDelegates[delCode].carStock[pCode] || 0) + qCartons).toFixed(4));
-                        }
+            // تجميع وتحديث أصناف الفاتورة وأسعارها
+            let updatedItems = [];
+            let updatedTotalQty = 0;
+            let computedGrandTotal = 0;
+
+            const rows = document.querySelectorAll('.edit-inv-item-row');
+            rows.forEach(tr => {
+                const name = tr.querySelector('.edit-item-name')?.value || 'صنف';
+                const code = tr.querySelector('.edit-item-code')?.value || '';
+                const qty = parseFloat(tr.querySelector('.edit-item-qty')?.value) || 0;
+                const price = parseFloat(tr.querySelector('.edit-item-price')?.value) || 0;
+                
+                if(qty > 0) {
+                    const total = qty * price;
+                    computedGrandTotal += total;
+                    updatedTotalQty += qty;
+                    updatedItems.push({
+                        name: name,
+                        code: code,
+                        qty: qty,
+                        price: price,
+                        total: total,
+                        qtyText: `Outer ${price} / ${qty} وحدة`
                     });
-                    db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock);
                 }
+            });
+
+            inv.items = updatedItems;
+            inv.totalQty = updatedTotalQty;
+            inv.total = parseFloat(document.getElementById('modalEditInvTotal').value) || computedGrandTotal;
+
+            if(inv.phone) {
+                cloudClientsPhones[inv.client] = inv.phone;
+                db.ref('clientsPhones/' + inv.client).set(inv.phone).catch(() => {});
             }
 
             db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
-                alert("✅ تم تعديل وحفظ بيانات الفاتورة بنجاح!");
+                alert("✅ تم تعديل الفاتورة والأصناف والأسعار بنجاح!");
                 closeEditInvoiceModal();
                 renderSavedInvoices();
                 renderDailyReport();
-                renderCarStockTable();
-                initSalesForm();
             });
         }
 
@@ -3792,16 +4137,17 @@
                     </div>`;
             }
 
-            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>السيارة:</b> ${inv.vehicleName || 'عام'} (عداد: ${inv.odometer || '-'} كم)<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>الخط:</b> ${inv.route || 'غير محدد'}<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
+            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>السيارة:</b> ${inv.vehicleName || 'عام'} (عداد: ${inv.odometer || '-'} كم)<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>رقم الموبايل:</b> ${inv.phone || 'غير مسجل'}<br><b>الخط:</b> ${inv.route || 'غير محدد'}<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
             document.getElementById('invoiceModal').style.display = 'flex';
         }
 
         function closeInvoiceModal() { document.getElementById('invoiceModal').style.display = 'none'; }
 
-        // ==================== التقارير وتصدير مسحوبات العملاء Excel ====================
+        // ==================== التقارير والبحث بالخط والإكسيل ====================
         function renderDailyReport() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
             const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
+            const selRoute = document.getElementById('reportRouteSelect')?.value || 'ALL';
             const selClient = document.getElementById('reportClientSelect')?.value;
             const fromDate = document.getElementById('filterFromDate')?.value;
             const toDate = document.getElementById('filterToDate')?.value;
@@ -3816,6 +4162,10 @@
                 if(s.status === 'cancelled') return false;
                 if(currentDelegate && !isAdm && s.delegateCode !== currentDelegate.code) return false;
                 if(isAdm && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
+                if(selRoute !== 'ALL') {
+                    let sRoute = (s.route || cloudClientsRoutes[s.client] || '').trim();
+                    if(normalizeRouteName(sRoute) !== normalizeRouteName(selRoute)) return false;
+                }
                 if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
                 if(fromDate && s.date < fromDate) return false;
                 if(toDate && s.date > toDate) return false;
@@ -3841,7 +4191,8 @@
                             if(qMap[it.code] !== undefined) qMap[it.code] += (it.unit === 'كرتونة' ? it.qty * 50 : it.qty); 
                         });
                     }
-                    invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td>${s.village || '-'}</td><td>${s.delegateName}</td><td><b>${s.total}</b> ج.م</td></tr>`;
+                    let rShow = s.route || cloudClientsRoutes[s.client] || '-';
+                    invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td><b>${rShow}</b></td><td>${s.village || '-'}</td><td>${s.delegateName}</td><td><b>${s.total}</b> ج.م</td></tr>`;
                 });
             }
 
@@ -3880,6 +4231,7 @@
         function exportClientWithdrawalsExcel() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
             const selDel = isAdm ? document.getElementById('reportDelegateSelect')?.value : (currentDelegate ? currentDelegate.code : '');
+            const selRoute = document.getElementById('reportRouteSelect')?.value || 'ALL';
             const selClient = document.getElementById('reportClientSelect')?.value || 'ALL';
             const fromDate = document.getElementById('filterFromDate')?.value;
             const toDate = document.getElementById('filterToDate')?.value;
@@ -3889,6 +4241,10 @@
                 if(s.status === 'cancelled') return false;
                 if(currentDelegate && !isAdm && s.delegateCode !== currentDelegate.code) return false;
                 if(isAdm && selDel !== 'ALL' && s.delegateCode !== selDel) return false;
+                if(selRoute !== 'ALL') {
+                    let sRoute = (s.route || cloudClientsRoutes[s.client] || '').trim();
+                    if(normalizeRouteName(sRoute) !== normalizeRouteName(selRoute)) return false;
+                }
                 if(selClient !== 'ALL' && (!s.client || s.client.toLowerCase() !== selClient.toLowerCase())) return false;
                 if(fromDate && s.date < fromDate) return false;
                 if(toDate && s.date > toDate) return false;
@@ -3921,8 +4277,9 @@
                     "رقم الفاتورة": "#" + s.invNo,
                     "تاريخ الفاتورة": s.date,
                     "اسم العميل / المحل": s.client || 'عميل نقدي',
+                    "رقم الهاتف": s.phone || '-',
                     "كود العميل": s.clientCode || '-',
-                    "خط السير": s.route || '-',
+                    "خط السير": s.route || cloudClientsRoutes[s.client] || '-',
                     "القرية / المركز": s.village || '-',
                     "المندوب": s.delegateName || '-',
                     "الأصناف المسحوبة": itemsSummary,
@@ -3934,17 +4291,14 @@
 
             const ws = XLSX.utils.json_to_sheet(excelRows);
             const wb = XLSX.utils.book_new();
-            const sheetName = selClient === 'ALL' ? "كل المسحوبات" : `مسحوبات ${selClient.substring(0, 20)}`;
+            const sheetName = selRoute !== 'ALL' ? `مسحوبات_${selRoute.substring(0, 15)}` : (selClient === 'ALL' ? "كل المسحوبات" : `مسحوبات_${selClient.substring(0, 15)}`);
             XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
             if (!ws['!views']) ws['!views'] = [];
             ws['!views'].push({ rightToLeft: true });
 
             const today = new Date().toISOString().slice(0, 10);
-            const fileName = selClient === 'ALL' 
-                ? `تقرير_كافة_مسحوبات_العملاء_${today}.xlsx` 
-                : `مسحوبات_العميل_${selClient}_${today}.xlsx`;
-
+            const fileName = `تقرير_المبيعات_والخط_${today}.xlsx`;
             XLSX.writeFile(wb, fileName);
         }
 
@@ -4219,32 +4573,80 @@
             updateReportClientsSelect();
         }
 
+        function onClientPhoneInputChange() {
+            const phoneInput = document.getElementById('clientPhoneInput');
+            const badge = document.getElementById('clientPhoneStatusBadge');
+            if(!phoneInput || !badge) return;
+
+            let val = phoneInput.value.trim();
+            if(val.length >= 10) {
+                badge.innerText = "✅ تم إدخال رقم الهاتف";
+                badge.style.color = "#16a34a";
+            } else {
+                badge.innerText = "ℹ️ رقم الهاتف اختياري";
+                badge.style.color = "#059669";
+            }
+        }
+
         function onClientNameInput() {
             clearTimeout(clientInputTimer);
             const val = document.getElementById('clientName').value.trim();
             const lblCode = document.getElementById('lblClientCode');
             const lblRoute = document.getElementById('lblClientRoute');
             const historyBox = document.getElementById('clientMonthlyHistory');
+            const phoneInput = document.getElementById('clientPhoneInput');
+            const phoneBadge = document.getElementById('clientPhoneStatusBadge');
+            const phoneGroup = document.getElementById('clientPhoneGroup');
             
             if(!val) { 
                 lblCode.innerText = "--"; 
                 if(lblRoute) lblRoute.innerText = "--";
                 historyBox.style.display = 'none'; 
+                if(phoneInput) phoneInput.value = "";
+                if(phoneBadge) { phoneBadge.innerText = "ℹ️ رقم الهاتف اختياري"; phoneBadge.style.color = "#059669"; }
+                if(phoneGroup) phoneGroup.style.display = "block";
                 return; 
             }
 
             let foundRoute = cloudClientsRoutes[val] || "--";
             let foundCode = cloudClients[val] || "";
+            let foundPhone = cloudClientsPhones[val] || "";
 
             for(let uid in portalCustomersDB) {
                 if(portalCustomersDB[uid].name && portalCustomersDB[uid].name.toLowerCase() === val.toLowerCase()) {
                     if(portalCustomersDB[uid].route) foundRoute = portalCustomersDB[uid].route;
                     if(portalCustomersDB[uid].clientCode) foundCode = portalCustomersDB[uid].clientCode;
+                    if(portalCustomersDB[uid].phone) foundPhone = portalCustomersDB[uid].phone;
                     break;
                 }
             }
+
+            if(!foundPhone) {
+                let pastInv = cloudSales.find(s => s.client && s.client.toLowerCase() === val.toLowerCase() && s.phone);
+                if(pastInv) foundPhone = pastInv.phone;
+            }
+
             if(lblRoute) lblRoute.innerText = foundRoute;
             lblCode.innerText = foundCode || (cloudClients[val] || "عميل جديد (تلقائي)");
+
+            if(foundPhone) {
+                if(phoneInput) phoneInput.value = foundPhone;
+                if(phoneBadge) {
+                    phoneBadge.innerText = `🟢 مسجل مسبقاً (${foundPhone})`;
+                    phoneBadge.style.color = "#16a34a";
+                }
+                if(phoneGroup) phoneGroup.style.background = "#f0fdf4";
+            } else {
+                if(phoneInput) phoneInput.value = "";
+                if(phoneBadge) {
+                    phoneBadge.innerText = "ℹ️ رقم الهاتف اختياري";
+                    phoneBadge.style.color = "#059669";
+                }
+                if(phoneGroup) {
+                    phoneGroup.style.display = "block";
+                    phoneGroup.style.background = "#f8fafc";
+                }
+            }
 
             clientInputTimer = setTimeout(() => {
                 let clientSales = cloudSales.filter(s => s.client && s.client.toLowerCase() === val.toLowerCase() && s.status !== 'cancelled');
@@ -4315,7 +4717,7 @@
             resultBox.innerHTML = outputHtml;
         }
 
-        // ==================== مخزن وتحميلات منوف شهر بشهر ====================
+        // ==================== مخزن وتحميلات منوف ====================
         function calcMenofTotal() {
             const cartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit')?.value) || 0;
@@ -4458,7 +4860,7 @@
             db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => renderMenofTable());
         }
 
-        // ==================== دفتر الأستاذ للذمامات والترحيل الشهري والتصدير ====================
+        // ==================== تصفية ودفتر الأستاذ للذمامات ====================
         window.addEventListener('DOMContentLoaded', () => {
             const today = new Date();
             const currentMonthStr = today.toISOString().slice(0, 7);
@@ -4616,7 +5018,6 @@
             setTimeout(() => { printArea.style.display = 'none'; }, 1000);
         }
 
-        // دالة تصدير كشف التصفية الشامل للذمامات إلى شيت Excel
         function exportDebtsToExcel() {
             const selectedMonth = document.getElementById('selectedMonth')?.value || 'الشهر_الحالي';
             const branch = document.getElementById('branchFilter')?.value || 'منوف';
@@ -4863,7 +5264,7 @@
             db.ref('lmInvoices').set(Object.assign({}, cloudLmInvoices)).then(() => renderLmTable());
         }
 
-        // ==================== إدارة الموظفين للمدير ====================
+        // ==================== إدارة الموظفين ====================
         function createNewUserAccount() {
             const code = document.getElementById('newAccCode').value.trim();
             const name = document.getElementById('newAccName').value.trim();
@@ -5034,9 +5435,11 @@
                 if(c) {
                     delete cloudClients[c.name];
                     delete cloudClientsRoutes[c.name];
+                    delete cloudClientsPhones[c.name];
                     delete cloudClientsLocations[c.name];
                     db.ref('clients/' + c.name).remove();
                     db.ref('clientsRoutes/' + c.name).remove();
+                    db.ref('clientsPhones/' + c.name).remove();
                     db.ref('clientsLocations/' + c.name).remove();
                 }
                 delete portalCustomersDB[uid];
@@ -5094,9 +5497,11 @@
                     const uid = "cust_" + Date.now() + "_" + i;
                     portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, pass, customerType: type };
                     cloudClients[name] = code;
+                    if(phone) cloudClientsPhones[name] = phone;
                     if(route) cloudClientsRoutes[name] = route;
                     db.ref('portalCustomers/' + uid).set(portalCustomersDB[uid]);
                     db.ref('clients/' + name).set(code);
+                    if(phone) db.ref('clientsPhones/' + name).set(phone);
                     if(route) db.ref('clientsRoutes/' + name).set(route);
                 });
                 alert(`✅ تم استيراد ${jsonData.length} عميل بنجاح!`);
@@ -5153,15 +5558,19 @@
             if(oldName !== newName) {
                 delete cloudClients[oldName];
                 delete cloudClientsRoutes[oldName];
+                delete cloudClientsPhones[oldName];
                 db.ref('clients/' + oldName).remove();
                 db.ref('clientsRoutes/' + oldName).remove();
+                db.ref('clientsPhones/' + oldName).remove();
             }
 
             cloudClients[newName] = code;
+            if(phone) cloudClientsPhones[newName] = phone;
             if(route) cloudClientsRoutes[newName] = route;
 
             db.ref('portalCustomers/' + uid).set(c);
             db.ref('clients/' + newName).set(code);
+            if(phone) db.ref('clientsPhones/' + newName).set(phone);
             if(route) db.ref('clientsRoutes/' + newName).set(route);
 
             alert("✅ تم تعديل وتحديث بيانات العميل بنجاح!");
@@ -5185,10 +5594,12 @@
             const uid = "cust_" + Date.now();
             portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, pass, customerType: type };
             cloudClients[name] = code;
+            if(phone) cloudClientsPhones[name] = phone;
             if(route) cloudClientsRoutes[name] = route;
 
             db.ref('portalCustomers/' + uid).set(portalCustomersDB[uid]);
             db.ref('clients/' + name).set(code);
+            if(phone) db.ref('clientsPhones/' + name).set(phone);
             if(route) db.ref('clientsRoutes/' + name).set(route);
 
             alert(`✅ تم حفظ وتفعيل العميل (${name}) بنجاح!`);
@@ -5199,6 +5610,8 @@
             document.getElementById('adminDirectPhone').value = '';
             document.getElementById('adminDirectPass').value = '';
             renderAdminPortalCustomersTable();
+            populateRoutesList();
+            updateClientsDatalist();
         }
 
         function adminDeleteCustomer(uid, name) {
@@ -5206,11 +5619,13 @@
             delete portalCustomersDB[uid];
             delete cloudClients[name];
             delete cloudClientsRoutes[name];
+            delete cloudClientsPhones[name];
             delete cloudClientsLocations[name];
 
             db.ref('portalCustomers/' + uid).remove();
             db.ref('clients/' + name).remove();
             db.ref('clientsRoutes/' + name).remove();
+            db.ref('clientsPhones/' + name).remove();
             db.ref('clientsLocations/' + name).remove().then(() => {
                 alert(`✅ تم حذف العميل (${name}) بنجاح.`);
                 renderAdminPortalCustomersTable();
