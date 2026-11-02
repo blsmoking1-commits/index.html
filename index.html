@@ -700,9 +700,10 @@
             </div>
 
             <table class="report-table">
-                <thead><tr><th>الصنف</th><th>الرصيد المتبقي بالسيارة</th></tr></thead>
+                <thead><tr><th>الصنف</th><th>الكمية المُحملة (البداية)</th><th>المتبقي بالسيارة</th><th>المباع (العجز)</th></tr></thead>
                 <tbody id="carStockTableBody"></tbody>
             </table>
+            <button class="btn btn-danger" style="width:100%; margin-top:10px;" onclick="resetLoadedCarStock()">🔄 تصفير الكمية المُحملة (لبدء جرد يوم جديد)</button>
         </div>
 
         <!-- ك) حساب النسب -->
@@ -1275,6 +1276,7 @@
 
         let ADMIN_PASS = "Hossam2023@";
         
+        let currentClientMaxLimit = 0;
         let defaultSettings = {
             companyName: "BLACK HORSE",
             companySubtitle: "شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية",
@@ -2707,6 +2709,13 @@
             if(!cloudDelegates[delCode].carStock) cloudDelegates[delCode].carStock = {...defaultCarStock};
             cloudDelegates[delCode].carStock[pCode] = parseFloat(((cloudDelegates[delCode].carStock[pCode] || 0) + qty).toFixed(4));
 
+            if(!cloudDelegates[delCode].loadedStock) cloudDelegates[delCode].loadedStock = {};
+            cloudDelegates[delCode].loadedStock[pCode] = parseFloat(((cloudDelegates[delCode].loadedStock[pCode] || 0) + qty).toFixed(4));
+
+            if(cloudDelegates[delCode].loadedStock && cloudDelegates[delCode].loadedStock[pCode]) {
+                cloudDelegates[delCode].loadedStock[pCode] = parseFloat(Math.max(0, cloudDelegates[delCode].loadedStock[pCode] - qty).toFixed(4));
+            }
+
             db.ref('productsList').set(products);
             db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock).then(() => {
                 alert(`✅ تم تحميل ${qty} كرتونة لسيارة المندوب وخصمها من المخزن.`);
@@ -2734,6 +2743,13 @@
             let prod = products.find(p => p.code === pCode);
             if(prod) prod.stock = parseFloat(((parseFloat(prod.stock) || 0) + qty).toFixed(4));
 
+            if(!cloudDelegates[delCode].loadedStock) cloudDelegates[delCode].loadedStock = {};
+            cloudDelegates[delCode].loadedStock[pCode] = parseFloat(((cloudDelegates[delCode].loadedStock[pCode] || 0) + qty).toFixed(4));
+
+            if(cloudDelegates[delCode].loadedStock && cloudDelegates[delCode].loadedStock[pCode]) {
+                cloudDelegates[delCode].loadedStock[pCode] = parseFloat(Math.max(0, cloudDelegates[delCode].loadedStock[pCode] - qty).toFixed(4));
+            }
+
             db.ref('productsList').set(products);
             db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock).then(() => {
                 alert(`🔄 تم رد ${qty} كرتونة من سيارة المندوب إلى المخزن بنجاح!`);
@@ -2752,15 +2768,38 @@
             const targetCode = isAdm ? (document.getElementById('selectDelegateForStock')?.value || '101') : currentDelegate.code;
 
             const carStock = (cloudDelegates[targetCode] && cloudDelegates[targetCode].carStock) ? cloudDelegates[targetCode].carStock : defaultCarStock;
+            const loadedStock = (cloudDelegates[targetCode] && cloudDelegates[targetCode].loadedStock) ? cloudDelegates[targetCode].loadedStock : {};
 
             products.forEach(p => {
                 const stockCartons = parseFloat(carStock[p.code]) || 0;
+                const loadedCartons = parseFloat(loadedStock[p.code]) || 0;
+                const soldCartons = Math.max(0, loadedCartons - stockCartons);
+                
                 const stockRibbons = Math.round(stockCartons * 50);
+                
+                if(loadedCartons === 0 && stockCartons === 0) return; // إخفاء الأصناف الصفرية
+
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${p.name}</b></td>
-                        <td style="font-weight:bold; color:#16a34a;">${stockCartons} كرتونة (${stockRibbons} رابطة)</td>
+                        <td style="color:#0284c7; font-weight:bold;">${loadedCartons} كرتونة</td>
+                        <td style="font-weight:bold; color:#16a34a;">${stockCartons} كرتونة (${stockRibbons} ر)</td>
+                        <td style="color:#dc2626; font-weight:bold;">${soldCartons.toFixed(2)} كرتونة</td>
                     </tr>`;
+            });
+        }
+
+        function resetLoadedCarStock() {
+            const isAdm = (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.role === 'store' || currentDelegate.role === 'fleet'));
+            const delCode = isAdm ? (document.getElementById('selectDelegateForStock')?.value || '101') : currentDelegate.code;
+            
+            if(!confirm("⚠️ هل أنت متأكد من تصفير 'الكمية المحملة' لهذا المندوب لبدء يوم جديد؟ (سيتم اعتبار المتبقي هو نقطة البداية)")) return;
+            
+            let curStock = cloudDelegates[delCode].carStock || {};
+            cloudDelegates[delCode].loadedStock = {...curStock}; 
+            db.ref('delegates/' + delCode + '/loadedStock').set(cloudDelegates[delCode].loadedStock).then(() => {
+                alert("✅ تم تصفير المحمل وبدء جرد يوم جديد بنجاح.");
+                renderCarStockTable();
             });
         }
 
@@ -3685,6 +3724,25 @@
                 grand += tot;
             });
             document.getElementById('grandTotal').innerText = grand.toFixed(2);
+
+            // تفعيل الحد الأقصى للفاتورة
+            const saveBtn = document.getElementById('btnSaveInvoiceMain');
+            let limitWarning = document.getElementById('limitWarningMsg');
+            if(currentClientMaxLimit > 0 && grand > currentClientMaxLimit) {
+                if(!limitWarning) {
+                    const div = document.createElement('div');
+                    div.id = 'limitWarningMsg';
+                    div.style = 'color:#9f1239; font-weight:bold; margin-top:10px; margin-bottom:10px; text-align:center; background:#ffe4e6; padding:10px; border:2px solid #e11d48; border-radius:6px;';
+                    saveBtn.parentNode.insertBefore(div, saveBtn);
+                    limitWarning = div;
+                }
+                limitWarning.innerText = `⚠️ تحذير: إجمالي الفاتورة (${grand.toFixed(2)}) يتجاوز الحد الأقصى المسموح للعميل (${currentClientMaxLimit} ج.م)!`;
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.4';
+            } else {
+                if(limitWarning) limitWarning.remove();
+                if(saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = '1'; }
+            }
         }
 
         // ==================== محرك إنشاء الفاتورة (رقم الهاتف اختيارياً) ====================
@@ -3845,8 +3903,9 @@
                         village: village || '',
                         phone: finalPhone || '',
                         pass: '123456',
-                        customerType: 'retail',
-                        location: clientLoc
+                        customerType: 'pending',
+                        location: clientLoc,
+                        maxLimit: 0
                     };
                     portalCustomersDB[newUid] = newCustData;
                     db.ref('portalCustomers/' + newUid).set(newCustData).then(() => {
@@ -4727,16 +4786,39 @@
                 }
             }
 
+            currentClientMaxLimit = 0;
+            for(let uid in portalCustomersDB) {
+                if(portalCustomersDB[uid].name && portalCustomersDB[uid].name.toLowerCase() === val.toLowerCase()) {
+                    currentClientMaxLimit = parseFloat(portalCustomersDB[uid].maxLimit) || 0;
+                    break;
+                }
+            }
+
             clientInputTimer = setTimeout(() => {
                 let clientSales = cloudSales.filter(s => s.client && s.client.toLowerCase() === val.toLowerCase() && s.status !== 'cancelled');
+                let limitHtml = currentClientMaxLimit > 0 ? `<div style="color:#dc2626; margin-top:4px;"><b>الحد الأقصى للفاتورة: ${currentClientMaxLimit} ج.م</b></div>` : '';
+                
                 if(clientSales.length > 0) {
                     let totalMonth = clientSales.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
-                    let details = clientSales.map(i => `فاتورة #${i.invNo}: ${i.total} ج.م (${i.date})`).join(' | ');
+                    let invoiceAvg = totalMonth / clientSales.length;
+                    
+                    let monthsSet = new Set();
+                    clientSales.forEach(s => { if(s.date) monthsSet.add(s.date.substring(0,7)); });
+                    let monthlyAvg = totalMonth / (monthsSet.size || 1);
+
                     historyBox.style.display = 'block';
-                    historyBox.innerHTML = `<b>📊 مبيعات العميل النشطة:</b> إجمالي الصافي = ${totalMonth.toFixed(2)} ج.م<br><span style="font-size:10px;">${details}</span>`;
+                    historyBox.innerHTML = `<b>📊 مبيعات العميل الكلية:</b> ${totalMonth.toFixed(2)} ج.م<br>
+                    📉 <b>متوسط الفاتورة الواحدة:</b> ${invoiceAvg.toFixed(2)} ج.م<br>
+                    📅 <b>متوسط المسحوبات شهرياً:</b> ${monthlyAvg.toFixed(2)} ج.م${limitHtml}`;
                 } else {
-                    historyBox.style.display = 'none';
+                    if(limitHtml) {
+                        historyBox.style.display = 'block';
+                        historyBox.innerHTML = limitHtml;
+                    } else {
+                        historyBox.style.display = 'none';
+                    }
                 }
+                calcTotals();
             }, 300);
         }
 
@@ -5603,6 +5685,18 @@
             document.getElementById('modalEditCustPhone').value = c.phone || '';
             document.getElementById('modalEditCustPass').value = c.pass || '';
             document.getElementById('modalEditCustType').value = c.customerType || 'retail';
+            
+            // إضافة حقل الحد الأقصى للنافذة المنبثقة
+            let limitDiv = document.getElementById('modalEditCustLimitDiv');
+            if(!limitDiv) {
+                let div = document.createElement('div');
+                div.id = 'modalEditCustLimitDiv';
+                div.className = 'form-group';
+                div.innerHTML = `<label style="color:#dc2626;">الحد الأقصى لقيمة الفاتورة (ج.م):</label><input type="number" id="modalEditCustLimit" placeholder="0 = بدون حد أقصى">`;
+                document.getElementById('modalEditCustType').parentNode.after(div);
+            }
+            document.getElementById('modalEditCustLimit').value = c.maxLimit || '';
+            
             document.getElementById('editCustomerModal').style.display = 'flex';
         }
 
@@ -5623,6 +5717,7 @@
             const phone = document.getElementById('modalEditCustPhone').value.trim();
             const pass = document.getElementById('modalEditCustPass').value.trim();
             const type = document.getElementById('modalEditCustType').value;
+            const maxLimit = parseFloat(document.getElementById('modalEditCustLimit').value) || 0;
 
             if(!newName) { alert("أدخل اسم العميل."); return; }
 
@@ -5633,6 +5728,7 @@
             c.phone = phone;
             c.pass = pass;
             c.customerType = type;
+            c.maxLimit = maxLimit;
 
             if(oldName !== newName) {
                 delete cloudClients[oldName];
