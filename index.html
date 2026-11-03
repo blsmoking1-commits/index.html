@@ -4802,9 +4802,20 @@
                     let totalMonth = clientSales.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
                     let invoiceAvg = totalMonth / clientSales.length;
                     
-                    let monthsSet = new Set();
-                    clientSales.forEach(s => { if(s.date) monthsSet.add(s.date.substring(0,7)); });
-                    let monthlyAvg = totalMonth / (monthsSet.size || 1);
+                    // 1. استخراج التواريخ وتحديد تاريخ أول فاتورة مسجلة للعميل
+let validDates = clientSales.map(s => new Date(s.date)).filter(d => !isNaN(d));
+let firstInvoiceDate = validDates.length > 0 ? new Date(Math.min(...validDates)) : new Date();
+
+// 2. حساب عدد الشهور المنقضية من تاريخ أول فاتورة حتى اليوم
+let now = new Date();
+let yearsDiff = now.getFullYear() - firstInvoiceDate.getFullYear();
+let monthsDiff = now.getMonth() - firstInvoiceDate.getMonth();
+
+// (+ 1 لتضمين شهر الفاتورة الأولى نفسه في الحساب)
+let totalMonthsCount = Math.max(1, (yearsDiff * 12) + monthsDiff + 1);
+
+// 3. حساب المتوسط الشهري الصحيح
+let monthlyAvg = totalMonth / totalMonthsCount
 
                     historyBox.style.display = 'block';
                     historyBox.innerHTML = `<b>📊 مبيعات العميل الكلية:</b> ${totalMonth.toFixed(2)} ج.م<br>
