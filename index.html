@@ -212,15 +212,6 @@
             <span id="barcodeLastScanned" style="font-size:10.5px; color:#1e293b;">آخر مسح: جاهز للاستقبال</span>
         </div>
 
-        <div id="selfAttendanceBox" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-            <div style="font-size:11.5px; font-weight:bold; color:#1e293b;">
-                📌 حالتك اليوم: <span id="lblMyAttendanceStatus" style="color:#64748b;">لم تسجل</span>
-            </div>
-            <div style="display:flex; gap:6px;">
-                <button class="btn btn-success" style="width:auto; margin:0; padding:5px 10px; font-size:11px;" onclick="recordMyAttendance('حضور')">✅ تسجيل حضور</button>
-                <button class="btn btn-danger" style="width:auto; margin:0; padding:5px 10px; font-size:11px; background:#64748b;" onclick="recordMyAttendance('انصراف')">🚪 انصراف</button>
-            </div>
-        </div>
 
         <div id="sosButtonContainer" style="display:none; margin-bottom:12px;">
             <button class="btn btn-sos" onclick="triggerSosAlert()">🚨 استغاثة طوارئ SOS (إرسال الموقع للمدير)</button>
@@ -231,7 +222,6 @@
             <div id="tabNewInvoice" class="tab-btn active" onclick="switchTab('invoice')">📝 فاتورة</div>
             <div id="tabClientQuota" class="tab-btn" onclick="switchTab('clientQuota')" style="display:none; background:#fef08a; color:#854d0e;">🎯 محصص العملاء</div>
             <div id="tabWarehouse" class="tab-btn" onclick="switchTab('warehouse')" style="background:#fef3c7; color:#92400e;">📦 المخزن وتزويد الأصناف</div>
-            <div id="tabAttendanceLog" class="tab-btn" onclick="switchTab('attendanceLog')" style="display:none; background:#ecfdf5; color:#065f46;">📋 سجل الحضور</div>
             <div id="tabClientsManage" class="tab-btn" onclick="switchTab('clientsManage')" style="display:none; background:#ecfdf5; color:#065f46;">👥 إدارة العملاء</div>
             <div id="tabPendingOrders" class="tab-btn" onclick="switchTab('pendingOrders')" style="display:none; background:#fef3c7; color:#92400e;">🔔 طلبات العملاء وموافقات الحصص <span id="badgePendingCount" class="badge-notify" style="display:none;">0</span></div>
             <div id="tabClientOrderOnly" class="tab-btn" onclick="switchTab('clientOrderOnly')" style="display:none; background:#e0f2fe; color:#0369a1;">📦 طلب فاتورة</div>
@@ -439,31 +429,7 @@
         </div>
 
         <!-- ج) تبويب سجل الحضور والانصراف -->
-        <div id="sectionAttendanceLog" style="display: none;">
-            <div class="filter-box">
-                <h4 style="margin:0 0 8px 0; color:#065f46;">📋 سجل حضور وانصراف الموظفين والمناديب:</h4>
-                <div style="display:flex; gap:8px;">
-                    <div class="form-group" style="flex:1; margin-bottom:0;"><label>من تاريخ:</label><input type="date" id="attFilterFrom" onchange="renderAttendanceLogTable()"></div>
-                    <div class="form-group" style="flex:1; margin-bottom:0;"><label>إلى تاريخ:</label><input type="date" id="attFilterTo" onchange="renderAttendanceLogTable()"></div>
-                </div>
-            </div>
-            <div style="overflow-x:auto;">
-                <table class="report-table" style="background:#fff;">
-                    <thead>
-                        <tr>
-                            <th>التاريخ</th>
-                            <th>الموظف / المندوب</th>
-                            <th>الكود</th>
-                            <th>نوع التسجيل</th>
-                            <th>التوقيت</th>
-                            <th>الموقع GPS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="attendanceLogTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-
+        
         <!-- د) تبويب إدارة العملاء -->
         <div id="sectionClientsManage" style="display: none;">
             <h4 style="margin-top:0; font-size:14px; color:#1e293b;">👥 لوحة إدارة بيانات وتعديل العملاء:</h4>
@@ -756,6 +722,15 @@
                     </select>
                 </div>
 
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:6px; margin-bottom:8px; align-items:center;">
+                    <input type="text" id="ratioCustomName" placeholder="اسم الصنف الإضافي (مثال: مونديال)" value="صنف إضافي" style="font-size:12px; font-weight:bold; padding:6px;">
+                    <input type="number" id="ratioCustomVal" value="0" min="0" step="0.1" oninput="calcRatioLoading()" style="text-align:center; font-weight:bold;">
+                    <select id="ratioCustomType" onchange="calcRatioLoading()" style="font-size:11px; padding:7px;">
+                        <option value="percent">نسبة مئوية (%)</option>
+                        <option value="ratio">نسبة صنف لصنف</option>
+                    </select>
+                </div>
+
                 <div id="ratioResultBox" style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-top:10px; font-size:13px; color:#166534; line-height:1.7;">
                     أدخل إجمالي الكرتونات وحدد نوع وقيمة النسبة لكل صنف.
                 </div>
@@ -771,14 +746,20 @@
                 <input type="hidden" id="editMenofId" value="">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
                     <div><label>تاريخ الشحنة:</label><input type="date" id="menofDate"></div>
-                    <div><label>عدد الكراتين:</label><input type="number" id="menofCartons" placeholder="0" min="0" oninput="calcMenofTotal()"></div>
+                    <div><label>إجمالي الكراتين:</label><input type="number" id="menofCartons" placeholder="0" min="0" readonly style="background:#f1f5f9; font-weight:bold;" oninput="calcMenofTotal()"></div>
                 </div>
+
+                <div style="background:#f8fafc; border:1px dashed #cbd5e1; padding:8px; border-radius:6px; margin-bottom:8px;">
+                    <button type="button" class="btn btn-primary" style="width:100%; margin-bottom:6px;" onclick="addMenofProductRow()">+ إضافة صنف للشحنة (تغذية المخزن)</button>
+                    <div id="menofProductsDynamicContainer"></div>
+                </div>
+
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
                     <div><label>المبلغ المودع (ج.م):</label><input type="number" id="menofDeposit" placeholder="0" min="0" oninput="calcMenofTotal()"></div>
                     <div><label>سعر البضاعة الإجمالي:</label><span id="menofTotalPrice" style="display:block; padding:9px; font-weight:bold; color:#2563eb;">0 ج.م</span></div>
                 </div>
                 <div style="font-weight:bold; margin-bottom:8px;">صافي الذمة: <span id="menofZimam" style="color:#dc2626;">0 ج.م</span></div>
-                <button class="btn btn-success" onclick="saveMenofLoad()">💾 حفظ شحنة منوف</button>
+                <button class="btn btn-success" onclick="saveMenofLoad()">💾 حفظ شحنة منوف وتغذية المخزن</button>
             </div>
 
             <div class="filter-box" style="background:#eff6ff; border:1.5px solid #3b82f6; margin-bottom:12px;">
@@ -2924,6 +2905,7 @@
             document.getElementById('salesView').style.display = 'block';
 
             setupUserTabs();
+renderSavedInvoices();
             switchTab('invoice');
             initSalesForm();
             populateRoutesList();
@@ -3636,16 +3618,40 @@
         }
 
         async function cancelInvoice(id) {
-            const ok = await showCustomConfirm("⚠️ هل أنت متأكد من إلغاء هذه الفاتورة؟");
-            if(!ok) return;
             let targetInv = cloudSales.find(s => String(s.id) === String(id));
-            if(targetInv) {
+            if (!targetInv) return;
+
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
+            const isCreator = (currentDelegate && (
+                String(targetInv.delegateCode || '').trim().toLowerCase() === String(currentDelegate.code || '').trim().toLowerCase() ||
+                (targetInv.delegateName && currentDelegate.name && String(targetInv.delegateName).trim() === String(currentDelegate.name).trim())
+            ));
+
+            if (!isAdm && !isCreator) {
+                showToast("❌ صلاحية إلغاء الفاتورة متاحة للمندوب صاحب الفاتورة أو المدير فقط.", "error");
+                return;
+            }
+            const ok = await showCustomConfirm("⚠️ هل أنت متأكد من إلغاء هذه الفاتورة؟ (ستظل ظاهرة كملغاة ولن تُخصم من السيارة أو تدخل في الحسابات)");
+            if (!ok) return;
+
+            if (targetInv.status !== 'cancelled') {
+                // رد كميات الفاتورة الملغاة إلى عهدة السيارة حتى لا تُخصم من السيارة
+                const delCode = targetInv.delegateCode;
+                if (delCode && cloudDelegates[delCode] && cloudDelegates[delCode].carStock && Array.isArray(targetInv.items)) {
+                    targetInv.items.forEach(it => {
+                        const qCartons = (it.unit === 'كرتونة') ? (parseFloat(it.qty) || 0) : ((parseFloat(it.qty) || 0) / 50);
+                        cloudDelegates[delCode].carStock[it.code] = parseFloat(((cloudDelegates[delCode].carStock[it.code] || 0) + qCartons).toFixed(4));
+                    });
+                    db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock);
+                }
+
                 targetInv.status = 'cancelled';
-                targetInv.total = 0;
                 db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
-                    showToast("✅ تم إلغاء الفاتورة.", "success");
+                    showToast("✅ تم إلغاء الفاتورة واستبعادها من الحسابات والسيارة.", "success");
                     renderSavedInvoices();
                     renderDailyReport();
+                    renderCarStockTable();
+                    updateDelegateTodaySummary();
                 });
             }
         }
@@ -3653,55 +3659,70 @@
         // ==================== الفواتير المحفوظة والبحث بالخط ====================
         function renderSavedInvoices() {
             const tbody = document.getElementById('savedInvoicesBody');
-            if(!tbody) return;
+            if (!tbody) return;
             tbody.innerHTML = '';
 
             const selectedDel = document.getElementById('filterDelegateSelect')?.value;
             const selectedRoute = document.getElementById('savedFilterRoute')?.value || 'ALL';
             const fromDate = document.getElementById('savedFilterFrom')?.value;
             const toDate = document.getElementById('savedFilterTo')?.value;
-            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
-            
+            const isAdm = (currentDelegate && (
+    String(currentDelegate.code || '').trim().toLowerCase() === 'admin' ||
+    String(currentDelegate.role || '').trim().toLowerCase() === 'admin'
+));
+            const canViewAll = (isAdm || (currentDelegate && currentDelegate.role === 'fleet'));
+
             let filtered = cloudSales.filter(s => {
-                if(currentDelegate) {
-                    if(!isAdm && s.delegateCode !== currentDelegate.code) return false;
-                    if(isAdm && selectedDel && selectedDel !== 'ALL' && s.delegateCode !== selectedDel) return false;
+                if (currentDelegate) {
+                    if (!canViewAll && s.delegateCode !== currentDelegate.code) return false;
+                    if (canViewAll && selectedDel && selectedDel !== 'ALL' && s.delegateCode !== selectedDel) return false;
                 }
-                if(selectedRoute !== 'ALL') {
+                if (selectedRoute !== 'ALL') {
                     let sRoute = (s.route || cloudClientsRoutes[s.client] || '').trim();
-                    if(normalizeRouteName(sRoute) !== normalizeRouteName(selectedRoute)) return false;
+                    if (normalizeRouteName(sRoute) !== normalizeRouteName(selectedRoute)) return false;
                 }
-                if(fromDate && s.date < fromDate) return false;
-                if(toDate && s.date > toDate) return false;
+                if (fromDate && s.date < fromDate) return false;
+                if (toDate && s.date > toDate) return false;
                 return true;
             });
 
-            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="10">لا توجد فواتير مطابقة للخط أو التاريخ المحدد.</td></tr>`; return; }
-            
+            if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="10">لا توجد فواتير مطابقة للخط أو التاريخ المحدد.</td></tr>`; return; }
+
             filtered.slice().reverse().forEach(inv => {
                 let isCancelled = (inv.status === 'cancelled');
-                let statusBadge = isCancelled ? `<span style="color:#dc2626; font-weight:bold;">ملغاة</span>` : `<span style="color:#16a34a; font-weight:bold;">نشطة</span>`;
+                let statusBadge = isCancelled 
+                    ? `<span style="color:#dc2626; font-weight:bold; background:#fee2e2; padding:2px 6px; border-radius:4px;">ملغاة (لا تُحتسب)</span>` 
+                    : `<span style="color:#16a34a; font-weight:bold;">نشطة</span>`;
                 let displayRoute = inv.route || cloudClientsRoutes[inv.client] || '-';
 
                 let actionButtons = `<button class="btn btn-thermal" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printDirectThermalDesktop(cloudSales.find(x=>x.id==='${inv.id}'))">🖨️ حراري</button> `;
                 actionButtons += `<button class="btn btn-bluetooth" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printViaRawBT(cloudSales.find(x=>x.id==='${inv.id}'))">📱 RawBT</button> `;
                 actionButtons += `<button class="btn" style="background:#0d9488; color:#fff; padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="printDirectBluetoothESC(cloudSales.find(x=>x.id==='${inv.id}'))">⚡ بلوتوث</button> `;
                 actionButtons += `<button class="btn btn-info" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="viewInvoiceDetails('${inv.id}')">👁️</button> `;
-                
+
+                const isCreator = (currentDelegate && (
+                    String(inv.delegateCode || '').trim().toLowerCase() === String(currentDelegate.code || '').trim().toLowerCase() ||
+                    (inv.delegateName && currentDelegate.name && String(inv.delegateName).trim() === String(currentDelegate.name).trim())
+                ));
                 if (isAdm) {
-                    actionButtons += `<button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openEditInvoiceModal('${inv.id}')">✏️ تعديل الأصناف</button> `;
+                    actionButtons += `<button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="openEditInvoiceModal('${inv.id}')">✏️ تعديل</button> `;
+                }
+                if (!isCancelled && (isAdm || isCreator)) {
+                    actionButtons += `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="cancelInvoice('${inv.id}')">❌ إلغاء</button>`;
                 }
 
-                if(!isCancelled && (isAdm || (currentDelegate && inv.delegateCode === currentDelegate.code))) {
-                    actionButtons += `<button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block;" onclick="cancelInvoice('${inv.id}')">❌</button>`;
-                }
-
-                tbody.innerHTML += `<tr><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}<br><small style="color:#64748b;">${inv.phone||''}</small></td><td><span style="color:#1e40af; font-weight:bold;">${displayRoute}</span></td><td><b>${inv.vehicleName || '-'}</b></td><td>${inv.odometer ? inv.odometer + ' كم' : '-'}</td><td>${inv.delegateName}</td><td>${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
+                let rowStyle = isCancelled ? 'background:#fff1f2; opacity:0.85;' : '';
+                tbody.innerHTML += `<tr style="${rowStyle}"><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}<br><small style="color:#64748b;">${inv.phone||''}</small></td><td><span style="color:#1e40af; font-weight:bold;">${displayRoute}</span></td><td><b>${inv.vehicleName || '-'}</b></td><td>${inv.odometer ? inv.odometer + ' كم' : '-'}</td><td>${inv.delegateName}</td><td style="${isCancelled ? 'text-decoration:line-through; color:#991b1b;' : ''}">${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
             });
         }
 
         // ==================== تعديل الأصناف والأسعار بالفاتورة للمدير ====================
         function openEditInvoiceModal(id) {
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
+            if (!isAdm) {
+                showToast("❌ صلاحية تعديل الفواتير متاحة للمدير فقط.", "error");
+                return;
+            }
             let inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
 
@@ -3815,6 +3836,11 @@
         function closeEditInvoiceModal() { document.getElementById('editInvoiceModal').style.display = 'none'; }
 
         function saveEditedInvoice() {
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
+            if (!isAdm) {
+                showToast("❌ صلاحية تعديل الفواتير متاحة للمدير فقط.", "error");
+                return;
+            }
             const id = document.getElementById('modalEditInvId').value;
             let inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
@@ -4138,7 +4164,6 @@
             document.getElementById('tabClientQuota').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabWarehouse').style.display = (isViewer || isHR) ? 'none' : 'block';
             document.getElementById('warehouseAdminControls').style.display = (isAdm || isStore) ? 'block' : 'none';
-            document.getElementById('tabAttendanceLog').style.display = (isAdm || isHR || isAccounting || isFleet) ? 'block' : 'none';
             document.getElementById('tabPendingOrders').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabClientsManage').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabRatios').style.display = isViewer ? 'none' : 'block';
@@ -4408,11 +4433,14 @@
                 return;
             }
 
+            const customProdName = (document.getElementById('ratioCustomName')?.value || '').trim() || "صنف إضافي";
+
             const items = [
                 { name: "كليوباترا عادية", val: parseFloat(document.getElementById('ratioCleopatraVal').value) || 0, type: document.getElementById('ratioCleopatraType').value },
                 { name: "كيلوبترا بوكس", val: parseFloat(document.getElementById('ratioBoxVal').value) || 0, type: document.getElementById('ratioBoxType').value },
                 { name: "كليوباترا براون", val: parseFloat(document.getElementById('ratioBrownVal').value) || 0, type: document.getElementById('ratioBrownType').value },
-                { name: "سوبر 94", val: parseFloat(document.getElementById('ratioSuperVal').value) || 0, type: document.getElementById('ratioSuperType').value }
+                { name: "سوبر 94", val: parseFloat(document.getElementById('ratioSuperVal').value) || 0, type: document.getElementById('ratioSuperType').value },
+                { name: customProdName, val: parseFloat(document.getElementById('ratioCustomVal')?.value) || 0, type: document.getElementById('ratioCustomType')?.value || 'percent' }
             ];
 
             let percentCartonsTotal = 0;
@@ -4461,13 +4489,48 @@
         }
 
         // ==================== منوف (التحميل الشهري + الذمم الشهرية التراكمية) ====================
-           function calcMenofTotal() {
-            const cartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
-            const deposit = parseFloat(document.getElementById('menofDeposit')?.value) || 0;
-            const price = systemSettings.defaultCartonPrice || 23925;
-            const totalGoods = cartons * price;
-            const zimam = deposit - totalGoods;
+           window.addMenofProductRow = function(selectedCode = '', qty = '') {
+            const container = document.getElementById('menofProductsDynamicContainer');
+            if (!container) return;
 
+            const div = document.createElement('div');
+            div.style = "display:flex; gap:6px; margin-bottom:4px; align-items:center;";
+            div.innerHTML = `
+                <select class="menof-prod-code" style="flex:2;" onchange="calcMenofTotal()">
+                    ${products.map(p => `<option value="${p.code}" ${p.code === selectedCode ? 'selected' : ''}>${p.name}</option>`).join('')}
+                </select>
+                <input type="number" class="menof-prod-qty" value="${qty}" placeholder="الكمية (كرتونة)" style="flex:1;" oninput="calcMenofTotal()">
+                <button type="button" class="btn btn-danger" style="padding:4px 8px; width:auto;" onclick="this.parentElement.remove(); calcMenofTotal();">✖</button>
+            `;
+            container.appendChild(div);
+        };
+
+        function calcMenofTotal() {
+            const deposit = parseFloat(document.getElementById('menofDeposit')?.value) || 0;
+            const defaultPrice = systemSettings.defaultCartonPrice || 23925;
+            let totalCartons = 0;
+            let totalGoods = 0;
+
+            const rows = document.querySelectorAll('#menofProductsDynamicContainer > div');
+            if (rows.length > 0) {
+                rows.forEach(row => {
+                    const code = row.querySelector('.menof-prod-code').value;
+                    const qty = parseFloat(row.querySelector('.menof-prod-qty').value) || 0;
+                    const pObj = products.find(p => p.code === code);
+                    const pr = pObj ? (parseFloat(pObj.price) || defaultPrice) : defaultPrice;
+
+                    totalCartons += qty;
+                    totalGoods += qty * pr;
+                });
+                if (document.getElementById('menofCartons')) {
+                    document.getElementById('menofCartons').value = totalCartons;
+                }
+            } else {
+                totalCartons = parseFloat(document.getElementById('menofCartons')?.value) || 0;
+                totalGoods = totalCartons * defaultPrice;
+            }
+
+            const zimam = deposit - totalGoods;
             document.getElementById('menofTotalPrice').innerText = totalGoods.toLocaleString() + " ج.م";
             document.getElementById('menofZimam').innerText = zimam.toLocaleString() + " ج.م";
         }
@@ -4475,39 +4538,91 @@
         function saveMenofLoad() {
             const editId = document.getElementById('editMenofId').value;
             const date = document.getElementById('menofDate').value || new Date().toISOString().split('T')[0];
-            const cartons = parseFloat(document.getElementById('menofCartons').value) || 0;
             const deposit = parseFloat(document.getElementById('menofDeposit').value) || 0;
-            const price = systemSettings.defaultCartonPrice || 23925;
-            const totalGoods = cartons * price;
-            const zimam = deposit - totalGoods;
+            const defaultPrice = systemSettings.defaultCartonPrice || 23925;
 
-            if(cartons <= 0 && deposit <= 0) { alert("أدخل بيانات الشحنة أو الإيداع."); return; }
+            let totalCartons = 0;
+            let totalGoods = 0;
+            let loadedItems = {};
 
-            if(editId) {
-                let rec = cloudMenofLoads.find(m => String(m.id) === String(editId));
-                if(rec) {
-                    rec.date = date; rec.cartons = cartons; rec.totalGoods = totalGoods; rec.deposit = deposit; rec.zimam = zimam;
+            if (editId) {
+                let oldRec = cloudMenofLoads.find(m => String(m.id) === String(editId));
+                if (oldRec && oldRec.items) {
+                    for (let code in oldRec.items) {
+                        let pObj = products.find(p => p.code === code);
+                        if (pObj) pObj.stock = (parseFloat(pObj.stock) || 0) - oldRec.items[code];
+                    }
                 }
-            } else {
-                cloudMenofLoads.push({ id: String(Date.now()), date, cartons, totalGoods, deposit, zimam });
             }
 
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
-                alert("✅ تم حفظ وتحديث شحنة منوف بنجاح!");
+            const rows = document.querySelectorAll('#menofProductsDynamicContainer > div');
+            if (rows.length > 0) {
+                rows.forEach(row => {
+                    let code = row.querySelector('.menof-prod-code').value;
+                    let qty = parseFloat(row.querySelector('.menof-prod-qty').value) || 0;
+                    if (qty > 0) {
+                        let pObj = products.find(p => p.code === code);
+                        let pr = pObj ? (parseFloat(pObj.price) || defaultPrice) : defaultPrice;
+
+                        totalCartons += qty;
+                        totalGoods += qty * pr;
+                        loadedItems[code] = (loadedItems[code] || 0) + qty;
+
+                        if (pObj) pObj.stock = (parseFloat(pObj.stock) || 0) + qty;
+                    }
+                });
+            } else {
+                totalCartons = parseFloat(document.getElementById('menofCartons').value) || 0;
+                totalGoods = totalCartons * defaultPrice;
+            }
+
+            if (totalCartons <= 0 && deposit <= 0) { showToast("أدخل بيانات الشحنة أو الإيداع.", "error"); return; }
+
+            const zimam = deposit - totalGoods;
+
+            if (editId) {
+                let rec = cloudMenofLoads.find(m => String(m.id) === String(editId));
+                if (rec) {
+                    rec.date = date;
+                    rec.cartons = totalCartons;
+                    rec.totalGoods = totalGoods;
+                    rec.deposit = deposit;
+                    rec.zimam = zimam;
+                    if (Object.keys(loadedItems).length > 0) rec.items = loadedItems;
+                }
+            } else {
+                cloudMenofLoads.push({ id: String(Date.now()), date, cartons: totalCartons, totalGoods, deposit, zimam, items: loadedItems });
+            }
+
+            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads));
+            db.ref('productsList').set(products).then(() => {
+                showToast("✅ تم حفظ شحنة منوف وتغذية رصيد المخزن العام تلقائياً!", "success");
                 document.getElementById('editMenofId').value = '';
+                if (document.getElementById('menofProductsDynamicContainer')) document.getElementById('menofProductsDynamicContainer').innerHTML = '';
                 document.getElementById('menofCartons').value = '';
                 document.getElementById('menofDeposit').value = '';
                 renderMenofTable();
+                renderWarehouseTable();
             });
         }
 
         function editMenofLoad(id) {
             let rec = cloudMenofLoads.find(m => String(m.id) === String(id));
-            if(!rec) return;
+            if (!rec) return;
             document.getElementById('editMenofId').value = rec.id;
             document.getElementById('menofDate').value = rec.date || '';
-            document.getElementById('menofCartons').value = rec.cartons || '';
             document.getElementById('menofDeposit').value = rec.deposit || '';
+
+            const container = document.getElementById('menofProductsDynamicContainer');
+            if (container) {
+                container.innerHTML = '';
+                if (rec.items && Object.keys(rec.items).length > 0) {
+                    for (let code in rec.items) {
+                        addMenofProductRow(code, rec.items[code]);
+                    }
+                }
+            }
+            document.getElementById('menofCartons').value = rec.cartons || '';
             calcMenofTotal();
             window.scrollTo({ top: 300, behavior: 'smooth' });
         }
@@ -4597,10 +4712,25 @@
             }
         }
 
-        function deleteMenofLoad(id) {
-            if(!confirm("⚠️ هل تريد حذف هذا السجل من شحنات منوف؟")) return;
+        async function deleteMenofLoad(id) {
+            const ok = await showCustomConfirm("⚠️ هل تريد حذف هذا السجل من شحنات منوف؟");
+            if (!ok) return;
+
+            let rec = cloudMenofLoads.find(m => String(m.id) === String(id));
+            if (rec && rec.items) {
+                for (let code in rec.items) {
+                    let pObj = products.find(p => p.code === code);
+                    if (pObj) pObj.stock = (parseFloat(pObj.stock) || 0) - rec.items[code];
+                }
+                db.ref('productsList').set(products);
+            }
+
             cloudMenofLoads = cloudMenofLoads.filter(m => String(m.id) !== String(id));
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => renderMenofTable());
+            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
+                showToast("✅ تم حذف الشحنة وتحديث رصيد المخزن.", "success");
+                renderMenofTable();
+                renderWarehouseTable();
+            });
         }
 
         // ==================== تصفية ودفتر الأستاذ للذمامات ====================
