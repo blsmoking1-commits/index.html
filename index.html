@@ -233,6 +233,7 @@
             <div id="tabShops" class="tab-btn" onclick="switchTab('shops')" style="display:none; background:#dbeafe;">🏪 المحلات</div>
             <div id="tabLmInvoices" class="tab-btn" onclick="switchTab('lmInvoices')" style="display:none; background:#fef3c7;">🚬 فواتير LM</div>
             <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات والتحكم</div>
+            <div id="tabWhatsappQuotas" class="tab-btn" onclick="switchTab('whatsappQuotas')" style="display:none; background:#dcfce7; color:#166534;">💬 إشعارات الحصص (واتساب)</div>
         </div>
 
         <!-- أ) فاتورة جديدة -->
@@ -998,6 +999,70 @@
                 <div class="form-group"><label>كلمة السر الحالية:</label><input type="password" id="currentPassInput"></div>
                 <div class="form-group"><label>كلمة السر الجديدة:</label><input type="password" id="newPassInput"></div>
                 <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر</button>
+            </div>
+        </div>
+
+        <!-- ص) إشعارات الحصص ومواعيد التسليم عبر واتساب الشركة -->
+        <div id="sectionWhatsappQuotas" style="display: none;">
+            <div style="background:#f0fdf4; border:1.5px solid #22c55e; padding:14px; border-radius:10px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                    <h4 style="margin:0; font-size:15px; color:#166534;">💬 إرسال الحصص ومواعيد التسليم للعملاء عبر واتساب الشركة</h4>
+                    <button class="btn" style="background:#15803d; color:#fff; width:auto; margin:0; padding:6px 12px; font-size:12px;" onclick="downloadWhatsappQuotaSampleExcel()">📥 تحميل نموذج ملف إكسيل (Excel)</button>
+                </div>
+                <p style="margin:0 0 10px 0; font-size:12px; color:#1e293b;">
+                    ارفع ملف الإكسيل الذي يحتوي على أعمدة: <b>(اسم العميل - رقم التليفون - الحصة - ميعاد التسليم)</b>، وسيقوم النظام بتجهيز الرسالة لكل عميل لإرسالها بضغطة زر أو بالتتابع التلقائي.
+                </p>
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px; background:#fff; padding:10px; border-radius:8px; border:1px solid #bbf7d0; margin-bottom:10px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="font-size:12px; font-weight:bold; color:#166534;">1️⃣ اختر ملف الإكسيل (.xlsx / .xls / .csv):</label>
+                        <input type="file" id="waQuotaExcelInput" accept=".xlsx,.xls,.csv" onchange="handleWhatsappQuotaExcelUpload(event)" style="padding:6px; background:#f8fafc;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="font-size:12px; font-weight:bold; color:#166534;">2️⃣ اسم الشركة في الرسالة:</label>
+                        <input type="text" id="waCompanyNameInput" value="شركة بلاك هورس للتوزيع" oninput="renderWhatsappQuotaTable()" style="padding:7px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="font-size:12px; font-weight:bold; color:#166534;">3️⃣ الفاصل الزمني للإرسال المتتابع (بالثواني):</label>
+                        <input type="number" id="waDelaySecondsInput" value="8" min="3" max="60" style="padding:7px;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label style="font-size:12px; font-weight:bold; color:#166534;">📝 قالب الرسالة (يمكنك تعديله بحرية — المتغيرات: <code>{العميل}</code> ، <code>{الحصة}</code> ، <code>{الميعاد}</code> ، <code>{الشركة}</code>):</label>
+                    <textarea id="waMessageTemplateInput" rows="3" oninput="renderWhatsappQuotaTable()" style="width:100%; padding:8px; border:1px solid #86efac; border-radius:6px; font-family:inherit; font-size:12.5px;">السلام عليكم أستاذ {العميل}،
+نحيطكم علماً من {الشركة} بأن حصتكم المقررة هي: {الحصة}.
+ميعاد التسليم المحدد: {الميعاد}.
+نشكركم لتعاونكم الدائم معنا.</textarea>
+                </div>
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <button id="btnStartAutoWaSend" class="btn btn-success" style="width:auto; margin:0; padding:8px 14px; font-size:12.5px; display:none;" onclick="startSequentialWhatsappSend()">🚀 بدء فتح المحادثات بالتتابع (للغير مرسل)</button>
+                    <button id="btnStopAutoWaSend" class="btn btn-danger" style="width:auto; margin:0; padding:8px 14px; font-size:12.5px; display:none;" onclick="stopSequentialWhatsappSend()">⏹️ إيقاف التتابع</button>
+                    <button class="btn" style="background:#0284c7; color:#fff; width:auto; margin:0; padding:8px 12px; font-size:12px;" onclick="addManualWhatsappQuotaRow()">➕ إضافة عميل يدوياً</button>
+                    <button class="btn" style="background:#64748b; color:#fff; width:auto; margin:0; padding:8px 12px; font-size:12px;" onclick="clearWhatsappQuotaList()">🗑️ مسح القائمة</button>
+                    <span id="waQuotaStatsBadge" style="font-size:12px; font-weight:bold; color:#166534; margin-right:auto;">الإجمالي: 0 | تم الإرسال: 0</span>
+                </div>
+            </div>
+
+            <div style="overflow-x:auto; background:#fff; border-radius:8px; border:1px solid #e2e8f0;">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>اسم العميل</th>
+                            <th>رقم التليفون</th>
+                            <th>الحصة</th>
+                            <th>ميعاد التسليم</th>
+                            <th>معاينة الرسالة</th>
+                            <th>الحالة</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="waQuotaTableBody">
+                        <tr><td colspan="8" style="text-align:center; color:#64748b; padding:18px;">لم يتم رفع ملف إكسيل بعد. ارفع الملف أو اضغط "تحميل نموذج ملف إكسيل" لمعرفة التنسيق.</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -2905,7 +2970,7 @@
             document.getElementById('salesView').style.display = 'block';
 
             setupUserTabs();
-renderSavedInvoices();
+            renderSavedInvoices();
             switchTab('invoice');
             initSalesForm();
             populateRoutesList();
@@ -3666,10 +3731,7 @@ renderSavedInvoices();
             const selectedRoute = document.getElementById('savedFilterRoute')?.value || 'ALL';
             const fromDate = document.getElementById('savedFilterFrom')?.value;
             const toDate = document.getElementById('savedFilterTo')?.value;
-            const isAdm = (currentDelegate && (
-    String(currentDelegate.code || '').trim().toLowerCase() === 'admin' ||
-    String(currentDelegate.role || '').trim().toLowerCase() === 'admin'
-));
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
             const canViewAll = (isAdm || (currentDelegate && currentDelegate.role === 'fleet'));
 
             let filtered = cloudSales.filter(s => {
@@ -4162,6 +4224,7 @@ renderSavedInvoices();
 
             document.getElementById('tabNewInvoice').style.display = (isViewer || isStore || isHR || isAccounting || isFleet) ? 'none' : 'block';
             document.getElementById('tabClientQuota').style.display = isAdm ? 'block' : 'none';
+            if(document.getElementById('tabWhatsappQuotas')) document.getElementById('tabWhatsappQuotas').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabWarehouse').style.display = (isViewer || isHR) ? 'none' : 'block';
             document.getElementById('warehouseAdminControls').style.display = (isAdm || isStore) ? 'block' : 'none';
             document.getElementById('tabPendingOrders').style.display = isAdm ? 'block' : 'none';
@@ -4209,7 +4272,8 @@ renderSavedInvoices();
                 'menof': { btn: 'tabMenof', sec: 'sectionMenof' },
                 'shops': { btn: 'tabShops', sec: 'sectionShops' },
                 'lmInvoices': { btn: 'tabLmInvoices', sec: 'sectionLmInvoices' },
-                'settings': { btn: 'tabSettings', sec: 'sectionSettings' }
+                'settings': { btn: 'tabSettings', sec: 'sectionSettings' },
+                'whatsappQuotas': { btn: 'tabWhatsappQuotas', sec: 'sectionWhatsappQuotas' }
             };
 
             for(let k in tabsMap) {
@@ -5375,6 +5439,239 @@ renderSavedInvoices();
             }
             document.getElementById('currentPassInput').value = '';
             document.getElementById('newPassInput').value = '';
+        }
+
+
+        // ==================== إشعارات الحصص ومواعيد التسليم عبر واتساب الشركة ====================
+        let waQuotaRows = [];
+        let waSequentialTimer = null;
+        let waSequentialRunning = false;
+
+        function formatEgyptWhatsappPhone(rawPhone) {
+            if (rawPhone === null || rawPhone === undefined) return '';
+            let digits = String(rawPhone).replace(/\D/g, '');
+            if (!digits) return '';
+            if (digits.startsWith('0020')) digits = digits.slice(2);
+            else if (digits.startsWith('20') && digits.length === 12) return digits;
+            else if (digits.startsWith('01') && digits.length === 11) digits = '2' + digits;
+            else if (digits.startsWith('1') && digits.length === 10) digits = '20' + digits;
+            return digits;
+        }
+
+        function downloadWhatsappQuotaSampleExcel() {
+            const sampleData = [
+                { "اسم العميل": "إسلام كرشة", "رقم التليفون": "01001234567", "الحصة": "10 كراتين كليوباترا كينج", "ميعاد التسليم": "غداً الساعة 10 صباحاً" },
+                { "اسم العميل": "إسلام رضا", "رقم التليفون": "01112345678", "الحصة": "5 كراتين بوكس أبيض + 2 سوبر", "ميعاد التسليم": "السبت القادم" }
+            ];
+            const ws = XLSX.utils.json_to_sheet(sampleData);
+            if (!ws['!views']) ws['!views'] = [];
+            ws['!views'].push({ rightToLeft: true });
+            ws['!cols'] = [{ wch: 24 }, { wch: 18 }, { wch: 32 }, { wch: 24 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "حصص_العملاء");
+            XLSX.writeFile(wb, "نموذج_حصص_العملاء_واتساب.xlsx");
+            showToast("✅ تم تحميل نموذج ملف الإكسيل بنجاح.", "success");
+        }
+
+        function handleWhatsappQuotaExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
+                    if (!rows.length) {
+                        showToast("⚠️ ملف الإكسيل فارغ!", "warning");
+                        return;
+                    }
+
+                    waQuotaRows = rows.map((r, idx) => {
+                        const keys = Object.keys(r);
+                        const findVal = (patterns) => {
+                            for (let k of keys) {
+                                const cleanK = k.trim().toLowerCase();
+                                if (patterns.some(p => cleanK.includes(p))) return String(r[k] ?? '').trim();
+                            }
+                            return '';
+                        };
+
+                        const clientName = findVal(['اسم', 'عميل', 'client', 'name']) || String(r[keys[0]] || '').trim();
+                        const rawPhone = findVal(['تليفون', 'هاتف', 'موبايل', 'رقم', 'واتس', 'phone', 'mobile']) || String(r[keys[1]] || '').trim();
+                        const quota = findVal(['حص', 'كمي', 'صنف', 'كوت', 'quota', 'qty']) || String(r[keys[2]] || '').trim();
+                        const deliveryDate = findVal(['ميعاد', 'موعد', 'تسليم', 'تاريخ', 'يوم', 'date', 'time']) || String(r[keys[3]] || '').trim();
+
+                        return {
+                            id: Date.now() + idx,
+                            client: clientName,
+                            rawPhone: rawPhone,
+                            waPhone: formatEgyptWhatsappPhone(rawPhone),
+                            quota: quota,
+                            delivery: deliveryDate,
+                            sent: false
+                        };
+                    }).filter(item => item.client || item.rawPhone);
+
+                    renderWhatsappQuotaTable();
+                    showToast(`✅ تم استيراد ${waQuotaRows.length} عميل من ملف الإكسيل بنجاح.`, "success");
+                } catch (err) {
+                    console.error(err);
+                    showToast("❌ حدث خطأ أثناء قراءة ملف الإكسيل. تأكد من صيغة الملف.", "error");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function buildWhatsappQuotaMessage(row) {
+            const tpl = document.getElementById('waMessageTemplateInput')?.value || '';
+            const comp = document.getElementById('waCompanyNameInput')?.value || (systemSettings?.companyName || 'شركة بلاك هورس');
+            return tpl
+                .replace(/\{العميل\}/g, row.client || 'عميلنا العزيز')
+                .replace(/\{الحصة\}/g, row.quota || '-')
+                .replace(/\{الميعاد\}/g, row.delivery || '-')
+                .replace(/\{الشركة\}/g, comp);
+        }
+
+        function renderWhatsappQuotaTable() {
+            const tbody = document.getElementById('waQuotaTableBody');
+            if (!tbody) return;
+            const sentCount = waQuotaRows.filter(r => r.sent).length;
+            const statsBadge = document.getElementById('waQuotaStatsBadge');
+            if (statsBadge) statsBadge.innerText = `الإجمالي: ${waQuotaRows.length} | تم الإرسال: ${sentCount} | المتبقي: ${waQuotaRows.length - sentCount}`;
+
+            const startBtn = document.getElementById('btnStartAutoWaSend');
+            if (startBtn) startBtn.style.display = (waQuotaRows.length > 0 && !waSequentialRunning) ? 'inline-block' : 'none';
+
+            if (waQuotaRows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#64748b; padding:18px;">لم يتم رفع ملف إكسيل بعد. ارفع الملف أو اضغط "تحميل نموذج ملف إكسيل" لمعرفة التنسيق.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = waQuotaRows.map((row, idx) => {
+                const msgPreview = buildWhatsappQuotaMessage(row);
+                const validPhone = row.waPhone && row.waPhone.length >= 11;
+                const phoneCell = validPhone
+                    ? `<span style="color:#166534; font-weight:bold; direction:ltr; display:inline-block;">+${row.waPhone}</span>`
+                    : `<span style="color:#dc2626; font-weight:bold;">⚠️ رقم غير صالح (${row.rawPhone || 'فارغ'})</span>`;
+
+                const statusHtml = row.sent
+                    ? `<span style="background:#dcfce7; color:#166534; padding:2px 8px; border-radius:12px; font-weight:bold; font-size:11px;">✅ تم الفتح/الإرسال</span>`
+                    : `<span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:12px; font-weight:bold; font-size:11px;">⏳ في الانتظار</span>`;
+
+                return `<tr style="${row.sent ? 'background:#f0fdf4;' : ''}">
+                    <td>${idx + 1}</td>
+                    <td><input type="text" value="${(row.client || '').replace(/"/g, '&quot;')}" onchange="updateWaQuotaRow(${idx}, 'client', this.value)" style="padding:4px; font-size:12px; min-width:110px;"></td>
+                    <td>
+                        <input type="text" value="${(row.rawPhone || '').replace(/"/g, '&quot;')}" onchange="updateWaQuotaRow(${idx}, 'rawPhone', this.value)" style="padding:4px; font-size:12px; width:110px; direction:ltr;">
+                        <div style="font-size:10px; margin-top:2px;">${phoneCell}</div>
+                    </td>
+                    <td><input type="text" value="${(row.quota || '').replace(/"/g, '&quot;')}" onchange="updateWaQuotaRow(${idx}, 'quota', this.value)" style="padding:4px; font-size:12px; min-width:140px;"></td>
+                    <td><input type="text" value="${(row.delivery || '').replace(/"/g, '&quot;')}" onchange="updateWaQuotaRow(${idx}, 'delivery', this.value)" style="padding:4px; font-size:12px; min-width:120px;"></td>
+                    <td style="max-width:240px; font-size:11px; color:#334155; white-space:pre-line; background:#f8fafc;">${msgPreview}</td>
+                    <td>${statusHtml}</td>
+                    <td style="white-space:nowrap;">
+                        <button class="btn btn-success" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="sendSingleWhatsappQuota(${idx})">💬 إرسال واتساب</button>
+                        <button class="btn btn-danger" style="padding:4px 7px; font-size:11px; width:auto; margin:0 2px;" onclick="deleteWaQuotaRow(${idx})">🗑️</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function updateWaQuotaRow(idx, field, val) {
+            if (!waQuotaRows[idx]) return;
+            waQuotaRows[idx][field] = val.trim();
+            if (field === 'rawPhone') {
+                waQuotaRows[idx].waPhone = formatEgyptWhatsappPhone(val);
+            }
+            renderWhatsappQuotaTable();
+        }
+
+        function addManualWhatsappQuotaRow() {
+            waQuotaRows.push({
+                id: Date.now(),
+                client: '',
+                rawPhone: '',
+                waPhone: '',
+                quota: '',
+                delivery: '',
+                sent: false
+            });
+            renderWhatsappQuotaTable();
+        }
+
+        function deleteWaQuotaRow(idx) {
+            waQuotaRows.splice(idx, 1);
+            renderWhatsappQuotaTable();
+        }
+
+        function clearWhatsappQuotaList() {
+            stopSequentialWhatsappSend();
+            waQuotaRows = [];
+            const inp = document.getElementById('waQuotaExcelInput');
+            if (inp) inp.value = '';
+            renderWhatsappQuotaTable();
+        }
+
+        function sendSingleWhatsappQuota(idx) {
+            const row = waQuotaRows[idx];
+            if (!row) return false;
+            if (!row.waPhone || row.waPhone.length < 11) {
+                showToast(`⚠️ رقم هاتف العميل (${row.client || idx + 1}) غير صحيح.`, "error");
+                return false;
+            }
+            const text = buildWhatsappQuotaMessage(row);
+            const url = `https://web.whatsapp.com/send?phone=${row.waPhone}&text=${encodeURIComponent(text)}`;
+            window.open(url, 'blackhorse_wa_sender');
+            row.sent = true;
+            renderWhatsappQuotaTable();
+            return true;
+        }
+
+        function startSequentialWhatsappSend() {
+            const pendingIndices = waQuotaRows.map((r, i) => (!r.sent && r.waPhone && r.waPhone.length >= 11) ? i : -1).filter(i => i !== -1);
+            if (pendingIndices.length === 0) {
+                showToast("⚠️ لا يوجد عملاء بأرقام صحيحة في قائمة الانتظار.", "warning");
+                return;
+            }
+            const delaySec = Math.max(3, parseInt(document.getElementById('waDelaySecondsInput')?.value) || 8);
+            waSequentialRunning = true;
+            document.getElementById('btnStartAutoWaSend').style.display = 'none';
+            document.getElementById('btnStopAutoWaSend').style.display = 'inline-block';
+
+            let pointer = 0;
+            const processNext = () => {
+                if (!waSequentialRunning || pointer >= pendingIndices.length) {
+                    stopSequentialWhatsappSend();
+                    showToast("✅ اكتمل فتح جميع محادثات العملاء المحددة.", "success");
+                    return;
+                }
+                const targetIdx = pendingIndices[pointer];
+                sendSingleWhatsappQuota(targetIdx);
+                pointer++;
+                if (pointer < pendingIndices.length && waSequentialRunning) {
+                    showToast(`⏳ تم فتح محادثة (${pointer}/${pendingIndices.length}) — التالي بعد ${delaySec} ثوانٍ...`, "info");
+                    waSequentialTimer = setTimeout(processNext, delaySec * 1000);
+                } else {
+                    stopSequentialWhatsappSend();
+                    showToast("✅ اكتمل فتح جميع محادثات العملاء بنجاح.", "success");
+                }
+            };
+            processNext();
+        }
+
+        function stopSequentialWhatsappSend() {
+            waSequentialRunning = false;
+            if (waSequentialTimer) {
+                clearTimeout(waSequentialTimer);
+                waSequentialTimer = null;
+            }
+            const startBtn = document.getElementById('btnStartAutoWaSend');
+            const stopBtn = document.getElementById('btnStopAutoWaSend');
+            if (startBtn) startBtn.style.display = waQuotaRows.length > 0 ? 'inline-block' : 'none';
+            if (stopBtn) stopBtn.style.display = 'none';
         }
 
         function handleLogout() {
