@@ -2947,16 +2947,15 @@ async function handleLogin() {
                     return;
                 }
             }
-
-            if (codeLower === "admin") {
-                try {
-                    await auth.signInWithEmailAndPassword("hosamrezoo@gmail.com", pass);
-                    currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin", allowedRoutes: ["ALL"] };
-                }} catch (error) {
-    showToast("❌ السبب: " + error.code, "error");
-    return;
+if (codeLower === "admin") {
+    try {
+        await auth.signInWithEmailAndPassword("hosamrezoo@gmail.com", pass);
+        currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin", allowedRoutes: ["ALL"] };
+    } catch (error) {
+        showToast("❌ خطأ: " + error.code, "error");
+        return;
+    }
 }
-            } else {
                 const dDB = (typeof cloudDelegates === 'object' && Object.keys(cloudDelegates).length > 0) 
                             ? cloudDelegates 
                             : defaultDelegates;
