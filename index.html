@@ -387,7 +387,7 @@
         <div id="sectionWarehouse" style="display: none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h4 style="margin:0; font-size:14px; color:#1e293b;">📦 المخزن العام وإدارة البضاعة (بالكرتونة):</h4>
-                <button class="btn btn-success" style="width:auto; margin:0; padding:6px 12px; font-size:12px;" onclick="openScanNewProductModal()">📷 مسح وإضافة صنف جديد</button>
+                <button id="btnScanNewProdWarehouse" class="btn btn-success" style="width:auto; margin:0; padding:6px 12px; font-size:12px; display:none;" onclick="openScanNewProductModal()">📷 مسح وإضافة صنف جديد</button>
             </div>
             
             <div id="warehouseAdminControls" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; padding:12px; border-radius:8px; margin-bottom:12px;">
@@ -403,7 +403,7 @@
                 <button class="btn btn-success" onclick="addNewProductItemToWarehouse()">➕ حفظ وإضافة الصنف للمخزن والفواتير</button>
             </div>
 
-            <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; margin-bottom:12px;">
+            <div id="warehouseInboundStockBox" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:8px; margin-bottom:12px;">
                 <h5 style="margin:0 0 8px 0; color:#0f172a; font-size:13px;">📥 وارد بضاعة جديد للمخزن (زيادة رصيد):</h5>
                 <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:6px; margin-bottom:6px;">
                     <select id="selectWarehouseProductIn"></select>
@@ -675,7 +675,7 @@
                 <thead><tr><th>الصنف</th><th>الكمية المُحملة (البداية)</th><th>المتبقي بالسيارة</th><th>المباع (العجز)</th></tr></thead>
                 <tbody id="carStockTableBody"></tbody>
             </table>
-            <button class="btn btn-danger" style="width:100%; margin-top:10px;" onclick="resetLoadedCarStock()">🔄 تصفير الكمية المُحملة (لبدء جرد يوم جديد)</button>
+            <button id="btnResetCarStock" class="btn btn-danger" style="width:100%; margin-top:10px; display:none;" onclick="resetLoadedCarStock()">🔄 تصفير الكمية المُحملة (لبدء جرد يوم جديد)</button>
         </div>
 
         <!-- ك) حساب النسب -->
@@ -973,8 +973,9 @@
                         <label>نوع الحساب والصلاحية:</label>
                         <select id="newAccRole">
                             <option value="delegate">مندوب مبيعات</option>
+                            <option value="admin">مدير النظام (صلاحيات كاملة)</option>
+                            <option value="store">مسؤول المخزن (أمين مخزن)</option>
                             <option value="fleet">مدير الحركة والأسطول</option>
-                            <option value="store">مسؤول المخزن</option>
                             <option value="hr">مسؤول الموارد البشرية (HR)</option>
                             <option value="accounting">الحسابات</option>
                             <option value="viewer">مشاهد فقط</option>
@@ -1224,8 +1225,9 @@
                 <label>نوع الحساب والصلاحية:</label>
                 <select id="modalEditUserRole">
                     <option value="delegate">مندوب مبيعات</option>
+                    <option value="admin">مدير النظام (صلاحيات كاملة)</option>
+                    <option value="store">مسؤول المخزن (أمين مخزن)</option>
                     <option value="fleet">مدير الحركة والأسطول</option>
-                    <option value="store">مسؤول المخزن</option>
                     <option value="hr">مسؤول الموارد البشرية (HR)</option>
                     <option value="accounting">الحسابات</option>
                     <option value="viewer">مشاهد فقط</option>
@@ -1941,7 +1943,11 @@
             } else {
                 playBeep(false);
                 if (statusLabel) statusLabel.innerText = `⚠ باركود جديد غير مسجل: (${scannedCode})`;
-                openQuickAddBarcodeModal(scannedCode);
+                if (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'store')) {
+                    openQuickAddBarcodeModal(scannedCode);
+                } else {
+                    showToast("⚠️ هذا الباركود غير مسجل في النظام. يرجى مراجعة المدير أو أمين المخزن.", "warning");
+                }
             }
         }
 
@@ -1964,6 +1970,10 @@
         }
 
         function saveQuickScannedProduct() {
+            if (!currentDelegate || (currentDelegate.code !== 'admin' && currentDelegate.role !== 'admin' && currentDelegate.role !== 'store')) {
+                showToast("❌ غير مصرح لك بإضافة أو تعديل أصناف المخزن!", "error");
+                return;
+            }
             const code = document.getElementById('modalScanBarcodeCode').value.trim();
             const name = document.getElementById('modalScanBarcodeName').value.trim();
             const stock = parseFloat(document.getElementById('modalScanBarcodeStock').value) || 0;
@@ -2421,7 +2431,8 @@
             if(!cont) return;
             cont.innerHTML = '';
             for(let code in cloudDelegates) {
-                if(code !== 'admin' && code !== 'store' && code !== 'fleet') {
+                let uRole = cloudDelegates[code].role || 'delegate';
+                if(code !== 'admin' && uRole !== 'admin' && uRole !== 'store' && uRole !== 'fleet' && uRole !== 'hr' && uRole !== 'accounting' && uRole !== 'viewer') {
                     let del = cloudDelegates[code];
                     let routesStr = (del.allowedRoutes || ["ALL"]).join(', ');
                     cont.innerHTML += `
@@ -2585,6 +2596,10 @@
         }
 
         function addNewProductItemToWarehouse() {
+            if (!currentDelegate || (currentDelegate.code !== 'admin' && currentDelegate.role !== 'admin' && currentDelegate.role !== 'store')) {
+                showToast("❌ غير مصرح لك بإضافة أصناف للمخزن!", "error");
+                return;
+            }
             const name = document.getElementById('newWarehouseProdName').value.trim();
             const code = document.getElementById('newWarehouseProdCode').value.trim() || String(Date.now());
             const stock = parseFloat(document.getElementById('newWarehouseProdStock').value) || 0;
@@ -2611,6 +2626,10 @@
         }
 
         function addStockToWarehouseDirect() {
+            if (!currentDelegate || (currentDelegate.code !== 'admin' && currentDelegate.role !== 'admin' && currentDelegate.role !== 'store')) {
+                showToast("❌ غير مصرح لك بتوريد بضاعة للمخزن!", "error");
+                return;
+            }
             const code = document.getElementById('selectWarehouseProductIn').value;
             const qty = parseFloat(document.getElementById('qtyWarehouseProductIn').value) || 0;
             if(qty <= 0) { showToast("أدخل كمية كراتين صحيحة.", "error"); return; }
@@ -2714,8 +2733,12 @@
         }
 
         async function resetLoadedCarStock() {
-            const isAdm = (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.role === 'store' || currentDelegate.role === 'fleet'));
-            const delCode = isAdm ? (document.getElementById('selectDelegateForStock')?.value || '101') : currentDelegate.code;
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'store' || currentDelegate.role === 'fleet'));
+            if (!isAdm) {
+                showToast("❌ صلاحية تصفير جرد السيارة متاحة للمدير أو أمين المخزن فقط!", "error");
+                return;
+            }
+            const delCode = document.getElementById('selectDelegateForStock')?.value || '101';
             
             const ok = await showCustomConfirm("⚠️ هل أنت متأكد من تصفير 'الكمية المحملة' لهذا المندوب لبدء يوم جديد؟");
             if(!ok) return;
@@ -2971,7 +2994,13 @@
 
             setupUserTabs();
             renderSavedInvoices();
-            switchTab('invoice');
+            if (currentDelegate.role === 'store') {
+                switchTab('warehouse');
+            } else if (currentDelegate.role === 'fleet' || currentDelegate.role === 'hr' || currentDelegate.role === 'accounting' || currentDelegate.role === 'viewer') {
+                switchTab('saved');
+            } else {
+                switchTab('invoice');
+            }
             initSalesForm();
             populateRoutesList();
             updateClientsDatalist();
@@ -4225,8 +4254,17 @@
             document.getElementById('tabNewInvoice').style.display = (isViewer || isStore || isHR || isAccounting || isFleet) ? 'none' : 'block';
             document.getElementById('tabClientQuota').style.display = isAdm ? 'block' : 'none';
             if(document.getElementById('tabWhatsappQuotas')) document.getElementById('tabWhatsappQuotas').style.display = isAdm ? 'block' : 'none';
-            document.getElementById('tabWarehouse').style.display = (isViewer || isHR) ? 'none' : 'block';
-            document.getElementById('warehouseAdminControls').style.display = (isAdm || isStore) ? 'block' : 'none';
+
+            const canAccessWarehouse = (isAdm || isStore);
+            document.getElementById('tabWarehouse').style.display = canAccessWarehouse ? 'block' : 'none';
+            document.getElementById('warehouseAdminControls').style.display = canAccessWarehouse ? 'block' : 'none';
+            if(document.getElementById('btnScanNewProdWarehouse')) document.getElementById('btnScanNewProdWarehouse').style.display = canAccessWarehouse ? 'inline-block' : 'none';
+            if(document.getElementById('warehouseInboundStockBox')) document.getElementById('warehouseInboundStockBox').style.display = canAccessWarehouse ? 'block' : 'none';
+
+            const canManageCarStock = (isAdm || isStore || isFleet);
+            if(document.getElementById('btnResetCarStock')) document.getElementById('btnResetCarStock').style.display = canManageCarStock ? 'block' : 'none';
+            document.getElementById('adminCarSetupBox').style.display = canManageCarStock ? 'block' : 'none';
+
             document.getElementById('tabPendingOrders').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabClientsManage').style.display = isAdm ? 'block' : 'none';
             document.getElementById('tabRatios').style.display = isViewer ? 'none' : 'block';
@@ -4239,7 +4277,6 @@
 
             document.getElementById('adminVehiclesOilControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             document.getElementById('adminSystemControlBox').style.display = isAdm ? 'block' : 'none';
-            document.getElementById('adminCarSetupBox').style.display = (isAdm || isStore || isFleet) ? 'block' : 'none';
             document.getElementById('adminRepRoutesControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             document.getElementById('adminDelegateFilterBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             
@@ -4251,6 +4288,8 @@
                 document.getElementById('adminUserManagement').style.display = 'block';
                 updatePendingOrdersBadge();
                 renderAdminUsersTable();
+            } else {
+                document.getElementById('adminUserManagement').style.display = 'none';
             }
             updateDelegatesSelects();
         }
@@ -4314,7 +4353,8 @@
                 if(!el) return;
                 el.innerHTML = (sId === 'selectDelegateForStock') ? '' : '<option value="ALL">📋 عرض كل المناديب</option>';
                 for(let code in cloudDelegates) {
-                    if(code !== 'admin' && code !== 'store' && code !== 'hr' && code !== 'accountant' && code !== 'fleet') {
+                    let uRole = cloudDelegates[code].role || 'delegate';
+                    if(code !== 'admin' && uRole !== 'admin' && uRole !== 'store' && uRole !== 'hr' && uRole !== 'accounting' && uRole !== 'fleet' && uRole !== 'viewer') {
                         el.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
                     }
                 }
@@ -5363,15 +5403,26 @@
             if(!tbody) return;
             tbody.innerHTML = '';
 
+            const roleNamesMap = {
+                'admin': '👑 مدير النظام',
+                'delegate': 'مندوب مبيعات',
+                'store': '📦 أمين مخزن',
+                'fleet': '🚚 مدير الحركة',
+                'hr': 'موارد بشرية (HR)',
+                'accounting': 'حسابات',
+                'viewer': 'مشاهد فقط'
+            };
+
             for(let code in cloudDelegates) {
                 if(code === 'admin') continue;
                 let u = cloudDelegates[code];
                 let statusBadge = u.locked ? '<span style="color:red; font-weight:bold;">مقفل</span>' : '<span style="color:green; font-weight:bold;">نشط</span>';
+                let roleLabel = roleNamesMap[u.role] || u.role || 'مندوب مبيعات';
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${code}</b></td>
                         <td>${u.name}</td>
-                        <td>${u.role || 'delegate'}</td>
+                        <td>${roleLabel}</td>
                         <td>${u.pass}</td>
                         <td>${statusBadge}</td>
                         <td>
