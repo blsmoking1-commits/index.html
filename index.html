@@ -1547,15 +1547,19 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            const keys = Object.keys(clientQuotasDB);
+            const keys = Object.keys(clientQuotasDB || {});
             if (keys.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="color:#64748b;">لم يتم تحديد حصص لأي عميل بعد (جميع العملاء مفتوحو الكمية).</td></tr>`;
                 return;
             }
 
+            let rowsHtml = '';
             keys.forEach(k => {
                 const q = clientQuotasDB[k];
+                if (!q || !q.clientName) return;
                 const info = getClientQuotaInfo(q.clientName);
+                if (!info) return;
+
                 const route = cloudClientsRoutes[q.clientName] || '-';
                 const isUnlimited = (info.cartonsLimit === 0);
 
@@ -1565,7 +1569,7 @@
                         ? `<span style="color:#dc2626; font-weight:bold;">🔴 استنفد الحصة (يتطلب موافقة)</span>`
                         : `<span style="color:#0284c7; font-weight:bold;">🟡 متاح (${info.remainingCartons} ك)</span>`);
 
-                tbody.innerHTML += `
+                rowsHtml += `
                     <tr>
                         <td><b>${q.clientName}</b></td>
                         <td>${route}</td>
