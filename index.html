@@ -2999,16 +2999,20 @@ async function handleLogin() {
 
             setupUserTabs();
             renderSavedInvoices();
-            if (currentDelegate.role === 'store') {
-                switchTab('warehouse');
-            } else if (currentDelegate.role === 'fleet' || currentDelegate.role === 'hr' || currentDelegate.role === 'accounting' || currentDelegate.role === 'viewer') {
-                switchTab('saved');
-            } else {
-                switchTab('invoice');
-            }
-            initSalesForm();
-            populateRoutesList();
-            updateClientsDatalist();
+            idocument.getElementById('lblDelegateName').innerText = currentDelegate.name;
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('salesView').style.display = 'block';
+
+            try { setupUserTabs(); } catch (e) { console.error("setupUserTabs:", e); }
+            try { renderSavedInvoices(); } catch (e) { console.error("renderSavedInvoices:", e); }
+            try {
+                if (currentDelegate.role === 'admin' || currentDelegate.role === 'delegate') {
+                    switchTab('invoice');
+                }
+            } catch (e) { console.error("switchTab:", e); }
+            try { initSalesForm(); } catch (e) { console.error("initSalesForm:", e); }
+            try { populateRoutesList(); } catch (e) { console.error("populateRoutesList:", e); }
+            try { updateClientsDatalist(); } catch (e) { console.error("updateClientsDatalist:", e); }
 
             if(currentDelegate.role === 'delegate') {
                 document.getElementById('sosButtonContainer').style.display = 'block';
