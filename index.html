@@ -1321,7 +1321,7 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        let ADMIN_PASS = "Hossam2023@";
+        
         
         // متغيرات نظام محصص العملاء والأهداف
         let quotaSystemActive = true;
@@ -1346,7 +1346,7 @@
 
         const defaultCarStock = { "1500000000": 10, "1500000002": 10, "1500000004": 10, "1500000005": 10, "1500000008": 10, "1500000009": 10, "1500000010": 10, "1500000146": 10 };
         const defaultDelegates = {
-            "admin": { pass: ADMIN_PASS, name: "حسام (المدير)", role: "admin", carStock: {...defaultCarStock}, allowedRoutes: ["ALL"] },
+           "admin": { pass: "", name: "حسام (المدير)", role: "admin", carStock: {...defaultCarStock}, allowedRoutes: ["ALL"] },
             "fleet": { pass: "fleet123", name: "مدير الحركة", role: "fleet", carStock: {...defaultCarStock}, allowedRoutes: ["ALL"] },
             "store": { pass: "store123", name: "مسؤول المخزن", role: "store", carStock: {...defaultCarStock}, allowedRoutes: ["ALL"] },
             "hr": { pass: "hr123", name: "الموارد البشرية (HR)", role: "hr", allowedRoutes: ["ALL"] },
@@ -2909,8 +2909,7 @@
             let msg = `السلام عليكم يا مدير، أنا العميل (${info}) نسيت كلمة السر لحسابي في بلاك هورس، برجاء المساعدة في استعادة كلمة السر.`;
             window.open(`https://api.whatsapp.com/send?phone=${getTargetWhatsApp()}&text=${encodeURIComponent(msg)}`, '_blank');
         }
-
-        function handleLogin() {
+async function handleLogin() {
             const rawInput = (document.getElementById('loginCode')?.value || '').trim();
             const codeLower = rawInput.toLowerCase();
             const cleanInputPhone = cleanPhoneStr(rawInput);
@@ -2949,8 +2948,14 @@
                 }
             }
 
-            if (codeLower === "admin" && (pass === ADMIN_PASS || pass === "Hossam2023@")) {
-                currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin", allowedRoutes: ["ALL"] };
+            if (codeLower === "admin") {
+                try {
+                    await auth.signInWithEmailAndPassword("hosamrezoo@gmail.com", pass);
+                    currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin", allowedRoutes: ["ALL"] };
+                } catch (error) {
+                    showToast("❌ كلمة السر غير صحيحة لحساب الإدارة!", "error");
+                    return;
+                }
             } else {
                 const dDB = (typeof cloudDelegates === 'object' && Object.keys(cloudDelegates).length > 0) 
                             ? cloudDelegates 
