@@ -2952,10 +2952,10 @@ async function handleLogin() {
                 try {
                     await auth.signInWithEmailAndPassword("hosamrezoo@gmail.com", pass);
                     currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin", allowedRoutes: ["ALL"] };
-                } catch (error) {
-                    showToast("❌ كلمة السر غير صحيحة لحساب الإدارة!", "error");
-                    return;
-                }
+                }} catch (error) {
+    showToast("❌ السبب: " + error.code, "error");
+    return;
+}
             } else {
                 const dDB = (typeof cloudDelegates === 'object' && Object.keys(cloudDelegates).length > 0) 
                             ? cloudDelegates 
