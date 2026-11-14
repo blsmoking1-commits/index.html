@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
         body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
@@ -914,6 +915,20 @@
 
         <!-- س) الإعدادات والتحكم -->
         <div id="sectionSettings" style="display: none;">
+            <!-- لوحة التحكم في السيرفر السحابي والبديل (Supabase Failover) -->
+            <div id="adminCloudFailoverBox" style="background:#f0fdf4; border:2px solid #16a34a; padding:14px; border-radius:10px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <h4 style="margin:0; font-size:14px; color:#166534;">☁️ حالة السيرفر السحابي والنسخ الاحتياطي المزدوج:</h4>
+                        <div id="cloudProviderBadge" style="font-size:12px; font-weight:bold; margin-top:4px; color:#15803d;">🟢 السيرفر النشط: Firebase (مع نسخ تلقائي لـ Supabase)</div>
+                        <div id="supabaseLastSyncText" style="font-size:11px; color:#475569; margin-top:2px;">آخر مزامنة احتياطية: في انتظار الحركة...</div>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="btn btn-primary" style="width:auto; margin:0; padding:8px 12px; font-size:12px;" onclick="forceFullSyncToSupabase()">🔄 نسخ كافة البيانات الآن لـ Supabase</button>
+                        <button id="btnSwitchCloudProvider" class="btn btn-warning" style="width:auto; margin:0; padding:8px 12px; font-size:12px;" onclick="toggleCloudDatabaseProvider()">⚡ تبديل السيرفر (Firebase ⇄ Supabase)</button>
+                    </div>
+                </div>
+            </div>
             <div id="adminVehiclesOilControlBox" style="display:none; background:#fffbeb; border:1.5px solid #f59e0b; padding:14px; border-radius:10px; margin-bottom:14px;">
                 <h4 style="margin-top:0; font-size:14px; color:#b45309;">🚗 متابعة أسطول السيارات وقراءات العداد وغيار الزيت (1500 كم):</h4>
                 
@@ -1320,6 +1335,161 @@
         }
         const db = firebase.database();
         const auth = firebase.auth();
+
+        // ==================== محرك المزامنة المزدوجة والبديل السحابي (Supabase Failover) ====================
+        const SUPABASE_URL = "https://amdapdsamabknpuyqirf.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_5wJNaSHeK1m0T-UE7110YQ_eFZZ9WHSnpx";
+        const sbClient = (window.supabase && SUPABASE_KEY && !SUPABASE_KEY.includes("حط_هنا"))
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+            : null;
+
+        let activeCloudProvider = localStorage.getItem('BH_ACTIVE_CLOUD') || 'FIREBASE';
+
+        function updateCloudFailoverUI() {
+            const badge = document.getElementById('cloudProviderBadge');
+            if (!badge) return;
+            if (!sbClient) {
+                badge.innerHTML = "⚠️ السيرفر الأساسي <b>Firebase</b> يعمل (ضع مفتاح Supabase في الكود لتفعيل النسخ البديل)";
+                badge.style.color = "#b45309";
+                return;
+            }
+            if (activeCloudProvider === 'FIREBASE') {
+                badge.innerHTML = "🟢 السيرفر النشط: <b>Firebase</b> (النسخ الصامت لـ Supabase يعمل تلقائياً)";
+                badge.style.color = "#15803d";
+            } else {
+                badge.innerHTML = "🟠 وضع الطوارئ نشط: <b>Supabase</b> (النظام يعمل بالكامل على السيرفر البديل)";
+                badge.style.color = "#c2410c";
+            }
+        }
+
+        let syncTimers = {};
+        function mirrorNodeToSupabase(nodeKey, dataPayload) {
+            if (!sbClient || dataPayload === null || dataPayload === undefined) return;
+            clearTimeout(syncTimers[nodeKey]);
+            syncTimers[nodeKey] = setTimeout(async () => {
+                try {
+                    const { error } = await sbClient
+                        .from('blackhorse_cloud_sync')
+                        .upsert({ node_key: nodeKey, payload: dataPayload, updated_at: new Date().toISOString() }, { onConflict: 'node_key' });
+                    if (!error) {
+                        const lbl = document.getElementById('supabaseLastSyncText');
+                        if (lbl) lbl.innerText = `✅ آخر مزامنة احتياطية ناجحة: ${new Date().toLocaleTimeString('ar-EG')} (${nodeKey})`;
+                    }
+                } catch (e) {
+                    console.warn("Supabase mirror warning:", e);
+                }
+            }, 1200);
+        }
+
+        async function forceFullSyncToSupabase() {
+            if (!sbClient) {
+                showToast("⚠️ يرجى وضع مفتاح Supabase (sb_publishable_...) داخل الكود أولاً.", "warning");
+                return;
+            }
+            showToast("⏳ جاري رفع نسخة كاملة من كافة بيانات الشركة إلى Supabase...", "info");
+
+            const allNodes = [
+                { node_key: 'sales', payload: Object.assign({}, cloudSales) },
+                { node_key: 'productsList', payload: products },
+                { node_key: 'delegates', payload: cloudDelegates },
+                { node_key: 'clients', payload: cloudClients },
+                { node_key: 'clientsRoutes', payload: cloudClientsRoutes },
+                { node_key: 'clientsPhones', payload: cloudClientsPhones },
+                { node_key: 'clientsLocations', payload: cloudClientsLocations },
+                { node_key: 'portalCustomers', payload: portalCustomersDB },
+                { node_key: 'pendingOrders', payload: Object.assign({}, cloudPendingOrders) },
+                { node_key: 'menofLoads', payload: Object.assign({}, cloudMenofLoads) },
+                { node_key: 'shops', payload: Object.assign({}, cloudShops) },
+                { node_key: 'lmInvoices', payload: Object.assign({}, cloudLmInvoices) },
+                { node_key: 'vehicles', payload: cloudVehicles },
+                { node_key: 'systemSettings', payload: systemSettings },
+                { node_key: 'clientQuotas', payload: clientQuotasDB },
+                { node_key: 'quotaSystemActive', payload: quotaSystemActive }
+            ];
+
+            const { error } = await sbClient.from('blackhorse_cloud_sync').upsert(allNodes, { onConflict: 'node_key' });
+            if (error) {
+                showToast("❌ فشل الرفع الاحتياطي: " + error.message, "error");
+            } else {
+                showToast("🎉 تم نسخ جميع بيانات الشركة بالكامل (16 قسم) إلى Supabase بنجاح!", "success");
+                const lbl = document.getElementById('supabaseLastSyncText');
+                if (lbl) lbl.innerText = `✅ نسخة كاملة محفوظة الساعة: ${new Date().toLocaleTimeString('ar-EG')}`;
+            }
+        }
+
+        const originalDbRef = db.ref.bind(db);
+        db.ref = function(path) {
+            const refObj = originalDbRef(path);
+            const rootKey = path ? String(path).split('/')[0] : '';
+
+            if (activeCloudProvider === 'SUPABASE' && rootKey) {
+                const origOn = refObj.on.bind(refObj);
+                refObj.on = function(eventType, callback) {
+                    if (eventType === 'value' && sbClient) {
+                        sbClient.from('blackhorse_cloud_sync').select('payload').eq('node_key', rootKey).single().then(({ data }) => {
+                            if (data && data.payload !== undefined) {
+                                callback({ val: () => data.payload });
+                            }
+                        });
+                    }
+                    return origOn(eventType, callback);
+                };
+            }
+
+            const origSet = refObj.set.bind(refObj);
+            refObj.set = function(val, onComplete) {
+                if (activeCloudProvider === 'SUPABASE' && sbClient && rootKey) {
+                    origSet(val).catch(() => {});
+                    if (path === rootKey) {
+                        return sbClient.from('blackhorse_cloud_sync')
+                            .upsert({ node_key: rootKey, payload: val, updated_at: new Date().toISOString() }, { onConflict: 'node_key' })
+                            .then(({ error }) => {
+                                if (error) throw error;
+                                if (onComplete) onComplete(null);
+                            });
+                    } else {
+                        setTimeout(() => forceFullSyncToSupabase(), 500);
+                        return Promise.resolve();
+                    }
+                } else {
+                    const res = origSet(val, onComplete);
+                    if (rootKey) {
+                        if (path === rootKey) {
+                            mirrorNodeToSupabase(rootKey, val);
+                        } else {
+                            originalDbRef(rootKey).once('value').then(snap => {
+                                if (snap.val() !== null) mirrorNodeToSupabase(rootKey, snap.val());
+                            }).catch(() => {});
+                        }
+                    }
+                    return res;
+                }
+            };
+
+            return refObj;
+        };
+
+        async function toggleCloudDatabaseProvider() {
+            if (!sbClient) {
+                showToast("⚠️ يرجى وضع مفتاح Supabase (sb_publishable_...) داخل الكود قبل التبديل.", "warning");
+                return;
+            }
+            const nextProvider = activeCloudProvider === 'FIREBASE' ? 'SUPABASE' : 'FIREBASE';
+            const msg = nextProvider === 'SUPABASE'
+                ? "⚠️ هل تريد تحويل النظام بالكامل للعمل على السيرفر البديل (Supabase)؟\n(تأكد أولاً من عمل مزامنة كاملة للبيانات)"
+                : "🔄 هل تريد إعادة النظام للعمل على السيرفر الأساسي (Firebase)؟";
+            
+            const ok = await showCustomConfirm(msg);
+            if (!ok) return;
+
+            localStorage.setItem('BH_ACTIVE_CLOUD', nextProvider);
+            activeCloudProvider = nextProvider;
+            updateCloudFailoverUI();
+            showToast(`✅ تم التحويل إلى ${nextProvider}، جاري إعادة تحميل النظام...`, "success");
+            setTimeout(() => location.reload(), 1200);
+        }
+
+        window.addEventListener('DOMContentLoaded', updateCloudFailoverUI);
 
         
         
@@ -4332,6 +4502,7 @@ async function handleLogin() {
 
             document.getElementById('adminVehiclesOilControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             document.getElementById('adminSystemControlBox').style.display = isAdm ? 'block' : 'none';
+            if(document.getElementById('adminCloudFailoverBox')) document.getElementById('adminCloudFailoverBox').style.display = isAdm ? 'block' : 'none';
             document.getElementById('adminRepRoutesControlBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             document.getElementById('adminDelegateFilterBox').style.display = (isAdm || isFleet) ? 'block' : 'none';
             
