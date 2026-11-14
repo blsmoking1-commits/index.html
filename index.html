@@ -2292,17 +2292,20 @@
                 renderRepRoutesInputs(); 
                 renderAdminUsersTable();
             }
-           if (currentActiveTab === 'carStock') renderCarStockTable();
-updateCarTransferProductsSelect();
-updateDelegatesSelects();
-        
-        db.ref('clients').on('value', (s) => { 
-            cloudClients = s.val() || {}; 
-            populateRoutesList();
-            updateClientsDatalist(); 
-            if (currentActiveTab === 'report') updateReportClientsSelect(); 
-            if (currentActiveTab === 'clientQuota') populateQuotaClientsSelect();
-        });
+          if (currentActiveTab === 'carStock') renderCarStockTable();
+        updateCarTransferProductsSelect();
+        updateDelegatesSelects(); 
+        populateRoutesList();
+        updateClientsDatalist();
+    });
+
+    db.ref('clients').on('value', (s) => { 
+        cloudClients = s.val() || {}; 
+        populateRoutesList();
+        updateClientsDatalist(); 
+        if (currentActiveTab === 'report') updateReportClientsSelect(); 
+        if (currentActiveTab === 'clientQuota') populateQuotaClientsSelect();
+    });
 
         db.ref('clientsRoutes').on('value', (s) => {
             cloudClientsRoutes = s.val() || {};
