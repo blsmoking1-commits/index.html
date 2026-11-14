@@ -1430,7 +1430,7 @@
 
         db.ref('clientQuotas').on('value', (s) => {
             clientQuotasDB = s.val() || {};
-            renderClientQuotasTable();
+            if (currentActiveTab === 'clientQuota') renderClientQuotasTable();
             checkSelectedClientQuotaStatus();
         });
 
@@ -1459,15 +1459,15 @@
             const sel = document.getElementById('quotaSelectClient');
             if (!sel) return;
             const prev = sel.value;
-            sel.innerHTML = '<option value="">-- اختر العميل لتحديد حصته --</option>';
-
             let namesSet = new Set();
             for (let cName in cloudClients) if (cName.trim()) namesSet.add(cName.trim());
             for (let uid in portalCustomersDB) if (portalCustomersDB[uid]?.name?.trim()) namesSet.add(portalCustomersDB[uid].name.trim());
 
+            let optsHtml = '<option value="">-- اختر العميل لتحديد حصته --</option>';
             Array.from(namesSet).sort().forEach(name => {
-                sel.innerHTML += `<option value="${name}">${name}</option>`;
+                optsHtml += `<option value="${name}">${name}</option>`;
             });
+            sel.innerHTML = optsHtml;
             if (prev && namesSet.has(prev)) sel.value = prev;
         }
 
@@ -1584,6 +1584,7 @@
                         </td>
                     </tr>`;
             });
+            tbody.innerHTML = rowsHtml || `<tr><td colspan="8" style="color:#64748b;">لم يتم تحديد حصص لأي عميل بعد (جميع العملاء مفتوحو الكمية).</td></tr>`;
         }
 
         function loadQuotaToEdit(name, cartons, days) {
@@ -2084,7 +2085,7 @@
             if(s.val()) cloudVehicles = { ...defaultVehicles, ...s.val() };
             else db.ref('vehicles').set(defaultVehicles);
             updateVehicleSelectOptions();
-            renderVehiclesOilTable();
+            if (currentActiveTab === 'settings') renderVehiclesOilTable();
             checkGlobalOilChangeAlerts();
             checkCurrentVehicleOilLimit();
         });
@@ -2199,9 +2200,9 @@
         function renderVehiclesOilTable() {
             const tbody = document.getElementById('vehiclesOilTableBody');
             if(!tbody) return;
-            tbody.innerHTML = '';
 
             const isAdm = (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
+            let html = '';
 
             for(let key in cloudVehicles) {
                 let v = cloudVehicles[key];
@@ -2217,7 +2218,7 @@
 
                 let deleteBtn = isAdm ? `<button class="btn btn-danger" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="deleteVehicleFromFleet('${key}')">🗑️ حذف</button>` : '';
 
-                tbody.innerHTML += `
+                html += `
                     <tr>
                         <td><b>${v.name}</b></td>
                         <td style="font-weight:bold; color:#2563eb;">${curKm} كم</td>
@@ -2230,6 +2231,7 @@
                         </td>
                     </tr>`;
             }
+            tbody.innerHTML = html;
         }
 
         function openOilChangeModal(vKey) {
@@ -2271,23 +2273,27 @@
         db.ref('productsList').on('value', (s) => {
             if(s.val()) products = Object.values(s.val());
             else db.ref('productsList').set(defaultProducts);
-            initSalesForm();
-            renderWarehouseTable();
-            updateReportProductsSelect();
+            if (currentActiveTab === 'invoice') initSalesForm();
+            if (currentActiveTab === 'warehouse') renderWarehouseTable();
+            if (currentActiveTab === 'report') updateReportProductsSelect();
         });
 
         db.ref('sales').on('value', (s) => { 
             cloudSales = s.val() ? Object.values(s.val()) : []; 
-            renderSavedInvoices();
-            renderClientQuotasTable();
-            if(currentActiveTab === 'menof') loadMonthlyDebts();
+            if (currentActiveTab === 'saved') renderSavedInvoices();
+            if (currentActiveTab === 'clientQuota') renderClientQuotasTable();
+            if (currentActiveTab === 'report') renderDailyReport();
+            if (currentActiveTab === 'menof') loadMonthlyDebts();
         });
 
         db.ref('delegates').on('value', (s) => { 
             if(s.val()) cloudDelegates = s.val(); 
-            renderRepRoutesInputs(); 
+            if (currentActiveTab === 'settings') {
+                renderRepRoutesInputs(); 
+                renderAdminUsersTable();
+            }
+            if (currentActiveTab === 'carStock') renderCarStockTable();
             updateDelegatesSelects(); 
-            renderAdminUsersTable();
             populateRoutesList();
             updateClientsDatalist();
         });
@@ -2296,8 +2302,8 @@
             cloudClients = s.val() || {}; 
             populateRoutesList();
             updateClientsDatalist(); 
-            updateReportClientsSelect(); 
-            populateQuotaClientsSelect();
+            if (currentActiveTab === 'report') updateReportClientsSelect(); 
+            if (currentActiveTab === 'clientQuota') populateQuotaClientsSelect();
         });
 
         db.ref('clientsRoutes').on('value', (s) => {
@@ -2311,33 +2317,39 @@
         });
 
         db.ref('clientsLocations').on('value', (s) => { cloudClientsLocations = s.val() || {}; });
-        db.ref('menofLoads').on('value', (s) => { cloudMenofLoads = s.val() ? Object.values(s.val()) : []; renderMenofTable(); });
+        db.ref('menofLoads').on('value', (s) => { 
+            cloudMenofLoads = s.val() ? Object.values(s.val()) : []; 
+            if (currentActiveTab === 'menof') renderMenofTable(); 
+        });
         
         db.ref('shops').on('value', (s) => { 
             cloudShops = s.val() ? Object.values(s.val()) : []; 
-            renderShopsTable(); 
-            if(currentActiveTab === 'menof') loadMonthlyDebts();
+            if (currentActiveTab === 'shops') renderShopsTable(); 
+            if (currentActiveTab === 'menof') loadMonthlyDebts();
         });
 
-        db.ref('lmInvoices').on('value', (s) => { cloudLmInvoices = s.val() ? Object.values(s.val()) : []; renderLmTable(); });
+        db.ref('lmInvoices').on('value', (s) => { 
+            cloudLmInvoices = s.val() ? Object.values(s.val()) : []; 
+            if (currentActiveTab === 'lmInvoices') renderLmTable(); 
+        });
         
         db.ref('pendingOrders').on('value', (s) => { 
             cloudPendingOrders = s.val() ? Object.values(s.val()) : [];
             updatePendingOrdersBadge();
-            renderAdminPendingOrdersTable();
+            if (currentActiveTab === 'pendingOrders') renderAdminPendingOrdersTable();
         });
 
         db.ref('portalCustomers').on('value', (s) => { 
             portalCustomersDB = s.val() || {}; 
             populateRoutesList();
             updateClientsDatalist();
-            populateQuotaClientsSelect();
-            renderAdminPortalCustomersTable();
+            if (currentActiveTab === 'clientQuota') populateQuotaClientsSelect();
+            if (currentActiveTab === 'clientsManage') renderAdminPortalCustomersTable();
         });
 
         db.ref('attendanceLog').on('value', (s) => {
             cloudAttendance = s.val() ? Object.values(s.val()) : [];
-            renderAttendanceLogTable();
+            if (currentActiveTab === 'attendanceLog') renderAttendanceLogTable();
         });
 
         db.ref('locations').on('value', (s) => {
@@ -2433,19 +2445,20 @@
         function renderRepRoutesInputs() {
             const cont = document.getElementById('repRoutesInputsList');
             if(!cont) return;
-            cont.innerHTML = '';
+            let html = '';
             for(let code in cloudDelegates) {
                 let uRole = cloudDelegates[code].role || 'delegate';
                 if(code !== 'admin' && uRole !== 'admin' && uRole !== 'store' && uRole !== 'fleet' && uRole !== 'hr' && uRole !== 'accounting' && uRole !== 'viewer') {
                     let del = cloudDelegates[code];
                     let routesStr = (del.allowedRoutes || ["ALL"]).join(', ');
-                    cont.innerHTML += `
+                    html += `
                         <div class="form-group" style="margin-bottom:8px;">
                             <label>المندوب: <b>${del.name}</b> (${code}):</label>
                             <input type="text" id="input_routes_${code}" value="${routesStr}" placeholder="مثال: ALL أو خط شبين, سدود, أشمون">
                         </div>`;
                 }
             }
+            cont.innerHTML = html;
         }
 
         function saveAllRepRoutesDirect() {
@@ -2508,10 +2521,11 @@
                 return;
             }
 
+            let html = '';
             filtered.slice().reverse().forEach(a => {
                 let mapBtn = (a.coords && a.coords.lat) ? `<a href="https://maps.google.com/?q=${a.coords.lat},${a.coords.lng}" target="_blank" class="btn btn-primary" style="padding:2px 6px; font-size:10px; width:auto; display:inline-block; margin:0;">📍 موقع GPS</a>` : '-';
                 let actionBadge = a.action === 'حضور' ? `<span style="color:#16a34a; font-weight:bold;">✅ حضور</span>` : `<span style="color:#dc2626; font-weight:bold;">🚪 انصراف</span>`;
-                tbody.innerHTML += `
+                html += `
                     <tr>
                         <td>${a.date}</td>
                         <td><b>${a.delegateName}</b></td>
@@ -2521,6 +2535,7 @@
                         <td>${mapBtn}</td>
                     </tr>`;
             });
+            tbody.innerHTML = html;
         }
 
         function renderWarehouseTable() {
@@ -2533,6 +2548,7 @@
             if(selectCar) selectCar.innerHTML = '';
 
             const isAdm = (currentDelegate && (currentDelegate.role === 'admin' || currentDelegate.role === 'store'));
+            let rowsHtml = '', inOptsHtml = '', carOptsHtml = '';
 
             products.forEach(p => {
                 const stockCartons = parseFloat(p.stock) || 0;
@@ -2546,7 +2562,7 @@
                     `;
                 }
 
-                tbody.innerHTML += `
+                rowsHtml += `
                     <tr>
                         <td><b>${p.name}</b></td>
                         <td><code style="color:#0284c7; font-weight:bold;">${p.code}</code></td>
@@ -2556,9 +2572,12 @@
                         <td>${actionsBtn}</td>
                     </tr>`;
 
-                if(selectIn) selectIn.innerHTML += `<option value="${p.code}">${p.name} (${p.code})</option>`;
-                if(selectCar) selectCar.innerHTML += `<option value="${p.code}">${p.name} (بالمخزن: ${stockCartons} ك)</option>`;
+                inOptsHtml += `<option value="${p.code}">${p.name} (${p.code})</option>`;
+                carOptsHtml += `<option value="${p.code}">${p.name} (بالمخزن: ${stockCartons} ك)</option>`;
             });
+            tbody.innerHTML = rowsHtml;
+            if(selectIn) selectIn.innerHTML = inOptsHtml;
+            if(selectCar) selectCar.innerHTML = carOptsHtml;
         }
 
         function openEditProductModal(code) {
@@ -2717,6 +2736,7 @@
             const carStock = (cloudDelegates[targetCode] && cloudDelegates[targetCode].carStock) ? cloudDelegates[targetCode].carStock : defaultCarStock;
             const loadedStock = (cloudDelegates[targetCode] && cloudDelegates[targetCode].loadedStock) ? cloudDelegates[targetCode].loadedStock : {};
 
+            let html = '';
             products.forEach(p => {
                 const stockCartons = parseFloat(carStock[p.code]) || 0;
                 const loadedCartons = parseFloat(loadedStock[p.code]) || 0;
@@ -2726,7 +2746,7 @@
                 
                 if(loadedCartons === 0 && stockCartons === 0) return;
 
-                tbody.innerHTML += `
+                html += `
                     <tr>
                         <td><b>${p.name}</b></td>
                         <td style="color:#0284c7; font-weight:bold;">${loadedCartons} كرتونة</td>
@@ -2734,6 +2754,7 @@
                         <td style="color:#dc2626; font-weight:bold;">${soldCartons.toFixed(2)} كرتونة</td>
                     </tr>`;
             });
+            tbody.innerHTML = html;
         }
 
         async function resetLoadedCarStock() {
@@ -3001,14 +3022,7 @@ async function handleLogin() {
             document.getElementById('loginView').style.display = 'none';
             document.getElementById('salesView').style.display = 'block';
 
-            setupUserTabs();
-            renderSavedInvoices();
-            idocument.getElementById('lblDelegateName').innerText = currentDelegate.name;
-            document.getElementById('loginView').style.display = 'none';
-            document.getElementById('salesView').style.display = 'block';
-
             try { setupUserTabs(); } catch (e) { console.error("setupUserTabs:", e); }
-            try { renderSavedInvoices(); } catch (e) { console.error("renderSavedInvoices:", e); }
             try {
                 if (currentDelegate.role === 'admin' || currentDelegate.role === 'delegate') {
                     switchTab('invoice');
@@ -3246,14 +3260,16 @@ async function handleLogin() {
             let myOrders = cloudPendingOrders.filter(o => o.clientId === currentPortalCustomer.uid || (o.clientName === currentPortalCustomer.name));
             if(myOrders.length === 0) { tbody.innerHTML = `<tr><td colspan="5">لا توجد طلبات مرسلة حالياً.</td></tr>`; return; }
 
+            let html = '';
             myOrders.slice().reverse().forEach(o => {
                 let statusBadge = '<span style="color:#d97706; font-weight:bold;">⏳ قيد مراجعة المدير</span>';
                 if(o.status === 'approved') statusBadge = '<span style="color:#16a34a; font-weight:bold;">✅ تمت الموافقة وتنزيل الفاتورة</span>';
                 if(o.status === 'rejected') statusBadge = '<span style="color:#dc2626; font-weight:bold;">❌ تم الرفض</span>';
                 let itemsStr = o.items ? o.items.map(it => `${it.name} (${it.qty} ${it.unit||'وحدة'})`).join(' + ') : 'طلب مبيعات';
 
-                tbody.innerHTML += `<tr><td>${o.date}</td><td>${o.orderType === 'wholesale' ? 'جملة' : 'قطاعي'}</td><td style="font-size:10px;">${itemsStr}</td><td><b>${o.grandTotal} ج.م</b></td><td>${statusBadge}</td></tr>`;
+                html += `<tr><td>${o.date}</td><td>${o.orderType === 'wholesale' ? 'جملة' : 'قطاعي'}</td><td style="font-size:10px;">${itemsStr}</td><td><b>${o.grandTotal} ج.م</b></td><td>${statusBadge}</td></tr>`;
             });
+            tbody.innerHTML = html;
         }
 
         function updatePendingOrdersBadge() {
@@ -3272,6 +3288,7 @@ async function handleLogin() {
             let pendingList = cloudPendingOrders.filter(o => o.status === 'pending');
             if(pendingList.length === 0) { tbody.innerHTML = `<tr><td colspan="7">🎉 لا توجد طلبات أو فواتير معلقة حالياً.</td></tr>`; return; }
 
+            let html = '';
             pendingList.slice().reverse().forEach(order => {
                 let itemsSummary = order.items ? order.items.map(it => `• ${it.name}: <b>${it.qty}</b> ${it.unit||'وحدة'}`).join('<br>') : '-';
                 let typeLabel = order.orderType === 'quota_exceed' 
@@ -3282,7 +3299,7 @@ async function handleLogin() {
                     ? `<b>المندوب:</b> ${order.delegateName || '-'}`
                     : `<span style="color:#dc2626; font-weight:bold;">${order.orderType === 'wholesale' ? (order.zimam + ' ج.م') : '-'}</span>`;
 
-                tbody.innerHTML += `
+                html += `
                     <tr>
                         <td>${order.date}</td>
                         <td><b>${order.clientName}</b><br><small style="color:#2563eb;">${order.clientCode || ''}</small></td>
@@ -3296,6 +3313,7 @@ async function handleLogin() {
                         </td>
                     </tr>`;
             });
+            tbody.innerHTML = html;
         }
 
         async function approveClientOrder(orderId) {
@@ -3514,9 +3532,9 @@ async function handleLogin() {
                 };
                 portalCustomersDB[newUid] = newCustData;
                 db.ref('portalCustomers/' + newUid).set(newCustData).then(() => {
-                    renderAdminPortalCustomersTable();
+                    if (currentActiveTab === 'clientsManage') renderAdminPortalCustomersTable();
                     updateClientsDatalist();
-                    populateQuotaClientsSelect();
+                    if (currentActiveTab === 'clientQuota') populateQuotaClientsSelect();
                 }).catch(() => {});
             }
 
@@ -3792,6 +3810,7 @@ async function handleLogin() {
 
             if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="10">لا توجد فواتير مطابقة للخط أو التاريخ المحدد.</td></tr>`; return; }
 
+            let html = '';
             filtered.slice().reverse().forEach(inv => {
                 let isCancelled = (inv.status === 'cancelled');
                 let statusBadge = isCancelled 
@@ -3816,8 +3835,9 @@ async function handleLogin() {
                 }
 
                 let rowStyle = isCancelled ? 'background:#fff1f2; opacity:0.85;' : '';
-                tbody.innerHTML += `<tr style="${rowStyle}"><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}<br><small style="color:#64748b;">${inv.phone||''}</small></td><td><span style="color:#1e40af; font-weight:bold;">${displayRoute}</span></td><td><b>${inv.vehicleName || '-'}</b></td><td>${inv.odometer ? inv.odometer + ' كم' : '-'}</td><td>${inv.delegateName}</td><td style="${isCancelled ? 'text-decoration:line-through; color:#991b1b;' : ''}">${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
+                html += `<tr style="${rowStyle}"><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}<br><small style="color:#64748b;">${inv.phone||''}</small></td><td><span style="color:#1e40af; font-weight:bold;">${displayRoute}</span></td><td><b>${inv.vehicleName || '-'}</b></td><td>${inv.odometer ? inv.odometer + ' كم' : '-'}</td><td>${inv.delegateName}</td><td style="${isCancelled ? 'text-decoration:line-through; color:#991b1b;' : ''}">${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
             });
+            tbody.innerHTML = html;
         }
 
         // ==================== تعديل الأصناف والأسعار بالفاتورة للمدير ====================
@@ -4108,7 +4128,7 @@ async function handleLogin() {
 
             const invTb = document.getElementById('repInvoicesTableBody');
             if(invTb) {
-                invTb.innerHTML = '';
+                let invHtml = '';
                 filtered.forEach(s => {
                     let invoiceDisplayTotal = 0;
                     if(s.items) {
@@ -4126,8 +4146,9 @@ async function handleLogin() {
                     totalMoney += displayAmount;
 
                     let rShow = s.route || cloudClientsRoutes[s.client] || '-';
-                    invTb.innerHTML += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td><b>${rShow}</b></td><td>${s.village || '-'}</td><td>${s.delegateName}</td><td><b>${displayAmount.toFixed(2)}</b> ج.م</td></tr>`;
+                    invHtml += `<tr><td>#${s.invNo}</td><td>${s.date}</td><td>${s.client}</td><td><b>${rShow}</b></td><td>${s.village || '-'}</td><td>${s.delegateName}</td><td><b>${displayAmount.toFixed(2)}</b> ج.م</td></tr>`;
                 });
+                invTb.innerHTML = invHtml;
             }
 
             document.getElementById('repTotalAmount').innerText = totalMoney.toFixed(2);
@@ -4136,7 +4157,7 @@ async function handleLogin() {
             let totalAllRibbons = 0;
             const prodTb = document.getElementById('repProductsBody');
             if(prodTb) {
-                prodTb.innerHTML = '';
+                let prodHtml = '';
                 products.forEach(p => {
                     if (!selectedProds.includes('ALL') && !selectedProds.includes(p.code) && !selectedProds.includes(p.name)) {
                         return;
@@ -4148,7 +4169,7 @@ async function handleLogin() {
                     let rem = totalRibbons % 50;
                     let floatCartons = (totalRibbons / 50).toFixed(2);
                     
-                    prodTb.innerHTML += `
+                    prodHtml += `
                         <tr>
                             <td><b>${p.name}</b></td>
                             <td><small style="color:#64748b;">${p.code}</small></td>
@@ -4157,6 +4178,7 @@ async function handleLogin() {
                             <td style="color:#0284c7;"><b>${floatCartons}</b> كرتونة</td>
                         </tr>`;
                 });
+                prodTb.innerHTML = prodHtml;
             }
 
             let overallCartons = Math.floor(totalAllRibbons / 50);
@@ -4361,16 +4383,17 @@ async function handleLogin() {
 
         function updateDelegatesSelects() {
             const selects = ['filterDelegateSelect', 'reportDelegateSelect', 'selectDelegateForStock'];
+            let delOpts = '';
+            for(let code in cloudDelegates) {
+                let uRole = cloudDelegates[code].role || 'delegate';
+                if(code !== 'admin' && uRole !== 'admin' && uRole !== 'store' && uRole !== 'hr' && uRole !== 'accounting' && uRole !== 'fleet' && uRole !== 'viewer') {
+                    delOpts += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
+                }
+            }
             selects.forEach(sId => {
                 const el = document.getElementById(sId);
                 if(!el) return;
-                el.innerHTML = (sId === 'selectDelegateForStock') ? '' : '<option value="ALL">📋 عرض كل المناديب</option>';
-                for(let code in cloudDelegates) {
-                    let uRole = cloudDelegates[code].role || 'delegate';
-                    if(code !== 'admin' && uRole !== 'admin' && uRole !== 'store' && uRole !== 'hr' && uRole !== 'accounting' && uRole !== 'fleet' && uRole !== 'viewer') {
-                        el.innerHTML += `<option value="${code}">${cloudDelegates[code].name} (${code})</option>`;
-                    }
-                }
+                el.innerHTML = ((sId === 'selectDelegateForStock') ? '' : '<option value="ALL">📋 عرض كل المناديب</option>') + delOpts;
             });
         }
 
@@ -4379,7 +4402,7 @@ async function handleLogin() {
             const selectedRoute = document.getElementById('selectRouteFilter')?.value || 'ALL';
             
             if(select) {
-                select.innerHTML = `<option value="">📋 اختر عميل ${selectedRoute !== 'ALL' ? '('+selectedRoute+')' : ''}...</option>`;
+                let optsHtml = `<option value="">📋 اختر عميل ${selectedRoute !== 'ALL' ? '('+selectedRoute+')' : ''}...</option>`;
                 
                 let combinedClients = new Set();
                 for(let name in cloudClients) if(name.trim()) combinedClients.add(name.trim());
@@ -4403,18 +4426,20 @@ async function handleLogin() {
                     }
                     
                     let label = name + (cRoute ? ` [${cRoute}]` : '');
-                    select.innerHTML += `<option value="${name}">${label}</option>`;
+                    optsHtml += `<option value="${name}">${label}</option>`;
                 });
+                select.innerHTML = optsHtml;
             }
         }
 
         function updateReportClientsSelect() {
             const sel = document.getElementById('reportClientSelect');
             if(!sel) return;
-            sel.innerHTML = '<option value="ALL">🏪 كل العملاء</option>';
+            let optsHtml = '<option value="ALL">🏪 كل العملاء</option>';
             for(let name in cloudClients) {
-                if(name.trim()) sel.innerHTML += `<option value="${name}">${name}</option>`;
+                if(name.trim()) optsHtml += `<option value="${name}">${name}</option>`;
             }
+            sel.innerHTML = optsHtml;
         }
 
         function pickExistingClient() {
@@ -4759,6 +4784,7 @@ async function handleLogin() {
 
             let monthCartons = 0, monthDeposits = 0, monthGoods = 0, monthZimam = 0;
             const monthlyStats = {};
+            let rowsHtml = '';
 
             cloudMenofLoads.forEach(m => {
                 const mDate = m.date || '';
@@ -4784,7 +4810,7 @@ async function handleLogin() {
                     monthGoods += goods;
                     monthZimam += zimam;
 
-                    tbody.innerHTML += `
+                    rowsHtml += `
                         <tr>
                             <td>${m.date}</td>
                             <td><b style="color:#0284c7;">${m.cartons}</b></td>
@@ -4799,7 +4825,8 @@ async function handleLogin() {
                 }
             });
 
-            if (tbody.innerHTML === '') {
+            tbody.innerHTML = rowsHtml;
+            if (rowsHtml === '') {
                 tbody.innerHTML = `<tr><td colspan="6" style="color:#64748b;">لا توجد شحنات مسجلة لشهر (${selectedMonth || 'المحدد'}).</td></tr>`;
             }
 
@@ -4813,10 +4840,11 @@ async function handleLogin() {
                 if (sortedMonths.length === 0) {
                     summaryTbody.innerHTML = `<tr><td colspan="5">لا توجد بيانات شحنات مسجلة حتى الآن.</td></tr>`;
                 } else {
+                    let sumHtml = '';
                     sortedMonths.forEach(mon => {
                         const st = monthlyStats[mon];
                         const isCurrentSelected = (mon === selectedMonth);
-                        summaryTbody.innerHTML += `
+                        sumHtml += `
                             <tr style="${isCurrentSelected ? 'background:#e0f2fe; font-weight:bold;' : ''}">
                                 <td><b>${mon}</b> ${isCurrentSelected ? '⭐ (المحدد)' : ''}</td>
                                 <td style="color:#0284c7; font-weight:bold;">${st.cartons} كرتونة</td>
@@ -4825,6 +4853,7 @@ async function handleLogin() {
                                 <td style="color:${st.zimam >= 0 ? '#15803d' : '#dc2626'}; font-weight:bold;">${st.zimam.toLocaleString()} ج.م</td>
                             </tr>`;
                     });
+                    summaryTbody.innerHTML = sumHtml;
                 }
             }
         }
@@ -5083,10 +5112,10 @@ async function handleLogin() {
         function renderShopsTable() {
             const tbody = document.getElementById('shopsTableBody');
             if(!tbody) return;
-            tbody.innerHTML = '';
+            let html = '';
 
             cloudShops.slice().reverse().forEach(s => {
-                tbody.innerHTML += `<tr>
+                html += `<tr>
                     <td><b>${s.name}</b></td>
                     <td>${s.cartons}</td>
                     <td>${s.totalPrice.toLocaleString()}</td>
@@ -5098,6 +5127,7 @@ async function handleLogin() {
                     </td>
                 </tr>`;
             });
+            tbody.innerHTML = html;
         }
 
         function openShopPayModal(id) {
@@ -5142,15 +5172,16 @@ async function handleLogin() {
         function renderLmFormInputs() {
             const cont = document.getElementById('lmItemsContainer');
             if(!cont) return;
-            cont.innerHTML = '';
+            let html = '';
             lmItemsList.forEach((it, i) => {
-                cont.innerHTML += `
+                html += `
                     <div style="display:grid; grid-template-columns: 1.5fr 1fr 1fr; gap:4px; margin-bottom:4px; align-items:center;">
                         <span style="font-size:11px; font-weight:bold;">${it.name}</span>
                         <input type="number" id="lm_qty_${i}" placeholder="كراتين" style="padding:5px; font-size:11px;">
                         <input type="number" id="lm_sell_${i}" placeholder="سعر البيع" style="padding:5px; font-size:11px;">
                     </div>`;
             });
+            cont.innerHTML = html;
         }
 
         function saveLmInvoice() {
@@ -5189,11 +5220,11 @@ async function handleLogin() {
         function renderLmTable() {
             const tbody = document.getElementById('lmInvoicesTableBody');
             if(!tbody) return;
-            tbody.innerHTML = '';
+            let html = '';
 
             cloudLmInvoices.slice().reverse().forEach(l => {
                 let typeLabel = l.type === 'mohamed' ? 'فاتورة محمد' : 'فاتورة حسام';
-                tbody.innerHTML += `<tr>
+                html += `<tr>
                     <td><b>${typeLabel}</b></td>
                     <td>${l.deposit.toLocaleString()}</td>
                     <td>${l.totalCost.toLocaleString()}</td>
@@ -5202,6 +5233,7 @@ async function handleLogin() {
                     <td><button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto;" onclick="deleteLmInvoice('${l.id}')">❌</button></td>
                 </tr>`;
             });
+            tbody.innerHTML = html;
         }
 
         async function deleteLmInvoice(id) {
@@ -5241,13 +5273,13 @@ async function handleLogin() {
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
             if(!tbody) return;
-            tbody.innerHTML = '';
+            let html = '';
 
             for(let uid in portalCustomersDB) {
                 let c = portalCustomersDB[uid];
                 let typeBadge = c.customerType === 'wholesale' ? '<span style="color:#16a34a; font-weight:bold;">جملة</span>' : 
                                (c.customerType === 'retail' ? '<span style="color:#2563eb; font-weight:bold;">قطاعي</span>' : '<span style="color:#d97706;">معلق</span>');
-                tbody.innerHTML += `
+                html += `
                     <tr>
                         <td><input type="checkbox" class="client-row-checkbox" value="${uid}"></td>
                         <td><b>${c.name}</b></td>
@@ -5262,6 +5294,7 @@ async function handleLogin() {
                         </td>
                     </tr>`;
             }
+            tbody.innerHTML = html;
         }
 
         function openEditCustomerModal(uid) {
@@ -5426,12 +5459,13 @@ async function handleLogin() {
                 'viewer': 'مشاهد فقط'
             };
 
+            let html = '';
             for(let code in cloudDelegates) {
                 if(code === 'admin') continue;
                 let u = cloudDelegates[code];
                 let statusBadge = u.locked ? '<span style="color:red; font-weight:bold;">مقفل</span>' : '<span style="color:green; font-weight:bold;">نشط</span>';
                 let roleLabel = roleNamesMap[u.role] || u.role || 'مندوب مبيعات';
-                tbody.innerHTML += `
+                html += `
                     <tr>
                         <td><b>${code}</b></td>
                         <td>${u.name}</td>
@@ -5444,6 +5478,7 @@ async function handleLogin() {
                         </td>
                     </tr>`;
             }
+            tbody.innerHTML = html;
         }
 
         function openEditUserModal(code) {
