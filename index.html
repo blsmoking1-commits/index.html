@@ -2292,11 +2292,9 @@
                 renderRepRoutesInputs(); 
                 renderAdminUsersTable();
             }
-            if (currentActiveTab === 'carStock') renderCarStockTable();
-            updateDelegatesSelects(); 
-            populateRoutesList();
-            updateClientsDatalist();
-        });
+           if (currentActiveTab === 'carStock') renderCarStockTable();
+updateCarTransferProductsSelect();
+updateDelegatesSelects();
         
         db.ref('clients').on('value', (s) => { 
             cloudClients = s.val() || {}; 
@@ -2667,7 +2665,26 @@
                 });
             }
         }
+function updateCarTransferProductsSelect() {
+    const sel = document.getElementById('selectTransferProductCar');
+    if (!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = '';
+    
+    if (!products || products.length === 0) {
+        sel.innerHTML = '<option value="">لا توجد أصناف</option>';
+        return;
+    }
 
+    products.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.code;
+        opt.textContent = `${p.name} (متاح: ${p.stock || 0})`;
+        sel.appendChild(opt);
+    });
+
+    if (currentVal) sel.value = currentVal;
+}
         function addStockToCarFromWarehouse() {
             const delCode = document.getElementById('selectDelegateForStock').value;
             const pCode = document.getElementById('selectTransferProductCar').value;
