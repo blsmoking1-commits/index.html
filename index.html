@@ -111,6 +111,36 @@
                 font-size: 12px;
             }
         }
+
+        /* تنسيق القائمة الذكية لاقتراح العملاء */
+        .client-autocomplete-wrap { position: relative; flex: 2; }
+        .client-suggestions-box {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            background: #ffffff;
+            border: 1.5px solid #2563eb;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 210px;
+            overflow-y: auto;
+            z-index: 2500;
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+            display: none;
+        }
+        .client-suggestion-item {
+            padding: 9px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .client-suggestion-item:last-child { border-bottom: none; }
+        .client-suggestion-item:hover, .client-suggestion-item:active { background-color: #eff6ff; }
+        .client-suggestion-meta { font-size: 11px; color: #64748b; }
     </style>
 </head>
 <body>
@@ -272,9 +302,12 @@
             <div class="form-group">
                 <label>اسم العميل / المحل (اكتب اسم جديد وسيُحفظ تلقائياً):</label>
                 <div style="display: flex; gap: 6px; align-items: center;">
-                    <input type="text" id="clientName" placeholder="اكتب اسم العميل مباشرة هنا..." oninput="onClientNameInput()" style="flex: 2; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
-                    <select id="selectExistingClient" onchange="pickExistingClient()" style="flex: 1.3; padding: 9px 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11px; background: #f8fafc; color: #334155;">
-                        <option value="">📋 عميل مسجل...</option>
+                    <div class="client-autocomplete-wrap">
+                        <input type="text" id="clientName" autocomplete="off" placeholder="اكتب أول حرفين من اسم العميل..." oninput="onClientNameInput()" onfocus="onClientNameInput()" style="width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
+                        <div id="clientSuggestionsBox" class="client-suggestions-box"></div>
+                    </div>
+                    <select id="selectExistingClient" onchange="pickExistingClient()" style="flex: 1.1; padding: 9px 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11px; background: #f8fafc; color: #334155;">
+                        <option value="">📋 القائمة...</option>
                     </select>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px;">
@@ -3706,8 +3739,22 @@ async function handleLogin() {
 
         // ==================== التسجيل التلقائي للعميل الجديد بدون حذف أي بيانات ====================
         function ensureClientRegisteredAutomatically(clientName, route, village, phone, locObj) {
-            const cleanName = clientName.trim();
+            let cleanName = clientName.trim();
             if (!cleanName) return "C-0000";
+
+            const normTarget = normalizeArabicText(cleanName);
+            for (let k in cloudClients) {
+                if (normalizeArabicText(k) === normTarget) {
+                    cleanName = k;
+                    break;
+                }
+            }
+            for (let uid in portalCustomersDB) {
+                if (portalCustomersDB[uid]?.name && normalizeArabicText(portalCustomersDB[uid].name) === normTarget) {
+                    cleanName = portalCustomersDB[uid].name.trim();
+                    break;
+                }
+            }
 
             let existingCode = cloudClients[cleanName];
             let foundInPortal = false;
@@ -4736,64 +4783,202 @@ async function handleLogin() {
             if(val) { document.getElementById('clientName').value = val; onClientNameInput(); }
         }
 
-        function onClientNameInput() {
+        // دالة توحيد الحروف العربية والمسافات لمنع تكرار الأسماء
+        function normalizeArabicText(str) {
+            if (!str) return '';
+            return String(str)
+                .trim()
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/ة/g, 'ه')
+                .replace(/ى/g, 'ي')
+                .replace(/[\u064B-\u065F]/g, '')
+                .replace(/\s+/g, ' ')
+                .toLowerCase();
+        }
+
+        // بناء قائمة العملاء الموحدة في الذاكرة للبحث الفوري بدون أي ثقل
+        function getUnifiedClientsSearchList() {
+            const selectedRoute = document.getElementById('selectRouteFilter')?.value || 'ALL';
+            const map = new Map();
+
+            for (let name in cloudClients) {
+                const clean = name.trim();
+                if (clean) {
+                    map.set(clean, {
+                        name: clean,
+                        code: cloudClients[name],
+                        route: cloudClientsRoutes[clean] || '',
+                        phone: cloudClientsPhones[clean] || '',
+                        village: ''
+                    });
+                }
+            }
+
+            for (let uid in portalCustomersDB) {
+                const c = portalCustomersDB[uid];
+                const clean = c?.name?.trim();
+                if (clean) {
+                    const existing = map.get(clean) || { name: clean };
+                    map.set(clean, {
+                        name: clean,
+                        code: c.clientCode || existing.code || '',
+                        route: c.route || existing.route || '',
+                        phone: c.phone || existing.phone || '',
+                        village: c.village || existing.village || ''
+                    });
+                }
+            }
+
+            let list = Array.from(map.values());
+            if (selectedRoute !== 'ALL') {
+                list = list.filter(c => c.route && normalizeRouteName(c.route) === normalizeRouteName(selectedRoute));
+            }
+            return list;
+        }
+
+        function renderClientSuggestions(rawQuery) {
+            const box = document.getElementById('clientSuggestionsBox');
+            if (!box) return;
+
+            const normQuery = normalizeArabicText(rawQuery);
+            if (normQuery.length < 2) {
+                box.style.display = 'none';
+                box.innerHTML = '';
+                return;
+            }
+
+            const allClients = getUnifiedClientsSearchList();
+            const matches = [];
+
+            for (let i = 0; i < allClients.length; i++) {
+                const c = allClients[i];
+                if (normalizeArabicText(c.name).includes(normQuery)) {
+                    matches.push(c);
+                    if (matches.length >= 6) break;
+                }
+            }
+
+            if (matches.length === 0) {
+                box.style.display = 'none';
+                box.innerHTML = '';
+                return;
+            }
+
+            box.innerHTML = matches.map(c => {
+                const safeName = c.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const metaText = [c.route, c.village].filter(Boolean).join(' - ') || 'عميل مسجل';
+                return `
+                    <div class="client-suggestion-item" onclick="selectSuggestedClient('${safeName}')">
+                        <div>
+                            <b style="color:#0f172a;">${c.name}</b>
+                            <div class="client-suggestion-meta">${metaText}</div>
+                        </div>
+                        <span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:10.5px; font-weight:bold;">${c.code || 'اختيار'}</span>
+                    </div>
+                `;
+            }).join('');
+
+            box.style.display = 'block';
+        }
+
+        function selectSuggestedClient(clientName) {
+            const input = document.getElementById('clientName');
+            const box = document.getElementById('clientSuggestionsBox');
+            if (input) input.value = clientName;
+            if (box) box.style.display = 'none';
+            onClientNameInput(true);
+        }
+
+        document.addEventListener('click', function(e) {
+            const wrap = document.querySelector('.client-autocomplete-wrap');
+            const box = document.getElementById('clientSuggestionsBox');
+            if (wrap && box && !wrap.contains(e.target)) {
+                box.style.display = 'none';
+            }
+        });
+
+        function onClientNameInput(skipDropdown = false) {
             clearTimeout(clientInputTimer);
-            const nameInput = document.getElementById('clientName').value.trim();
+            const rawVal = document.getElementById('clientName').value;
+            const nameInput = rawVal.trim();
             const phoneInputElem = document.getElementById('clientPhoneInput');
             const statusBadge = document.getElementById('clientPhoneStatusBadge');
 
-            if(!nameInput) { 
+            if (!skipDropdown) {
+                renderClientSuggestions(rawVal);
+            }
+
+            if (!nameInput) { 
                 document.getElementById('lblClientCode').innerText = '--'; 
                 document.getElementById('lblClientRoute').innerText = '--'; 
                 document.getElementById('clientMonthlyHistory').style.display = 'none';
                 document.getElementById('clientQuotaAlertBox').style.display = 'none';
-                if(phoneInputElem) {
+                if (phoneInputElem) {
                     phoneInputElem.value = '';
                     phoneInputElem.readOnly = false;
                     phoneInputElem.style.backgroundColor = '#fff';
                 }
-                if(statusBadge) {
+                if (statusBadge) {
                     statusBadge.innerText = "ℹ️ رقم الهاتف اختياري";
                     statusBadge.style.color = "#059669";
                 }
                 return; 
             }
 
-            let foundPhone = cloudClientsPhones[nameInput] || "";
+            const normInput = normalizeArabicText(nameInput);
+            let matchedKey = cloudClients[nameInput] ? nameInput : null;
+            let foundPhone = matchedKey ? (cloudClientsPhones[matchedKey] || "") : "";
             let foundVillage = "";
-            if(!foundPhone) {
-                for(let uid in portalCustomersDB) {
-                    if(portalCustomersDB[uid].name === nameInput) {
-                        if(portalCustomersDB[uid].phone) foundPhone = portalCustomersDB[uid].phone;
-                        if(portalCustomersDB[uid].village) foundVillage = portalCustomersDB[uid].village;
+            let foundRoute = matchedKey ? (cloudClientsRoutes[matchedKey] || "") : "";
+            let foundCode = matchedKey ? cloudClients[matchedKey] : "";
+
+            if (!matchedKey) {
+                for (let k in cloudClients) {
+                    if (normalizeArabicText(k) === normInput) {
+                        matchedKey = k;
+                        foundCode = cloudClients[k];
+                        foundPhone = cloudClientsPhones[k] || "";
+                        foundRoute = cloudClientsRoutes[k] || "";
                         break;
                     }
                 }
             }
 
-            if(foundVillage && !document.getElementById('clientVillage').value) {
+            for (let uid in portalCustomersDB) {
+                const p = portalCustomersDB[uid];
+                if (p && p.name && normalizeArabicText(p.name) === normInput) {
+                    matchedKey = p.name;
+                    if (p.clientCode) foundCode = p.clientCode;
+                    if (p.phone) foundPhone = p.phone;
+                    if (p.village) foundVillage = p.village;
+                    if (p.route) foundRoute = p.route;
+                    break;
+                }
+            }
+
+            if (foundVillage && !document.getElementById('clientVillage').value) {
                 document.getElementById('clientVillage').value = foundVillage;
             }
 
-            if(foundPhone) {
-                if(phoneInputElem) {
+            if (foundPhone) {
+                if (phoneInputElem) {
                     phoneInputElem.value = foundPhone;
                     phoneInputElem.readOnly = true;
                     phoneInputElem.style.backgroundColor = '#f1f5f9';
                     phoneInputElem.style.color = '#16a34a';
                 }
-                if(statusBadge) {
+                if (statusBadge) {
                     statusBadge.innerText = "✅ مسجل مسبقاً";
                     statusBadge.style.color = "#16a34a";
                 }
             } else {
-                if(phoneInputElem) {
+                if (phoneInputElem) {
                     phoneInputElem.readOnly = false;
                     phoneInputElem.style.backgroundColor = '#fff';
                     phoneInputElem.style.color = '#0f172a';
                 }
-                if(statusBadge) {
-                    statusBadge.innerText = "ℹ️ عميل جديد - سيُسجل تلقائياً";
+                if (statusBadge) {
+                    statusBadge.innerText = matchedKey ? "ℹ️ عميل مسجل (بدون هاتف)" : "ℹ️ عميل جديد - سيُسجل تلقائياً";
                     statusBadge.style.color = "#0284c7";
                 }
             }
@@ -4801,24 +4986,10 @@ async function handleLogin() {
             checkSelectedClientQuotaStatus();
 
             clientInputTimer = setTimeout(() => {
-                if(cloudClients[nameInput]) {
-                    document.getElementById('lblClientCode').innerText = cloudClients[nameInput];
-                } else {
-                    document.getElementById('lblClientCode').innerText = "C-جديد (تلقائي)";
-                }
-
-                let cRoute = cloudClientsRoutes[nameInput] || "";
-                if(!cRoute) {
-                    for(let uid in portalCustomersDB) {
-                        if(portalCustomersDB[uid].name === nameInput && portalCustomersDB[uid].route) {
-                            cRoute = portalCustomersDB[uid].route;
-                            break;
-                        }
-                    }
-                }
-                document.getElementById('lblClientRoute').innerText = cRoute || "غير محدد";
-                showClientMonthlyStats(nameInput);
-            }, 300);
+                document.getElementById('lblClientCode').innerText = foundCode || "C-جديد (تلقائي)";
+                document.getElementById('lblClientRoute').innerText = foundRoute || "غير محدد";
+                showClientMonthlyStats(matchedKey || nameInput);
+            }, 250);
         }
 
         function onClientPhoneInputChange() {
@@ -6171,3 +6342,4 @@ async function handleLogin() {
     </script>
 </body>
 </html>
+
