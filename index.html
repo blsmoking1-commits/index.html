@@ -458,6 +458,7 @@
                     <div class="form-group"><label>رقم التليفون (اختياري):</label><input type="text" id="adminDirectPhone" placeholder="1012345678 (اختياري)"></div>
                     <div class="form-group"><label>كلمة السر:</label><input type="text" id="adminDirectPass" placeholder="كلمة السر..."></div>
                     <div class="form-group"><label>الفئة:</label><select id="adminDirectType"><option value="retail">قطاعي</option><option value="wholesale">جملة</option></select></div>
+                    <div class="form-group"><label>تاريخ الانضمام:</label><input type="date" id="adminDirectJoinedAt"></div>
                 </div>
                 <button class="btn btn-success" onclick="adminDirectAddCustomer()">✅ حفظ وتفعيل حساب العميل فوراً</button>
             </div>
@@ -477,6 +478,8 @@
                                 <th>الخط / السير</th>
                                 <th>بيانات الاتصال والقرية</th>
                                 <th>الفئة</th>
+                                <th>تاريخ الانضمام</th>
+                                <th>فترات التباعد بين المسحوبات</th>
                                 <th>كلمة السر</th>
                                 <th>إجراءات وتعديل</th>
                             </tr>
@@ -649,6 +652,27 @@
                 <table class="report-table">
                     <thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>الخط</th><th>القرية/المركز</th><th>المندوب</th><th>قيمة الأصناف المختارة (ج.م)</th></tr></thead>
                     <tbody id="repInvoicesTableBody"></tbody>
+                </table>
+            </div>
+
+            <h4 style="font-size: 14px; color: #0f172a; margin-top: 20px; margin-bottom: 6px; background:#eff6ff; padding:8px 10px; border-radius:6px; border-right:4px solid #2563eb;">⏱️ تقرير تاريخ الانضمام وفترات التباعد بين المسحوبات للعملاء:</h4>
+            <div style="overflow-x:auto;">
+                <table class="report-table" style="background:#fff;">
+                    <thead>
+                        <tr style="background:#0f172a; color:#fff;">
+                            <th>العميل / المحل</th>
+                            <th>الخط</th>
+                            <th>تاريخ الانضمام</th>
+                            <th>عدد السحبات</th>
+                            <th>أول سحبة</th>
+                            <th>آخر سحبة</th>
+                            <th>متوسط التباعد (يوم)</th>
+                            <th>أقصى انقطاع (يوم)</th>
+                            <th>منذ آخر سحبة (يوم)</th>
+                            <th>التقييم</th>
+                        </tr>
+                    </thead>
+                    <tbody id="repClientIntervalsBody"></tbody>
                 </table>
             </div>
         </div>
@@ -1211,6 +1235,10 @@
                 <label style="color:#b45309;">مدة الحصة (بالأيام):</label>
                 <input type="number" id="modalEditCustQuotaDays" value="30" min="1">
             </div>
+            <div class="form-group">
+                <label style="color:#0284c7;">📅 تاريخ انضمام العميل:</label>
+                <input type="date" id="modalEditCustJoinedAt">
+            </div>
             <button class="btn btn-success" onclick="saveEditedCustomer()">💾 حفظ وتحديث بيانات العميل</button>
             <button class="btn btn-danger" style="background:#64748b; margin-top:6px;" onclick="closeEditCustomerModal()">إلغاء</button>
         </div>
@@ -1338,7 +1366,7 @@
 
         // ==================== محرك المزامنة المزدوجة والبديل السحابي (Supabase Failover) ====================
         const SUPABASE_URL = "https://amdapdsamabknpuyqirf.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_5wJNaSHeK1m0T-UE7l1OYQ_eFZZ9WHS";
+        const SUPABASE_KEY = "sb_publishable_5wJNaSHeK1m0T-UE7110YQ_eFZZ9WHSnpx";
         const sbClient = (window.supabase && SUPABASE_KEY && !SUPABASE_KEY.includes("حط_هنا"))
             ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
             : null;
@@ -3097,6 +3125,7 @@ function updateCarTransferProductsSelect() {
                 village: village,
                 customerType: 'pending',
                 clientCode: clientCode,
+                joinedAt: new Date().toISOString().split('T')[0],
                 location: tempRegCoords
             };
 
@@ -3718,6 +3747,7 @@ async function handleLogin() {
                     phone: phone || '',
                     pass: '123456',
                     customerType: 'retail',
+                    joinedAt: getCustomerJoinDate(cleanName),
                     location: locObj || null
                 };
                 portalCustomersDB[newUid] = newCustData;
@@ -4376,6 +4406,74 @@ async function handleLogin() {
             if(document.getElementById('repTotalCartonsSum')) {
                 document.getElementById('repTotalCartonsSum').innerText = `${overallCartons} كرتونة و ${overallRemRibbons} رابطة`;
             }
+            renderClientIntervalsReportTable(selRoute, selClient);
+        }
+
+        function renderClientIntervalsReportTable(selRoute = 'ALL', selClient = 'ALL') {
+            const tbody = document.getElementById('repClientIntervalsBody');
+            if (!tbody) return;
+
+            let clientNames = new Set();
+            for (let name in cloudClients) if (name.trim()) clientNames.add(name.trim());
+            for (let uid in portalCustomersDB) if (portalCustomersDB[uid]?.name?.trim()) clientNames.add(portalCustomersDB[uid].name.trim());
+            cloudSales.forEach(s => { if (s.status !== 'cancelled' && s.client?.trim()) clientNames.add(s.client.trim()); });
+
+            let list = Array.from(clientNames).filter(name => {
+                if (selClient && selClient !== 'ALL' && name.toLowerCase() !== selClient.toLowerCase()) return false;
+                if (selRoute && selRoute !== 'ALL') {
+                    let cRoute = cloudClientsRoutes[name] || '';
+                    if (!cRoute) {
+                        for (let uid in portalCustomersDB) {
+                            if (portalCustomersDB[uid]?.name === name && portalCustomersDB[uid]?.route) {
+                                cRoute = portalCustomersDB[uid].route;
+                                break;
+                            }
+                        }
+                    }
+                    if (normalizeRouteName(cRoute) !== normalizeRouteName(selRoute)) return false;
+                }
+                return true;
+            });
+
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10">لا توجد بيانات عملاء مطابقة للفلتر المحدد.</td></tr>';
+                return;
+            }
+
+            let rows = list.map(name => {
+                const st = getClientWithdrawalAnalytics(name);
+                let cRoute = cloudClientsRoutes[name] || '-';
+                let statusBadge = st.totalOrders === 0
+                    ? '<span style="color:#64748b;">لم يسحب بعد</span>'
+                    : (st.isDelayed
+                        ? '<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-weight:bold;">⚠️ متأخر عن معدله</span>'
+                        : '<span style="background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:4px; font-weight:bold;">🟢 منتظم</span>');
+
+                return {
+                    name,
+                    route: cRoute,
+                    st,
+                    statusBadge
+                };
+            });
+
+            // Sort delayed / highest days since last order first so emergency review is immediate
+            rows.sort((a, b) => b.st.daysSinceLast - a.st.daysSinceLast);
+
+            tbody.innerHTML = rows.map(r => `
+                <tr style="${r.st.isDelayed ? 'background:#fff1f2;' : ''}">
+                    <td><b>${r.name}</b></td>
+                    <td>${r.route}</td>
+                    <td style="font-weight:bold; color:#0284c7;">${r.st.joinDate}</td>
+                    <td><b>${r.st.totalOrders}</b></td>
+                    <td>${r.st.firstOrder}</td>
+                    <td>${r.st.lastOrder}</td>
+                    <td style="font-weight:bold; color:#0f172a;">${r.st.totalOrders > 1 ? r.st.avgGapDays + ' يوم' : '-'}</td>
+                    <td>${r.st.totalOrders > 1 ? r.st.maxGapDays + ' يوم' : '-'}</td>
+                    <td style="font-weight:bold; color:${r.st.isDelayed ? '#dc2626' : '#16a34a'};">${r.st.totalOrders > 0 ? r.st.daysSinceLast + ' يوم' : '-'}</td>
+                    <td>${r.statusBadge}</td>
+                </tr>
+            `).join('');
         }
 
         function exportClientWithdrawalsExcel() {
@@ -4737,15 +4835,90 @@ async function handleLogin() {
             }
         }
 
+        function getCustomerJoinDate(clientName, custObj = null) {
+            if (custObj && custObj.joinedAt) return custObj.joinedAt;
+            if (clientName) {
+                for (let uid in portalCustomersDB) {
+                    const p = portalCustomersDB[uid];
+                    if (p && p.name && p.name.trim().toLowerCase() === clientName.trim().toLowerCase() && p.joinedAt) {
+                        return p.joinedAt;
+                    }
+                }
+                const validDates = cloudSales
+                    .filter(s => s.status !== 'cancelled' && s.client && s.client.trim().toLowerCase() === clientName.trim().toLowerCase() && s.date)
+                    .map(s => s.date)
+                    .sort();
+                if (validDates.length > 0) return validDates[0];
+            }
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function getClientWithdrawalAnalytics(clientName, custObj = null) {
+            const joinDate = getCustomerJoinDate(clientName, custObj);
+            const sales = cloudSales
+                .filter(s => s.status !== 'cancelled' && s.client && s.client.trim().toLowerCase() === clientName.trim().toLowerCase() && s.date)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (sales.length === 0) {
+                return {
+                    joinDate,
+                    totalOrders: 0,
+                    firstOrder: '-',
+                    lastOrder: '-',
+                    avgGapDays: 0,
+                    maxGapDays: 0,
+                    daysSinceLast: 0,
+                    gapsList: [],
+                    isDelayed: false
+                };
+            }
+
+            const msPerDay = 1000 * 60 * 60 * 24;
+            let gaps = [];
+            for (let i = 1; i < sales.length; i++) {
+                const d1 = new Date(sales[i - 1].date).getTime();
+                const d2 = new Date(sales[i].date).getTime();
+                const diffDays = Math.max(0, Math.round((d2 - d1) / msPerDay));
+                gaps.push(diffDays);
+            }
+
+            const avgGap = gaps.length > 0 ? parseFloat((gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(1)) : 0;
+            const maxGap = gaps.length > 0 ? Math.max(...gaps) : 0;
+            const lastDateStr = sales[sales.length - 1].date;
+            const daysSinceLast = Math.max(0, Math.floor((Date.now() - new Date(lastDateStr).getTime()) / msPerDay));
+            const isDelayed = (avgGap > 0 && daysSinceLast > avgGap * 1.5) || (avgGap === 0 && daysSinceLast > 14);
+
+            return {
+                joinDate,
+                totalOrders: sales.length,
+                firstOrder: sales[0].date,
+                lastOrder: lastDateStr,
+                avgGapDays: avgGap,
+                maxGapDays: maxGap,
+                daysSinceLast,
+                gapsList: gaps,
+                isDelayed
+            };
+        }
+
         function showClientMonthlyStats(clientName) {
             const box = document.getElementById('clientMonthlyHistory');
             if(!box) return;
             const currentMonth = new Date().toISOString().slice(0, 7);
             let clientSales = cloudSales.filter(s => s.status !== 'cancelled' && s.client && s.client.toLowerCase() === clientName.toLowerCase() && s.date && s.date.startsWith(currentMonth));
-            if(clientSales.length === 0) { box.style.display = 'none'; return; }
+            const analytics = getClientWithdrawalAnalytics(clientName);
+
+            if(clientSales.length === 0 && analytics.totalOrders === 0) {
+                box.style.display = 'block';
+                box.innerHTML = `📅 <b>تاريخ انضمام العميل:</b> ${analytics.joinDate} | <i>عميل جديد (لم يقم بأي مسحوبات سابقة)</i>`;
+                return;
+            }
             let totalSpent = clientSales.reduce((acc, s) => acc + s.total, 0);
+            let spacingSummary = analytics.totalOrders > 1
+                ? `متوسط التباعد بين المسحوبات: <b>${analytics.avgGapDays} يوم</b> (أقصى انقطاع: ${analytics.maxGapDays} يوم)`
+                : `سحبة واحدة مسجلة`;
             box.style.display = 'block';
-            box.innerHTML = `📊 <b>سجل العميل هذا الشهر:</b> سحب <b>${clientSales.length}</b> فواتير بقيمة <b>${totalSpent.toFixed(2)} ج.م</b>`;
+            box.innerHTML = `📅 <b>تاريخ الانضمام:</b> ${analytics.joinDate} | ⏱️ <b>منذ آخر سحبة:</b> <span style="color:${analytics.isDelayed ? '#dc2626' : '#15803d'}; font-weight:bold;">${analytics.daysSinceLast} يوم</span> (${spacingSummary})<br>📊 <b>سجل العميل هذا الشهر:</b> سحب <b>${clientSales.length}</b> فواتير بقيمة <b>${totalSpent.toFixed(2)} ج.م</b>`;
         }
 
         function updateDelegateTodaySummary() {
@@ -5443,11 +5616,12 @@ async function handleLogin() {
             const phone = document.getElementById('adminDirectPhone').value.trim();
             const pass = document.getElementById('adminDirectPass').value.trim() || "123456";
             const type = document.getElementById('adminDirectType').value;
+            const joinedAt = document.getElementById('adminDirectJoinedAt')?.value || new Date().toISOString().split('T')[0];
 
             if(!name) { showToast("يرجى كتابة اسم العميل.", "error"); return; }
 
             const uid = "cust_" + Date.now();
-            const custObj = { uid, name, clientCode: code, route, village, phone, pass, customerType: type };
+            const custObj = { uid, name, clientCode: code, route, village, phone, pass, customerType: type, joinedAt };
 
             cloudClients[name] = code;
             db.ref('clients/' + name).set(code);
@@ -5470,6 +5644,16 @@ async function handleLogin() {
                 let c = portalCustomersDB[uid];
                 let typeBadge = c.customerType === 'wholesale' ? '<span style="color:#16a34a; font-weight:bold;">جملة</span>' : 
                                (c.customerType === 'retail' ? '<span style="color:#2563eb; font-weight:bold;">قطاعي</span>' : '<span style="color:#d97706;">معلق</span>');
+                let joinDateStr = getCustomerJoinDate(c.name, c);
+                let intervalStats = getClientWithdrawalAnalytics(c.name, c);
+                let spacingHtml = intervalStats.totalOrders === 0
+                    ? '<span style="color:#64748b; font-size:10.5px;">لم يسحب بعد</span>'
+                    : (intervalStats.totalOrders === 1
+                        ? `<span style="color:#0284c7; font-size:10.5px;">سحبة واحدة (منذ ${intervalStats.daysSinceLast} يوم)</span>`
+                        : `<div style="font-size:10.5px; line-height:1.4;">
+                            متوسط: <b>${intervalStats.avgGapDays} يوم</b><br>
+                            منذ آخر سحبة: <b style="color:${intervalStats.isDelayed ? '#dc2626' : '#16a34a'};">${intervalStats.daysSinceLast} يوم</b> ${intervalStats.isDelayed ? '⚠️' : '✅'}
+                           </div>`);
                 html += `
                     <tr>
                         <td><input type="checkbox" class="client-row-checkbox" value="${uid}"></td>
@@ -5478,6 +5662,8 @@ async function handleLogin() {
                         <td>${c.route || '-'}</td>
                         <td>${c.phone || '-'} | ${c.village || '-'}</td>
                         <td>${typeBadge}</td>
+                        <td style="font-weight:bold; color:#0f172a; white-space:nowrap;">${joinDateStr}</td>
+                        <td>${spacingHtml}</td>
                         <td>${c.pass || '-'}</td>
                         <td>
                             <button class="btn btn-warning" style="padding:2px 6px; font-size:10px; width:auto;" onclick="openEditCustomerModal('${uid}')">✏️ تعديل</button>
@@ -5503,6 +5689,7 @@ async function handleLogin() {
             const qInfo = getClientQuotaInfo(c.name);
             document.getElementById('modalEditCustQuotaCartons').value = qInfo ? qInfo.cartonsLimit : 0;
             document.getElementById('modalEditCustQuotaDays').value = qInfo ? qInfo.daysPeriod : 30;
+            document.getElementById('modalEditCustJoinedAt').value = getCustomerJoinDate(c.name, c);
 
             document.getElementById('editCustomerModal').style.display = 'flex';
         }
@@ -5521,6 +5708,8 @@ async function handleLogin() {
             c.phone = document.getElementById('modalEditCustPhone').value.trim();
             c.pass = document.getElementById('modalEditCustPass').value.trim();
             c.customerType = document.getElementById('modalEditCustType').value;
+            const newJoinedAt = document.getElementById('modalEditCustJoinedAt')?.value;
+            if (newJoinedAt) c.joinedAt = newJoinedAt;
 
             const quotaCartons = parseFloat(document.getElementById('modalEditCustQuotaCartons').value) || 0;
             const quotaDays = parseInt(document.getElementById('modalEditCustQuotaDays').value) || 30;
@@ -5569,13 +5758,21 @@ async function handleLogin() {
             let rows = [];
             for(let uid in portalCustomersDB) {
                 let c = portalCustomersDB[uid];
+                let st = getClientWithdrawalAnalytics(c.name, c);
                 rows.push({
                     "اسم العميل": c.name,
                     "الكود": c.clientCode || '',
                     "الخط": c.route || '',
                     "القرية": c.village || '',
                     "الهاتف": c.phone || '',
-                    "الفئة": c.customerType || 'retail'
+                    "الفئة": c.customerType || 'retail',
+                    "تاريخ الانضمام": st.joinDate,
+                    "عدد المسحوبات": st.totalOrders,
+                    "أول سحبة": st.firstOrder,
+                    "آخر سحبة": st.lastOrder,
+                    "متوسط التباعد بين المسحوبات (يوم)": st.totalOrders > 1 ? st.avgGapDays : 0,
+                    "أقصى فترة انقطاع (يوم)": st.totalOrders > 1 ? st.maxGapDays : 0,
+                    "عدد الأيام منذ آخر سحبة": st.daysSinceLast
                 });
             }
             const ws = XLSX.utils.json_to_sheet(rows);
@@ -5602,7 +5799,8 @@ async function handleLogin() {
                         let route = r["الخط"] || '';
                         let village = r["القرية"] || '';
                         let phone = r["الهاتف"] || '';
-                        portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, pass: "123456", customerType: "retail" };
+                        let joinedAt = r["تاريخ الانضمام"] || r["joinedAt"] || new Date().toISOString().split('T')[0];
+                        portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, pass: "123456", customerType: "retail", joinedAt };
                         cloudClients[name] = code;
                         if(route) cloudClientsRoutes[name] = route;
                     }
