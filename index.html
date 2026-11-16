@@ -166,6 +166,7 @@
             <h1 id="loginHeaderName">BLACK HORSE</h1>
             <p id="loginHeaderSubtitle">شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية</p>
             <div class="tax-info" id="loginHeaderTax">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027</div>
+            <div style="font-size:11px; color:#0284c7; font-weight:bold; margin-top:4px;">📧 البريد الرسمي للمراسلات: <span id="fixedOfficialEmailText">blsmoking1@gmail.com</span></div>
         </div>
         
         <div id="loginMainForm">
@@ -1022,6 +1023,8 @@
                 <div class="form-group"><label>الشعار / الوصف الفرعي:</label><input type="text" id="sysInputSubtitle" placeholder="شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية"></div>
                 <div class="form-group"><label>بيانات السجل والضرائب والنشاط:</label><input type="text" id="sysInputTax" placeholder="كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027"></div>
                 <div class="form-group"><label>رقم الواتساب الرسمي (بدون مسافات مثل: 201011112764):</label><input type="text" id="sysInputWa" placeholder="201011112764"></div>
+                <div class="form-group"><label>📧 البريد الإلكتروني المطبوع على الفواتير (قابل للتعديل من المدير):</label><input type="email" id="sysInputInvoiceEmail" placeholder="hosamrezoo@gmail.com"></div>
+                <div class="form-group"><label>🔒 البريد الإلكتروني الثابت للمراسلات والتطبيق (ثابت):</label><input type="email" id="sysInputOfficialEmail" value="blsmoking1@gmail.com" readonly class="readonly-input" style="background:#e2e8f0; color:#475569; font-weight:bold;"></div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
                     <div class="form-group"><label>سعر كرتونة الجملة الافتراضي (ج.م):</label><input type="number" id="sysInputCartonPrice" value="23925"></div>
                     <div class="form-group"><label>سعر رابطة القطاعي الافتراضي (ج.م):</label><input type="number" id="sysInputRibbonPrice" value="480"></div>
@@ -1558,11 +1561,15 @@
         let quotaSystemActive = true;
         let clientQuotasDB = {};
 
+        const FIXED_CORRESPONDENCE_EMAIL = "blsmoking1@gmail.com";
+
         let defaultSettings = {
             companyName: "BLACK HORSE",
             companySubtitle: "شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية",
             taxInfo: "كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027",
             whatsapp: "201011112764",
+            invoiceEmail: "hosamrezoo@gmail.com",
+            officialEmail: FIXED_CORRESPONDENCE_EMAIL,
             defaultCartonPrice: 23925,
             defaultRibbonPrice: 480
         };
@@ -1956,10 +1963,12 @@
 
             let cName = systemSettings.companyName || "BLACK HORSE";
             let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
+            let cInvEmail = systemSettings.invoiceEmail || "hosamrezoo@gmail.com";
 
             let receiptText = `      ${cName}\n`;
             receiptText += `${systemSettings.companySubtitle || 'شركة بلاك هورس - موزع معتمد'}\n`;
             receiptText += `${cTax}\n`;
+            if (cInvEmail) receiptText += `Email: ${cInvEmail}\n`;
             receiptText += `--------------------------------\n`;
             receiptText += `التاريخ: ${rec.date}\n`;
             receiptText += `فاتورة رقم: #${rec.invNo}\n`;
@@ -2016,8 +2025,10 @@
             try {
                 let cName = systemSettings.companyName || "BLACK HORSE";
                 let cTax = systemSettings.taxInfo || "كود النشاط: 7761 | س.ت: 76027";
+                let cInvEmail = systemSettings.invoiceEmail || "hosamrezoo@gmail.com";
+                let emailLine = cInvEmail ? `Email: ${cInvEmail}\n` : '';
 
-                let receiptText = `     [ ${cName} ]\n${systemSettings.companySubtitle || 'شركة بلاك هورس - موزع معتمد'}\n${cTax}\n--------------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالسيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\nالعميل: ${rec.client}\n${rec.phone ? `موبايل: ${rec.phone}\n`:''}${rec.village ? `القرية: ${rec.village}\n`:''}${rec.route ? `الخط: ${rec.route}\n`:''}--------------------------------\nالمنتج          الكمية  السعر  الإجمالي\n--------------------------------\n`;
+                let receiptText = `     [ ${cName} ]\n${systemSettings.companySubtitle || 'شركة بلاك هورس - موزع معتمد'}\n${cTax}\n${emailLine}--------------------------------\nالتاريخ: ${rec.date}\nفاتورة: #${rec.invNo}\nالسيارة: ${rec.vehicleName || 'عام'} (عداد: ${rec.odometer || '-'} كم)\nالعميل: ${rec.client}\n${rec.phone ? `موبايل: ${rec.phone}\n`:''}${rec.village ? `القرية: ${rec.village}\n`:''}${rec.route ? `الخط: ${rec.route}\n`:''}--------------------------------\nالمنتج          الكمية  السعر  الإجمالي\n--------------------------------\n`;
                 
                 rec.items.forEach(it => {
                     let nameLine = it.name.padEnd(16, ' ').substring(0, 16);
@@ -2268,7 +2279,7 @@
                 <div style="text-align:center; font-family:'Courier New', monospace; width:75mm; margin:auto; direction:rtl;">
                     <h2 style="margin:0; font-size:18px;">${cName}</h2>
                     <p style="margin:2px 0; font-size:11px;">${systemSettings.companySubtitle || 'موزع معتمد'}</p>
-                    <div style="font-size:9.5px; border-bottom:1px dashed #000; padding-bottom:4px;">${cTax}</div>
+                    <div style="font-size:9.5px; border-bottom:1px dashed #000; padding-bottom:4px;">${cTax}${systemSettings.invoiceEmail ? `<br>Email: ${systemSettings.invoiceEmail}` : ''}</div>
                     
                     <table style="width:100%; font-size:11px; margin:4px 0;">
                         <tr><td>التاريخ: ${rec.date}</td><td style="text-align:left;">فاتورة: #${rec.invNo}</td></tr>
@@ -2325,15 +2336,19 @@
             const hName = document.getElementById('loginHeaderName');
             const hSub = document.getElementById('loginHeaderSubtitle');
             const hTax = document.getElementById('loginHeaderTax');
+            const hFixedMail = document.getElementById('fixedOfficialEmailText');
 
             if(hName) hName.innerText = systemSettings.companyName || "BLACK HORSE";
             if(hSub) hSub.innerText = systemSettings.companySubtitle || "";
             if(hTax) hTax.innerText = systemSettings.taxInfo || "";
+            if(hFixedMail) hFixedMail.innerText = FIXED_CORRESPONDENCE_EMAIL;
 
             const inputName = document.getElementById('sysInputName');
             const inputSub = document.getElementById('sysInputSubtitle');
             const inputTax = document.getElementById('sysInputTax');
             const inputWa = document.getElementById('sysInputWa');
+            const inputInvEmail = document.getElementById('sysInputInvoiceEmail');
+            const inputOffEmail = document.getElementById('sysInputOfficialEmail');
             const inputCarton = document.getElementById('sysInputCartonPrice');
             const inputRibbon = document.getElementById('sysInputRibbonPrice');
 
@@ -2341,15 +2356,23 @@
             if(inputSub) inputSub.value = systemSettings.companySubtitle || "";
             if(inputTax) inputTax.value = systemSettings.taxInfo || "";
             if(inputWa) inputWa.value = systemSettings.whatsapp || "201011112764";
+            if(inputInvEmail) inputInvEmail.value = systemSettings.invoiceEmail || "hosamrezoo@gmail.com";
+            if(inputOffEmail) inputOffEmail.value = FIXED_CORRESPONDENCE_EMAIL;
             if(inputCarton) inputCarton.value = systemSettings.defaultCartonPrice || 23925;
             if(inputRibbon) inputRibbon.value = systemSettings.defaultRibbonPrice || 480;
         }
 
         function saveSystemSettingsDirect() {
+            const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
+            if (!isAdm) {
+                showToast("❌ صلاحية تعديل إعدادات النظام متاحة للمدير فقط.", "error");
+                return;
+            }
             const cName = document.getElementById('sysInputName').value.trim() || "BLACK HORSE";
             const cSub = document.getElementById('sysInputSubtitle').value.trim();
             const cTax = document.getElementById('sysInputTax').value.trim();
             const cWa = document.getElementById('sysInputWa').value.trim().replace(/\D/g, '') || "201011112764";
+            const cInvEmail = document.getElementById('sysInputInvoiceEmail').value.trim() || "hosamrezoo@gmail.com";
             const cCarton = parseFloat(document.getElementById('sysInputCartonPrice').value) || 23925;
             const cRibbon = parseFloat(document.getElementById('sysInputRibbonPrice').value) || 480;
 
@@ -2358,12 +2381,14 @@
                 companySubtitle: cSub,
                 taxInfo: cTax,
                 whatsapp: cWa,
+                invoiceEmail: cInvEmail,
+                officialEmail: FIXED_CORRESPONDENCE_EMAIL,
                 defaultCartonPrice: cCarton,
                 defaultRibbonPrice: cRibbon
             };
 
             db.ref('systemSettings').set(systemSettings).then(() => {
-                showToast("✅ تم حفظ وتحديث كافة إعدادات النظام والواتساب والأسعار بنجاح!", "success");
+                showToast("✅ تم حفظ وتحديث كافة إعدادات النظام وإيميل الفواتير والواتساب بنجاح!", "success");
                 applySystemBranding();
             });
         }
@@ -3494,7 +3519,7 @@ async function handleLogin() {
             };
 
             cloudPendingOrders.push(orderObj);
-            db.ref('pendingOrders').set(Object.assign({}, cloudPendingOrders)).then(() => {
+            db.ref('pendingOrders/' + orderObj.id).set(orderObj).then(() => {
                 showToast("🎉 تم إرسال طلب الفاتورة بنجاح وهو بانتظار موافقة المدير.", "success");
                 let waItemsDetails = itemsList.map(it => `• ${it.name}: ${it.qty} ${it.unit} بسعر ${it.price} (إجمالي: ${it.total} ج.م)`).join('%0A');
                 let waText = `طلب فاتورة جديد بانتظار موافقة المدير:%0A----------------------------%0A🏪 المحل: ${currentPortalCustomer.name}%0A🏷️ الكود: ${currentPortalCustomer.clientCode}%0A📍 القرية: ${currentPortalCustomer.village || ''}%0A🛣️ الخط: ${currentPortalCustomer.route || ''}%0A📅 التاريخ: ${todayStr}%0A📂 النوع: ${isWholesale ? 'جملة (بالكرتونة)' : 'قطاعي (بالرابطة)'}%0A----------------------------%0Aالأصناف المطلوبة:%0A${waItemsDetails}%0A----------------------------%0A📦 إجمالي الكمية: ${totalUnits} ${isWholesale ? 'كرتونة' : 'رابطة'}%0A💰 الإجمالي الكلي: ${grandTotal} ج.م`;
@@ -3595,7 +3620,7 @@ async function handleLogin() {
                     db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock);
                 }
 
-                cloudSales.push({
+                const newApprovedSale = {
                     id: String(Date.now()),
                     invNo: order.invNo || Math.floor(1000 + Math.random() * 9000),
                     date: order.date,
@@ -3615,20 +3640,22 @@ async function handleLogin() {
                     items: order.items || [],
                     location: order.location || null,
                     clientLocation: order.location || null
-                });
-                db.ref('sales').set(Object.assign({}, cloudSales));
+                };
+                cloudSales.push(newApprovedSale);
+                db.ref('sales/' + newApprovedSale.id).set(newApprovedSale);
             } else {
-                cloudSales.push({
+                const newPortalSale = {
                     id: String(Date.now()), invNo: Math.floor(1000 + Math.random() * 9000), date: order.date,
                     delegateCode: "portal_client", delegateName: "طلب معتمد من بوابة العميل (قطاعي)",
                     client: order.clientName, clientCode: order.clientCode || '', phone: order.phone || '', village: order.village || '',
                     route: order.route || '', total: order.grandTotal, totalQty: order.totalUnits || 1, status: 'active', items: order.items || [],
                     clientLocation: order.location || null
-                });
-                db.ref('sales').set(Object.assign({}, cloudSales));
+                };
+                cloudSales.push(newPortalSale);
+                db.ref('sales/' + newPortalSale.id).set(newPortalSale);
             }
 
-            db.ref('pendingOrders').set(Object.assign({}, cloudPendingOrders)).then(() => {
+            db.ref('pendingOrders/' + order.id + '/status').set('approved').then(() => {
                 showToast(`✅ تمت الموافقة وتنزيل الفاتورة بنجاح!`, "success");
                 renderAdminPendingOrdersTable();
                 updatePendingOrdersBadge();
@@ -3641,7 +3668,7 @@ async function handleLogin() {
             const ok = await showCustomConfirm(`رفض طلب العميل (${order.clientName})؟`);
             if(!ok) return;
             order.status = 'rejected';
-            db.ref('pendingOrders').set(Object.assign({}, cloudPendingOrders)).then(() => {
+            db.ref('pendingOrders/' + order.id + '/status').set('rejected').then(() => {
                 showToast("❌ تم رفض الطلب.", "warning");
                 renderAdminPendingOrdersTable();
                 updatePendingOrdersBadge();
@@ -3937,7 +3964,7 @@ async function handleLogin() {
                         };
 
                         cloudPendingOrders.push(pendingQuotaOrder);
-                        await db.ref('pendingOrders').set(Object.assign({}, cloudPendingOrders));
+                        await db.ref('pendingOrders/' + pendingQuotaOrder.id).set(pendingQuotaOrder);
                         showToast("⚠️ الكمية تتجاوز حصة العميل المقررة! تم تحويل الفاتورة للمدير للموافقة عليها.", "warning");
                         initSalesForm();
                         return null;
@@ -3982,7 +4009,7 @@ async function handleLogin() {
                 };
 
                 cloudSales.push(salesRecord);
-                await db.ref('sales').set(Object.assign({}, cloudSales));
+                await db.ref('sales/' + salesRecord.id).set(salesRecord);
                 
                 currentSavedInvoice = salesRecord;
                 lastSavedInvoiceTimestamp = Date.now();
@@ -4005,8 +4032,27 @@ async function handleLogin() {
             }
         }
 
-        function sendSingleInvoiceViaWhatsApp() {
-            window.open(`https://api.whatsapp.com/send?phone=${getTargetWhatsApp()}&text=${encodeURIComponent("فاتورة مبيعات " + (systemSettings.companyName || "بلاك هورس"))}`, '_blank');
+        async function sendSingleInvoiceViaWhatsApp() {
+            const rec = currentSavedInvoice || await createInvoiceObject();
+            if (!rec) return;
+
+            let itemsStr = (rec.items || []).map(it => `• ${it.name}: ${it.qty} ${it.unit || 'وحدة'} × ${it.price} = ${it.total.toFixed(2)} ج.م`).join('\n');
+            let msg = `*${systemSettings.companyName || 'BLACK HORSE'}*\n` +
+                      `${systemSettings.companySubtitle || ''}\n` +
+                      `📧 ${systemSettings.invoiceEmail || 'hosamrezoo@gmail.com'}\n` +
+                      `----------------------------\n` +
+                      `🧾 فاتورة رقم: #${rec.invNo}\n` +
+                      `📅 التاريخ: ${rec.date}\n` +
+                      `🏪 العميل: ${rec.client}\n` +
+                      `🚚 المندوب: ${rec.delegateName || ''}\n` +
+                      `----------------------------\n` +
+                      `${itemsStr}\n` +
+                      `----------------------------\n` +
+                      `💰 *الإجمالي الكلي: ${rec.total.toFixed(2)} ج.م*\n` +
+                      `شكراً لتعاملكم معنا.`;
+
+            let targetPhone = formatEgyptWhatsappPhone(rec.phone) || getTargetWhatsApp();
+            window.open(`https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         async function cancelInvoice(id) {
@@ -4038,7 +4084,7 @@ async function handleLogin() {
                 }
 
                 targetInv.status = 'cancelled';
-                db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
+                db.ref('sales/' + targetInv.id + '/status').set('cancelled').then(() => {
                     showToast("✅ تم إلغاء الفاتورة واستبعادها من الحسابات والسيارة.", "success");
                     renderSavedInvoices();
                     renderDailyReport();
@@ -4236,6 +4282,9 @@ async function handleLogin() {
             let inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
 
+            const oldItems = Array.isArray(inv.items) ? JSON.parse(JSON.stringify(inv.items)) : [];
+            const wasActive = (inv.status !== 'cancelled');
+
             inv.invNo = document.getElementById('modalEditInvNo').value.trim();
             inv.date = document.getElementById('modalEditInvDate').value;
             inv.client = document.getElementById('modalEditInvClient').value.trim();
@@ -4244,7 +4293,8 @@ async function handleLogin() {
             inv.odometer = parseFloat(document.getElementById('modalEditInvOdometer').value) || 0;
             inv.village = document.getElementById('modalEditInvVillage').value.trim();
             inv.route = document.getElementById('modalEditInvRoute').value.trim();
-            inv.status = document.getElementById('modalEditInvStatus').value;
+            const newStatus = document.getElementById('modalEditInvStatus').value;
+            inv.status = newStatus;
 
             let updatedItems = [];
             let updatedTotalQty = 0;
@@ -4256,6 +4306,7 @@ async function handleLogin() {
                 const code = tr.querySelector('.edit-item-code')?.value || '';
                 const qty = parseFloat(tr.querySelector('.edit-item-qty')?.value) || 0;
                 const price = parseFloat(tr.querySelector('.edit-item-price')?.value) || 0;
+                const unit = (price >= 10000) ? 'كرتونة' : 'رابطة';
                 
                 if(qty > 0) {
                     const total = qty * price;
@@ -4267,10 +4318,29 @@ async function handleLogin() {
                         qty: qty,
                         price: price,
                         total: total,
+                        unit: unit,
                         qtyText: `Outer ${price} / ${qty} وحدة`
                     });
                 }
             });
+
+            // تسوية فرق الكميات في عهدة سيارة المندوب تلقائياً
+            const delCode = inv.delegateCode;
+            if (delCode && cloudDelegates[delCode] && cloudDelegates[delCode].carStock) {
+                if (wasActive) {
+                    oldItems.forEach(it => {
+                        const qCartons = (it.unit === 'كرتونة') ? (parseFloat(it.qty) || 0) : ((parseFloat(it.qty) || 0) / 50);
+                        cloudDelegates[delCode].carStock[it.code] = parseFloat(((cloudDelegates[delCode].carStock[it.code] || 0) + qCartons).toFixed(4));
+                    });
+                }
+                if (newStatus !== 'cancelled') {
+                    updatedItems.forEach(it => {
+                        const qCartons = (it.unit === 'كرتونة') ? (parseFloat(it.qty) || 0) : ((parseFloat(it.qty) || 0) / 50);
+                        cloudDelegates[delCode].carStock[it.code] = parseFloat(Math.max(0, (cloudDelegates[delCode].carStock[it.code] || 0) - qCartons).toFixed(4));
+                    });
+                }
+                db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock);
+            }
 
             inv.items = updatedItems;
             inv.totalQty = updatedTotalQty;
@@ -4281,11 +4351,12 @@ async function handleLogin() {
                 db.ref('clientsPhones/' + inv.client).set(inv.phone).catch(() => {});
             }
 
-            db.ref('sales').set(Object.assign({}, cloudSales)).then(() => {
-                showToast("✅ تم تعديل الفاتورة والأصناف والأسعار بنجاح!", "success");
+            db.ref('sales/' + inv.id).set(inv).then(() => {
+                showToast("✅ تم تعديل الفاتورة وتحديث عهدة السيارة والحسابات بنجاح!", "success");
                 closeEditInvoiceModal();
                 renderSavedInvoices();
                 renderDailyReport();
+                renderCarStockTable();
             });
         }
 
@@ -4362,7 +4433,8 @@ async function handleLogin() {
 
             let totalMoney = 0;
             let qMap = {};
-            products.forEach(p => qMap[p.code] = 0);
+            let qMapByName = {};
+            products.forEach(p => { qMap[p.code] = 0; qMapByName[p.name] = 0; });
 
             let filtered = cloudSales.filter(s => {
                 if(s.status === 'cancelled') return false;
@@ -4401,7 +4473,9 @@ async function handleLogin() {
                     if(s.items) {
                         s.items.forEach(it => { 
                             if (selectedProds.includes('ALL') || selectedProds.includes(it.code) || selectedProds.includes(it.name)) {
-                                if(qMap[it.code] !== undefined) qMap[it.code] += (it.unit === 'كرتونة' ? it.qty * 50 : it.qty); 
+                                const ribQty = (it.unit === 'كرتونة' ? it.qty * 50 : it.qty);
+                                if(qMap[it.code] !== undefined) qMap[it.code] += ribQty;
+                                else if(qMapByName[it.name] !== undefined) qMapByName[it.name] += ribQty;
                                 invoiceDisplayTotal += (it.total || (it.qty * it.price) || 0);
                             }
                         });
@@ -4430,7 +4504,7 @@ async function handleLogin() {
                         return;
                     }
 
-                    let totalRibbons = qMap[p.code] || 0;
+                    let totalRibbons = (qMap[p.code] || 0) + (qMapByName[p.name] || 0);
                     totalAllRibbons += totalRibbons;
                     let cartons = Math.floor(totalRibbons / 50);
                     let rem = totalRibbons % 50;
@@ -5257,21 +5331,23 @@ async function handleLogin() {
 
             const zimam = deposit - totalGoods;
 
+            let targetMenofLoad = null;
             if (editId) {
-                let rec = cloudMenofLoads.find(m => String(m.id) === String(editId));
-                if (rec) {
-                    rec.date = date;
-                    rec.cartons = totalCartons;
-                    rec.totalGoods = totalGoods;
-                    rec.deposit = deposit;
-                    rec.zimam = zimam;
-                    if (Object.keys(loadedItems).length > 0) rec.items = loadedItems;
+                targetMenofLoad = cloudMenofLoads.find(m => String(m.id) === String(editId));
+                if (targetMenofLoad) {
+                    targetMenofLoad.date = date;
+                    targetMenofLoad.cartons = totalCartons;
+                    targetMenofLoad.totalGoods = totalGoods;
+                    targetMenofLoad.deposit = deposit;
+                    targetMenofLoad.zimam = zimam;
+                    if (Object.keys(loadedItems).length > 0) targetMenofLoad.items = loadedItems;
                 }
             } else {
-                cloudMenofLoads.push({ id: String(Date.now()), date, cartons: totalCartons, totalGoods, deposit, zimam, items: loadedItems });
+                targetMenofLoad = { id: String(Date.now()), date, cartons: totalCartons, totalGoods, deposit, zimam, items: loadedItems };
+                cloudMenofLoads.push(targetMenofLoad);
             }
 
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads));
+            if (targetMenofLoad) db.ref('menofLoads/' + targetMenofLoad.id).set(targetMenofLoad);
             db.ref('productsList').set(products).then(() => {
                 showToast("✅ تم حفظ شحنة منوف وتغذية رصيد المخزن العام تلقائياً!", "success");
                 document.getElementById('editMenofId').value = '';
@@ -5407,7 +5483,7 @@ async function handleLogin() {
             }
 
             cloudMenofLoads = cloudMenofLoads.filter(m => String(m.id) !== String(id));
-            db.ref('menofLoads').set(Object.assign({}, cloudMenofLoads)).then(() => {
+            db.ref('menofLoads/' + id).remove().then(() => {
                 showToast("✅ تم حذف الشحنة وتحديث رصيد المخزن.", "success");
                 renderMenofTable();
                 renderWarehouseTable();
@@ -6078,22 +6154,34 @@ async function handleLogin() {
             db.ref('delegates/' + code).remove().then(() => renderAdminUsersTable());
         }
 
-        function changeMyPassword() {
+        async function changeMyPassword() {
             const curP = document.getElementById('currentPassInput').value.trim();
             const newP = document.getElementById('newPassInput').value.trim();
             if(!curP || !newP) { showToast("أدخل كلمة السر الحالية والجديدة.", "error"); return; }
 
             if(currentDelegate.code === 'admin') {
-                if(curP !== ADMIN_PASS) { showToast("كلمة السر الحالية غير صحيحة.", "error"); return; }
-                ADMIN_PASS = newP;
-                showToast("✅ تم تغيير كلمة سر المدير بنجاح.", "success");
+                try {
+                    const user = auth.currentUser;
+                    if (!user) {
+                        showToast("❌ يرجى إعادة تسجيل الدخول بحساب المدير أولاً.", "error");
+                        return;
+                    }
+                    await auth.signInWithEmailAndPassword(user.email, curP);
+                    await user.updatePassword(newP);
+                    showToast("✅ تم تغيير كلمة سر المدير بنجاح.", "success");
+                } catch (err) {
+                    showToast("❌ كلمة السر الحالية غير صحيحة أو كلمة السر الجديدة ضعيفة (6 أحرف على الأقل).", "error");
+                    return;
+                }
             } else {
                 let u = cloudDelegates[currentDelegate.code];
                 if(u && u.pass === curP) {
                     u.pass = newP;
-                    db.ref('delegates/' + currentDelegate.code + '/pass').set(newP).then(() => showToast("✅ تم تغيير كلمة السر بنجاح.", "success"));
+                    await db.ref('delegates/' + currentDelegate.code + '/pass').set(newP);
+                    showToast("✅ تم تغيير كلمة السر بنجاح.", "success");
                 } else {
                     showToast("كلمة السر الحالية غير صحيحة.", "error");
+                    return;
                 }
             }
             document.getElementById('currentPassInput').value = '';
@@ -6342,4 +6430,5 @@ async function handleLogin() {
     </script>
 </body>
 </html>
+
 
