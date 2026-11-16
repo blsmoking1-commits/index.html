@@ -1024,7 +1024,7 @@
                 <div class="form-group"><label>بيانات السجل والضرائب والنشاط:</label><input type="text" id="sysInputTax" placeholder="كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027"></div>
                 <div class="form-group"><label>رقم الواتساب الرسمي (بدون مسافات مثل: 201011112764):</label><input type="text" id="sysInputWa" placeholder="201011112764"></div>
                 <div class="form-group"><label>📧 البريد الإلكتروني المطبوع على الفواتير (قابل للتعديل من المدير):</label><input type="email" id="sysInputInvoiceEmail" placeholder="hosamrezoo@gmail.com"></div>
-                <div class="form-group"><label>🔒 البريد الإلكتروني الثابت للمراسلات والتطبيق (ثابت):</label><input type="email" id="sysInputOfficialEmail" value="blsmoking1@gmail.com" readonly class="readonly-input" style="background:#e2e8f0; color:#475569; font-weight:bold;"></div>
+                <div class="form-group"><label>📧 البريد الإلكتروني الرسمي للمراسلات والتطبيق (قابل للتعديل من المدير):</label><input type="email" id="sysInputOfficialEmail" placeholder="blsmoking1@gmail.com" style="font-weight:bold;"></div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
                     <div class="form-group"><label>سعر كرتونة الجملة الافتراضي (ج.م):</label><input type="number" id="sysInputCartonPrice" value="23925"></div>
                     <div class="form-group"><label>سعر رابطة القطاعي الافتراضي (ج.م):</label><input type="number" id="sysInputRibbonPrice" value="480"></div>
@@ -2341,7 +2341,7 @@
             if(hName) hName.innerText = systemSettings.companyName || "BLACK HORSE";
             if(hSub) hSub.innerText = systemSettings.companySubtitle || "";
             if(hTax) hTax.innerText = systemSettings.taxInfo || "";
-            if(hFixedMail) hFixedMail.innerText = FIXED_CORRESPONDENCE_EMAIL;
+            if(hFixedMail) hFixedMail.innerText = systemSettings.officialEmail || FIXED_CORRESPONDENCE_EMAIL;
 
             const inputName = document.getElementById('sysInputName');
             const inputSub = document.getElementById('sysInputSubtitle');
@@ -2357,7 +2357,7 @@
             if(inputTax) inputTax.value = systemSettings.taxInfo || "";
             if(inputWa) inputWa.value = systemSettings.whatsapp || "201011112764";
             if(inputInvEmail) inputInvEmail.value = systemSettings.invoiceEmail || "hosamrezoo@gmail.com";
-            if(inputOffEmail) inputOffEmail.value = FIXED_CORRESPONDENCE_EMAIL;
+            if(inputOffEmail) inputOffEmail.value = systemSettings.officialEmail || FIXED_CORRESPONDENCE_EMAIL;
             if(inputCarton) inputCarton.value = systemSettings.defaultCartonPrice || 23925;
             if(inputRibbon) inputRibbon.value = systemSettings.defaultRibbonPrice || 480;
         }
@@ -2373,6 +2373,7 @@
             const cTax = document.getElementById('sysInputTax').value.trim();
             const cWa = document.getElementById('sysInputWa').value.trim().replace(/\D/g, '') || "201011112764";
             const cInvEmail = document.getElementById('sysInputInvoiceEmail').value.trim() || "hosamrezoo@gmail.com";
+            const cOffEmail = document.getElementById('sysInputOfficialEmail').value.trim() || FIXED_CORRESPONDENCE_EMAIL;
             const cCarton = parseFloat(document.getElementById('sysInputCartonPrice').value) || 23925;
             const cRibbon = parseFloat(document.getElementById('sysInputRibbonPrice').value) || 480;
 
@@ -2382,7 +2383,7 @@
                 taxInfo: cTax,
                 whatsapp: cWa,
                 invoiceEmail: cInvEmail,
-                officialEmail: FIXED_CORRESPONDENCE_EMAIL,
+                officialEmail: cOffEmail,
                 defaultCartonPrice: cCarton,
                 defaultRibbonPrice: cRibbon
             };
