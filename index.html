@@ -1189,10 +1189,14 @@ document.addEventListener("DOMContentLoaded", () => {
         else btn.classList.add('hidden');
       });
 
-      document.querySelectorAll('.admin-only').forEach(el => {
-        if (currentRole === "admin" || currentRole === "manager") el.classList.remove('hidden');
-        else el.classList.add('hidden');
-      });
+    document.addEventListener("DOMContentLoaded", () => {
+  const userBadge = document.getElementById("navUserBadge");
+  // جلب اسم المستخدم المخزن محلياً أو من الجلسة
+  const currentUser = localStorage.getItem("bh_username") || "مسؤول النظام";
+  if (userBadge) {
+    userBadge.textContent = `مسؤول: ${currentUser}`;
+  }
+}); });
 
       document.querySelectorAll('.admin-or-warehouse').forEach(el => {
         if (currentRole === "admin" || currentRole === "warehouse") el.classList.remove('hidden');
