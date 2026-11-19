@@ -498,9 +498,37 @@
             </div>
 
             <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:10px; border-radius:6px; margin-bottom:12px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
                     <h5 style="margin:0; color:#1e40af; font-size:13px;">👑 قائمة العملاء المسجلين (تُضاف إليهم الأسماء الجديدة تلقائياً):</h5>
                     <button class="btn btn-danger" style="width:auto; margin:0; padding:5px 10px; font-size:11px;" onclick="deleteSelectedClients()">🗑️ مسح العملاء المحددين</button>
+                </div>
+
+                <!-- قائمة منسدلة لتصفية فترات التباعد بين المسحوبات وتصدير المتجاوزين لإكسيل -->
+                <div style="background:#fffbeb; border:1.5px solid #f59e0b; padding:10px; border-radius:8px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
+                        <label for="clientSpacingFilterSelect" style="font-size:12.5px; font-weight:bold; color:#92400e; margin:0;">⏱️ تجميع العملاء حسب فترات التباعد بين المسحوبات:</label>
+                        <span id="filteredClientsSpacingBadge" style="background:#fef3c7; color:#b45309; border:1px solid #f59e0b; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:bold;">عدد العملاء المطابقين: 0</span>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <select id="clientSpacingFilterSelect" onchange="renderAdminPortalCustomersTable()" style="flex:2; min-width:230px; padding:8px; border:1.5px solid #d97706; border-radius:6px; font-size:12.5px; font-weight:bold; background:#fff; color:#0f172a;">
+                            <option value="ALL">📋 عرض جميع العملاء (الكل)</option>
+                            <option value="DELAYED">⚠️ العملاء المتجاوزون لمعدل سحبهم الطبيعي (تلقائي)</option>
+                            <option value="3">⏱️ تجاوزوا 3 أيام بدون سحب</option>
+                            <option value="7">⏱️ تجاوزوا 7 أيام (أسبوع) بدون سحب</option>
+                            <option value="10">⏱️ تجاوزوا 10 أيام بدون سحب</option>
+                            <option value="14">⏱️ تجاوزوا 14 يوماً (أسبوعين) بدون سحب</option>
+                            <option value="21">⏱️ تجاوزوا 21 يوماً (3 أسابيع) بدون سحب</option>
+                            <option value="30">⏱️ تجاوزوا 30 يوماً (شهر) بدون سحب</option>
+                            <option value="45">⏱️ تجاوزوا 45 يوماً بدون سحب</option>
+                            <option value="60">⏱️ تجاوزوا 60 يوماً (شهرين) بدون سحب</option>
+                            <option value="90">⏱️ تجاوزوا 90 يوماً (3 شهور) بدون سحب</option>
+                            <option value="AVG_7">📊 متوسط التباعد بين مسحوباتهم أكثر من 7 أيام</option>
+                            <option value="AVG_14">📊 متوسط التباعد بين مسحوباتهم أكثر من 14 يوماً</option>
+                            <option value="AVG_30">📊 متوسط التباعد بين مسحوباتهم أكثر من 30 يوماً</option>
+                            <option value="NEVER">🆕 عملاء مسجلون لم يسحبوا بعد (0 مسحوبات)</option>
+                        </select>
+                        <button type="button" class="btn btn-success" style="flex:1; min-width:200px; margin:0; padding:8px 12px; font-size:12px;" onclick="exportFilteredSpacingClientsExcel()">📥 تصدير القائمة المصفّاة (Excel)</button>
+                    </div>
                 </div>
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
@@ -5883,27 +5911,99 @@ async function handleLogin() {
             });
         }
 
+        function getFilteredAdminCustomersBySpacing() {
+            const filterVal = document.getElementById('clientSpacingFilterSelect')?.value || 'ALL';
+            const results = [];
+
+            for (let uid in portalCustomersDB) {
+                const c = portalCustomersDB[uid];
+                if (!c || !c.name) continue;
+                const joinDateStr = getCustomerJoinDate(c.name, c);
+                const st = getClientWithdrawalAnalytics(c.name, c);
+
+                let include = false;
+                let overdueDays = 0;
+
+                if (filterVal === 'ALL') {
+                    include = true;
+                    if (st.isDelayed) {
+                        overdueDays = st.avgGapDays > 0
+                            ? Math.max(0, Math.round(st.daysSinceLast - st.avgGapDays))
+                            : Math.max(0, st.daysSinceLast - 14);
+                    }
+                } else if (filterVal === 'DELAYED') {
+                    include = (st.totalOrders > 0 && st.isDelayed);
+                    if (include) {
+                        overdueDays = st.avgGapDays > 0
+                            ? Math.max(0, Math.round(st.daysSinceLast - st.avgGapDays))
+                            : Math.max(0, st.daysSinceLast - 14);
+                    }
+                } else if (filterVal === 'NEVER') {
+                    include = (st.totalOrders === 0);
+                } else if (filterVal.startsWith('AVG_')) {
+                    const minAvg = parseFloat(filterVal.replace('AVG_', '')) || 0;
+                    include = (st.totalOrders > 1 && st.avgGapDays > minAvg);
+                    if (include) overdueDays = parseFloat((st.avgGapDays - minAvg).toFixed(1));
+                } else {
+                    const daysLimit = parseInt(filterVal, 10) || 0;
+                    include = (st.totalOrders > 0 && st.daysSinceLast > daysLimit);
+                    if (include) overdueDays = Math.max(0, st.daysSinceLast - daysLimit);
+                }
+
+                if (include) {
+                    results.push({ uid, customer: c, joinDateStr, stats: st, overdueDays, filterVal });
+                }
+            }
+
+            if (filterVal.startsWith('AVG_')) {
+                results.sort((a, b) => b.stats.avgGapDays - a.stats.avgGapDays);
+            } else if (filterVal !== 'ALL' && filterVal !== 'NEVER') {
+                results.sort((a, b) => b.stats.daysSinceLast - a.stats.daysSinceLast);
+            }
+
+            return results;
+        }
+
         function renderAdminPortalCustomersTable() {
             const tbody = document.getElementById('adminPortalCustomersBody');
-            if(!tbody) return;
-            let html = '';
+            if (!tbody) return;
 
-            for(let uid in portalCustomersDB) {
-                let c = portalCustomersDB[uid];
+            const filteredList = getFilteredAdminCustomersBySpacing();
+            const countBadge = document.getElementById('filteredClientsSpacingBadge');
+            if (countBadge) {
+                countBadge.innerText = `عدد العملاء المطابقين: ${filteredList.length} عميل`;
+            }
+
+            if (filteredList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="color:#64748b; padding:14px;">لا يوجد عملاء مطابقون لفترة التباعد المختارة حالياً.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            filteredList.forEach(item => {
+                const { uid, customer: c, joinDateStr, stats: intervalStats, overdueDays, filterVal } = item;
                 let typeBadge = c.customerType === 'wholesale' ? '<span style="color:#16a34a; font-weight:bold;">جملة</span>' : 
                                (c.customerType === 'retail' ? '<span style="color:#2563eb; font-weight:bold;">قطاعي</span>' : '<span style="color:#d97706;">معلق</span>');
-                let joinDateStr = getCustomerJoinDate(c.name, c);
-                let intervalStats = getClientWithdrawalAnalytics(c.name, c);
+
+                let exceededBadge = '';
+                if (overdueDays > 0 && filterVal !== 'ALL') {
+                    exceededBadge = `<div style="margin-top:2px;"><span style="background:#fee2e2; color:#dc2626; padding:1px 5px; border-radius:4px; font-weight:bold; font-size:10px;">🔴 متجاوز بـ ${overdueDays} يوم</span></div>`;
+                }
+
                 let spacingHtml = intervalStats.totalOrders === 0
                     ? '<span style="color:#64748b; font-size:10.5px;">لم يسحب بعد</span>'
                     : (intervalStats.totalOrders === 1
-                        ? `<span style="color:#0284c7; font-size:10.5px;">سحبة واحدة (منذ ${intervalStats.daysSinceLast} يوم)</span>`
+                        ? `<div style="font-size:10.5px; line-height:1.4;">
+                            سحبة واحدة (منذ <b style="color:${intervalStats.isDelayed || overdueDays > 0 ? '#dc2626' : '#0284c7'};">${intervalStats.daysSinceLast} يوم</b>)${exceededBadge}
+                           </div>`
                         : `<div style="font-size:10.5px; line-height:1.4;">
                             متوسط: <b>${intervalStats.avgGapDays} يوم</b><br>
-                            منذ آخر سحبة: <b style="color:${intervalStats.isDelayed ? '#dc2626' : '#16a34a'};">${intervalStats.daysSinceLast} يوم</b> ${intervalStats.isDelayed ? '⚠️' : '✅'}
+                            منذ آخر سحبة: <b style="color:${intervalStats.isDelayed || overdueDays > 0 ? '#dc2626' : '#16a34a'};">${intervalStats.daysSinceLast} يوم</b> ${intervalStats.isDelayed || overdueDays > 0 ? '⚠️' : '✅'}${exceededBadge}
                            </div>`);
+
+                const rowHighlight = (intervalStats.isDelayed || overdueDays > 0) ? 'background:#fff1f2;' : '';
                 html += `
-                    <tr>
+                    <tr style="${rowHighlight}">
                         <td><input type="checkbox" class="client-row-checkbox" value="${uid}"></td>
                         <td><b>${c.name}</b></td>
                         <td><code style="color:#2563eb;">${c.clientCode || '-'}</code></td>
@@ -5918,8 +6018,65 @@ async function handleLogin() {
                             <button class="btn btn-danger" style="padding:2px 6px; font-size:10px; width:auto;" onclick="deletePortalCustomer('${uid}')">🗑️</button>
                         </td>
                     </tr>`;
-            }
+            });
             tbody.innerHTML = html;
+        }
+
+        function exportFilteredSpacingClientsExcel() {
+            const selectEl = document.getElementById('clientSpacingFilterSelect');
+            const filterVal = selectEl?.value || 'ALL';
+            const filterLabel = selectEl?.options[selectEl.selectedIndex]?.text.replace(/^[^\w؀-ۿ]+/, '').trim() || 'الكل';
+            const filteredList = getFilteredAdminCustomersBySpacing();
+
+            if (filteredList.length === 0) {
+                showToast("⚠️ لا يوجد عملاء في القائمة المصفّاة للتصدير.", "warning");
+                return;
+            }
+
+            const rows = filteredList.map((item, idx) => {
+                const c = item.customer;
+                const st = item.stats;
+                const typeText = c.customerType === 'wholesale' ? 'جملة' : (c.customerType === 'retail' ? 'قطاعي' : 'معلق');
+                const statusText = st.totalOrders === 0
+                    ? 'لم يسحب بعد'
+                    : (item.overdueDays > 0 ? `متجاوز بـ ${item.overdueDays} يوم` : (st.isDelayed ? 'متأخر عن معدله' : 'منتظم'));
+
+                return {
+                    "م": idx + 1,
+                    "اسم العميل": c.name || '',
+                    "الكود": c.clientCode || '',
+                    "الخط": c.route || '',
+                    "القرية": c.village || '',
+                    "الهاتف": c.phone || '',
+                    "الفئة": typeText,
+                    "تاريخ الانضمام": st.joinDate,
+                    "عدد المسحوبات": st.totalOrders,
+                    "أول سحبة": st.firstOrder,
+                    "آخر سحبة": st.lastOrder,
+                    "متوسط التباعد بين المسحوبات (يوم)": st.totalOrders > 1 ? st.avgGapDays : 0,
+                    "أقصى فترة انقطاع (يوم)": st.totalOrders > 1 ? st.maxGapDays : 0,
+                    "عدد الأيام منذ آخر سحبة": st.totalOrders > 0 ? st.daysSinceLast : 0,
+                    "مقدار التجاوز (يوم)": item.overdueDays,
+                    "الحالة / التصنيف": statusText
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            if (!ws['!views']) ws['!views'] = [];
+            ws['!views'].push({ rightToLeft: true });
+            ws['!cols'] = [
+                { wch: 5 }, { wch: 24 }, { wch: 12 }, { wch: 18 }, { wch: 16 },
+                { wch: 15 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
+                { wch: 14 }, { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 20 }
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "العملاء_المتجاوزون");
+
+            const today = new Date().toISOString().slice(0, 10);
+            const safeSuffix = filterVal === 'ALL' ? 'جميع_العملاء' : `متجاوزين_${filterVal}`;
+            XLSX.writeFile(wb, `عملاء_بلاك_هورس_${safeSuffix}_${today}.xlsx`);
+            showToast(`✅ تم تصدير ${rows.length} عميل (${filterLabel}) إلى ملف Excel بنجاح!`, "success");
         }
 
         function openEditCustomerModal(uid) {
