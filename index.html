@@ -4632,6 +4632,7 @@ async function handleLogin() {
             </tr>
         `;
     }).join('');
+        }
 
         function exportClientWithdrawalsExcel() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
@@ -5132,74 +5133,6 @@ async function handleLogin() {
                 if (validDates.length > 0) return validDates[0];
             }
             return new Date().toISOString().split('T')[0];
-        }
-
-        function getClientWithdrawalAnalytics(clientName, custObj = null) {
-            const joinDate = getCustomerJoinDate(clientName, custObj);
-            const sales = cloudSales
-                .filter(s => s.status !== 'cancelled' && s.client && s.client.trim().toLowerCase() === clientName.trim().toLowerCase() && s.date)
-                .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            if (sales.length === 0) {
-                return {
-                    joinDate,
-                    totalOrders: 0,
-                    firstOrder: '-',
-                    lastOrder: '-',
-                    avgGapDays: 0,
-                    maxGapDays: 0,
-                    daysSinceLast: 0,
-                    gapsList: [],
-                    isDelayed: false
-                };
-            }
-
-            const msPerDay = 1000 * 60 * 60 * 24;
-            let gaps = [];
-            for (let i = 1; i < sales.length; i++) {
-                const d1 = new Date(sales[i - 1].date).getTime();
-                const d2 = new Date(sales[i].date).getTime();
-                const diffDays = Math.max(0, Math.round((d2 - d1) / msPerDay));
-                gaps.push(diffDays);
-            }
-
-            const avgGap = gaps.length > 0 ? parseFloat((gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(1)) : 0;
-            const maxGap = gaps.length > 0 ? Math.max(...gaps) : 0;
-            const lastDateStr = sales[sales.length - 1].date;
-            const daysSinceLast = Math.max(0, Math.floor((Date.now() - new Date(lastDateStr).getTime()) / msPerDay));
-            const isDelayed = (avgGap > 0 && daysSinceLast > avgGap * 1.5) || (avgGap === 0 && daysSinceLast > 14);
-
-            return {
-                joinDate,
-                totalOrders: sales.length,
-                firstOrder: sales[0].date,
-                lastOrder: lastDateStr,
-                avgGapDays: avgGap,
-                maxGapDays: maxGap,
-                daysSinceLast,
-                gapsList: gaps,
-                isDelayed
-            };
-        }
-
-        function showClientMonthlyStats(clientName) {
-            const box = document.getElementById('clientMonthlyHistory');
-            if(!box) return;
-            const currentMonth = new Date().toISOString().slice(0, 7);
-            let clientSales = cloudSales.filter(s => s.status !== 'cancelled' && s.client && s.client.toLowerCase() === clientName.toLowerCase() && s.date && s.date.startsWith(currentMonth));
-            const analytics = getClientWithdrawalAnalytics(clientName);
-
-            if(clientSales.length === 0 && analytics.totalOrders === 0) {
-                box.style.display = 'block';
-                box.innerHTML = `📅 <b>تاريخ انضمام العميل:</b> ${analytics.joinDate} | <i>عميل جديد (لم يقم بأي مسحوبات سابقة)</i>`;
-                return;
-            }
-            let totalSpent = clientSales.reduce((acc, s) => acc + s.total, 0);
-            let spacingSummary = analytics.totalOrders > 1
-                ? `متوسط التباعد بين المسحوبات: <b>${analytics.avgGapDays} يوم</b> (أقصى انقطاع: ${analytics.maxGapDays} يوم)`
-                : `سحبة واحدة مسجلة`;
-            box.style.display = 'block';
-            box.innerHTML = `📅 <b>تاريخ الانضمام:</b> ${analytics.joinDate} | ⏱️ <b>منذ آخر سحبة:</b> <span style="color:${analytics.isDelayed ? '#dc2626' : '#15803d'}; font-weight:bold;">${analytics.daysSinceLast} يوم</span> (${spacingSummary})<br>📊 <b>سجل العميل هذا الشهر:</b> سحب <b>${clientSales.length}</b> فواتير بقيمة <b>${totalSpent.toFixed(2)} ج.م</b>`;
         }
 
         function updateDelegateTodaySummary() {
@@ -6165,7 +6098,77 @@ const safeCustName = (c.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;')
             checked.forEach(uid => db.ref('portalCustomers/' + uid).remove());
         }
 
-       // ==================== دالة مساعدة لتحويل التاريخ لتوقيت محلي بدون انحراف ساعات ====================
+        function exportClientsFast() {
+            let rows = [];
+            for(let uid in portalCustomersDB) {
+                let c = portalCustomersDB[uid];
+                if(!c || !c.name) continue;
+                let st = getClientWithdrawalAnalytics(c.name, c);
+                rows.push({
+                    "اسم العميل": c.name,
+                    "الكود": c.clientCode || '',
+                    "الخط": c.route || '',
+                    "القرية": c.village || '',
+                    "الهاتف": c.phone || '',
+                    "الفئة": c.customerType || 'retail',
+                    "تاريخ الانضمام": st.joinDate,
+                    "عدد المسحوبات": st.totalOrders,
+                    "أول سحبة": st.firstOrder,
+                    "آخر سحبة": st.lastOrder,
+                    "رقم آخر فاتورة": st.lastInvoiceNo || '-',
+                    "إجمالي آخر فاتورة": st.lastInvoiceTotal || 0,
+                    "متوسط التباعد بين المسحوبات (يوم)": st.totalOrders > 1 ? st.avgGapDays : 0,
+                    "أقصى فترة انقطاع (يوم)": st.totalOrders > 1 ? st.maxGapDays : 0,
+                    "عدد الأيام منذ آخر سحبة": st.daysSinceLast
+                });
+            }
+            const ws = XLSX.utils.json_to_sheet(rows);
+            if (!ws['!views']) ws['!views'] = [];
+            ws['!views'].push({ rightToLeft: true });
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "العملاء");
+            XLSX.writeFile(wb, "قائمة_عملاء_بلاك_هورس.xlsx");
+            showToast(`✅ تم تصدير ${rows.length} عميل إلى Excel بنجاح!`, "success");
+        }
+
+        function importClientsFromExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet);
+
+                let importedCount = 0;
+                rows.forEach((r, i) => {
+                    let name = r["اسم العميل"] || r["الاسم"] || r["name"];
+                    if(name) {
+                        name = String(name).trim();
+                        let uid = "cust_" + Date.now() + "_" + i;
+                        let code = r["الكود"] || ("C-" + Math.floor(1000 + Math.random()*9000));
+                        let route = r["الخط"] || '';
+                        let village = r["القرية"] || '';
+                        let phone = r["الهاتف"] || '';
+                        let customerType = r["الفئة"] || 'retail';
+                        let joinedAt = r["تاريخ الانضمام"] || r["joinedAt"] || new Date().toISOString().split('T')[0];
+                        portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, pass: "123456", customerType, joinedAt };
+                        cloudClients[name] = code;
+                        if(route) cloudClientsRoutes[name] = route;
+                        importedCount++;
+                    }
+                });
+                db.ref('portalCustomers').set(portalCustomersDB);
+                db.ref('clients').set(cloudClients);
+                db.ref('clientsRoutes').set(cloudClientsRoutes);
+                e.target.value = '';
+                showToast(`✅ تم استيراد وتحديث ${importedCount} عميل بنجاح!`, "success");
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ==================== دالة مساعدة لتحويل التاريخ لتوقيت محلي بدون انحراف ساعات ====================
 function parseLocalDateMidnight(dateStr) {
     if (!dateStr) return 0;
     const parts = String(dateStr).split('T')[0].split('-').map(Number);
