@@ -512,6 +512,8 @@
                     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                         <select id="clientSpacingFilterSelect" onchange="renderAdminPortalCustomersTable()" style="flex:2; min-width:230px; padding:8px; border:1.5px solid #d97706; border-radius:6px; font-size:12.5px; font-weight:bold; background:#fff; color:#0f172a;">
                             <option value="ALL">📋 عرض جميع العملاء (الكل)</option>
+                            <option value="ACTIVE_ONLY">✅ العملاء النشطون فقط (استبعاد المعلقين والصفرية)</option>
+                            <option value="PENDING_ALL">⏳ العملاء المعلقون فقط (فئة pending أو 0 مسحوبات)</option>
                             <option value="DELAYED">⚠️ العملاء المتجاوزون لمعدل سحبهم الطبيعي (تلقائي)</option>
                             <option value="3">⏱️ تجاوزوا 3 أيام بدون سحب</option>
                             <option value="7">⏱️ تجاوزوا 7 أيام (أسبوع) بدون سحب</option>
@@ -3798,15 +3800,15 @@ async function handleLogin() {
             let cleanName = clientName.trim();
             if (!cleanName) return "C-0000";
 
-            const normTarget = normalizeArabicText(cleanName);
+            const strictTarget = normalizeArabicStrictKey(cleanName);
             for (let k in cloudClients) {
-                if (normalizeArabicText(k) === normTarget) {
+                if (normalizeArabicStrictKey(k) === strictTarget) {
                     cleanName = k;
                     break;
                 }
             }
             for (let uid in portalCustomersDB) {
-                if (portalCustomersDB[uid]?.name && normalizeArabicText(portalCustomersDB[uid].name) === normTarget) {
+                if (portalCustomersDB[uid]?.name && normalizeArabicStrictKey(portalCustomersDB[uid].name) === strictTarget) {
                     cleanName = portalCustomersDB[uid].name.trim();
                     break;
                 }
@@ -3816,7 +3818,7 @@ async function handleLogin() {
             let foundInPortal = false;
 
             for (let uid in portalCustomersDB) {
-                if (portalCustomersDB[uid]?.name && portalCustomersDB[uid].name.trim().toLowerCase() === cleanName.toLowerCase()) {
+                if (portalCustomersDB[uid]?.name && normalizeArabicStrictKey(portalCustomersDB[uid].name) === strictTarget) {
                     foundInPortal = true;
                     existingCode = portalCustomersDB[uid].clientCode || existingCode;
                     break;
@@ -4907,6 +4909,11 @@ async function handleLogin() {
                 .toLowerCase();
         }
 
+        // مفتاح مقارنة صارم بدون مسافات لمنع تكرار مثل (احمد حسن / احمدحسن)
+        function normalizeArabicStrictKey(str) {
+            return normalizeArabicText(str).replace(/\s+/g, '');
+        }
+
         // بناء قائمة العملاء الموحدة في الذاكرة للبحث الفوري بدون أي ثقل
         function getUnifiedClientsSearchList() {
             const selectedRoute = document.getElementById('selectRouteFilter')?.value || 'ALL';
@@ -5836,6 +5843,15 @@ async function handleLogin() {
 
             if(!name) { showToast("يرجى كتابة اسم العميل.", "error"); return; }
 
+            const strictNew = normalizeArabicStrictKey(name);
+            for (let existingUid in portalCustomersDB) {
+                const ex = portalCustomersDB[existingUid];
+                if (ex && ex.name && normalizeArabicStrictKey(ex.name) === strictNew) {
+                    showToast(`⚠️ العميل "${ex.name}" مسجل بالفعل بكود (${ex.clientCode || 'بدون كود'})! افتح التعديل لتحديث بياناته بدلاً من تكراره.`, "warning");
+                    return;
+                }
+            }
+
             const uid = "cust_" + Date.now();
             const custObj = { uid, name, clientCode: code, route, village, phone, pass, customerType: type, joinedAt };
 
@@ -5864,6 +5880,8 @@ async function handleLogin() {
                 let include = false;
                 let overdueDays = 0;
 
+                const isPendingCustomer = (c.customerType === 'pending' || st.totalOrders === 0);
+
                 if (filterVal === 'ALL') {
                     include = true;
                     if (st.isDelayed) {
@@ -5871,6 +5889,15 @@ async function handleLogin() {
                             ? Math.max(0, Math.round(st.daysSinceLast - st.avgGapDays))
                             : Math.max(0, st.daysSinceLast - 14);
                     }
+                } else if (filterVal === 'ACTIVE_ONLY') {
+                    include = !isPendingCustomer;
+                    if (include && st.isDelayed) {
+                        overdueDays = st.avgGapDays > 0
+                            ? Math.max(0, Math.round(st.daysSinceLast - st.avgGapDays))
+                            : Math.max(0, st.daysSinceLast - 14);
+                    }
+                } else if (filterVal === 'PENDING_ALL') {
+                    include = isPendingCustomer;
                 } else if (filterVal === 'DELAYED') {
                     include = (st.totalOrders > 0 && st.isDelayed);
                     if (include) {
@@ -6141,29 +6168,70 @@ const safeCustName = (c.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;')
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(firstSheet);
 
-                let importedCount = 0;
+                // فهرسة العملاء الحاليين بالمفتاح الموحد (بدون مسافات أو همزات) لمنع التكرار عند الاستيراد
+                const existingByKey = {};
+                for (let existingUid in portalCustomersDB) {
+                    const ex = portalCustomersDB[existingUid];
+                    if (ex && ex.name) {
+                        existingByKey[normalizeArabicStrictKey(ex.name)] = existingUid;
+                    }
+                }
+
+                let addedCount = 0;
+                let updatedCount = 0;
+                let skippedNoise = 0;
+
                 rows.forEach((r, i) => {
-                    let name = r["اسم العميل"] || r["الاسم"] || r["name"];
-                    if(name) {
-                        name = String(name).trim();
+                    let rawName = r["اسم العميل"] || r["الاسم"] || r["name"];
+                    if(!rawName) return;
+                    let name = String(rawName).trim();
+                    let strictKey = normalizeArabicStrictKey(name);
+
+                    // تجاهل السجلات الوهمية وصفوف الإجمالي
+                    if (!strictKey || strictKey === 'test' || strictKey.includes('عميلفريد')) {
+                        skippedNoise++;
+                        return;
+                    }
+
+                    let code = r["الكود"] ? String(r["الكود"]).trim() : ("C-" + Math.floor(1000 + Math.random()*9000));
+                    let route = r["الخط"] ? String(r["الخط"]).trim() : '';
+                    let village = r["القرية"] ? String(r["القرية"]).trim() : '';
+                    let phone = r["الهاتف"] ? String(r["الهاتف"]).trim() : '';
+                    let rawType = r["الفئة"] ? String(r["الفئة"]).trim() : 'retail';
+                    let customerType = (rawType === 'جملة' || rawType === 'wholesale') ? 'wholesale' : (rawType === 'pending' ? 'pending' : 'retail');
+                    let joinedAt = r["تاريخ الانضمام"] || r["joinedAt"] || new Date().toISOString().split('T')[0];
+
+                    if (existingByKey[strictKey]) {
+                        const targetUid = existingByKey[strictKey];
+                        const prev = portalCustomersDB[targetUid];
+                        portalCustomersDB[targetUid] = {
+                            ...prev,
+                            name: prev.name || name,
+                            clientCode: code || prev.clientCode,
+                            route: route || prev.route || '',
+                            village: village || prev.village || '',
+                            phone: phone || prev.phone || '',
+                            customerType: customerType || prev.customerType || 'retail',
+                            joinedAt: prev.joinedAt || joinedAt
+                        };
+                        cloudClients[portalCustomersDB[targetUid].name] = portalCustomersDB[targetUid].clientCode;
+                        if (portalCustomersDB[targetUid].route) cloudClientsRoutes[portalCustomersDB[targetUid].name] = portalCustomersDB[targetUid].route;
+                        updatedCount++;
+                    } else {
                         let uid = "cust_" + Date.now() + "_" + i;
-                        let code = r["الكود"] || ("C-" + Math.floor(1000 + Math.random()*9000));
-                        let route = r["الخط"] || '';
-                        let village = r["القرية"] || '';
-                        let phone = r["الهاتف"] || '';
-                        let customerType = r["الفئة"] || 'retail';
-                        let joinedAt = r["تاريخ الانضمام"] || r["joinedAt"] || new Date().toISOString().split('T')[0];
                         portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, pass: "123456", customerType, joinedAt };
+                        existingByKey[strictKey] = uid;
                         cloudClients[name] = code;
                         if(route) cloudClientsRoutes[name] = route;
-                        importedCount++;
+                        addedCount++;
                     }
                 });
                 db.ref('portalCustomers').set(portalCustomersDB);
                 db.ref('clients').set(cloudClients);
                 db.ref('clientsRoutes').set(cloudClientsRoutes);
                 e.target.value = '';
-                showToast(`✅ تم استيراد وتحديث ${importedCount} عميل بنجاح!`, "success");
+                renderAdminPortalCustomersTable();
+                showToast(`✅ اكتمل الاستيراد الذكي: إضافة ${addedCount} عميل جديد، وتحديث ${updatedCount} عميل موجود (تجاهل ${skippedNoise} سجل وهمي)!`, "success");
             };
             reader.readAsArrayBuffer(file);
         }
