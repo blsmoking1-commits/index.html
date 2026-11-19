@@ -4610,21 +4610,28 @@ async function handleLogin() {
             // Sort delayed / highest days since last order first so emergency review is immediate
             rows.sort((a, b) => b.st.daysSinceLast - a.st.daysSinceLast);
 
-            tbody.innerHTML = rows.map(r => `
-                <tr style="${r.st.isDelayed ? 'background:#fff1f2;' : ''}">
-                    <td><b>${r.name}</b></td>
-                    <td>${r.route}</td>
-                    <td style="font-weight:bold; color:#0284c7;">${r.st.joinDate}</td>
-                    <td><b>${r.st.totalOrders}</b></td>
-                    <td>${r.st.firstOrder}</td>
-                    <td>${r.st.lastOrder}</td>
-                    <td style="font-weight:bold; color:#0f172a;">${r.st.totalOrders > 1 ? r.st.avgGapDays + ' يوم' : '-'}</td>
-                    <td>${r.st.totalOrders > 1 ? r.st.maxGapDays + ' يوم' : '-'}</td>
-                    <td style="font-weight:bold; color:${r.st.isDelayed ? '#dc2626' : '#16a34a'};">${r.st.totalOrders > 0 ? r.st.daysSinceLast + ' يوم' : '-'}</td>
-                    <td>${r.statusBadge}</td>
-                </tr>
-            `).join('');
-        }
+          tbody.innerHTML = rows.map(r => {
+        const safeName = r.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const lastInvBtn = r.st.totalOrders > 0
+            ? `<div style="font-weight:bold;">${r.st.lastOrder}</div>
+               <button type="button" class="btn btn-info" style="padding:2px 7px; font-size:10px; width:auto; margin-top:3px;" onclick="viewLastClientInvoice('${safeName}')">🧾 عرض آخر فاتورة</button>`
+            : '-';
+
+        return `
+            <tr style="${r.st.isDelayed ? 'background:#fff1f2;' : ''}">
+                <td><b>${r.name}</b></td>
+                <td>${r.route}</td>
+                <td style="font-weight:bold; color:#0284c7;">${r.st.joinDate}</td>
+                <td><b>${r.st.totalOrders}</b></td>
+                <td>${r.st.firstOrder}</td>
+                <td>${lastInvBtn}</td>
+                <td style="font-weight:bold; color:#0f172a;">${r.st.totalOrders > 1 ? r.st.avgGapDays + ' يوم' : '-'}</td>
+                <td>${r.st.totalOrders > 1 ? r.st.maxGapDays + ' يوم' : '-'}</td>
+                <td style="font-weight:bold; color:${r.st.isDelayed ? '#dc2626' : '#16a34a'};">${r.st.totalOrders > 0 ? r.st.daysSinceLast + ' يوم' : '-'}</td>
+                <td>${r.statusBadge}</td>
+            </tr>
+        `;
+    }).join('');
 
         function exportClientWithdrawalsExcel() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin' || currentDelegate.role === 'fleet'));
@@ -5989,17 +5996,16 @@ async function handleLogin() {
                 if (overdueDays > 0 && filterVal !== 'ALL') {
                     exceededBadge = `<div style="margin-top:2px;"><span style="background:#fee2e2; color:#dc2626; padding:1px 5px; border-radius:4px; font-weight:bold; font-size:10px;">🔴 متجاوز بـ ${overdueDays} يوم</span></div>`;
                 }
-
-                let spacingHtml = intervalStats.totalOrders === 0
-                    ? '<span style="color:#64748b; font-size:10.5px;">لم يسحب بعد</span>'
-                    : (intervalStats.totalOrders === 1
-                        ? `<div style="font-size:10.5px; line-height:1.4;">
-                            سحبة واحدة (منذ <b style="color:${intervalStats.isDelayed || overdueDays > 0 ? '#dc2626' : '#0284c7'};">${intervalStats.daysSinceLast} يوم</b>)${exceededBadge}
-                           </div>`
-                        : `<div style="font-size:10.5px; line-height:1.4;">
-                            متوسط: <b>${intervalStats.avgGapDays} يوم</b><br>
-                            منذ آخر سحبة: <b style="color:${intervalStats.isDelayed || overdueDays > 0 ? '#dc2626' : '#16a34a'};">${intervalStats.daysSinceLast} يوم</b> ${intervalStats.isDelayed || overdueDays > 0 ? '⚠️' : '✅'}${exceededBadge}
-                           </div>`);
+const safeCustName = (c.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    let spacingHtml = intervalStats.totalOrders === 0
+        ? '<span style="color:#64748b; font-size:10.5px;">لم يسحب بعد</span>'
+        : `<div style="font-size:10.5px; line-height:1.5;">
+            آخر فاتورة: <b>${intervalStats.lastOrder}</b> (${intervalStats.lastInvoiceTotal} ج.م)<br>
+            منذ آخر سحبة: <b style="color:${intervalStats.isDelayed || overdueDays > 0 ? '#dc2626' : '#16a34a'};">${intervalStats.daysSinceLast} يوم</b> ${intervalStats.isDelayed ? '⚠️' : '✅'}
+            ${intervalStats.totalOrders > 1 ? `<br>متوسط التباعد: <b>${intervalStats.avgGapDays} يوم</b>` : ''}
+            ${exceededBadge}
+            <button type="button" class="btn btn-info" style="padding:2px 7px; font-size:10px; width:auto; margin-top:3px;" onclick="viewLastClientInvoice('${safeCustName}')">🧾 عرض آخر فاتورة</button>
+           </div>`;
 
                 const rowHighlight = (intervalStats.isDelayed || overdueDays > 0) ? 'background:#fff1f2;' : '';
                 html += `
@@ -6159,64 +6165,210 @@ async function handleLogin() {
             checked.forEach(uid => db.ref('portalCustomers/' + uid).remove());
         }
 
-        function exportClientsFast() {
-            let rows = [];
-            for(let uid in portalCustomersDB) {
-                let c = portalCustomersDB[uid];
-                let st = getClientWithdrawalAnalytics(c.name, c);
-                rows.push({
-                    "اسم العميل": c.name,
-                    "الكود": c.clientCode || '',
-                    "الخط": c.route || '',
-                    "القرية": c.village || '',
-                    "الهاتف": c.phone || '',
-                    "الفئة": c.customerType || 'retail',
-                    "تاريخ الانضمام": st.joinDate,
-                    "عدد المسحوبات": st.totalOrders,
-                    "أول سحبة": st.firstOrder,
-                    "آخر سحبة": st.lastOrder,
-                    "متوسط التباعد بين المسحوبات (يوم)": st.totalOrders > 1 ? st.avgGapDays : 0,
-                    "أقصى فترة انقطاع (يوم)": st.totalOrders > 1 ? st.maxGapDays : 0,
-                    "عدد الأيام منذ آخر سحبة": st.daysSinceLast
-                });
+       // ==================== دالة مساعدة لتحويل التاريخ لتوقيت محلي بدون انحراف ساعات ====================
+function parseLocalDateMidnight(dateStr) {
+    if (!dateStr) return 0;
+    const parts = String(dateStr).split('T')[0].split('-').map(Number);
+    if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+        return new Date(parts[0], parts[1] - 1, parts[2]).getTime();
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? 0 : new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+// ==================== جلب كافة فواتير العميل (قطاعي + جملة) مرتبة زمنياً ====================
+function getClientAllInvoices(clientName, custObj = null) {
+    if (!clientName) return [];
+    const normTarget = normalizeArabicText(clientName);
+    let targetCode = custObj?.clientCode || cloudClients[clientName.trim()] || '';
+
+    if (!targetCode) {
+        for (let k in cloudClients) {
+            if (normalizeArabicText(k) === normTarget) {
+                targetCode = cloudClients[k];
+                break;
             }
-            const ws = XLSX.utils.json_to_sheet(rows);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "العملاء");
-            XLSX.writeFile(wb, "قائمة_عملاء_بلاك_هورس.xlsx");
         }
-
-        function importClientsFromExcel(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet);
-
-                rows.forEach((r, i) => {
-                    let name = r["اسم العميل"] || r["الاسم"] || r["name"];
-                    if(name) {
-                        let uid = "cust_" + Date.now() + "_" + i;
-                        let code = r["الكود"] || ("C-" + Math.floor(1000 + Math.random()*9000));
-                        let route = r["الخط"] || '';
-                        let village = r["القرية"] || '';
-                        let phone = r["الهاتف"] || '';
-                        let joinedAt = r["تاريخ الانضمام"] || r["joinedAt"] || new Date().toISOString().split('T')[0];
-                        portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, pass: "123456", customerType: "retail", joinedAt };
-                        cloudClients[name] = code;
-                        if(route) cloudClientsRoutes[name] = route;
-                    }
-                });
-                db.ref('portalCustomers').set(portalCustomersDB);
-                db.ref('clients').set(cloudClients);
-                db.ref('clientsRoutes').set(cloudClientsRoutes);
-                showToast(`✅ تم استيراد وتحديث ${rows.length} عميل بنجاح!`, "success");
-            };
-            reader.readAsArrayBuffer(file);
+    }
+    if (!targetCode) {
+        for (let uid in portalCustomersDB) {
+            const p = portalCustomersDB[uid];
+            if (p && p.name && normalizeArabicText(p.name) === normTarget && p.clientCode) {
+                targetCode = p.clientCode;
+                break;
+            }
         }
+    }
+
+    let unifiedInvoices = [];
+
+    // 1. فواتير المبيعات (cloudSales) غير الملغاة
+    cloudSales.forEach(s => {
+        if (s.status === 'cancelled' || !s.date) return;
+        const matchName = s.client && normalizeArabicText(s.client) === normTarget;
+        const matchCode = targetCode && s.clientCode && String(s.clientCode).trim() === String(targetCode).trim();
+        if (matchName || matchCode) {
+            unifiedInvoices.push({
+                ...s,
+                source: 'sales',
+                sortTime: parseLocalDateMidnight(s.date),
+                sortId: Number(s.id) || 0
+            });
+        }
+    });
+
+    // 2. فواتير المحلات / الجملة (cloudShops)
+    cloudShops.forEach(sh => {
+        if (!sh.date) return;
+        const shName = sh.name || sh.clientName || '';
+        const matchName = shName && normalizeArabicText(shName) === normTarget;
+        const matchCode = targetCode && sh.clientCode && String(sh.clientCode).trim() === String(targetCode).trim();
+        if (matchName || matchCode) {
+            unifiedInvoices.push({
+                id: sh.id,
+                invNo: sh.invNo || 'جملة',
+                date: sh.date,
+                client: shName,
+                clientCode: sh.clientCode || targetCode || '-',
+                route: sh.route || cloudClientsRoutes[shName] || '',
+                village: sh.village || '',
+                delegateName: 'إدارة / جملة',
+                total: parseFloat(sh.totalPrice || 0),
+                paid: parseFloat(sh.paid || 0),
+                zimam: parseFloat(sh.zimam || 0),
+                items: sh.items || [{ name: sh.notes || 'بضاعة جملة', qty: sh.cartons || 1, unit: 'كرتونة', price: systemSettings.defaultCartonPrice || 23925, total: parseFloat(sh.totalPrice || 0) }],
+                source: 'shop',
+                sortTime: parseLocalDateMidnight(sh.date),
+                sortId: Number(sh.id) || 0
+            });
+        }
+    });
+
+    // ترتيب تصاعدي: بالتاريخ أولاً ثم برقم/وقت الفاتورة لضمان الوصول لآخر فاتورة فعلية
+    unifiedInvoices.sort((a, b) => {
+        if (a.sortTime !== b.sortTime) return a.sortTime - b.sortTime;
+        return a.sortId - b.sortId;
+    });
+
+    return unifiedInvoices;
+}
+
+// ==================== حساب آخر سحبة وفترات التباعد من آخر فاتورة بدقة ====================
+function getClientWithdrawalAnalytics(clientName, custObj = null) {
+    const joinDate = getCustomerJoinDate(clientName, custObj);
+    const sales = getClientAllInvoices(clientName, custObj);
+
+    if (sales.length === 0) {
+        return {
+            joinDate,
+            totalOrders: 0,
+            firstOrder: '-',
+            lastOrder: '-',
+            lastInvoice: null,
+            lastInvoiceNo: '-',
+            lastInvoiceTotal: 0,
+            avgGapDays: 0,
+            maxGapDays: 0,
+            daysSinceLast: 0,
+            gapsList: [],
+            isDelayed: false
+        };
+    }
+
+    const msPerDay = 1000 * 60 * 60 * 24;
+    let gaps = [];
+    for (let i = 1; i < sales.length; i++) {
+        const diffDays = Math.max(0, Math.round((sales[i].sortTime - sales[i - 1].sortTime) / msPerDay));
+        gaps.push(diffDays);
+    }
+
+    const avgGap = gaps.length > 0 ? parseFloat((gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(1)) : 0;
+    const maxGap = gaps.length > 0 ? Math.max(...gaps) : 0;
+
+    // آخر سحبة = آخر فاتورة في الترتيب الزمني
+    const lastInv = sales[sales.length - 1];
+    const now = new Date();
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const daysSinceLast = Math.max(0, Math.round((todayMidnight - lastInv.sortTime) / msPerDay));
+    const isDelayed = (avgGap > 0 && daysSinceLast > avgGap * 1.5) || (avgGap === 0 && daysSinceLast > 14);
+
+    return {
+        joinDate,
+        totalOrders: sales.length,
+        firstOrder: sales[0].date,
+        lastOrder: lastInv.date,
+        lastInvoice: lastInv,
+        lastInvoiceNo: lastInv.invNo || '-',
+        lastInvoiceTotal: parseFloat(lastInv.total || 0),
+        avgGapDays: avgGap,
+        maxGapDays: maxGap,
+        daysSinceLast,
+        gapsList: gaps,
+        isDelayed
+    };
+}
+
+// ==================== دالة زر "عرض آخر فاتورة" للعميل ====================
+function viewLastClientInvoice(clientName) {
+    const analytics = getClientWithdrawalAnalytics(clientName);
+    if (!analytics || !analytics.lastInvoice) {
+        showToast("⚠️ لا توجد فواتير سابقة مسجلة لهذا العميل.", "warning");
+        return;
+    }
+
+    const inv = analytics.lastInvoice;
+    if (inv.source === 'sales') {
+        viewInvoiceDetails(inv.id);
+        return;
+    }
+
+    // في حال كانت آخر فاتورة من سجل الجملة / المحلات
+    let itemsHtml = (inv.items && inv.items.length > 0)
+        ? inv.items.map(it => `- ${it.name} | كمية: ${it.qty} (${it.unit || 'كرتونة'}) | سعر: ${it.price} | إجمالي: ${it.total} ج.م`).join('<br>')
+        : 'بضاعة جملة';
+
+    document.getElementById('modalInvoiceContent').innerHTML = `
+        <b>نوع الفاتورة:</b> فاتورة جملة / محلات (#${inv.invNo})<br>
+        <b>التاريخ:</b> ${inv.date}<br>
+        <b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br>
+        <b>الخط:</b> ${inv.route || 'غير محدد'}<br>
+        <b>القرية:</b> ${inv.village || 'غير محدد'}<br>
+        <hr><b>الأصناف:</b><br>${itemsHtml}<br>
+        <hr><b>الإجمالي:</b> ${inv.total.toFixed(2)} ج.م | <b>المسدد:</b> ${(inv.paid || 0).toFixed(2)} ج.م | <b>المتبقي:</b> ${(inv.zimam || 0).toFixed(2)} ج.م
+    `;
+    document.getElementById('invoiceModal').style.display = 'flex';
+}
+
+// ==================== تحديث صندوق ملخص العميل في شاشة الفاتورة الجديدة ====================
+function showClientMonthlyStats(clientName) {
+    const box = document.getElementById('clientMonthlyHistory');
+    if (!box) return;
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const allClientInvoices = getClientAllInvoices(clientName);
+    let clientMonthSales = allClientInvoices.filter(s => s.date && s.date.startsWith(currentMonth));
+    const analytics = getClientWithdrawalAnalytics(clientName);
+
+    if (analytics.totalOrders === 0) {
+        box.style.display = 'block';
+        box.innerHTML = `📅 <b>تاريخ انضمام العميل:</b> ${analytics.joinDate} | <i>عميل جديد (لم يقم بأي مسحوبات سابقة)</i>`;
+        return;
+    }
+
+    let totalMonthSpent = clientMonthSales.reduce((acc, s) => acc + (parseFloat(s.total) || 0), 0);
+    let spacingSummary = analytics.totalOrders > 1
+        ? `متوسط التباعد: <b>${analytics.avgGapDays} يوم</b> (أقصى انقطاع: ${analytics.maxGapDays} يوم)`
+        : `سحبة واحدة مسجلة`;
+    const safeName = clientName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+    box.style.display = 'block';
+    box.innerHTML = `
+        📅 <b>تاريخ الانضمام:</b> ${analytics.joinDate} | ⏱️ <b>منذ آخر سحبة:</b> 
+        <span style="color:${analytics.isDelayed ? '#dc2626' : '#15803d'}; font-weight:bold;">${analytics.daysSinceLast} يوم</span> (${spacingSummary})<br>
+        🧾 <b>آخر فاتورة (#${analytics.lastInvoiceNo}):</b> بتاريخ <b>${analytics.lastOrder}</b> بقيمة <b>${analytics.lastInvoiceTotal.toFixed(2)} ج.م</b>
+        <button type="button" class="btn btn-primary" style="width:auto; padding:3px 10px; font-size:11px; margin:0 6px 0 0; display:inline-block;" onclick="viewLastClientInvoice('${safeName}')">🧾 عرض آخر فاتورة</button><br>
+        📊 <b>مسحوبات الشهر الحالي:</b> <b>${clientMonthSales.length}</b> فواتير بقيمة <b>${totalMonthSpent.toFixed(2)} ج.م</b>
+    `;
+}
 
         // ==================== إدارة الموظفين والصلاحيات ====================
         function createNewUserAccount() {
