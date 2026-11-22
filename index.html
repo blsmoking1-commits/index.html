@@ -512,8 +512,6 @@
                     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                         <select id="clientSpacingFilterSelect" onchange="renderAdminPortalCustomersTable()" style="flex:2; min-width:230px; padding:8px; border:1.5px solid #d97706; border-radius:6px; font-size:12.5px; font-weight:bold; background:#fff; color:#0f172a;">
                             <option value="ALL">📋 عرض جميع العملاء (الكل)</option>
-                            <option value="ACTIVE_ONLY">✅ العملاء النشطون فقط (استبعاد المعلقين والصفرية)</option>
-                            <option value="PENDING_ALL">⏳ العملاء المعلقون فقط (فئة pending أو 0 مسحوبات)</option>
                             <option value="DELAYED">⚠️ العملاء المتجاوزون لمعدل سحبهم الطبيعي (تلقائي)</option>
                             <option value="3">⏱️ تجاوزوا 3 أيام بدون سحب</option>
                             <option value="7">⏱️ تجاوزوا 7 أيام (أسبوع) بدون سحب</option>
@@ -1070,12 +1068,10 @@
 
             <div id="adminUserManagement" style="display:none; border:1px solid #cbd5e1; padding:12px; border-radius:8px; margin-bottom:12px;">
                 <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px; margin-bottom:10px;">
-                    <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف جديد (مربوط بـ Firebase Auth وقاعدة البيانات):</h5>
+                    <h5 style="margin:0 0 8px 0; color:#0f172a;">➕ إنشاء حساب موظف جديد:</h5>
                     <div class="form-group"><label>كود المستخدم:</label><input type="text" id="newAccCode" placeholder="مثال: fleet1 أو hr1 أو store1 أو 103"></div>
                     <div class="form-group"><label>اسم الموظف:</label><input type="text" id="newAccName" placeholder="اسم الموظف..."></div>
-                    <div class="form-group"><label>البريد الإلكتروني (الإيميل - لتسجيل الدخول والاستعادة):</label><input type="email" id="newAccEmail" placeholder="employee@blackhorse.com (اختياري إذا أدخلت رقم هاتف)"></div>
-                    <div class="form-group"><label>رقم الهاتف (للدخول السريع):</label><input type="text" id="newAccPhone" placeholder="مثال: 01012345678 (اختياري)"></div>
-                    <div class="form-group"><label>كلمة السر (6 أحرف/أرقام على الأقل للربط مع Firebase):</label><input type="password" id="newAccPass" placeholder="أدخل كلمة السر..."></div>
+                    <div class="form-group"><label>كلمة السر:</label><input type="password" id="newAccPass"></div>
                     <div class="form-group">
                         <label>نوع الحساب والصلاحية:</label>
                         <select id="newAccRole">
@@ -1095,7 +1091,7 @@
                 <div style="overflow-x:auto;">
                     <table class="report-table" style="background:#fff;">
                         <thead>
-                            <tr><th>الكود</th><th>الاسم</th><th>الإيميل / الهاتف</th><th>الصلاحية</th><th>كلمة السر</th><th>الحالة</th><th>إجراءات وتعديل</th></tr>
+                            <tr><th>الكود</th><th>الاسم</th><th>الصلاحية</th><th>كلمة السر</th><th>الحالة</th><th>إجراءات وتعديل</th></tr>
                         </thead>
                         <tbody id="adminUsersListTableBody"></tbody>
                     </table>
@@ -1331,8 +1327,6 @@
             <input type="hidden" id="modalEditUserOrigCode">
             <div class="form-group"><label>كود المستخدم:</label><input type="text" id="modalEditUserCode" class="readonly-input" readonly></div>
             <div class="form-group"><label>اسم الموظف:</label><input type="text" id="modalEditUserName"></div>
-            <div class="form-group"><label>البريد الإلكتروني (الإيميل):</label><input type="email" id="modalEditUserEmail" placeholder="example@domain.com"></div>
-            <div class="form-group"><label>رقم الهاتف:</label><input type="text" id="modalEditUserPhone" placeholder="010..."></div>
             <div class="form-group"><label>كلمة السر:</label><input type="password" id="modalEditUserPass"></div>
             <div class="form-group">
                 <label>نوع الحساب والصلاحية:</label>
@@ -2570,24 +2564,7 @@
         });
 
         db.ref('sales').on('value', (s) => { 
-            const rawVal = s.val();
-            if (rawVal && typeof rawVal === 'object') {
-                const seenIds = new Set();
-                const uniqueList = [];
-                Object.keys(rawVal).forEach(k => {
-                    const item = rawVal[k];
-                    if (!item) return;
-                    const uid = String(item.id || k);
-                    if (!item.id) item.id = k;
-                    if (!seenIds.has(uid)) {
-                        seenIds.add(uid);
-                        uniqueList.push(item);
-                    }
-                });
-                cloudSales = uniqueList;
-            } else {
-                cloudSales = [];
-            }
+            cloudSales = s.val() ? Object.values(s.val()) : []; 
             if (currentActiveTab === 'saved') renderSavedInvoices();
             if (currentActiveTab === 'clientQuota') renderClientQuotasTable();
             if (currentActiveTab === 'report') renderDailyReport();
@@ -3187,29 +3164,8 @@ function updateCarTransferProductsSelect() {
             document.getElementById('loginMainForm').style.display = 'block';
         }
 
-        // ==================== مساعد إنشاء حساب في Firebase Auth دون تسجيل خروج المدير ====================
-        async function createFirebaseAuthUserSafely(email, password) {
-            if (!email || !email.includes('@') || !password || password.length < 6) return null;
-            let secondaryApp = null;
-            try {
-                const appName = "SecondaryAuthApp_" + Date.now();
-                secondaryApp = firebase.initializeApp(firebaseConfig, appName);
-                const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, password);
-                const fbUid = cred && cred.user ? cred.user.uid : null;
-                await secondaryApp.auth().signOut();
-                await secondaryApp.delete();
-                return fbUid;
-            } catch (err) {
-                if (secondaryApp) {
-                    try { await secondaryApp.delete(); } catch (e) {}
-                }
-                console.warn("Firebase Auth creation note:", err.code || err.message);
-                return { error: err.code || err.message };
-            }
-        }
-
         // ==================== تسجيل العميل الإلكتروني ====================
-        async function registerCustomerWithEmail() {
+        function registerCustomerWithEmail() {
             const name = document.getElementById('regClientName').value.trim();
             const email = document.getElementById('regClientEmail').value.trim().toLowerCase();
             const password = document.getElementById('regClientPass').value.trim();
@@ -3223,31 +3179,9 @@ function updateCarTransferProductsSelect() {
                 return;
             }
 
-            if (!email && !phoneInput) {
-                showToast("❌ يرجى إدخال البريد الإلكتروني (الإيميل) أو رقم التليفون.", "error");
-                return;
-            }
-
-            if (password.length < 6) {
-                showToast("❌ كلمة السر يجب أن تكون 6 أحرف أو أرقام على الأقل.", "error");
-                return;
-            }
-
             const fullPhone = phoneInput ? ("+20" + phoneInput.replace(/^0+/, '')) : "";
             const clientCode = "C-" + Math.floor(1000 + Math.random() * 9000);
             const uid = "cust_" + Date.now();
-            const authEmail = email || ((phoneInput ? phoneInput.replace(/^0+/, '') : clientCode.toLowerCase()) + "@blackhorse.com");
-
-            let firebaseUid = null;
-            const authRes = await createFirebaseAuthUserSafely(authEmail, password);
-            if (authRes && typeof authRes === 'object' && authRes.error) {
-                if (authRes.error === 'auth/email-already-in-use') {
-                    showToast("❌ هذا البريد الإلكتروني مسجل مسبقاً في Firebase!", "error");
-                    return;
-                }
-            } else if (typeof authRes === 'string') {
-                firebaseUid = authRes;
-            }
 
             cloudClients[name] = clientCode;
             db.ref('clients/' + name).set(clientCode).catch(() => {});
@@ -3269,9 +3203,8 @@ function updateCarTransferProductsSelect() {
 
             const custData = {
                 uid: uid,
-                firebaseUid: firebaseUid || '',
                 name: name,
-                email: authEmail,
+                email: email || ((phoneInput || clientCode) + "@blackhorse.com"),
                 pass: password,
                 phone: fullPhone,
                 route: route,
@@ -3284,7 +3217,7 @@ function updateCarTransferProductsSelect() {
             };
 
             db.ref('portalCustomers/' + uid).set(custData).then(() => {
-                showToast("🎉 تم تسجيل حسابك بنجاح في النظام و Firebase! كود محلك: [" + clientCode + "]", "success");
+                showToast("🎉 تم تسجيل حسابك بنجاح! كود محلك: [" + clientCode + "]", "success");
                 currentPortalCustomer = custData;
                 enterPortalCustomerDashboard();
             });
@@ -3346,12 +3279,12 @@ async function handleLogin() {
                 }
             }
 
-            if (codeLower === "admin" || codeLower === "hosamrezoo@gmail.com") {
+            if (codeLower === "admin") {
                 try {
                     await auth.signInWithEmailAndPassword("hosamrezoo@gmail.com", pass);
                     currentDelegate = { code: "admin", name: "حسام (المدير)", role: "admin", allowedRoutes: ["ALL"] };
                 } catch (error) {
-                    showToast("❌ خطأ في دخول المدير: " + error.code, "error");
+                    showToast("❌ خطأ: " + error.code, "error");
                     return;
                 }
             } else {
@@ -3359,24 +3292,7 @@ async function handleLogin() {
                             ? cloudDelegates 
                             : defaultDelegates;
 
-                let targetKey = null;
-                if (dDB[rawInput]) {
-                    targetKey = rawInput;
-                } else if (dDB[codeLower]) {
-                    targetKey = codeLower;
-                } else {
-                    for (let k in dDB) {
-                        let u = dDB[k];
-                        if (!u) continue;
-                        let uEmail = (u.email || '').trim().toLowerCase();
-                        let uPhoneClean = cleanPhoneStr(u.phone);
-                        if ((uEmail && uEmail === codeLower) ||
-                            (cleanInputPhone && uPhoneClean && uPhoneClean === cleanInputPhone)) {
-                            targetKey = k;
-                            break;
-                        }
-                    }
-                }
+                let targetKey = dDB[rawInput] ? rawInput : (dDB[codeLower] ? codeLower : null);
 
                 if (targetKey && dDB[targetKey]) {
                     let targetUser = dDB[targetKey];
@@ -3384,52 +3300,16 @@ async function handleLogin() {
                         showToast("❌ هذا الحساب مقفل ومحظور من الإدارة!", "error"); 
                         return; 
                     }
-
-                    let authSuccess = false;
-                    if (targetUser.email && targetUser.email.includes('@')) {
-                        try {
-                            await auth.signInWithEmailAndPassword(targetUser.email, pass);
-                            authSuccess = true;
-                            if (String(targetUser.pass).trim() !== pass) {
-                                targetUser.pass = pass;
-                                db.ref('delegates/' + targetKey + '/pass').set(pass).catch(() => {});
-                            }
-                        } catch (fbErr) {
-                            if (String(targetUser.pass).trim() === pass) {
-                                authSuccess = true;
-                            }
-                        }
-                    } else if (String(targetUser.pass).trim() === pass) {
-                        authSuccess = true;
-                    }
-
-                    if (authSuccess) {
+                    if (String(targetUser.pass).trim() === pass) {
                         currentDelegate = { 
                             code: targetKey, 
                             name: targetUser.name, 
-                            email: targetUser.email || '',
-                            phone: targetUser.phone || '',
                             role: targetUser.role || 'delegate', 
                             allowedRoutes: targetUser.allowedRoutes || ["ALL"] 
                         };
                     } else { 
                         showToast("❌ كلمة السر غير صحيحة!", "error"); 
                         return; 
-                    }
-                } else if (rawInput.includes('@')) {
-                    try {
-                        const cred = await auth.signInWithEmailAndPassword(rawInput, pass);
-                        const fbEmail = (cred.user && cred.user.email) ? cred.user.email.toLowerCase() : codeLower;
-                        currentDelegate = {
-                            code: fbEmail.split('@')[0],
-                            name: fbEmail,
-                            email: fbEmail,
-                            role: 'delegate',
-                            allowedRoutes: ["ALL"]
-                        };
-                    } catch (err) {
-                        showToast("❌ بيانات تسجيل الدخول غير مسجلة لدينا!", "error");
-                        return;
                     }
                 } else { 
                     showToast("❌ بيانات تسجيل الدخول غير مسجلة لدينا!", "error"); 
@@ -3918,15 +3798,15 @@ async function handleLogin() {
             let cleanName = clientName.trim();
             if (!cleanName) return "C-0000";
 
-            const strictTarget = normalizeArabicStrictKey(cleanName);
+            const normTarget = normalizeArabicText(cleanName);
             for (let k in cloudClients) {
-                if (normalizeArabicStrictKey(k) === strictTarget) {
+                if (normalizeArabicText(k) === normTarget) {
                     cleanName = k;
                     break;
                 }
             }
             for (let uid in portalCustomersDB) {
-                if (portalCustomersDB[uid]?.name && normalizeArabicStrictKey(portalCustomersDB[uid].name) === strictTarget) {
+                if (portalCustomersDB[uid]?.name && normalizeArabicText(portalCustomersDB[uid].name) === normTarget) {
                     cleanName = portalCustomersDB[uid].name.trim();
                     break;
                 }
@@ -3936,7 +3816,7 @@ async function handleLogin() {
             let foundInPortal = false;
 
             for (let uid in portalCustomersDB) {
-                if (portalCustomersDB[uid]?.name && normalizeArabicStrictKey(portalCustomersDB[uid].name) === strictTarget) {
+                if (portalCustomersDB[uid]?.name && portalCustomersDB[uid].name.trim().toLowerCase() === cleanName.toLowerCase()) {
                     foundInPortal = true;
                     existingCode = portalCustomersDB[uid].clientCode || existingCode;
                     break;
@@ -4421,125 +4301,92 @@ async function handleLogin() {
 
         function closeEditInvoiceModal() { document.getElementById('editInvoiceModal').style.display = 'none'; }
 
-        let isEditInvoiceSaving = false;
-        async function saveEditedInvoice() {
+        function saveEditedInvoice() {
             const isAdm = (currentDelegate && (currentDelegate.code === 'admin' || currentDelegate.role === 'admin'));
             if (!isAdm) {
                 showToast("❌ صلاحية تعديل الفواتير متاحة للمدير فقط.", "error");
                 return;
             }
-            if (isEditInvoiceSaving) return;
-
-            const id = String(document.getElementById('modalEditInvId').value || '').trim();
-            let inv = cloudSales.find(s => String(s.id) === id);
+            const id = document.getElementById('modalEditInvId').value;
+            let inv = cloudSales.find(s => String(s.id) === String(id));
             if(!inv) return;
 
-            isEditInvoiceSaving = true;
-            try {
-                const oldInvNo = String(inv.invNo || '').trim();
-                const oldItems = Array.isArray(inv.items) ? JSON.parse(JSON.stringify(inv.items)) : [];
-                const wasActive = (inv.status !== 'cancelled');
+            const oldItems = Array.isArray(inv.items) ? JSON.parse(JSON.stringify(inv.items)) : [];
+            const wasActive = (inv.status !== 'cancelled');
 
-                inv.invNo = document.getElementById('modalEditInvNo').value.trim();
-                inv.date = document.getElementById('modalEditInvDate').value;
-                inv.client = document.getElementById('modalEditInvClient').value.trim();
-                inv.phone = document.getElementById('modalEditInvPhone').value.trim();
-                inv.vehicleName = document.getElementById('modalEditInvVehicle').value.trim();
-                inv.odometer = parseFloat(document.getElementById('modalEditInvOdometer').value) || 0;
-                inv.village = document.getElementById('modalEditInvVillage').value.trim();
-                inv.route = document.getElementById('modalEditInvRoute').value.trim();
-                const newStatus = document.getElementById('modalEditInvStatus').value;
-                inv.status = newStatus;
+            inv.invNo = document.getElementById('modalEditInvNo').value.trim();
+            inv.date = document.getElementById('modalEditInvDate').value;
+            inv.client = document.getElementById('modalEditInvClient').value.trim();
+            inv.phone = document.getElementById('modalEditInvPhone').value.trim();
+            inv.vehicleName = document.getElementById('modalEditInvVehicle').value.trim();
+            inv.odometer = parseFloat(document.getElementById('modalEditInvOdometer').value) || 0;
+            inv.village = document.getElementById('modalEditInvVillage').value.trim();
+            inv.route = document.getElementById('modalEditInvRoute').value.trim();
+            const newStatus = document.getElementById('modalEditInvStatus').value;
+            inv.status = newStatus;
 
-                let updatedItems = [];
-                let updatedTotalQty = 0;
-                let computedGrandTotal = 0;
+            let updatedItems = [];
+            let updatedTotalQty = 0;
+            let computedGrandTotal = 0;
 
-                const rows = document.querySelectorAll('.edit-inv-item-row');
-                rows.forEach(tr => {
-                    const name = tr.querySelector('.edit-item-name')?.value || 'صنف';
-                    const code = tr.querySelector('.edit-item-code')?.value || '';
-                    const qty = parseFloat(tr.querySelector('.edit-item-qty')?.value) || 0;
-                    const price = parseFloat(tr.querySelector('.edit-item-price')?.value) || 0;
-                    const unit = (price >= 10000) ? 'كرتونة' : 'رابطة';
-                    
-                    if(qty > 0) {
-                        const total = qty * price;
-                        computedGrandTotal += total;
-                        updatedTotalQty += qty;
-                        updatedItems.push({
-                            name: name,
-                            code: code,
-                            qty: qty,
-                            price: price,
-                            total: total,
-                            unit: unit,
-                            qtyText: `Outer ${price} / ${qty} وحدة`
-                        });
-                    }
-                });
-
-                // تسوية فرق الكميات في عهدة سيارة المندوب تلقائياً
-                const delCode = inv.delegateCode;
-                if (delCode && cloudDelegates[delCode] && cloudDelegates[delCode].carStock) {
-                    if (wasActive) {
-                        oldItems.forEach(it => {
-                            const qCartons = (it.unit === 'كرتونة') ? (parseFloat(it.qty) || 0) : ((parseFloat(it.qty) || 0) / 50);
-                            cloudDelegates[delCode].carStock[it.code] = parseFloat(((cloudDelegates[delCode].carStock[it.code] || 0) + qCartons).toFixed(4));
-                        });
-                    }
-                    if (newStatus !== 'cancelled') {
-                        updatedItems.forEach(it => {
-                            const qCartons = (it.unit === 'كرتونة') ? (parseFloat(it.qty) || 0) : ((parseFloat(it.qty) || 0) / 50);
-                            cloudDelegates[delCode].carStock[it.code] = parseFloat(Math.max(0, (cloudDelegates[delCode].carStock[it.code] || 0) - qCartons).toFixed(4));
-                        });
-                    }
-                    await db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock);
+            const rows = document.querySelectorAll('.edit-inv-item-row');
+            rows.forEach(tr => {
+                const name = tr.querySelector('.edit-item-name')?.value || 'صنف';
+                const code = tr.querySelector('.edit-item-code')?.value || '';
+                const qty = parseFloat(tr.querySelector('.edit-item-qty')?.value) || 0;
+                const price = parseFloat(tr.querySelector('.edit-item-price')?.value) || 0;
+                const unit = (price >= 10000) ? 'كرتونة' : 'رابطة';
+                
+                if(qty > 0) {
+                    const total = qty * price;
+                    computedGrandTotal += total;
+                    updatedTotalQty += qty;
+                    updatedItems.push({
+                        name: name,
+                        code: code,
+                        qty: qty,
+                        price: price,
+                        total: total,
+                        unit: unit,
+                        qtyText: `Outer ${price} / ${qty} وحدة`
+                    });
                 }
+            });
 
-                inv.items = updatedItems;
-                inv.totalQty = updatedTotalQty;
-                inv.total = parseFloat(document.getElementById('modalEditInvTotal').value) || computedGrandTotal;
-
-                if(inv.phone) {
-                    cloudClientsPhones[inv.client] = inv.phone;
-                    db.ref('clientsPhones/' + inv.client).set(inv.phone).catch(() => {});
+            // تسوية فرق الكميات في عهدة سيارة المندوب تلقائياً
+            const delCode = inv.delegateCode;
+            if (delCode && cloudDelegates[delCode] && cloudDelegates[delCode].carStock) {
+                if (wasActive) {
+                    oldItems.forEach(it => {
+                        const qCartons = (it.unit === 'كرتونة') ? (parseFloat(it.qty) || 0) : ((parseFloat(it.qty) || 0) / 50);
+                        cloudDelegates[delCode].carStock[it.code] = parseFloat(((cloudDelegates[delCode].carStock[it.code] || 0) + qCartons).toFixed(4));
+                    });
                 }
-
-                // منع تكرار الفاتورة نهائياً: حذف أي مفتاح مكرر في Firebase لنفس الفاتورة والاحتفاظ بمفتاح واحد فقط (inv.id)
-                const targetKey = String(inv.id);
-                try {
-                    const snap = await originalDbRef('sales').once('value');
-                    const allSalesObj = snap.val();
-                    if (allSalesObj && typeof allSalesObj === 'object') {
-                        for (const fbKey of Object.keys(allSalesObj)) {
-                            const rec = allSalesObj[fbKey];
-                            if (!rec) continue;
-                            const sameId = (String(rec.id || '') === targetKey);
-                            const sameInvNoAndClient = (oldInvNo && String(rec.invNo || '').trim() === oldInvNo && String(rec.client || '').trim() === String(inv.client || '').trim() && String(rec.delegateCode || '') === String(inv.delegateCode || ''));
-                            if (fbKey !== targetKey && (sameId || sameInvNoAndClient)) {
-                                await originalDbRef('sales/' + fbKey).remove();
-                            }
-                        }
-                    }
-                } catch (cleanErr) {
-                    console.warn("Duplicate cleanup check:", cleanErr);
+                if (newStatus !== 'cancelled') {
+                    updatedItems.forEach(it => {
+                        const qCartons = (it.unit === 'كرتونة') ? (parseFloat(it.qty) || 0) : ((parseFloat(it.qty) || 0) / 50);
+                        cloudDelegates[delCode].carStock[it.code] = parseFloat(Math.max(0, (cloudDelegates[delCode].carStock[it.code] || 0) - qCartons).toFixed(4));
+                    });
                 }
+                db.ref('delegates/' + delCode + '/carStock').set(cloudDelegates[delCode].carStock);
+            }
 
-                // تحديث المصفوفة المحلية بدون تكرار
-                cloudSales = cloudSales.filter(s => String(s.id) !== targetKey);
-                cloudSales.push(inv);
+            inv.items = updatedItems;
+            inv.totalQty = updatedTotalQty;
+            inv.total = parseFloat(document.getElementById('modalEditInvTotal').value) || computedGrandTotal;
 
-                await db.ref('sales/' + targetKey).set(inv);
+            if(inv.phone) {
+                cloudClientsPhones[inv.client] = inv.phone;
+                db.ref('clientsPhones/' + inv.client).set(inv.phone).catch(() => {});
+            }
 
-                showToast("✅ تم تعديل الفاتورة بدون تكرار وتحديث عهدة السيارة والحسابات بنجاح!", "success");
+            db.ref('sales/' + inv.id).set(inv).then(() => {
+                showToast("✅ تم تعديل الفاتورة وتحديث عهدة السيارة والحسابات بنجاح!", "success");
                 closeEditInvoiceModal();
                 renderSavedInvoices();
                 renderDailyReport();
                 renderCarStockTable();
-            } finally {
-                isEditInvoiceSaving = false;
-            }
+            });
         }
 
         function viewInvoiceDetails(id) {
@@ -5058,11 +4905,6 @@ async function handleLogin() {
                 .replace(/[\u064B-\u065F]/g, '')
                 .replace(/\s+/g, ' ')
                 .toLowerCase();
-        }
-
-        // مفتاح مقارنة صارم بدون مسافات لمنع تكرار مثل (احمد حسن / احمدحسن)
-        function normalizeArabicStrictKey(str) {
-            return normalizeArabicText(str).replace(/\s+/g, '');
         }
 
         // بناء قائمة العملاء الموحدة في الذاكرة للبحث الفوري بدون أي ثقل
@@ -5994,15 +5836,6 @@ async function handleLogin() {
 
             if(!name) { showToast("يرجى كتابة اسم العميل.", "error"); return; }
 
-            const strictNew = normalizeArabicStrictKey(name);
-            for (let existingUid in portalCustomersDB) {
-                const ex = portalCustomersDB[existingUid];
-                if (ex && ex.name && normalizeArabicStrictKey(ex.name) === strictNew) {
-                    showToast(`⚠️ العميل "${ex.name}" مسجل بالفعل بكود (${ex.clientCode || 'بدون كود'})! افتح التعديل لتحديث بياناته بدلاً من تكراره.`, "warning");
-                    return;
-                }
-            }
-
             const uid = "cust_" + Date.now();
             const custObj = { uid, name, clientCode: code, route, village, phone, pass, customerType: type, joinedAt };
 
@@ -6031,8 +5864,6 @@ async function handleLogin() {
                 let include = false;
                 let overdueDays = 0;
 
-                const isPendingCustomer = (c.customerType === 'pending' || st.totalOrders === 0);
-
                 if (filterVal === 'ALL') {
                     include = true;
                     if (st.isDelayed) {
@@ -6040,15 +5871,6 @@ async function handleLogin() {
                             ? Math.max(0, Math.round(st.daysSinceLast - st.avgGapDays))
                             : Math.max(0, st.daysSinceLast - 14);
                     }
-                } else if (filterVal === 'ACTIVE_ONLY') {
-                    include = !isPendingCustomer;
-                    if (include && st.isDelayed) {
-                        overdueDays = st.avgGapDays > 0
-                            ? Math.max(0, Math.round(st.daysSinceLast - st.avgGapDays))
-                            : Math.max(0, st.daysSinceLast - 14);
-                    }
-                } else if (filterVal === 'PENDING_ALL') {
-                    include = isPendingCustomer;
                 } else if (filterVal === 'DELAYED') {
                     include = (st.totalOrders > 0 && st.isDelayed);
                     if (include) {
@@ -6319,70 +6141,29 @@ const safeCustName = (c.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;')
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(firstSheet);
 
-                // فهرسة العملاء الحاليين بالمفتاح الموحد (بدون مسافات أو همزات) لمنع التكرار عند الاستيراد
-                const existingByKey = {};
-                for (let existingUid in portalCustomersDB) {
-                    const ex = portalCustomersDB[existingUid];
-                    if (ex && ex.name) {
-                        existingByKey[normalizeArabicStrictKey(ex.name)] = existingUid;
-                    }
-                }
-
-                let addedCount = 0;
-                let updatedCount = 0;
-                let skippedNoise = 0;
-
+                let importedCount = 0;
                 rows.forEach((r, i) => {
-                    let rawName = r["اسم العميل"] || r["الاسم"] || r["name"];
-                    if(!rawName) return;
-                    let name = String(rawName).trim();
-                    let strictKey = normalizeArabicStrictKey(name);
-
-                    // تجاهل السجلات الوهمية وصفوف الإجمالي
-                    if (!strictKey || strictKey === 'test' || strictKey.includes('عميلفريد')) {
-                        skippedNoise++;
-                        return;
-                    }
-
-                    let code = r["الكود"] ? String(r["الكود"]).trim() : ("C-" + Math.floor(1000 + Math.random()*9000));
-                    let route = r["الخط"] ? String(r["الخط"]).trim() : '';
-                    let village = r["القرية"] ? String(r["القرية"]).trim() : '';
-                    let phone = r["الهاتف"] ? String(r["الهاتف"]).trim() : '';
-                    let rawType = r["الفئة"] ? String(r["الفئة"]).trim() : 'retail';
-                    let customerType = (rawType === 'جملة' || rawType === 'wholesale') ? 'wholesale' : (rawType === 'pending' ? 'pending' : 'retail');
-                    let joinedAt = r["تاريخ الانضمام"] || r["joinedAt"] || new Date().toISOString().split('T')[0];
-
-                    if (existingByKey[strictKey]) {
-                        const targetUid = existingByKey[strictKey];
-                        const prev = portalCustomersDB[targetUid];
-                        portalCustomersDB[targetUid] = {
-                            ...prev,
-                            name: prev.name || name,
-                            clientCode: code || prev.clientCode,
-                            route: route || prev.route || '',
-                            village: village || prev.village || '',
-                            phone: phone || prev.phone || '',
-                            customerType: customerType || prev.customerType || 'retail',
-                            joinedAt: prev.joinedAt || joinedAt
-                        };
-                        cloudClients[portalCustomersDB[targetUid].name] = portalCustomersDB[targetUid].clientCode;
-                        if (portalCustomersDB[targetUid].route) cloudClientsRoutes[portalCustomersDB[targetUid].name] = portalCustomersDB[targetUid].route;
-                        updatedCount++;
-                    } else {
+                    let name = r["اسم العميل"] || r["الاسم"] || r["name"];
+                    if(name) {
+                        name = String(name).trim();
                         let uid = "cust_" + Date.now() + "_" + i;
+                        let code = r["الكود"] || ("C-" + Math.floor(1000 + Math.random()*9000));
+                        let route = r["الخط"] || '';
+                        let village = r["القرية"] || '';
+                        let phone = r["الهاتف"] || '';
+                        let customerType = r["الفئة"] || 'retail';
+                        let joinedAt = r["تاريخ الانضمام"] || r["joinedAt"] || new Date().toISOString().split('T')[0];
                         portalCustomersDB[uid] = { uid, name, clientCode: code, route, village, phone, pass: "123456", customerType, joinedAt };
-                        existingByKey[strictKey] = uid;
                         cloudClients[name] = code;
                         if(route) cloudClientsRoutes[name] = route;
-                        addedCount++;
+                        importedCount++;
                     }
                 });
                 db.ref('portalCustomers').set(portalCustomersDB);
                 db.ref('clients').set(cloudClients);
                 db.ref('clientsRoutes').set(cloudClientsRoutes);
                 e.target.value = '';
-                renderAdminPortalCustomersTable();
-                showToast(`✅ اكتمل الاستيراد الذكي: إضافة ${addedCount} عميل جديد، وتحديث ${updatedCount} عميل موجود (تجاهل ${skippedNoise} سجل وهمي)!`, "success");
+                showToast(`✅ تم استيراد وتحديث ${importedCount} عميل بنجاح!`, "success");
             };
             reader.readAsArrayBuffer(file);
         }
@@ -6593,64 +6374,20 @@ function showClientMonthlyStats(clientName) {
 }
 
         // ==================== إدارة الموظفين والصلاحيات ====================
-        async function createNewUserAccount() {
+        function createNewUserAccount() {
             const code = document.getElementById('newAccCode').value.trim();
             const name = document.getElementById('newAccName').value.trim();
-            const email = (document.getElementById('newAccEmail')?.value || '').trim().toLowerCase();
-            const phoneRaw = (document.getElementById('newAccPhone')?.value || '').trim();
             const pass = document.getElementById('newAccPass').value.trim();
             const role = document.getElementById('newAccRole').value;
 
-            if(!code || !name || !pass) { showToast("يرجى إكمال كود المستخدم والاسم وكلمة السر.", "error"); return; }
+            if(!code || !name || !pass) { showToast("يرجى إكمال كافة البيانات.", "error"); return; }
             if(cloudDelegates[code]) { showToast("كود المستخدم موجود مسبقاً.", "error"); return; }
 
-            if (email && pass.length < 6) {
-                showToast("❌ لربط الحساب بالإيميل في Firebase، يجب أن تكون كلمة السر 6 أحرف/أرقام على الأقل.", "error");
-                return;
-            }
-
-            if (email) {
-                for (let k in cloudDelegates) {
-                    if (cloudDelegates[k] && cloudDelegates[k].email && cloudDelegates[k].email.toLowerCase() === email) {
-                        showToast("❌ هذا البريد الإلكتروني مستخدم لموظف آخر بالفعل.", "error");
-                        return;
-                    }
-                }
-            }
-
-            let firebaseUid = '';
-            if (email && email.includes('@')) {
-                const authRes = await createFirebaseAuthUserSafely(email, pass);
-                if (authRes && typeof authRes === 'object' && authRes.error) {
-                    if (authRes.error === 'auth/email-already-in-use') {
-                        showToast("⚠️ هذا الإيميل مسجل مسبقاً في Firebase Auth، سيتم ربط بيانات الموظف به في قاعدة البيانات.", "warning");
-                    } else {
-                        showToast("⚠️ تنبيه Firebase Auth: " + authRes.error, "warning");
-                    }
-                } else if (typeof authRes === 'string') {
-                    firebaseUid = authRes;
-                }
-            }
-
-            const cleanPhone = phoneRaw ? cleanPhoneStr(phoneRaw) : '';
-            cloudDelegates[code] = {
-                pass,
-                name,
-                email: email || '',
-                phone: cleanPhone || '',
-                firebaseUid: firebaseUid,
-                role,
-                carStock: {...defaultCarStock},
-                allowedRoutes: ["ALL"],
-                locked: false
-            };
-
+            cloudDelegates[code] = { pass, name, role, carStock: {...defaultCarStock}, allowedRoutes: ["ALL"], locked: false };
             db.ref('delegates/' + code).set(cloudDelegates[code]).then(() => {
-                showToast(email ? "✅ تم إنشاء حساب الموظف وربطه بالإيميل و Firebase بنجاح!" : "✅ تم إنشاء حساب الموظف بنجاح!", "success");
+                showToast("✅ تم إنشاء حساب الموظف بنجاح!", "success");
                 document.getElementById('newAccCode').value = '';
                 document.getElementById('newAccName').value = '';
-                if (document.getElementById('newAccEmail')) document.getElementById('newAccEmail').value = '';
-                if (document.getElementById('newAccPhone')) document.getElementById('newAccPhone').value = '';
                 document.getElementById('newAccPass').value = '';
                 renderAdminUsersTable();
             });
@@ -6677,12 +6414,10 @@ function showClientMonthlyStats(clientName) {
                 let u = cloudDelegates[code];
                 let statusBadge = u.locked ? '<span style="color:red; font-weight:bold;">مقفل</span>' : '<span style="color:green; font-weight:bold;">نشط</span>';
                 let roleLabel = roleNamesMap[u.role] || u.role || 'مندوب مبيعات';
-                let contactInfo = [u.email ? `📧 ${u.email}` : '', u.phone ? `📱 ${u.phone}` : ''].filter(Boolean).join('<br>') || '-';
                 html += `
                     <tr>
                         <td><b>${code}</b></td>
                         <td>${u.name}</td>
-                        <td style="font-size:11px; direction:ltr;">${contactInfo}</td>
                         <td>${roleLabel}</td>
                         <td>${u.pass}</td>
                         <td>${statusBadge}</td>
@@ -6701,8 +6436,6 @@ function showClientMonthlyStats(clientName) {
             document.getElementById('modalEditUserOrigCode').value = code;
             document.getElementById('modalEditUserCode').value = code;
             document.getElementById('modalEditUserName').value = u.name || '';
-            if (document.getElementById('modalEditUserEmail')) document.getElementById('modalEditUserEmail').value = u.email || '';
-            if (document.getElementById('modalEditUserPhone')) document.getElementById('modalEditUserPhone').value = u.phone || '';
             document.getElementById('modalEditUserPass').value = u.pass || '';
             document.getElementById('modalEditUserRole').value = u.role || 'delegate';
             document.getElementById('modalEditUserLocked').value = u.locked ? 'true' : 'false';
@@ -6711,24 +6444,13 @@ function showClientMonthlyStats(clientName) {
 
         function closeEditUserModal() { document.getElementById('editUserModal').style.display = 'none'; }
 
-        async function saveEditedUser() {
+        function saveEditedUser() {
             const code = document.getElementById('modalEditUserOrigCode').value;
             let u = cloudDelegates[code];
             if(!u) return;
 
-            const newEmail = (document.getElementById('modalEditUserEmail')?.value || '').trim().toLowerCase();
-            const newPhone = (document.getElementById('modalEditUserPhone')?.value || '').trim();
-            const newPass = document.getElementById('modalEditUserPass').value.trim();
-
-            if (newEmail && newEmail.includes('@') && newPass.length >= 6 && (!u.email || u.email !== newEmail)) {
-                const authRes = await createFirebaseAuthUserSafely(newEmail, newPass);
-                if (typeof authRes === 'string') u.firebaseUid = authRes;
-            }
-
             u.name = document.getElementById('modalEditUserName').value.trim();
-            u.email = newEmail;
-            u.phone = newPhone ? cleanPhoneStr(newPhone) : '';
-            u.pass = newPass;
+            u.pass = document.getElementById('modalEditUserPass').value.trim();
             u.role = document.getElementById('modalEditUserRole').value;
             u.locked = (document.getElementById('modalEditUserLocked').value === 'true');
 
