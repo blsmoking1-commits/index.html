@@ -5856,9 +5856,7 @@ async function handleLogin() {
             });
         }
 
-                // ==================== التحميلات بالأصناف من تاريخ إلى تاريخ (جدول جديد لكل شهر + إكسيل) ====================
-        let currentFilteredMenofItemRows = [];
-
+        // ==================== أدوات مساعدة لفترة التحميلات بالأصناف (جدول مستقل كل شهر) ====================
         function setMenofItemsDateBoundsForMonth(monthStr) {
             if (!monthStr || !/^\d{4}-\d{2}$/.test(monthStr)) return;
             const [y, m] = monthStr.split('-').map(Number);
@@ -5895,352 +5893,16 @@ async function handleLogin() {
             const sel = document.getElementById('menofItemsProdFilter');
             if (!sel) return;
             const prev = sel.value || 'ALL';
-            let opts = '<option value="ALL">كل الأصناف</option>';
+            let opts = '<option value="ALL">كل الأصناف (عرض جميع الأصناف)</option>';
             products.forEach(p => {
                 opts += `<option value="${p.code}">${p.name} (${p.code})</option>`;
             });
             sel.innerHTML = opts;
-            sel.value = prev;
-        }
-
-        // ==================== التحميلات بالأصناف من تاريخ إلى تاريخ (سجل شهري مستقل + إكسيل تفصيلي) ====================
-        let currentFilteredMenofItemRows = [];
-
-        function setMenofItemsDateBoundsForMonth(monthStr) {
-            if (!monthStr || !/^\d{4}-\d{2}$/.test(monthStr)) return;
-            const [y, m] = monthStr.split('-').map(Number);
-            const firstDay = `${monthStr}-01`;
-            const lastDayNum = new Date(y, m, 0).getDate();
-            const lastDay = `${monthStr}-${String(lastDayNum).padStart(2, '0')}`;
-            const fromEl = document.getElementById('menofItemsFromDate');
-            const toEl = document.getElementById('menofItemsToDate');
-            if (fromEl) fromEl.value = firstDay;
-            if (toEl) toEl.value = lastDay;
-        }
-
-        function onMenofItemsMonthChange() {
-            const mVal = document.getElementById('menofItemsMonthSelect')?.value;
-            if (mVal) {
-                setMenofItemsDateBoundsForMonth(mVal);
-            }
-            renderMenofItemLoadsTable();
-        }
-
-        function resetMenofItemDateRangeToSelectedMonth() {
-            let mVal = document.getElementById('menofItemsMonthSelect')?.value;
-            if (!mVal) {
-                mVal = new Date().toISOString().slice(0, 7);
-                if (document.getElementById('menofItemsMonthSelect')) {
-                    document.getElementById('menofItemsMonthSelect').value = mVal;
-                }
-            }
-            setMenofItemsDateBoundsForMonth(mVal);
-            renderMenofItemLoadsTable();
-        }
-
-        function populateMenofItemProdFilter() {
-            const sel = document.getElementById('menofItemsProdFilter');
-            if (!sel) return;
-            const prev = sel.value || 'ALL';
-            let opts = '<option value="ALL">كل الأصناف</option>';
-            (products || []).forEach(p => {
-                opts += `<option value="${p.code}">${p.name} (${p.code})</option>`;
-            });
-            sel.innerHTML = opts;
-            if (Array.from(sel.options).some(o => o.value === prev)) {
+            if (prev === 'ALL' || products.some(p => String(p.code) === String(prev))) {
                 sel.value = prev;
             } else {
                 sel.value = 'ALL';
             }
-        }
-
-        function getFilteredMenofItemRows() {
-            const monthSel = document.getElementById('menofItemsMonthSelect')?.value || new Date().toISOString().slice(0, 7);
-            const fromDate = document.getElementById('menofItemsFromDate')?.value || '';
-            const toDate = document.getElementById('menofItemsToDate')?.value || '';
-            const prodFilter = document.getElementById('menofItemsProdFilter')?.value || 'ALL';
-            const defaultPrice = parseFloat(systemSettings?.defaultCartonPrice) || 23925;
-
-            const rows = [];
-
-            (cloudMenofLoads || []).forEach(m => {
-                if (!m || !m.date) return;
-                const dStr = String(m.date).trim().slice(0, 10);
-                if (!dStr) return;
-
-                // سجل شهري مستقل لكل شهر
-                if (monthSel && !dStr.startsWith(monthSel)) return;
-                if (fromDate && dStr < fromDate) return;
-                if (toDate && dStr > toDate) return;
-
-                const depositVal = parseFloat(m.deposit) || 0;
-
-                if (m.items && typeof m.items === 'object') {
-                    const entries = Array.isArray(m.items) ? m.items : Object.entries(m.items);
-                    entries.forEach(entry => {
-                        let code = '-';
-                        let name = '';
-                        let qty = 0;
-                        let itemPrice = null;
-                        let itemTotal = null;
-
-                        if (Array.isArray(entry)) {
-                            code = String(entry[0] || '-').trim();
-                            const val = entry[1];
-                            if (val && typeof val === 'object') {
-                                qty = parseFloat(val.qty ?? val.cartons) || 0;
-                                name = String(val.name || '').trim();
-                                if (val.price !== undefined) itemPrice = parseFloat(val.price) || 0;
-                                if (val.total !== undefined) itemTotal = parseFloat(val.total) || 0;
-                            } else {
-                                qty = parseFloat(val) || 0;
-                            }
-                        } else if (entry && typeof entry === 'object') {
-                            code = String(entry.code || entry.prodCode || '-').trim();
-                            name = String(entry.name || entry.prodName || '').trim();
-                            qty = parseFloat(entry.qty ?? entry.cartons) || 0;
-                            if (entry.price !== undefined) itemPrice = parseFloat(entry.price) || 0;
-                            if (entry.total !== undefined) itemTotal = parseFloat(entry.total) || 0;
-                        }
-
-                        if (qty <= 0) return;
-
-                        const pObj = (products || []).find(p =>
-                            String(p.code).trim() === code ||
-                            (name && p.name && p.name.trim() === name)
-                        );
-
-                        if (prodFilter !== 'ALL') {
-                            const matchCode = String(prodFilter).trim() === code;
-                            const matchProdName = pObj && String(pObj.code).trim() === String(prodFilter).trim();
-                            if (!matchCode && !matchProdName) return;
-                        }
-
-                        const resolvedName = name || (pObj ? pObj.name : `صنف (${code})`);
-                        const resolvedCode = (code && code !== '-') ? code : (pObj ? String(pObj.code) : '-');
-                        const unitPrice = (itemPrice !== null && itemPrice > 0)
-                            ? itemPrice
-                            : (pObj && parseFloat(pObj.price) > 0 ? parseFloat(pObj.price) : defaultPrice);
-                        const goodsValue = (itemTotal !== null && itemTotal > 0) ? itemTotal : (qty * unitPrice);
-
-                        rows.push({
-                            month: dStr.slice(0, 7),
-                            date: dStr,
-                            prodName: resolvedName,
-                            prodCode: resolvedCode,
-                            cartons: qty,
-                            ribbons: Math.round(qty * 50),
-                            unitPrice,
-                            goodsValue,
-                            deposit: depositVal
-                        });
-                    });
-                } else {
-                    if (prodFilter !== 'ALL') return;
-                    const qty = parseFloat(m.cartons) || 0;
-                    if (qty > 0) {
-                        const goodsValue = parseFloat(m.totalGoods) || (qty * defaultPrice);
-                        rows.push({
-                            month: dStr.slice(0, 7),
-                            date: dStr,
-                            prodName: m.notes || 'شحنة عامة (منوف)',
-                            prodCode: '-',
-                            cartons: qty,
-                            ribbons: Math.round(qty * 50),
-                            unitPrice: qty > 0 ? (goodsValue / qty) : defaultPrice,
-                            goodsValue,
-                            deposit: depositVal
-                        });
-                    }
-                }
-            });
-
-            rows.sort((a, b) => a.date.localeCompare(b.date) || a.prodName.localeCompare(b.prodName, 'ar'));
-            return { rows, monthSel, fromDate, toDate };
-        }
-
-        function renderMenofItemLoadsTable() {
-            const tbody = document.getElementById('menofItemLoadsTableBody');
-            if (!tbody) return;
-            populateMenofItemProdFilter();
-
-            const { rows, monthSel, fromDate, toDate } = getFilteredMenofItemRows();
-            currentFilteredMenofItemRows = rows;
-
-            const banner = document.getElementById('menofMonthlySheetBanner');
-            if (banner) {
-                banner.innerText = `جدول شهر: ${monthSel || 'الكل'} | الفترة: ${fromDate || 'بداية الشهر'} إلى ${toDate || 'نهاية الشهر'} (سجل مستقل لكل شهر)`;
-            }
-
-            if (!rows || rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="color:#64748b; padding:12px;">لا توجد تحميلات بالأصناف مسجلة لشهر (${monthSel}) في النطاق الزمني المحدد.</td></tr>`;
-                const sumEl = document.getElementById('menofItemsSummaryText');
-                if (sumEl) sumEl.innerText = 'إجمالي الكراتين المحملة في الفترة: 0 كرتونة | إجمالي القيمة: 0.00 ج.م';
-                return;
-            }
-
-            // تجميع كل صنف خلال الفترة المحددة
-            const groupedMap = {};
-            let totalCartons = 0;
-            let totalRibbons = 0;
-            let totalGoods = 0;
-
-            rows.forEach(r => {
-                const key = (r.prodCode && r.prodCode !== '-') ? `${r.prodCode}__${r.prodName}` : r.prodName;
-                if (!groupedMap[key]) {
-                    groupedMap[key] = {
-                        prodName: r.prodName,
-                        prodCode: r.prodCode,
-                        loadsCount: 0,
-                        cartons: 0,
-                        ribbons: 0,
-                        goodsValue: 0
-                    };
-                }
-                groupedMap[key].loadsCount += 1;
-                groupedMap[key].cartons += r.cartons;
-                groupedMap[key].ribbons += r.ribbons;
-                groupedMap[key].goodsValue += r.goodsValue;
-
-                totalCartons += r.cartons;
-                totalRibbons += r.ribbons;
-                totalGoods += r.goodsValue;
-            });
-
-            const groupedList = Object.values(groupedMap);
-            let html = groupedList.map(item => `
-                <tr>
-                    <td style="text-align:right; font-weight:bold; color:#0f172a;">${item.prodName}</td>
-                    <td><code style="color:#0284c7; font-weight:bold;">${item.prodCode}</code></td>
-                    <td>${item.loadsCount} مرة</td>
-                    <td style="color:#16a34a; font-weight:bold; font-size:12.5px;">${Number(item.cartons.toFixed(2))} كرتونة</td>
-                    <td>${item.ribbons.toLocaleString()} رابطة</td>
-                    <td style="color:#1e40af; font-weight:bold;">${item.goodsValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ج.م</td>
-                </tr>
-            `).join('');
-
-            html += `
-                <tr style="background:#dcfce7; font-weight:bold; color:#14532d; border-top:2px solid #16a34a;">
-                    <td colspan="3" style="text-align:right;">📊 إجمالي الفترة المجمع (${groupedList.length} أصناف)</td>
-                    <td style="font-size:13px;">${Number(totalCartons.toFixed(2))} كرتونة</td>
-                    <td>${totalRibbons.toLocaleString()} رابطة</td>
-                    <td style="font-size:13px;">${totalGoods.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ج.م</td>
-                </tr>
-            `;
-
-            tbody.innerHTML = html;
-
-            const sumEl = document.getElementById('menofItemsSummaryText');
-            if (sumEl) {
-                sumEl.innerText = `إجمالي الكراتين المحملة في الفترة: ${Number(totalCartons.toFixed(2))} كرتونة (${totalRibbons.toLocaleString()} رابطة) | إجمالي القيمة: ${totalGoods.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ج.م`;
-            }
-        }
-
-        function exportMenofItemLoadsExcel() {
-            const { rows, monthSel, fromDate, toDate } = getFilteredMenofItemRows();
-            if (!rows || rows.length === 0) {
-                showToast("⚠️ لا توجد بيانات تحميلات بالأصناف لتصديرها في الفترة المحددة.", "warning");
-                return;
-            }
-
-            const arabicDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-            let totalCartons = 0;
-            let totalRibbons = 0;
-            let totalGoods = 0;
-
-            // 1. شيت التفاصيل لكل تاريخ على حدة
-            const detailRows = rows.map((r, idx) => {
-                const dt = new Date(r.date + 'T00:00:00');
-                const dayName = isNaN(dt.getTime()) ? '' : arabicDays[dt.getDay()];
-                totalCartons += r.cartons;
-                totalRibbons += r.ribbons;
-                totalGoods += r.goodsValue;
-
-                return {
-                    "م": idx + 1,
-                    "التاريخ": r.date,
-                    "اليوم": dayName,
-                    "الشهر": r.month,
-                    "الصنف": r.prodName,
-                    "كود الصنف": r.prodCode,
-                    "الكمية المحملة (كرتونة)": Number(r.cartons.toFixed(2)),
-                    "ما يعادل (رابطة)": r.ribbons,
-                    "سعر الكرتونة (ج.م)": Number(r.unitPrice.toFixed(2)),
-                    "قيمة البضاعة (ج.م)": Number(r.goodsValue.toFixed(2)),
-                    "إيداع الشحنة (ج.م)": Number(r.deposit.toFixed(2))
-                };
-            });
-
-            detailRows.push({
-                "م": "",
-                "التاريخ": "الإجمالي الكلي",
-                "اليوم": "",
-                "الشهر": monthSel || "",
-                "الصنف": "",
-                "كود الصنف": "",
-                "الكمية المحملة (كرتونة)": Number(totalCartons.toFixed(2)),
-                "ما يعادل (رابطة)": totalRibbons,
-                "سعر الكرتونة (ج.م)": "",
-                "قيمة البضاعة (ج.م)": Number(totalGoods.toFixed(2)),
-                "إيداع الشحنة (ج.م)": ""
-            });
-
-            // 2. شيت ملخص الأصناف المجمع للفترة
-            const groupedMap = {};
-            rows.forEach(r => {
-                const key = (r.prodCode && r.prodCode !== '-') ? `${r.prodCode}__${r.prodName}` : r.prodName;
-                if (!groupedMap[key]) {
-                    groupedMap[key] = {
-                        prodName: r.prodName,
-                        prodCode: r.prodCode,
-                        loadsCount: 0,
-                        cartons: 0,
-                        ribbons: 0,
-                        goodsValue: 0
-                    };
-                }
-                groupedMap[key].loadsCount += 1;
-                groupedMap[key].cartons += r.cartons;
-                groupedMap[key].ribbons += r.ribbons;
-                groupedMap[key].goodsValue += r.goodsValue;
-            });
-
-            const summaryRows = Object.values(groupedMap).map((g, idx) => ({
-                "م": idx + 1,
-                "الصنف": g.prodName,
-                "كود الصنف": g.prodCode,
-                "عدد مرات التحميل": g.loadsCount,
-                "إجمالي الكراتين المحملة": Number(g.cartons.toFixed(2)),
-                "ما يعادل (رابطة)": g.ribbons,
-                "إجمالي القيمة (ج.م)": Number(g.goodsValue.toFixed(2))
-            }));
-
-            const wb = XLSX.utils.book_new();
-            const wsDetail = XLSX.utils.json_to_sheet(detailRows);
-            const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
-
-            wsDetail['!cols'] = [
-                { wch: 5 }, { wch: 13 }, { wch: 11 }, { wch: 10 }, { wch: 24 },
-                { wch: 15 }, { wch: 20 }, { wch: 16 }, { wch: 18 }, { wch: 20 }, { wch: 18 }
-            ];
-            wsSummary['!cols'] = [
-                { wch: 5 }, { wch: 24 }, { wch: 15 }, { wch: 18 }, { wch: 22 }, { wch: 16 }, { wch: 20 }
-            ];
-
-            if (!wsDetail['!views']) wsDetail['!views'] = [];
-            wsDetail['!views'].push({ rightToLeft: true });
-            if (!wsSummary['!views']) wsSummary['!views'] = [];
-            wsSummary['!views'].push({ rightToLeft: true });
-
-            const detailSheetName = `تفاصيل_${monthSel || 'شهر'}`.slice(0, 31);
-            const summarySheetName = `ملخص_${monthSel || 'شهر'}`.slice(0, 31);
-
-            XLSX.utils.book_append_sheet(wb, wsDetail, detailSheetName);
-            XLSX.utils.book_append_sheet(wb, wsSummary, summarySheetName);
-
-            const fname = `تحميلات_منوف_تفصيلي_${monthSel || 'الكل'}_${fromDate || 'بداية'}_الى_${toDate || 'نهاية'}.xlsx`;
-            XLSX.writeFile(wb, fname);
-            showToast("✅ تم تصدير ملف الإكسيل بتفاصيل كل تاريخ وملخص الأصناف بنجاح.", "success");
         }
 
         // ==================== تصفية ودفتر الأستاذ للذمامات ====================
@@ -7652,6 +7314,339 @@ function showClientMonthlyStats(clientName) {
             document.getElementById('loginView').style.display = 'block';
         }
     
+// ==================== 1. استخراج وتطبيع بيانات تحميلات منوف (قراءة صحيحة من map الأصناف) ====================
+function getFilteredMenofItemEntries() {
+    const monthVal = document.getElementById('menofItemsMonthSelect')?.value || '';
+    const fromDate = document.getElementById('menofItemsFromDate')?.value || '';
+    const toDate = document.getElementById('menofItemsToDate')?.value || '';
+    const prodFilter = document.getElementById('menofItemsProdFilter')?.value || 'ALL';
+    const defaultPrice = systemSettings.defaultCartonPrice || 23925;
+
+    const banner = document.getElementById('menofMonthlySheetBanner');
+    if (banner) {
+        const rangeTxt = (fromDate || toDate) ? ` | من ${fromDate || 'البداية'} إلى ${toDate || 'النهاية'}` : '';
+        banner.innerText = monthVal ? `الشهر النشط: ${monthVal}${rangeTxt}` : `الشهر النشط: جميع الشهور${rangeTxt}`;
+    }
+
+    const dailyEntries = [];
+
+    (cloudMenofLoads || []).forEach(load => {
+        if (!load || !load.date) return;
+        const d = String(load.date).trim();
+
+        if (fromDate && d < fromDate) return;
+        if (toDate && d > toDate) return;
+        if (!fromDate && !toDate && monthVal && !d.startsWith(monthVal)) return;
+
+        // التنسيق المحفوظ في Firebase هو كائن { "1500000000": 10, "1500000002": 5 }
+        if (load.items && typeof load.items === 'object' && !Array.isArray(load.items) && Object.keys(load.items).length > 0) {
+            for (const [rawKey, rawVal] of Object.entries(load.items)) {
+                let itemCode = String(rawKey).trim();
+                let itemName = '';
+                let qtyCartons = 0;
+                let customPrice = 0;
+                let customTotal = 0;
+
+                if (rawVal !== null && typeof rawVal === 'object') {
+                    // في حال كان عنصراً مفصلاً بداخل كائن
+                    itemCode = String(rawVal.code || rawVal.prodCode || rawKey).trim();
+                    itemName = String(rawVal.name || rawVal.prodName || '').trim();
+                    qtyCartons = parseFloat(rawVal.qty ?? rawVal.cartons) || 0;
+                    customPrice = parseFloat(rawVal.price) || 0;
+                    customTotal = parseFloat(rawVal.total) || 0;
+                } else {
+                    // التنسيق القياسي: المفتاح هو كود الصنف والقيمة هي عدد الكراتين المحملة فقط
+                    qtyCartons = parseFloat(rawVal) || 0;
+                }
+
+                if (qtyCartons <= 0) continue;
+
+                const prodMeta = products.find(p => String(p.code).trim() === itemCode || (itemName && p.name.trim() === itemName));
+                if (!itemName) {
+                    itemName = prodMeta ? prodMeta.name : `صنف (${itemCode})`;
+                }
+
+                if (prodFilter !== 'ALL' && itemCode !== String(prodFilter).trim() && itemName !== String(prodFilter).trim()) {
+                    continue;
+                }
+
+                const unitPrice = customPrice || (prodMeta ? (parseFloat(prodMeta.price) || defaultPrice) : defaultPrice);
+                const itemTotal = customTotal || (qtyCartons * unitPrice);
+
+                dailyEntries.push({
+                    loadId: load.id || '',
+                    date: d,
+                    name: itemName,
+                    code: itemCode,
+                    cartons: qtyCartons,
+                    ribbons: Math.round(qtyCartons * 50),
+                    price: unitPrice,
+                    totalValue: itemTotal,
+                    loadDeposit: parseFloat(load.deposit) || 0,
+                    loadTotalGoods: parseFloat(load.totalGoods) || 0
+                });
+            }
+        } else if (Array.isArray(load.items) && load.items.length > 0) {
+            load.items.forEach(it => {
+                if (!it) return;
+                const itemCode = String(it.code || it.prodCode || '-').trim();
+                const prodMeta = products.find(p => String(p.code).trim() === itemCode || p.name === it.name);
+                const itemName = String(it.name || it.prodName || (prodMeta ? prodMeta.name : `صنف (${itemCode})`)).trim();
+                const qtyCartons = parseFloat(it.qty ?? it.cartons) || 0;
+                if (qtyCartons <= 0) return;
+
+                if (prodFilter !== 'ALL' && itemCode !== String(prodFilter).trim() && itemName !== String(prodFilter).trim()) {
+                    return;
+                }
+
+                const unitPrice = parseFloat(it.price) || (prodMeta ? (parseFloat(prodMeta.price) || defaultPrice) : defaultPrice);
+                const itemTotal = parseFloat(it.total) || (qtyCartons * unitPrice);
+
+                dailyEntries.push({
+                    loadId: load.id || '',
+                    date: d,
+                    name: itemName,
+                    code: itemCode,
+                    cartons: qtyCartons,
+                    ribbons: Math.round(qtyCartons * 50),
+                    price: unitPrice,
+                    totalValue: itemTotal,
+                    loadDeposit: parseFloat(load.deposit) || 0,
+                    loadTotalGoods: parseFloat(load.totalGoods) || 0
+                });
+            });
+        } else {
+            // شحنة عامة مسجلة بدون تفصيل أصناف
+            const qtyCartons = parseFloat(load.cartons) || 0;
+            if (qtyCartons <= 0) return;
+            if (prodFilter !== 'ALL') return;
+
+            const itemTotal = parseFloat(load.totalGoods || load.totalPrice || load.total) || (qtyCartons * defaultPrice);
+            dailyEntries.push({
+                loadId: load.id || '',
+                date: d,
+                name: load.notes || 'شحنة عامة (غير مفصلة بالأصناف)',
+                code: '-',
+                cartons: qtyCartons,
+                ribbons: Math.round(qtyCartons * 50),
+                price: qtyCartons > 0 ? Math.round(itemTotal / qtyCartons) : defaultPrice,
+                totalValue: itemTotal,
+                loadDeposit: parseFloat(load.deposit) || 0,
+                loadTotalGoods: itemTotal
+            });
+        }
+    });
+
+    // ترتيب تصاعدي حسب التاريخ
+    dailyEntries.sort((a, b) => a.date.localeCompare(b.date));
+    return dailyEntries;
+}
+
+// ==================== 2. العرض على الويب: إظهار كل الأصناف والكميات المحملة من التاريخ إلى التاريخ ====================
+function renderMenofItemLoadsTable() {
+    const tbody = document.getElementById('menofItemLoadsTableBody');
+    const summaryEl = document.getElementById('menofItemsSummaryText');
+    if (!tbody) return;
+
+    populateMenofItemProdFilter();
+
+    const prodFilter = document.getElementById('menofItemsProdFilter')?.value || 'ALL';
+    const dailyEntries = getFilteredMenofItemEntries();
+
+    // تجميع الكميات المحملة لكل صنف خلال الفترة المختارة
+    const groupedMap = {};
+
+    // عند اختيار "كل الأصناف"، نهيئ كل أصناف المخزن أولاً ليظهر كل صنف بكميته المحملة (حتى لو 0 في هذه الفترة)
+    if (prodFilter === 'ALL' && Array.isArray(products)) {
+        products.forEach(p => {
+            const pCode = String(p.code).trim();
+            groupedMap[pCode] = {
+                name: p.name,
+                code: pCode,
+                loadsCount: 0,
+                totalCartons: 0,
+                totalRibbons: 0,
+                totalValue: 0
+            };
+        });
+    }
+
+    let grandCartons = 0;
+    let grandRibbons = 0;
+    let grandValue = 0;
+
+    dailyEntries.forEach(entry => {
+        const key = (entry.code && entry.code !== '-') ? String(entry.code).trim() : entry.name;
+        if (!groupedMap[key]) {
+            groupedMap[key] = {
+                name: entry.name,
+                code: entry.code,
+                loadsCount: 0,
+                totalCartons: 0,
+                totalRibbons: 0,
+                totalValue: 0
+            };
+        }
+        groupedMap[key].loadsCount += 1;
+        groupedMap[key].totalCartons += entry.cartons;
+        groupedMap[key].totalRibbons += entry.ribbons;
+        groupedMap[key].totalValue += entry.totalValue;
+
+        grandCartons += entry.cartons;
+        grandRibbons += entry.ribbons;
+        grandValue += entry.totalValue;
+    });
+
+    const itemsList = Object.values(groupedMap);
+
+    if (itemsList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:#64748b; padding:12px;">لا توجد أصناف أو تحميلات مسجلة في هذه الفترة.</td></tr>`;
+        if (summaryEl) summaryEl.innerText = 'إجمالي الكراتين المحملة في الفترة: 0 كرتونة';
+        return;
+    }
+
+    let rowsHtml = '';
+    itemsList.forEach(item => {
+        const hasLoads = item.totalCartons > 0;
+        rowsHtml += `
+            <tr style="${!hasLoads ? 'background:#f8fafc; color:#94a3b8;' : ''}">
+                <td style="text-align:right; font-weight:bold; color:${hasLoads ? '#0f172a' : '#64748b'};">${item.name}</td>
+                <td><code style="color:#0284c7; font-weight:bold;">${item.code}</code></td>
+                <td>${item.loadsCount} مرة</td>
+                <td style="font-weight:bold; color:${hasLoads ? '#16a34a' : '#94a3b8'}; font-size:12.5px;">${Number(item.totalCartons.toFixed(2))} كرتونة</td>
+                <td>${item.totalRibbons.toLocaleString()} رابطة</td>
+                <td style="font-weight:bold; color:${hasLoads ? '#1e40af' : '#94a3b8'};">${item.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ج.م</td>
+            </tr>
+        `;
+    });
+
+    rowsHtml += `
+        <tr style="background:#dcfce7; font-weight:bold; color:#14532d; border-top:2px solid #16a34a;">
+            <td colspan="3" style="text-align:right;">📊 إجمالي الفترة المجمع (${itemsList.length} صنف)</td>
+            <td style="font-size:13px;">${Number(grandCartons.toFixed(2))} كرتونة</td>
+            <td>${grandRibbons.toLocaleString()} رابطة</td>
+            <td style="font-size:13px;">${grandValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ج.م</td>
+        </tr>
+    `;
+
+    tbody.innerHTML = rowsHtml;
+    if (summaryEl) {
+        summaryEl.innerText = `إجمالي الكراتين المحملة في الفترة: ${Number(grandCartons.toFixed(2))} كرتونة (${grandRibbons.toLocaleString()} رابطة) | الإجمالي: ${grandValue.toLocaleString()} ج.م`;
+    }
+}
+
+// ==================== 3. تصدير الإكسيل: التحميلات كل تاريخ بتفصيلته + شيت ملخص الأصناف ====================
+function exportMenofItemLoadsExcel() {
+    const dailyEntries = getFilteredMenofItemEntries();
+    if (dailyEntries.length === 0) {
+        showToast("⚠️ لا توجد بيانات تحميلات في هذه الفترة لتصديرها.", "warning");
+        return;
+    }
+
+    const arabicDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    let totalCartons = 0;
+    let totalRibbons = 0;
+    let totalValue = 0;
+
+    // الشيت الأول: كل تاريخ بتفصيلته (سطر لكل صنف في كل تاريخ تحميل)
+    const dailySheetRows = dailyEntries.map((e, idx) => {
+        const dt = new Date(e.date + 'T00:00:00');
+        const dayName = isNaN(dt.getTime()) ? '' : arabicDays[dt.getDay()];
+        totalCartons += e.cartons;
+        totalRibbons += e.ribbons;
+        totalValue += e.totalValue;
+
+        return {
+            'م': idx + 1,
+            'التاريخ': e.date,
+            'اليوم': dayName,
+            'اسم الصنف': e.name,
+            'كود الصنف': e.code,
+            'الكمية المحملة (كرتونة)': Number(e.cartons.toFixed(2)),
+            'ما يعادل (رابطة)': e.ribbons,
+            'سعر الكرتونة (ج.م)': e.price,
+            'إجمالي قيمة الصنف (ج.م)': Number(e.totalValue.toFixed(2)),
+            'إجمالي الشحنة في هذا التاريخ (ج.م)': Number(e.loadTotalGoods.toFixed(2)),
+            'المبلغ المودع للشحنة (ج.م)': Number(e.loadDeposit.toFixed(2))
+        };
+    });
+
+    dailySheetRows.push({
+        'م': '',
+        'التاريخ': 'الإجمالي الكلي للفترة',
+        'اليوم': '',
+        'اسم الصنف': '',
+        'كود الصنف': '',
+        'الكمية المحملة (كرتونة)': Number(totalCartons.toFixed(2)),
+        'ما يعادل (رابطة)': totalRibbons,
+        'سعر الكرتونة (ج.م)': '',
+        'إجمالي قيمة الصنف (ج.م)': Number(totalValue.toFixed(2)),
+        'إجمالي الشحنة في هذا التاريخ (ج.م)': '',
+        'المبلغ المودع للشحنة (ج.م)': ''
+    });
+
+    // الشيت الثاني: ملخص كل الأصناف المجمع من التاريخ إلى التاريخ
+    const prodFilter = document.getElementById('menofItemsProdFilter')?.value || 'ALL';
+    const groupedMap = {};
+    if (prodFilter === 'ALL' && Array.isArray(products)) {
+        products.forEach(p => {
+            const pCode = String(p.code).trim();
+            groupedMap[pCode] = { name: p.name, code: pCode, count: 0, cartons: 0, ribbons: 0, val: 0 };
+        });
+    }
+
+    dailyEntries.forEach(e => {
+        const key = (e.code && e.code !== '-') ? String(e.code).trim() : e.name;
+        if (!groupedMap[key]) {
+            groupedMap[key] = { name: e.name, code: e.code, count: 0, cartons: 0, ribbons: 0, val: 0 };
+        }
+        groupedMap[key].count += 1;
+        groupedMap[key].cartons += e.cartons;
+        groupedMap[key].ribbons += e.ribbons;
+        groupedMap[key].val += e.totalValue;
+    });
+
+    const summarySheetRows = Object.values(groupedMap).map(g => ({
+        'اسم الصنف': g.name,
+        'كود الصنف': g.code,
+        'عدد مرات التحميل': g.count,
+        'إجمالي الكراتين المحملة': Number(g.cartons.toFixed(2)),
+        'ما يعادل (رابطة)': g.ribbons,
+        'إجمالي القيمة (ج.م)': Number(g.val.toFixed(2))
+    }));
+
+    summarySheetRows.push({
+        'اسم الصنف': 'الإجمالي الكلي',
+        'كود الصنف': '',
+        'عدد مرات التحميل': dailyEntries.length,
+        'إجمالي الكراتين المحملة': Number(totalCartons.toFixed(2)),
+        'ما يعادل (رابطة)': totalRibbons,
+        'إجمالي القيمة (ج.م)': Number(totalValue.toFixed(2))
+    });
+
+    const wb = XLSX.utils.book_new();
+    const wsDaily = XLSX.utils.json_to_sheet(dailySheetRows);
+    const wsSummary = XLSX.utils.json_to_sheet(summarySheetRows);
+
+    if (!wsDaily['!views']) wsDaily['!views'] = [];
+    wsDaily['!views'].push({ rightToLeft: true });
+    if (!wsSummary['!views']) wsSummary['!views'] = [];
+    wsSummary['!views'].push({ rightToLeft: true });
+
+    wsDaily['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 12 }, { wch: 24 }, { wch: 16 }, { wch: 22 }, { wch: 18 }, { wch: 20 }, { wch: 24 }, { wch: 26 }, { wch: 24 }];
+    wsSummary['!cols'] = [{ wch: 24 }, { wch: 16 }, { wch: 18 }, { wch: 24 }, { wch: 18 }, { wch: 24 }];
+
+    XLSX.utils.book_append_sheet(wb, wsDaily, "التحميلات كل تاريخ بتفصيلته");
+    XLSX.utils.book_append_sheet(wb, wsSummary, "ملخص كل الأصناف");
+
+    const fromLbl = document.getElementById('menofItemsFromDate')?.value || document.getElementById('menofItemsMonthSelect')?.value || 'الكل';
+    const toLbl = document.getElementById('menofItemsToDate')?.value || '';
+    const fileName = `تحميلات_منوف_بالتفصيل_${fromLbl}${toLbl ? '_الى_' + toLbl : ''}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+    showToast("✅ تم تصدير ملف الإكسيل (كل تاريخ بتفصيلته + ملخص الأصناف) بنجاح!", "success");
+}
+
 // ==================== 4. تجهيز الدفع الإلكتروني (InstaPay / تحويل بنكي / روابط الدفع) ====================
 const origApplyBranding = applySystemBranding;
 applySystemBranding = function() {
