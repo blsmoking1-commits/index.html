@@ -345,6 +345,39 @@
 
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
 
+            <!-- صندوق تجهيز الدفع بـ InstaPay والتحويل البنكي وروابط الدفع -->
+            <div id="invoicePaymentPrepBox" style="background:#f8fafc; border:1.5px solid #0284c7; border-radius:10px; padding:12px; margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+                    <span style="font-weight:bold; color:#0369a1; font-size:13px;">💳 تجهيز التحصيل والدفع الإلكتروني:</span>
+                    <select id="invoicePaymentMethodSelect" onchange="onInvoicePaymentMethodChange()" style="width:auto; min-width:190px; padding:6px 10px; border:1.5px solid #0284c7; border-radius:6px; font-weight:bold; font-size:12px; background:#fff; color:#0f172a;">
+                        <option value="cash">💵 نقدي (كاش)</option>
+                        <option value="instapay">⚡ إنستا باي (InstaPay)</option>
+                        <option value="bank_transfer">🏦 تحويل بنكي (Bank Transfer)</option>
+                        <option value="payment_link">🔗 رابط دفع إلكتروني (Payment Link)</option>
+                    </select>
+                </div>
+
+                <div id="electronicPaymentDetailsPanel" style="display:none; background:#fff; border:1px dashed #38bdf8; border-radius:8px; padding:10px; font-size:12px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:bold; color:#334155;">المبلغ المطلوب تحصيله (ج.م):</label>
+                            <input type="number" id="epayCustomAmount" placeholder="تلقائي من إجمالي الفاتورة" oninput="updateElectronicPaymentPreview()" style="padding:6px; font-weight:bold; color:#16a34a;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:bold; color:#334155;">رابط دفع مخصص للفاتورة (اختياري):</label>
+                            <input type="url" id="epayCustomInvoiceLink" placeholder="اتركه فارغاً لاستخدام رابط الشركة" oninput="updateElectronicPaymentPreview()" style="padding:6px;">
+                        </div>
+                    </div>
+
+                    <div id="epayRenderedCard" style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px; padding:8px; line-height:1.7; color:#0f172a; margin-bottom:8px;"></div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <button type="button" class="btn btn-info" style="margin:0; padding:7px; font-size:11.5px;" onclick="copyElectronicPaymentDetails()">📋 نسخ بيانات ورابط الدفع</button>
+                        <button type="button" class="btn btn-whatsapp" style="margin:0; padding:7px; font-size:11.5px;" onclick="sendElectronicPaymentRequestWhatsApp()">📲 إرسال طلب الدفع للعميل واتساب</button>
+                    </div>
+                </div>
+            </div>
+
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
                 <button id="btnThermalPrint" class="btn btn-thermal" onclick="triggerDirectThermalDesktop()">🖨️ طباعة طابعة حرارية (EXE / USB)</button>
                 <button id="btnRawbtPrint" class="btn btn-bluetooth" onclick="triggerViaRawBT()">📱 طباعة RawBT (بلوتوث)</button>
@@ -940,12 +973,12 @@
                     <table class="report-table" style="background:#fff;" id="menofItemLoadsTable">
                         <thead style="background:#14532d; color:#fff;">
                             <tr>
-                                <th>التاريخ</th>
                                 <th>الصنف</th>
-                                <th>كود الصنف</th>
-                                <th>الكمية (كرتونة)</th>
-                                <th>قيمة البضاعة (ج.م)</th>
-                                <th>إيداع الشحنة (ج.م)</th>
+                                <th>كود الصنف / الباركود</th>
+                                <th>عدد مرات التحميل</th>
+                                <th>إجمالي الكراتين المحملة</th>
+                                <th>ما يعادل (رابطة)</th>
+                                <th>إجمالي القيمة (ج.م)</th>
                             </tr>
                         </thead>
                         <tbody id="menofItemLoadsTableBody"></tbody>
@@ -1117,6 +1150,43 @@
                     <div class="form-group"><label>سعر كرتونة الجملة الافتراضي (ج.م):</label><input type="number" id="sysInputCartonPrice" value="23925"></div>
                     <div class="form-group"><label>سعر رابطة القطاعي الافتراضي (ج.م):</label><input type="number" id="sysInputRibbonPrice" value="480"></div>
                 </div>
+                <div style="background:#eff6ff; border:1.5px solid #3b82f6; padding:10px; border-radius:8px; margin:10px 0;">
+    <h5 style="margin:0 0 8px 0; color:#1e40af; font-size:13px;">💳 إعدادات الدفع الإلكتروني (InstaPay / تحويل بنكي / روابط الدفع):</h5>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+        <div class="form-group" style="margin-bottom:6px;">
+            <label>عنوان InstaPay (IPA أو الموبايل):</label>
+            <input type="text" id="sysInputInstapayHandle" placeholder="مثال: blackhorse@instapay">
+        </div>
+        <div class="form-group" style="margin-bottom:6px;">
+            <label>رابط الدفع المباشر InstaPay:</label>
+            <input type="url" id="sysInputInstapayLink" placeholder="https://ipn.eg/S/...">
+        </div>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+        <div class="form-group" style="margin-bottom:6px;">
+            <label>اسم البنك:</label>
+            <input type="text" id="sysInputBankName" placeholder="مثال: البنك الأهلي / المشرق / كريدي أجريكول">
+        </div>
+        <div class="form-group" style="margin-bottom:6px;">
+            <label>اسم المستفيد / صاحب الحساب:</label>
+            <input type="text" id="sysInputBankAccName" placeholder="شركة بلاك هورس للتوزيع">
+        </div>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+        <div class="form-group" style="margin-bottom:6px;">
+            <label>رقم الحساب البنكي:</label>
+            <input type="text" id="sysInputBankAccNum" placeholder="رقم الحساب...">
+        </div>
+        <div class="form-group" style="margin-bottom:6px;">
+            <label>رقم الـ IBAN:</label>
+            <input type="text" id="sysInputBankIban" placeholder="EG000000000000000000000000000">
+        </div>
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+        <label>رابط بوابة الدفع الإلكتروني العام (Payment Link):</label>
+        <input type="url" id="sysInputCustomPayLink" placeholder="https://...">
+    </div>
+</div>
                 <button class="btn btn-primary" onclick="saveSystemSettingsDirect()">💾 حفظ وتحديث إعدادات النظام بالكامل</button>
             </div>
 
@@ -7363,6 +7433,365 @@ function showClientMonthlyStats(clientName) {
             document.getElementById('salesView').style.display = 'none';
             document.getElementById('loginView').style.display = 'block';
         }
-    </script>
+    
+// ==================== 1. استخراج وتطبيع بيانات تحميلات منوف ====================
+function getFilteredMenofItemEntries() {
+    const monthVal = document.getElementById('menofItemsMonthSelect')?.value || '';
+    const fromDate = document.getElementById('menofItemsFromDate')?.value || '';
+    const toDate = document.getElementById('menofItemsToDate')?.value || '';
+    const prodFilter = document.getElementById('menofItemsProdFilter')?.value || 'ALL';
+
+    const banner = document.getElementById('menofMonthlySheetBanner');
+    if (banner) {
+        banner.innerText = monthVal ? `الشهر النشط: ${monthVal}` : 'الشهر النشط: جميع الشهور';
+    }
+
+    const dailyEntries = [];
+
+    (cloudMenofLoads || []).forEach(load => {
+        if (!load || !load.date) return;
+        const d = String(load.date).trim();
+
+        if (fromDate && d < fromDate) return;
+        if (toDate && d > toDate) return;
+        if (!fromDate && !toDate && monthVal && !d.startsWith(monthVal)) return;
+
+        let rawItems = [];
+        if (Array.isArray(load.items) && load.items.length > 0) {
+            rawItems = load.items;
+        } else if (load.items && typeof load.items === 'object') {
+            rawItems = Object.values(load.items);
+        } else {
+            rawItems = [{
+                name: load.notes || 'شحنة عامة (منوف)',
+                code: '-',
+                qty: parseFloat(load.cartons) || 0,
+                price: 0,
+                total: parseFloat(load.totalPrice || load.total) || 0
+            }];
+        }
+
+        rawItems.forEach(it => {
+            if (!it) return;
+            const itemCode = String(it.code || it.prodCode || '-').trim();
+            const itemName = String(it.name || it.prodName || 'صنف غير محدد').trim();
+            const qtyCartons = parseFloat(it.qty || it.cartons) || 0;
+            if (qtyCartons <= 0) return;
+
+            if (prodFilter !== 'ALL' && itemCode !== prodFilter && itemName !== prodFilter) {
+                return;
+            }
+
+            const prodMeta = products.find(p => String(p.code) === itemCode || p.name === itemName);
+            const unitPrice = parseFloat(it.price) || (prodMeta ? parseFloat(prodMeta.price) : 0) || 0;
+            const itemTotal = parseFloat(it.total) || (qtyCartons * unitPrice);
+
+            dailyEntries.push({
+                date: d,
+                name: itemName,
+                code: itemCode,
+                cartons: qtyCartons,
+                ribbons: Math.round(qtyCartons * 50),
+                price: unitPrice,
+                totalValue: itemTotal,
+                loadDeposit: parseFloat(load.deposit) || 0
+            });
+        });
+    });
+
+    // ترتيب تصاعدي حسب التاريخ
+    dailyEntries.sort((a, b) => a.date.localeCompare(b.date));
+    return dailyEntries;
+}
+
+// ==================== 2. العرض على الويب: الأصناف مجمعة خلال الفترة ====================
+function renderMenofItemLoadsTable() {
+    const tbody = document.getElementById('menofItemLoadsTableBody');
+    const summaryEl = document.getElementById('menofItemsSummaryText');
+    if (!tbody) return;
+
+    const dailyEntries = getFilteredMenofItemEntries();
+
+    if (dailyEntries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:#64748b; padding:12px;">لا توجد تحميلات مسجلة في هذه الفترة.</td></tr>`;
+        if (summaryEl) summaryEl.innerText = 'إجمالي الكراتين المحملة في الفترة: 0 كرتونة';
+        return;
+    }
+
+    // تجميع حسب الصنف (كود الصنف أو اسمه)
+    const groupedMap = {};
+    let grandCartons = 0;
+    let grandRibbons = 0;
+    let grandValue = 0;
+
+    dailyEntries.forEach(entry => {
+        const key = (entry.code && entry.code !== '-') ? entry.code : entry.name;
+        if (!groupedMap[key]) {
+            groupedMap[key] = {
+                name: entry.name,
+                code: entry.code,
+                loadsCount: 0,
+                totalCartons: 0,
+                totalRibbons: 0,
+                totalValue: 0
+            };
+        }
+        groupedMap[key].loadsCount += 1;
+        groupedMap[key].totalCartons += entry.cartons;
+        groupedMap[key].totalRibbons += entry.ribbons;
+        groupedMap[key].totalValue += entry.totalValue;
+
+        grandCartons += entry.cartons;
+        grandRibbons += entry.ribbons;
+        grandValue += entry.totalValue;
+    });
+
+    let rowsHtml = '';
+    Object.values(groupedMap).forEach(item => {
+        rowsHtml += `
+            <tr>
+                <td style="text-align:right; font-weight:bold; color:#0f172a;">${item.name}</td>
+                <td><code style="color:#0284c7; font-weight:bold;">${item.code}</code></td>
+                <td>${item.loadsCount} مرة</td>
+                <td style="font-weight:bold; color:#16a34a; font-size:12.5px;">${Number(item.totalCartons.toFixed(2))} كرتونة</td>
+                <td>${item.totalRibbons.toLocaleString()} رابطة</td>
+                <td style="font-weight:bold; color:#1e40af;">${item.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ج.م</td>
+            </tr>
+        `;
+    });
+
+    rowsHtml += `
+        <tr style="background:#dcfce7; font-weight:bold; color:#14532d; border-top:2px solid #16a34a;">
+            <td colspan="3" style="text-align:right;">📊 إجمالي الفترة المجمع (${Object.keys(groupedMap).length} أصناف)</td>
+            <td style="font-size:13px;">${Number(grandCartons.toFixed(2))} كرتونة</td>
+            <td>${grandRibbons.toLocaleString()} رابطة</td>
+            <td style="font-size:13px;">${grandValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ج.م</td>
+        </tr>
+    `;
+
+    tbody.innerHTML = rowsHtml;
+    if (summaryEl) {
+        summaryEl.innerText = `إجمالي الكراتين المحملة في الفترة: ${Number(grandCartons.toFixed(2))} كرتونة (${grandRibbons.toLocaleString()} رابطة) | الإجمالي: ${grandValue.toLocaleString()} ج.م`;
+    }
+}
+
+// ==================== 3. تصدير الإكسيل: التفاصيل باليوم + شيت الملخص ====================
+function exportMenofItemLoadsExcel() {
+    const dailyEntries = getFilteredMenofItemEntries();
+    if (dailyEntries.length === 0) {
+        showToast("⚠️ لا توجد بيانات تحميلات في هذه الفترة لتصديرها.", "warning");
+        return;
+    }
+
+    const arabicDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    let totalCartons = 0;
+    let totalRibbons = 0;
+    let totalValue = 0;
+
+    // الشيت الأول: التفاصيل باليوم
+    const dailySheetRows = dailyEntries.map(e => {
+        const dt = new Date(e.date + 'T00:00:00');
+        const dayName = isNaN(dt.getTime()) ? '' : arabicDays[dt.getDay()];
+        totalCartons += e.cartons;
+        totalRibbons += e.ribbons;
+        totalValue += e.totalValue;
+
+        return {
+            'التاريخ': e.date,
+            'اليوم': dayName,
+            'اسم الصنف': e.name,
+            'كود الصنف': e.code,
+            'الكمية المحملة (كرتونة)': Number(e.cartons.toFixed(2)),
+            'ما يعادل (رابطة)': e.ribbons,
+            'سعر الكرتونة (ج.م)': e.price,
+            'إجمالي قيمة الصنف (ج.م)': Number(e.totalValue.toFixed(2)),
+            'إيداع الشحنة (ج.م)': e.loadDeposit
+        };
+    });
+
+    dailySheetRows.push({
+        'التاريخ': 'الإجمالي الكلي',
+        'اليوم': '',
+        'اسم الصنف': '',
+        'كود الصنف': '',
+        'الكمية المحملة (كرتونة)': Number(totalCartons.toFixed(2)),
+        'ما يعادل (رابطة)': totalRibbons,
+        'سعر الكرتونة (ج.م)': '',
+        'إجمالي قيمة الصنف (ج.م)': Number(totalValue.toFixed(2)),
+        'إيداع الشحنة (ج.م)': ''
+    });
+
+    // الشيت الثاني: الملخص المجمع للأصناف
+    const groupedMap = {};
+    dailyEntries.forEach(e => {
+        const key = (e.code && e.code !== '-') ? e.code : e.name;
+        if (!groupedMap[key]) {
+            groupedMap[key] = { name: e.name, code: e.code, count: 0, cartons: 0, ribbons: 0, val: 0 };
+        }
+        groupedMap[key].count += 1;
+        groupedMap[key].cartons += e.cartons;
+        groupedMap[key].ribbons += e.ribbons;
+        groupedMap[key].val += e.totalValue;
+    });
+
+    const summarySheetRows = Object.values(groupedMap).map(g => ({
+        'اسم الصنف': g.name,
+        'كود الصنف': g.code,
+        'عدد مرات التحميل': g.count,
+        'إجمالي الكراتين المحملة': Number(g.cartons.toFixed(2)),
+        'ما يعادل (رابطة)': g.ribbons,
+        'إجمالي القيمة (ج.م)': Number(g.val.toFixed(2))
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const wsDaily = XLSX.utils.json_to_sheet(dailySheetRows);
+    const wsSummary = XLSX.utils.json_to_sheet(summarySheetRows);
+
+    wsDaily['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 24 }, { wch: 16 }, { wch: 20 }, { wch: 16 }, { wch: 18 }, { wch: 22 }, { wch: 18 }];
+    wsSummary['!cols'] = [{ wch: 24 }, { wch: 16 }, { wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 22 }];
+
+    XLSX.utils.book_append_sheet(wb, wsDaily, "التفاصيل باليوم");
+    XLSX.utils.book_append_sheet(wb, wsSummary, "ملخص الأصناف المجمع");
+
+    const fromLbl = document.getElementById('menofItemsFromDate')?.value || document.getElementById('menofItemsMonthSelect')?.value || 'الكل';
+    const toLbl = document.getElementById('menofItemsToDate')?.value || '';
+    const fileName = `تحميلات_منوف_باليوم_${fromLbl}${toLbl ? '_الى_' + toLbl : ''}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+    showToast("✅ تم تصدير ملف الإكسيل بالتفاصيل اليومية والملخص المجمع!", "success");
+}
+
+// ==================== 4. تجهيز الدفع الإلكتروني (InstaPay / تحويل بنكي / روابط الدفع) ====================
+const origApplyBranding = applySystemBranding;
+applySystemBranding = function() {
+    if (typeof origApplyBranding === 'function') origApplyBranding();
+    const mapFields = {
+        sysInputInstapayHandle: systemSettings.instapayHandle || '',
+        sysInputInstapayLink: systemSettings.instapayLink || '',
+        sysInputBankName: systemSettings.bankName || '',
+        sysInputBankAccName: systemSettings.bankAccountName || '',
+        sysInputBankAccNum: systemSettings.bankAccountNumber || '',
+        sysInputBankIban: systemSettings.bankIban || '',
+        sysInputCustomPayLink: systemSettings.customPaymentLink || ''
+    };
+    for (let id in mapFields) {
+        const el = document.getElementById(id);
+        if (el) el.value = mapFields[id];
+    }
+    updateElectronicPaymentPreview();
+};
+
+const origSaveSettings = saveSystemSettingsDirect;
+saveSystemSettingsDirect = function() {
+    systemSettings.instapayHandle = document.getElementById('sysInputInstapayHandle')?.value.trim() || '';
+    systemSettings.instapayLink = document.getElementById('sysInputInstapayLink')?.value.trim() || '';
+    systemSettings.bankName = document.getElementById('sysInputBankName')?.value.trim() || '';
+    systemSettings.bankAccountName = document.getElementById('sysInputBankAccName')?.value.trim() || '';
+    systemSettings.bankAccountNumber = document.getElementById('sysInputBankAccNum')?.value.trim() || '';
+    systemSettings.bankIban = document.getElementById('sysInputBankIban')?.value.trim() || '';
+    systemSettings.customPaymentLink = document.getElementById('sysInputCustomPayLink')?.value.trim() || '';
+    if (typeof origSaveSettings === 'function') origSaveSettings();
+};
+
+const origCalcTotals = calcTotals;
+calcTotals = function() {
+    if (typeof origCalcTotals === 'function') origCalcTotals();
+    updateElectronicPaymentPreview();
+};
+
+function onInvoicePaymentMethodChange() {
+    const method = document.getElementById('invoicePaymentMethodSelect')?.value || 'cash';
+    const panel = document.getElementById('electronicPaymentDetailsPanel');
+    if (!panel) return;
+    panel.style.display = (method === 'cash') ? 'none' : 'block';
+    updateElectronicPaymentPreview();
+}
+
+function buildElectronicPaymentPayload() {
+    const method = document.getElementById('invoicePaymentMethodSelect')?.value || 'cash';
+    const grandVal = parseFloat(document.getElementById('grandTotal')?.innerText) || 0;
+    const customAmt = parseFloat(document.getElementById('epayCustomAmount')?.value);
+    const amount = (!isNaN(customAmt) && customAmt > 0) ? customAmt : grandVal;
+
+    const clientName = document.getElementById('clientName')?.value.trim() || 'العميل';
+    const invNo = document.getElementById('invoiceNo')?.value.trim() || '';
+    const customLink = document.getElementById('epayCustomInvoiceLink')?.value.trim() || '';
+
+    const ipa = systemSettings.instapayHandle || 'غير محدد بالإعدادات';
+    const ipLink = customLink || systemSettings.instapayLink || '';
+    const bName = systemSettings.bankName || 'غير محدد بالإعدادات';
+    const bAccName = systemSettings.bankAccountName || systemSettings.companyName || 'BLACK HORSE';
+    const bAccNum = systemSettings.bankAccountNumber || '';
+    const bIban = systemSettings.bankIban || '';
+    const genPayLink = customLink || systemSettings.customPaymentLink || systemSettings.instapayLink || '';
+
+    let htmlPreview = `<b>👤 العميل:</b> ${clientName} | <b>🧾 فاتورة:</b> #${invNo} | <b>💰 المبلغ:</b> <span style="color:#16a34a; font-weight:bold;">${amount.toFixed(2)} ج.م</span><br>`;
+    let textMsg = `*${systemSettings.companyName || 'BLACK HORSE'} - طلب سداد إلكتروني*\n` +
+                  `👤 العميل: ${clientName}\n` +
+                  `🧾 فاتورة رقم: #${invNo}\n` +
+                  `💰 المبلغ المطلوب: *${amount.toFixed(2)} ج.م*\n` +
+                  `----------------------------\n`;
+
+    if (method === 'instapay') {
+        htmlPreview += `⚡ <b>الدفع عبر إنستا باي (InstaPay):</b><br>• عنوان الدفع (IPA): <b style="color:#7c3aed;">${ipa}</b>`;
+        textMsg += `⚡ *الدفع اللحظي عبر InstaPay:*\n• عنوان الدفع (IPA): ${ipa}\n`;
+        if (ipLink) {
+            htmlPreview += `<br>• رابط الدفع المباشر: <a href="${ipLink}" target="_blank" style="color:#0284c7; font-weight:bold;">${ipLink}</a>`;
+            textMsg += `• رابط الدفع المباشر:\n${ipLink}\n`;
+        }
+    } else if (method === 'bank_transfer') {
+        htmlPreview += `🏦 <b>بيانات التحويل البنكي:</b><br>• البنك: <b>${bName}</b> | المستفيد: <b>${bAccName}</b>`;
+        textMsg += `🏦 *بيانات التحويل البنكي:*\n• البنك: ${bName}\n• اسم المستفيد: ${bAccName}\n`;
+        if (bAccNum) {
+            htmlPreview += `<br>• رقم الحساب: <b>${bAccNum}</b>`;
+            textMsg += `• رقم الحساب: ${bAccNum}\n`;
+        }
+        if (bIban) {
+            htmlPreview += `<br>• IBAN: <b>${bIban}</b>`;
+            textMsg += `• رقم الآيبان (IBAN): ${bIban}\n`;
+        }
+    } else if (method === 'payment_link') {
+        htmlPreview += `🔗 <b>رابط الدفع الإلكتروني المباشر:</b><br>`;
+        if (genPayLink) {
+            htmlPreview += `<a href="${genPayLink}" target="_blank" style="color:#0284c7; font-weight:bold;">${genPayLink}</a>`;
+            textMsg += `🔗 *اضغط على الرابط لإتمام السداد إلكترونياً:*\n${genPayLink}\n`;
+        } else {
+            htmlPreview += `<span style="color:#dc2626;">يرجى إدخال رابط الدفع في الحقل أعلاه أو في إعدادات النظام.</span>`;
+            textMsg += `🔗 رابط الدفع الإلكتروني: (يرجى إضافة الرابط)\n`;
+        }
+    }
+
+    textMsg += `----------------------------\nيرجى إرسال صورة إيصال التحويل بعد إتمام العملية.`;
+    return { method, amount, htmlPreview, textMsg };
+}
+
+function updateElectronicPaymentPreview() {
+    const card = document.getElementById('epayRenderedCard');
+    if (!card) return;
+    const payload = buildElectronicPaymentPayload();
+    card.innerHTML = payload.htmlPreview;
+}
+
+function copyElectronicPaymentDetails() {
+    const payload = buildElectronicPaymentPayload();
+    navigator.clipboard.writeText(payload.textMsg).then(() => {
+        showToast("📋 تم نسخ بيانات ورابط الدفع بنجاح! جاهز للصق.", "success");
+    }).catch(() => {
+        showToast("⚠️ تعذر النسخ التلقائي، انسخ النص يدوياً.", "warning");
+    });
+}
+
+function sendElectronicPaymentRequestWhatsApp() {
+    const payload = buildElectronicPaymentPayload();
+    const clientPhone = document.getElementById('clientPhoneInput')?.value.trim() || '';
+    const cleanPhone = clientPhone.replace(/\D/g, '');
+    const waPhone = cleanPhone
+        ? (cleanPhone.startsWith('20') ? cleanPhone : '20' + cleanPhone.replace(/^0+/, ''))
+        : getTargetWhatsApp();
+
+    window.open(`https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(payload.textMsg)}`, '_blank');
+}
+
+</script>
 </body>
 </html>
