@@ -267,6 +267,7 @@
             <div id="tabLmInvoices" class="tab-btn" onclick="switchTab('lmInvoices')" style="display:none; background:#fef3c7;">🚬 فواتير LM</div>
             <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات والتحكم</div>
             <div id="tabWhatsappQuotas" class="tab-btn" onclick="switchTab('whatsappQuotas')" style="display:none; background:#dcfce7; color:#166534;">💬 إشعارات الحصص (واتساب)</div>
+            <div id="tabSecretPayment" class="tab-btn" onclick="switchTab('secretPayment')" style="display:none; background:#e0f2fe; color:#0369a1; border:1px dashed #0284c7;">💳 روابط الدفع</div>
         </div>
 
         <!-- أ) فاتورة جديدة -->
@@ -344,39 +345,6 @@
             <div id="productsList"></div>
 
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
-
-            <!-- صندوق تجهيز الدفع بـ InstaPay والتحويل البنكي وروابط الدفع -->
-            <div id="invoicePaymentPrepBox" style="background:#f8fafc; border:1.5px solid #0284c7; border-radius:10px; padding:12px; margin-bottom:10px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
-                    <span style="font-weight:bold; color:#0369a1; font-size:13px;">💳 تجهيز التحصيل والدفع الإلكتروني:</span>
-                    <select id="invoicePaymentMethodSelect" onchange="onInvoicePaymentMethodChange()" style="width:auto; min-width:190px; padding:6px 10px; border:1.5px solid #0284c7; border-radius:6px; font-weight:bold; font-size:12px; background:#fff; color:#0f172a;">
-                        <option value="cash">💵 نقدي (كاش)</option>
-                        <option value="instapay">⚡ إنستا باي (InstaPay)</option>
-                        <option value="bank_transfer">🏦 تحويل بنكي (Bank Transfer)</option>
-                        <option value="payment_link">🔗 رابط دفع إلكتروني (Payment Link)</option>
-                    </select>
-                </div>
-
-                <div id="electronicPaymentDetailsPanel" style="display:none; background:#fff; border:1px dashed #38bdf8; border-radius:8px; padding:10px; font-size:12px;">
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
-                        <div>
-                            <label style="font-size:11px; font-weight:bold; color:#334155;">المبلغ المطلوب تحصيله (ج.م):</label>
-                            <input type="number" id="epayCustomAmount" placeholder="تلقائي من إجمالي الفاتورة" oninput="updateElectronicPaymentPreview()" style="padding:6px; font-weight:bold; color:#16a34a;">
-                        </div>
-                        <div>
-                            <label style="font-size:11px; font-weight:bold; color:#334155;">رابط دفع مخصص للفاتورة (اختياري):</label>
-                            <input type="url" id="epayCustomInvoiceLink" placeholder="اتركه فارغاً لاستخدام رابط الشركة" oninput="updateElectronicPaymentPreview()" style="padding:6px;">
-                        </div>
-                    </div>
-
-                    <div id="epayRenderedCard" style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px; padding:8px; line-height:1.7; color:#0f172a; margin-bottom:8px;"></div>
-
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-                        <button type="button" class="btn btn-info" style="margin:0; padding:7px; font-size:11.5px;" onclick="copyElectronicPaymentDetails()">📋 نسخ بيانات ورابط الدفع</button>
-                        <button type="button" class="btn btn-whatsapp" style="margin:0; padding:7px; font-size:11.5px;" onclick="sendElectronicPaymentRequestWhatsApp()">📲 إرسال طلب الدفع للعميل واتساب</button>
-                    </div>
-                </div>
-            </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
                 <button id="btnThermalPrint" class="btn btn-thermal" onclick="triggerDirectThermalDesktop()">🖨️ طباعة طابعة حرارية (EXE / USB)</button>
@@ -1235,6 +1203,45 @@
                 <div class="form-group"><label>كلمة السر الحالية:</label><input type="password" id="currentPassInput"></div>
                 <div class="form-group"><label>كلمة السر الجديدة:</label><input type="password" id="newPassInput"></div>
                 <button class="btn btn-primary" onclick="changeMyPassword()">حفظ كلمة السر</button>
+            </div>
+        </div>
+
+        <!-- تبويب مخفي: روابط الدفع الإلكتروني والتحويلات -->
+        <div id="sectionSecretPayment" style="display: none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#f0f9ff; border:1px solid #bae6fd; padding:8px 12px; border-radius:8px; margin-bottom:10px;">
+                <span style="font-weight:bold; color:#0369a1; font-size:13px;">🔒 تبويب روابط الدفع الإلكتروني السريع</span>
+                <button type="button" class="btn btn-danger" style="width:auto; margin:0; padding:5px 10px; font-size:11px; background:#64748b;" onclick="toggleSecretPaymentTab(false)">🙈 إخفاء التبويب</button>
+            </div>
+
+            <div id="invoicePaymentPrepBox" style="background:#f8fafc; border:1.5px solid #0284c7; border-radius:10px; padding:12px; margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+                    <span style="font-weight:bold; color:#0369a1; font-size:13px;">💳 تجهيز التحصيل والدفع الإلكتروني:</span>
+                    <select id="invoicePaymentMethodSelect" onchange="onInvoicePaymentMethodChange()" style="width:auto; min-width:190px; padding:6px 10px; border:1.5px solid #0284c7; border-radius:6px; font-weight:bold; font-size:12px; background:#fff; color:#0f172a;">
+                        <option value="instapay" selected>⚡ إنستا باي (InstaPay)</option>
+                        <option value="bank_transfer">🏦 تحويل بنكي (Bank Transfer)</option>
+                        <option value="payment_link">🔗 رابط دفع إلكتروني (Payment Link)</option>
+                    </select>
+                </div>
+
+                <div id="electronicPaymentDetailsPanel" style="display:block; background:#fff; border:1px dashed #38bdf8; border-radius:8px; padding:10px; font-size:12px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:bold; color:#334155;">المبلغ المطلوب تحصيله (ج.م):</label>
+                            <input type="number" id="epayCustomAmount" placeholder="تلقائي من إجمالي الفاتورة" oninput="updateElectronicPaymentPreview()" style="padding:6px; font-weight:bold; color:#16a34a;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:bold; color:#334155;">رابط دفع مخصص للفاتورة (اختياري):</label>
+                            <input type="url" id="epayCustomInvoiceLink" placeholder="اتركه فارغاً لاستخدام رابط الشركة" oninput="updateElectronicPaymentPreview()" style="padding:6px;">
+                        </div>
+                    </div>
+
+                    <div id="epayRenderedCard" style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px; padding:8px; line-height:1.7; color:#0f172a; margin-bottom:8px;"></div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <button type="button" class="btn btn-info" style="margin:0; padding:7px; font-size:11.5px;" onclick="copyElectronicPaymentDetails()">📋 نسخ بيانات ورابط الدفع</button>
+                        <button type="button" class="btn btn-whatsapp" style="margin:0; padding:7px; font-size:11.5px;" onclick="sendElectronicPaymentRequestWhatsApp()">📲 إرسال طلب الدفع للعميل واتساب</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -5178,7 +5185,8 @@ async function handleLogin() {
                 'shops': { btn: 'tabShops', sec: 'sectionShops' },
                 'lmInvoices': { btn: 'tabLmInvoices', sec: 'sectionLmInvoices' },
                 'settings': { btn: 'tabSettings', sec: 'sectionSettings' },
-                'whatsappQuotas': { btn: 'tabWhatsappQuotas', sec: 'sectionWhatsappQuotas' }
+                'whatsappQuotas': { btn: 'tabWhatsappQuotas', sec: 'sectionWhatsappQuotas' },
+                'secretPayment': { btn: 'tabSecretPayment', sec: 'sectionSecretPayment' }
             };
 
             for(let k in tabsMap) {
@@ -5189,6 +5197,7 @@ async function handleLogin() {
             }
 
             if(tabKey === 'clientQuota') { populateQuotaClientsSelect(); renderClientQuotasTable(); }
+            if(tabKey === 'secretPayment') { onInvoicePaymentMethodChange(); updateElectronicPaymentPreview(); }
             if(tabKey === 'saved') { populateRoutesList(); renderSavedInvoices(); }
             if(tabKey === 'report') { populateRoutesList(); updateReportClientsSelect(); updateReportProductsSelect(); renderDailyReport(); }
             if(tabKey === 'carStock') renderCarStockTable();
@@ -7777,6 +7786,48 @@ function sendElectronicPaymentRequestWhatsApp() {
 
     window.open(`https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(payload.textMsg)}`, '_blank');
 }
+
+// ==================== إظهار وإخفاء التبويب المخفي لروابط الدفع ====================
+let secretPayTapCount = 0;
+let secretPayTapTimer = null;
+
+function toggleSecretPaymentTab(show) {
+    const tabBtn = document.getElementById('tabSecretPayment');
+    if (!tabBtn) return;
+    tabBtn.style.display = show ? 'block' : 'none';
+    if (show) {
+        switchTab('secretPayment');
+        showToast("🔓 تم فتح تبويب روابط الدفع المخفي", "info");
+    } else {
+        switchTab('invoice');
+        showToast("🔒 تم إخفاء تبويب روابط الدفع", "info");
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const userBar = document.querySelector('#salesView .delegate-info');
+    if (userBar) {
+        userBar.addEventListener('click', (e) => {
+            if (e.target && e.target.getAttribute('onclick') === 'handleLogout()') return;
+            secretPayTapCount++;
+            clearTimeout(secretPayTapTimer);
+            secretPayTapTimer = setTimeout(() => { secretPayTapCount = 0; }, 2000);
+            if (secretPayTapCount >= 5) {
+                secretPayTapCount = 0;
+                const tabBtn = document.getElementById('tabSecretPayment');
+                const isVisible = tabBtn && tabBtn.style.display !== 'none';
+                toggleSecretPaymentTab(!isVisible);
+            }
+        });
+    }
+});
+
+const origLogoutSecretPay = handleLogout;
+handleLogout = function() {
+    const tabBtn = document.getElementById('tabSecretPayment');
+    if (tabBtn) tabBtn.style.display = 'none';
+    if (typeof origLogoutSecretPay === 'function') origLogoutSecretPay();
+};
 
 </script>
 </body>
