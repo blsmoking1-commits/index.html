@@ -346,6 +346,54 @@
 
             <div class="grand-box">الإجمالي الكلي: <span id="grandTotal">0.00</span> ج.م</div>
 
+            <!-- خيارات الدفع للمندوب + تبويب التحويل والكاميرا -->
+            <div id="invPayMethodBox" style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:10px; margin:10px 0;">
+                <div style="font-weight:bold; font-size:12.5px; color:#0f172a; margin-bottom:8px;">💳 طريقة سداد الفاتورة:</div>
+                <input type="hidden" id="invPayMethodInput" value="cash">
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px;">
+                    <button type="button" id="btnPayOpt_cash" class="btn" style="margin:0; padding:9px 4px; font-size:12px; background:#16a34a; color:#fff; border:2px solid #0f172a;" onclick="selectRepPaymentMethod('cash')">💵 نقدي</button>
+                    <button type="button" id="btnPayOpt_bank_transfer" class="btn" style="margin:0; padding:9px 4px; font-size:12px; background:#fff; color:#1e293b; border:1.5px solid #cbd5e1;" onclick="selectRepPaymentMethod('bank_transfer')">🏦 تحويل بنكي</button>
+                    <button type="button" id="btnPayOpt_instapay" class="btn" style="margin:0; padding:9px 4px; font-size:12px; background:#fff; color:#1e293b; border:1.5px solid #cbd5e1;" onclick="selectRepPaymentMethod('instapay')">⚡ إنستا باي</button>
+                </div>
+
+                <!-- التبويب الذي يظهر عند اختيار تحويل بنكي أو إنستا باي -->
+                <div id="invElectronicPanel" style="display:none; margin-top:10px; background:#f0f9ff; border:1.5px solid #0284c7; border-radius:8px; padding:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span id="invEpayTitle" style="font-weight:bold; color:#0369a1; font-size:12.5px;">⚡ بيانات الدفع الإلكتروني</span>
+                        <button type="button" style="background:#e2e8f0; border:none; border-radius:5px; padding:3px 8px; font-size:11px; color:#334155; font-weight:bold; cursor:pointer;" onclick="selectRepPaymentMethod('cash')">✖️ إغلاق (نقدي)</button>
+                    </div>
+
+                    <div id="invEpayInfoCard" style="background:#fff; border:1px dashed #38bdf8; border-radius:6px; padding:8px; font-size:12px; line-height:1.7; color:#0f172a; margin-bottom:8px;"></div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:10px;">
+                        <button type="button" class="btn btn-info" style="margin:0; padding:7px; font-size:11px;" onclick="copyRepPaymentDetails()">📋 نسخ بيانات التحويل</button>
+                        <button type="button" class="btn btn-whatsapp" style="margin:0; padding:7px; font-size:11px;" onclick="sendRepPaymentWhatsApp()">📲 إرسال البيانات للعميل</button>
+                    </div>
+
+                    <!-- قسم فتح الكاميرا وإرفاق صورة الإيصال -->
+                    <div style="background:#fffbeb; border:1.5px dashed #f59e0b; border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-weight:bold; font-size:12px; color:#92400e; margin-bottom:6px;">📸 إرفاق صورة إيصال التحويل / لقطة الشاشة:</div>
+
+                        <input type="file" id="invReceiptCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleReceiptPhotoSelected(event)">
+                        <input type="file" id="invReceiptGalleryInput" accept="image/*" style="display:none;" onchange="handleReceiptPhotoSelected(event)">
+
+                        <div style="display:grid; grid-template-columns: 1.4fr 1fr; gap:6px;">
+                            <button type="button" class="btn" style="margin:0; padding:9px 6px; font-size:12px; background:#d97706; color:#fff; font-weight:bold;" onclick="document.getElementById('invReceiptCameraInput').click()">📷 فتح الكاميرا لتصوير الإيصال</button>
+                            <button type="button" class="btn" style="margin:0; padding:9px 6px; font-size:11.5px; background:#475569; color:#fff;" onclick="document.getElementById('invReceiptGalleryInput').click()">🖼️ من الاستوديو</button>
+                        </div>
+
+                        <div id="invReceiptPreviewWrap" style="display:none; margin-top:8px; background:#fff; border:1px solid #cbd5e1; border-radius:6px; padding:6px;">
+                            <img id="invReceiptPreviewImg" src="" alt="صورة الإيصال" style="max-width:100%; max-height:200px; border-radius:6px; display:block; margin:0 auto 6px auto;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span id="invReceiptSizeBadge" style="font-size:11px; color:#16a34a; font-weight:bold;">✅ تم إرفاق الصورة</span>
+                                <button type="button" class="btn btn-danger" style="width:auto; margin:0; padding:4px 10px; font-size:11px;" onclick="clearAttachedReceiptPhoto()">🗑️ حذف / إعادة التصوير</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
                 <button id="btnThermalPrint" class="btn btn-thermal" onclick="triggerDirectThermalDesktop()">🖨️ طباعة طابعة حرارية (EXE / USB)</button>
                 <button id="btnRawbtPrint" class="btn btn-bluetooth" onclick="triggerViaRawBT()">📱 طباعة RawBT (بلوتوث)</button>
@@ -4021,6 +4069,9 @@ async function handleLogin() {
                     odometer: order.odometer || 0,
                     total: order.grandTotal,
                     totalQty: order.totalUnits || 0,
+                    paymentMethod: order.paymentMethod || 'cash',
+                    paymentMethodLabel: order.paymentMethodLabel || 'نقدي',
+                    paymentReceiptImage: order.paymentReceiptImage || null,
                     status: 'active',
                     items: order.items || [],
                     location: order.location || null,
@@ -4344,6 +4395,9 @@ async function handleLogin() {
                             totalUnits: totalRibbonsCount,
                             grandTotal: grand,
                             date: invDate,
+                            paymentMethod: document.getElementById('invPayMethodInput')?.value || 'cash',
+                            paymentMethodLabel: ({ cash: 'نقدي', bank_transfer: 'تحويل بنكي', instapay: 'إنستا باي (InstaPay)' }[document.getElementById('invPayMethodInput')?.value || 'cash'] || 'نقدي'),
+                            paymentReceiptImage: attachedReceiptImageBase64 || null,
                             status: 'pending',
                             location: locObj
                         };
@@ -4389,6 +4443,9 @@ async function handleLogin() {
                     client: client, phone: finalPhone, village: village, route: (route !== 'ALL' ? route : (cloudClientsRoutes[client] || '')), clientCode: clientCode,
                     vehicleKey: vehicleKey, vehicleName: vehicleName, odometer: odometerReading,
                     total: grand, totalQty: totalRibbonsCount, status: 'active', items: itemsSoldList,
+                    paymentMethod: document.getElementById('invPayMethodInput')?.value || 'cash',
+                    paymentMethodLabel: ({ cash: 'نقدي', bank_transfer: 'تحويل بنكي', instapay: 'إنستا باي (InstaPay)' }[document.getElementById('invPayMethodInput')?.value || 'cash'] || 'نقدي'),
+                    paymentReceiptImage: attachedReceiptImageBase64 || null,
                     location: locObj,
                     clientLocation: clientLoc
                 };
@@ -4434,6 +4491,7 @@ async function handleLogin() {
                       `${itemsStr}\n` +
                       `----------------------------\n` +
                       `💰 *الإجمالي الكلي: ${rec.total.toFixed(2)} ج.م*\n` +
+                      `💳 طريقة السداد: ${rec.paymentMethodLabel || 'نقدي'}\n` +
                       `شكراً لتعاملكم معنا.`;
 
             let targetPhone = formatEgyptWhatsappPhone(rec.phone) || getTargetWhatsApp();
@@ -4533,7 +4591,7 @@ async function handleLogin() {
                 }
 
                 let rowStyle = isCancelled ? 'background:#fff1f2; opacity:0.85;' : '';
-                html += `<tr style="${rowStyle}"><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}<br><small style="color:#64748b;">${inv.phone||''}</small></td><td><span style="color:#1e40af; font-weight:bold;">${displayRoute}</span></td><td><b>${inv.vehicleName || '-'}</b></td><td>${inv.odometer ? inv.odometer + ' كم' : '-'}</td><td>${inv.delegateName}</td><td style="${isCancelled ? 'text-decoration:line-through; color:#991b1b;' : ''}">${inv.total} ج.م</td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
+                html += `<tr style="${rowStyle}"><td><b>#${inv.invNo}</b></td><td>${inv.date}</td><td>${inv.client}<br><small style="color:#64748b;">${inv.phone||''}</small></td><td><span style="color:#1e40af; font-weight:bold;">${displayRoute}</span></td><td><b>${inv.vehicleName || '-'}</b></td><td>${inv.odometer ? inv.odometer + ' كم' : '-'}</td><td>${inv.delegateName}</td><td style="${isCancelled ? 'text-decoration:line-through; color:#991b1b;' : ''}">${inv.total} ج.م<br><small style="color:#0369a1; font-weight:bold;">${inv.paymentMethodLabel || 'نقدي'}${inv.paymentReceiptImage ? ' 📸' : ''}</small></td><td>${statusBadge}</td><td>${actionButtons}</td></tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -4799,7 +4857,23 @@ async function handleLogin() {
                     </div>`;
             }
 
-            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>التاريخ:</b> ${inv.date}<br><b>السيارة:</b> ${inv.vehicleName || 'عام'} (عداد: ${inv.odometer || '-'} كم)<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>رقم الموبايل:</b> ${inv.phone || 'غير مسجل'}<br><b>الخط:</b> ${inv.route || 'غير محدد'}<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
+            let payBadgeHtml = `<span style="background:#dcfce7; color:#166534; padding:2px 8px; border-radius:4px; font-weight:bold;">💵 ${inv.paymentMethodLabel || 'نقدي'}</span>`;
+            if (inv.paymentMethod === 'instapay') {
+                payBadgeHtml = `<span style="background:#f3e8ff; color:#6b21a8; padding:2px 8px; border-radius:4px; font-weight:bold;">⚡ ${inv.paymentMethodLabel || 'إنستا باي (InstaPay)'}</span>`;
+            } else if (inv.paymentMethod === 'bank_transfer') {
+                payBadgeHtml = `<span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:4px; font-weight:bold;">🏦 ${inv.paymentMethodLabel || 'تحويل بنكي'}</span>`;
+            }
+
+            let receiptPhotoHtml = '';
+            if (inv.paymentReceiptImage) {
+                receiptPhotoHtml = `
+                    <div style="background:#fffbeb; border:1.5px solid #fcd34d; padding:8px; border-radius:6px; margin:8px 0; text-align:center;">
+                        <div style="font-weight:bold; color:#92400e; font-size:12px; margin-bottom:6px;">📸 صورة إيصال التحويل المرفقة من المندوب:</div>
+                        <img src="${inv.paymentReceiptImage}" alt="إيصال التحويل" style="max-width:100%; max-height:280px; border-radius:6px; border:1px solid #cbd5e1; cursor:pointer;" onclick="window.open(this.src, '_blank')">
+                    </div>`;
+            }
+
+            document.getElementById('modalInvoiceContent').innerHTML = `<b>رقم الفاتورة:</b> #${inv.invNo}<br><b>طريقة السداد:</b> ${payBadgeHtml}<br>${receiptPhotoHtml}<b>التاريخ:</b> ${inv.date}<br><b>السيارة:</b> ${inv.vehicleName || 'عام'} (عداد: ${inv.odometer || '-'} كم)<br><b>العميل:</b> ${inv.client} (${inv.clientCode || '-'})<br><b>رقم الموبايل:</b> ${inv.phone || 'غير مسجل'}<br><b>الخط:</b> ${inv.route || 'غير محدد'}<br><b>المندوب:</b> ${inv.delegateName}<br><b>القرية:</b> ${inv.village || 'غير محدد'}<br>${mapHtml}<hr><b>الأصناف:</b><br>${itemsHtml}<br><hr><b>الإجمالي:</b> ${inv.total} ج.م`;
             document.getElementById('invoiceModal').style.display = 'flex';
         }
 
@@ -7827,6 +7901,157 @@ handleLogout = function() {
     const tabBtn = document.getElementById('tabSecretPayment');
     if (tabBtn) tabBtn.style.display = 'none';
     if (typeof origLogoutSecretPay === 'function') origLogoutSecretPay();
+};
+
+
+// ==================== نظام اختيار الدفع (نقدي / تحويل / إنستا) + الكاميرا للمندوب ====================
+let attachedReceiptImageBase64 = null;
+
+function selectRepPaymentMethod(method) {
+    const hiddenInput = document.getElementById('invPayMethodInput');
+    if (hiddenInput) hiddenInput.value = method;
+
+    ['cash', 'bank_transfer', 'instapay'].forEach(m => {
+        const btn = document.getElementById('btnPayOpt_' + m);
+        if (!btn) return;
+        if (m === method) {
+            btn.style.background = (m === 'cash') ? '#16a34a' : (m === 'instapay' ? '#7c3aed' : '#0284c7');
+            btn.style.color = '#fff';
+            btn.style.border = '2px solid #0f172a';
+        } else {
+            btn.style.background = '#fff';
+            btn.style.color = '#1e293b';
+            btn.style.border = '1.5px solid #cbd5e1';
+        }
+    });
+
+    const panel = document.getElementById('invElectronicPanel');
+    if (!panel) return;
+
+    if (method === 'cash') {
+        panel.style.display = 'none';
+    } else {
+        panel.style.display = 'block';
+        renderRepElectronicPaymentBox();
+    }
+}
+
+function getRepPaymentMessageData() {
+    const method = document.getElementById('invPayMethodInput')?.value || 'cash';
+    const grandVal = parseFloat(document.getElementById('grandTotal')?.innerText) || 0;
+    const clientName = document.getElementById('clientName')?.value.trim() || 'العميل';
+    const invNo = document.getElementById('invoiceNo')?.value.trim() || '';
+
+    const ipa = systemSettings.instapayHandle || 'غير محدد بالإعدادات';
+    const ipLink = systemSettings.instapayLink || '';
+    const bName = systemSettings.bankName || 'غير محدد بالإعدادات';
+    const bAccName = systemSettings.bankAccountName || systemSettings.companyName || 'BLACK HORSE';
+    const bAccNum = systemSettings.bankAccountNumber || '';
+    const bIban = systemSettings.bankIban || '';
+
+    let html = `<b>👤 العميل:</b> ${clientName} | <b>💰 المبلغ:</b> <span style="color:#16a34a; font-weight:bold;">${grandVal.toFixed(2)} ج.م</span><br>`;
+    let text = `*${systemSettings.companyName || 'BLACK HORSE'} - بيانات السداد*\n👤 العميل: ${clientName}\n🧾 فاتورة: #${invNo}\n💰 المبلغ: *${grandVal.toFixed(2)} ج.م*\n------------------\n`;
+
+    const titleEl = document.getElementById('invEpayTitle');
+    if (method === 'instapay') {
+        if (titleEl) titleEl.innerText = '⚡ التحصيل عبر إنستا باي (InstaPay)';
+        html += `⚡ <b>عنوان InstaPay (IPA):</b> <b style="color:#7c3aed;">${ipa}</b>`;
+        text += `⚡ *الدفع عبر InstaPay:*\n• عنوان الدفع: ${ipa}\n`;
+        if (ipLink) {
+            html += `<br>🔗 <b>رابط الدفع:</b> <a href="${ipLink}" target="_blank" style="color:#0284c7; font-weight:bold;">${ipLink}</a>`;
+            text += `• رابط الدفع المباشر: ${ipLink}\n`;
+        }
+    } else if (method === 'bank_transfer') {
+        if (titleEl) titleEl.innerText = '🏦 التحصيل عبر التحويل البنكي';
+        html += `🏦 <b>البنك:</b> ${bName} | <b>المستفيد:</b> ${bAccName}`;
+        text += `🏦 *بيانات التحويل البنكي:*\n• البنك: ${bName}\n• المستفيد: ${bAccName}\n`;
+        if (bAccNum) { html += `<br>• <b>رقم الحساب:</b> ${bAccNum}`; text += `• رقم الحساب: ${bAccNum}\n`; }
+        if (bIban) { html += `<br>• <b>IBAN:</b> ${bIban}`; text += `• IBAN: ${bIban}\n`; }
+    }
+    return { html, text };
+}
+
+function renderRepElectronicPaymentBox() {
+    const card = document.getElementById('invEpayInfoCard');
+    if (!card) return;
+    card.innerHTML = getRepPaymentMessageData().html;
+}
+
+function copyRepPaymentDetails() {
+    const { text } = getRepPaymentMessageData();
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("📋 تم نسخ بيانات التحويل!", "success");
+    }).catch(() => {
+        showToast("⚠️ تعذر النسخ التلقائي، انسخ النص يدوياً.", "warning");
+    });
+}
+
+function sendRepPaymentWhatsApp() {
+    const { text } = getRepPaymentMessageData();
+    const phone = document.getElementById('clientPhoneInput')?.value.trim() || '';
+    const waPhone = formatEgyptWhatsappPhone(phone) || getTargetWhatsApp();
+    window.open(`https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function handleReceiptPhotoSelected(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const maxDim = 900;
+            let w = img.width, h = img.height;
+            if (w > maxDim || h > maxDim) {
+                if (w > h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+                else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            attachedReceiptImageBase64 = canvas.toDataURL('image/jpeg', 0.72);
+            const approxKb = Math.round((attachedReceiptImageBase64.length * 3) / 4 / 1024);
+
+            const prevImg = document.getElementById('invReceiptPreviewImg');
+            const sizeBadge = document.getElementById('invReceiptSizeBadge');
+            const wrap = document.getElementById('invReceiptPreviewWrap');
+            if (prevImg) prevImg.src = attachedReceiptImageBase64;
+            if (sizeBadge) sizeBadge.innerText = `✅ تم إرفاق الصورة (${approxKb} KB)`;
+            if (wrap) wrap.style.display = 'block';
+            showToast("📸 تم التقاط وإرفاق صورة الإيصال بنجاح!", "success");
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearAttachedReceiptPhoto() {
+    attachedReceiptImageBase64 = null;
+    const camIn = document.getElementById('invReceiptCameraInput');
+    const galIn = document.getElementById('invReceiptGalleryInput');
+    const wrap = document.getElementById('invReceiptPreviewWrap');
+    if (camIn) camIn.value = '';
+    if (galIn) galIn.value = '';
+    if (wrap) wrap.style.display = 'none';
+}
+
+const origCalcTotalsRepPay = calcTotals;
+calcTotals = function() {
+    if (typeof origCalcTotalsRepPay === 'function') origCalcTotalsRepPay();
+    if (document.getElementById('invElectronicPanel')?.style.display !== 'none') {
+        renderRepElectronicPaymentBox();
+    }
+};
+
+const origInitSalesFormRepPay = initSalesForm;
+initSalesForm = function() {
+    if (typeof origInitSalesFormRepPay === 'function') origInitSalesFormRepPay();
+    clearAttachedReceiptPhoto();
+    selectRepPaymentMethod('cash');
 };
 
 </script>
