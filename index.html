@@ -7731,9 +7731,26 @@ function exportMenofItemLoadsExcel() {
 }
 
 // ==================== 4. تجهيز الدفع الإلكتروني (InstaPay / تحويل بنكي / روابط الدفع) ====================
+(function preloadEpaySettings() {
+    try {
+        const cached = JSON.parse(localStorage.getItem('bh_epay_settings_cache') || '{}');
+        if (typeof systemSettings === 'object' && systemSettings !== null) {
+            Object.assign(systemSettings, cached, systemSettings);
+        }
+    } catch (e) {}
+})();
+
 const origApplyBranding = applySystemBranding;
 applySystemBranding = function() {
     if (typeof origApplyBranding === 'function') origApplyBranding();
+    
+    try {
+        const cached = JSON.parse(localStorage.getItem('bh_epay_settings_cache') || '{}');
+        ['instapayHandle', 'instapayLink', 'bankName', 'bankAccountName', 'bankAccountNumber', 'bankIban', 'customPaymentLink'].forEach(k => {
+            if (!systemSettings[k] && cached[k]) systemSettings[k] = cached[k];
+        });
+    } catch (e) {}
+
     const mapFields = {
         sysInputInstapayHandle: systemSettings.instapayHandle || '',
         sysInputInstapayLink: systemSettings.instapayLink || '',
@@ -7747,21 +7764,43 @@ applySystemBranding = function() {
         const el = document.getElementById(id);
         if (el) el.value = mapFields[id];
     }
+    
     updateElectronicPaymentPreview();
+    if (typeof renderRepElectronicPaymentBox === 'function') {
+        renderRepElectronicPaymentBox();
+    }
 };
 
 const origSaveSettings = saveSystemSettingsDirect;
 saveSystemSettingsDirect = function() {
-    systemSettings.instapayHandle = document.getElementById('sysInputInstapayHandle')?.value.trim() || '';
-    systemSettings.instapayLink = document.getElementById('sysInputInstapayLink')?.value.trim() || '';
-    systemSettings.bankName = document.getElementById('sysInputBankName')?.value.trim() || '';
-    systemSettings.bankAccountName = document.getElementById('sysInputBankAccName')?.value.trim() || '';
-    systemSettings.bankAccountNumber = document.getElementById('sysInputBankAccNum')?.value.trim() || '';
-    systemSettings.bankIban = document.getElementById('sysInputBankIban')?.value.trim() || '';
-    systemSettings.customPaymentLink = document.getElementById('sysInputCustomPayLink')?.value.trim() || '';
-    if (typeof origSaveSettings === 'function') origSaveSettings();
-};
+    const epayData = {
+        instapayHandle: document.getElementById('sysInputInstapayHandle')?.value.trim() || '',
+        instapayLink: document.getElementById('sysInputInstapayLink')?.value.trim() || '',
+        bankName: document.getElementById('sysInputBankName')?.value.trim() || '',
+        bankAccountName: document.getElementById('sysInputBankAccName')?.value.trim() || '',
+        bankAccountNumber: document.getElementById('sysInputBankAccNum')?.value.trim() || '',
+        bankIban: document.getElementById('sysInputBankIban')?.value.trim() || '',
+        customPaymentLink: document.getElementById('sysInputCustomPayLink')?.value.trim() || ''
+    };
 
+    Object.assign(systemSettings, epayData);
+    
+    try {
+        localStorage.setItem('bh_epay_settings_cache', JSON.stringify(epayData));
+    } catch (e) {}
+
+    if (typeof origSaveSettings === 'function') origSaveSettings();
+
+    if (typeof db !== 'undefined' && db) {
+        db.ref('systemSettings').update(epayData).catch(() => {});
+    } else if (typeof firebase !== 'undefined' && firebase.database) {
+        firebase.database().ref('systemSettings').update(epayData).catch(() => {});
+    }
+
+    if (typeof renderRepElectronicPaymentBox === 'function') {
+        renderRepElectronicPaymentBox();
+    }
+};
 const origCalcTotals = calcTotals;
 calcTotals = function() {
     if (typeof origCalcTotals === 'function') origCalcTotals();
