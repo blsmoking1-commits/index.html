@@ -1,33 +1,1051 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة المبيعات والتتبع الشامل - شركة بلاك هورس</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
-        body { background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; }
-        .card { max-width: 850px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        .text-center { text-align: center; }
-        
-        .logo-box {
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>شركة بلاك هورس — BLACK HORSE | البوابة ونظام إدارة المبيعات</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ================= التنسيقات العامة وتبديل خلفية البوابة / النظام ================= */
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #070b14;
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+    body.erp-active {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      padding: 10px;
+      overflow-x: visible;
+    }
+    #bhPortalRoot {
+      min-height: 100vh;
+    }
+    body.erp-active #bhPortalRoot {
+      min-height: 0;
+    }
+
+    /* ================= 1. تنسيقات البوابة التعريفية وشاشة الدخول ================= */
+#bhPortalRoot {
+
+      --bg-main: #070b14;
+      --bg-surface: #0f1626;
+      --bg-elevated: #162035;
+      --gold: #d4af37;
+      --gold-bright: #f5d76e;
+      --gold-soft: rgba(212, 175, 55, 0.14);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-gold: rgba(212, 175, 55, 0.35);
+      --danger: #ef4444;
+      --success: #10b981;
+    
+}
+#bhPortalRoot, #bhPortalRoot * {
+
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', sans-serif;
+    
+}
+html {
+
+      scroll-behavior: smooth;
+    
+}
+#bhPortalRoot {
+
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.75;
+      overflow-x: hidden;
+    
+}
+#bhPortalRoot a {
+
+      text-decoration: none;
+      color: inherit;
+    
+}
+#bhPortalRoot .container {
+
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 22px;
+    
+}
+#bhPortalRoot .hidden {
+
+      display: none !important;
+    
+}
+#bhPortalRoot .btn {
+
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.22s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    
+}
+#bhPortalRoot .btn-gold {
+
+      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+      color: #070b14;
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.25);
+    
+}
+#bhPortalRoot .btn-gold:hover {
+
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(212, 175, 55, 0.38);
+    
+}
+#bhPortalRoot .btn-outline {
+
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright);
+    
+}
+#bhPortalRoot .btn-outline:hover {
+
+      background: var(--gold-soft);
+    
+}
+#bhPortalRoot .btn-ghost {
+
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+    
+}
+#bhPortalRoot .btn-ghost:hover {
+
+      background: #1e2b47;
+    
+}
+#bhPortalRoot .btn-danger {
+
+      background: rgba(239, 68, 68, 0.14);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    
+}
+#bhPortalRoot header.site-header {
+
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(7, 11, 20, 0.9);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-subtle);
+    
+}
+#bhPortalRoot .header-row {
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      gap: 14px;
+    
+}
+#bhPortalRoot .brand {
+
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    
+}
+#bhPortalRoot .brand-emblem {
+
+      width: 48px;
+      height: 48px;
+      border-radius: 15px;
+      background: linear-gradient(145deg, #1b253b, #0c1220);
+      border: 1.5px solid var(--gold);
+      color: var(--gold-bright);
+      font-weight: 900;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 22px rgba(212, 175, 55, 0.22);
+      flex-shrink: 0;
+    
+}
+#bhPortalRoot .brand-text h1 {
+
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      background: linear-gradient(90deg, var(--gold-bright), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    
+}
+#bhPortalRoot .brand-text span {
+
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: block;
+      margin-top: -2px;
+    
+}
+#bhPortalRoot .drawer-trigger {
+
+      width: 46px;
+      height: 46px;
+      border-radius: 13px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: 0.22s ease;
+    
+}
+#bhPortalRoot .drawer-trigger:hover {
+
+      background: var(--gold-soft);
+      transform: scale(1.03);
+    
+}
+#bhPortalRoot .drawer-line {
+
+      width: 20px;
+      height: 2.2px;
+      border-radius: 99px;
+      background: var(--gold-bright);
+    
+}
+#bhPortalRoot .drawer-backdrop {
+
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 15, 0.72);
+      backdrop-filter: blur(5px);
+      z-index: 1900;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.25s ease;
+    
+}
+#bhPortalRoot .drawer-backdrop.open {
+
+      opacity: 1;
+      visibility: visible;
+    
+}
+#bhPortalRoot aside.side-drawer {
+
+      position: fixed;
+      top: 0;
+      right: -330px;
+      width: 315px;
+      max-width: 86vw;
+      height: 100vh;
+      background: linear-gradient(180deg, #10182b, #090e1a);
+      border-left: 1px solid var(--border-gold);
+      z-index: 2000;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: -16px 0 45px rgba(0, 0, 0, 0.65);
+      transition: right 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    
+}
+#bhPortalRoot aside.side-drawer.open {
+
+      right: 0;
+    
+}
+#bhPortalRoot .drawer-top {
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 18px;
+    
+}
+#bhPortalRoot .drawer-close {
+
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    
+}
+#bhPortalRoot .drawer-links {
+
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    
+}
+#bhPortalRoot .drawer-link {
+
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    
+}
+#bhPortalRoot .drawer-link:hover {
+
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--border-subtle);
+    
+}
+#bhPortalRoot .drawer-login-btn {
+
+      margin-top: 16px;
+      padding: 13px 16px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+      color: #070b14;
+      font-weight: 900;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.25);
+    
+}
+#bhPortalRoot .hero {
+
+      padding: 72px 0 60px;
+      background:
+        radial-gradient(circle at 85% 15%, rgba(212, 175, 55, 0.14), transparent 45%),
+        radial-gradient(circle at 15% 85%, rgba(37, 99, 235, 0.08), transparent 45%);
+      border-bottom: 1px solid var(--border-subtle);
+    
+}
+#bhPortalRoot .hero-grid {
+
+      display: grid;
+      grid-template-columns: 1.25fr 0.95fr;
+      gap: 36px;
+      align-items: center;
+    
+}
+#bhPortalRoot .hero-logo-row {
+
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    
+}
+#bhPortalRoot .hero-badge {
+
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 15px;
+      border-radius: 999px;
+      background: var(--gold-soft);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright);
+      font-size: 13px;
+      font-weight: 700;
+    
+}
+#bhPortalRoot .hero h2 {
+
+      font-size: 37px;
+      font-weight: 900;
+      line-height: 1.28;
+      margin-bottom: 16px;
+    
+}
+#bhPortalRoot .hero h2 .gold-word {
+
+      color: var(--gold-bright);
+    
+}
+#bhPortalRoot .hero p {
+
+      color: var(--text-secondary);
+      font-size: 16px;
+      margin-bottom: 26px;
+      max-width: 610px;
+    
+}
+#bhPortalRoot .hero-cta {
+
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    
+}
+#bhPortalRoot .company-profile-card {
+
+      background: linear-gradient(160deg, rgba(22, 32, 53, 0.92), rgba(15, 22, 38, 0.96));
+      border: 1px solid var(--border-gold);
+      border-radius: 22px;
+      padding: 26px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    
+}
+#bhPortalRoot .company-profile-card h3 {
+
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold-bright);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-subtle);
+    
+}
+#bhPortalRoot .spec-item {
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+      font-size: 14px;
+    
+}
+#bhPortalRoot .spec-item:last-child {
+
+      border-bottom: none;
+    
+}
+#bhPortalRoot .spec-label {
+
+      color: var(--text-secondary);
+    
+}
+#bhPortalRoot .spec-value {
+
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: left;
+    
+}
+#bhPortalRoot section.page-section {
+
+      padding: 64px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    
+}
+#bhPortalRoot .section-header {
+
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 38px;
+    
+}
+#bhPortalRoot .section-tag {
+
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--gold);
+      display: block;
+      margin-bottom: 6px;
+    
+}
+#bhPortalRoot .section-header h3 {
+
+      font-size: 27px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    
+}
+#bhPortalRoot .section-header p {
+
+      color: var(--text-secondary);
+      font-size: 15px;
+    
+}
+#bhPortalRoot .grid-3 {
+
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(275px, 1fr));
+      gap: 20px;
+    
+}
+#bhPortalRoot .glass-card {
+
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 24px;
+      transition: 0.22s ease;
+    
+}
+#bhPortalRoot .glass-card:hover {
+
+      border-color: var(--border-gold);
+      background: var(--bg-elevated);
+      transform: translateY(-3px);
+    
+}
+#bhPortalRoot .num-badge {
+
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--gold-soft);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 15px;
+      margin-bottom: 14px;
+    
+}
+#bhPortalRoot .glass-card h4 {
+
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    
+}
+#bhPortalRoot .glass-card p {
+
+      font-size: 14px;
+      color: var(--text-secondary);
+    
+}
+#bhPortalRoot .mgmt-public-card {
+
+      background: linear-gradient(155deg, #131c31, #0c1220);
+      border: 1px solid var(--border-gold);
+      border-radius: 18px;
+      padding: 24px;
+      text-align: center;
+    
+}
+#bhPortalRoot .mgmt-avatar {
+
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      background: var(--gold-soft);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+    
+}
+#bhPortalRoot .mgmt-role-badge {
+
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: var(--gold-soft);
+      color: var(--gold-bright);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    
+}
+#bhPortalRoot .companies-strip {
+
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 34px;
+    
+}
+#bhPortalRoot .company-pill-card {
+
+      background: linear-gradient(145deg, #131c31, #0d1424);
+      border: 1px solid var(--border-gold);
+      border-radius: 16px;
+      padding: 18px 14px;
+      text-align: center;
+    
+}
+#bhPortalRoot .company-pill-card h4 {
+
+      color: var(--gold-bright);
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    
+}
+#bhPortalRoot .company-pill-card span {
+
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: block;
+    
+}
+#bhPortalRoot .gallery-bar {
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 14px 20px;
+      margin-bottom: 22px;
+    
+}
+#bhPortalRoot .pack-card {
+
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    
+}
+#bhPortalRoot .pack-visual {
+
+      height: 180px;
+      background: radial-gradient(circle at center, #1c2742, #0b101d);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 14px;
+    
+}
+#bhPortalRoot .pack-visual img {
+
+      max-height: 150px;
+      max-width: 90%;
+      object-fit: contain;
+      border-radius: 10px;
+    
+}
+#bhPortalRoot .pack-frame {
+
+      width: 90px;
+      height: 128px;
+      border-radius: 12px;
+      border: 1.5px dashed var(--border-gold);
+      background: rgba(212, 175, 55, 0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      color: var(--gold-bright);
+      font-size: 12px;
+      font-weight: 700;
+    
+}
+#bhPortalRoot .pack-company-badge {
+
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(7, 11, 20, 0.88);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright);
+      padding: 3px 11px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    
+}
+#bhPortalRoot .pack-details {
+
+      padding: 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    
+}
+#bhPortalRoot .pack-details h4 {
+
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    
+}
+#bhPortalRoot .pack-details p {
+
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    
+}
+#bhPortalRoot .price-tag {
+
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.14);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    
+}
+#bhPortalRoot footer.site-footer {
+
+      padding: 30px 0;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 13px;
+      background: #05080f;
+    
+}
+#bhPortalRoot #loginPageView {
+
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(212, 175, 55, 0.14), transparent 45%),
+        radial-gradient(circle at 80% 80%, rgba(30, 58, 138, 0.18), transparent 45%),
+        var(--bg-main);
+    
+}
+#bhPortalRoot .auth-card {
+
+      width: 100%;
+      max-width: 430px;
+      background: linear-gradient(165deg, #121a2d, #0b101d);
+      border: 1px solid var(--border-gold);
+      border-radius: 24px;
+      padding: 32px 28px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    
+}
+#bhPortalRoot .auth-header {
+
+      text-align: center;
+      margin-bottom: 22px;
+    
+}
+#bhPortalRoot .auth-header .brand-emblem {
+
+      margin: 0 auto 12px;
+      width: 56px;
+      height: 56px;
+      font-size: 20px;
+    
+}
+#bhPortalRoot .auth-header h2 {
+
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--gold-bright);
+    
+}
+#bhPortalRoot .auth-header p {
+
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    
+}
+#bhPortalRoot .form-field {
+
+      margin-bottom: 15px;
+    
+}
+#bhPortalRoot .form-field label {
+
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    
+}
+#bhPortalRoot .input-box {
+
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #070b14;
+      color: var(--text-primary);
+      font-size: 14px;
+    
+}
+#bhPortalRoot .input-box:focus {
+
+      outline: none;
+      border-color: var(--gold);
+    
+}
+#bhPortalRoot .auth-error {
+
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      text-align: center;
+    
+}
+#bhPortalRoot #internalSystemView {
+
+      min-height: 100vh;
+      background: var(--bg-main);
+      padding-bottom: 60px;
+    
+}
+#bhPortalRoot .sys-header {
+
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    
+}
+#bhPortalRoot .sys-tabs-bar {
+
+      display: flex;
+      gap: 10px;
+      margin: 22px 0;
+      flex-wrap: wrap;
+    
+}
+#bhPortalRoot .sys-tab-btn {
+
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    
+}
+#bhPortalRoot .sys-tab-btn.active {
+
+      background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+      color: #070b14;
+      border-color: var(--gold);
+    
+}
+#bhPortalRoot .panel-box {
+
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 22px;
+    
+}
+#bhPortalRoot .panel-box h3 {
+
+      color: var(--gold-bright);
+      font-size: 18px;
+      margin-bottom: 14px;
+    
+}
+#bhPortalRoot .editor-grid {
+
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(265px, 1fr));
+      gap: 14px;
+    
+}
+#bhPortalRoot .filter-grid {
+
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 14px;
+      align-items: end;
+    
+}
+#bhPortalRoot .summary-strip {
+
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    
+}
+#bhPortalRoot .stat-card {
+
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 16px 18px;
+    
+}
+#bhPortalRoot .stat-card span {
+
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: block;
+    
+}
+#bhPortalRoot .stat-card strong {
+
+      font-size: 20px;
+      color: var(--gold-bright);
+      font-weight: 900;
+    
+}
+#bhPortalRoot .table-container {
+
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      overflow-x: auto;
+    
+}
+#bhPortalRoot table {
+
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 780px;
+    
+}
+#bhPortalRoot th, #bhPortalRoot td {
+
+      padding: 14px 16px;
+      text-align: right;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 14px;
+    
+}
+#bhPortalRoot th {
+
+      background: #141d31;
+      color: var(--gold-bright);
+      font-weight: 800;
+    
+}
+#bhPortalRoot .badge-status {
+
+      padding: 4px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    
+}
+#bhPortalRoot .badge-paid {
+
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+    
+}
+#bhPortalRoot .badge-credit {
+
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+    
+}
+@media (max-width: 840px) {
+#bhPortalRoot .hero-grid {
+
+        grid-template-columns: 1fr;
+      
+}
+#bhPortalRoot .hero h2 {
+
+        font-size: 28px;
+      
+}
+
+    
+}
+
+  
+
+    /* ================= 2. تنسيقات نظام المبيعات والتتبع الداخلي ================= */
+#bhErpRoot, #bhErpRoot * {
+ box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
+}
+#bhErpRoot {
+ background-color: #f1f5f9; margin: 0; padding: 10px; color: #0f172a; 
+}
+#bhErpRoot .card {
+ max-width: 850px; margin: auto; background: #fff; padding: 18px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+}
+#bhErpRoot .text-center {
+ text-align: center; 
+}
+#bhErpRoot .logo-box {
+
             background: #0f172a;
             color: #fff;
             padding: 14px;
             border-radius: 10px;
             margin-bottom: 15px;
             text-align: center;
-        }
-        .logo-box h1 { margin: 0; font-size: 22px; letter-spacing: 0.5px; }
-        .logo-box p { margin: 4px 0 0 0; font-size: 11px; color: #38bdf8; font-weight: bold; }
-        .tax-info { font-size: 9.5px; color: #94a3b8; margin-top: 6px; }
+        
+}
+#bhErpRoot .logo-box h1 {
+ margin: 0; font-size: 22px; letter-spacing: 0.5px; 
+}
+#bhErpRoot .logo-box p {
+ margin: 4px 0 0 0; font-size: 11px; color: #38bdf8; font-weight: bold; 
+}
+#bhErpRoot .tax-info {
+ font-size: 9.5px; color: #94a3b8; margin-top: 6px; 
+}
+#bhErpRoot .barcode-status-bar {
 
-        .barcode-status-bar {
             background: #ecfdf5;
             border: 1px solid #10b981;
             color: #065f46;
@@ -39,63 +1057,131 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
-        }
-
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #334155; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
-        .readonly-input { background-color: #f1f5f9; color: #64748b; font-weight: bold; }
-
-        .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; margin-top: 6px; }
-        .btn-primary { background: #2563eb; color: white; }
-        .btn-success { background: #16a34a; color: white; }
-        .btn-info { background: #0284c7; color: white; }
-        .btn-whatsapp { background: #25d366; color: white; }
-        .btn-danger { background: #dc2626; color: white; }
-        .btn-bluetooth { background: #7c3aed; color: white; }
-        .btn-thermal { background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; }
-        .btn-warning { background: #d97706; color: white; }
-        .btn-sos { background: #e11d48; color: white; animation: pulseSos 1.5s infinite; font-size: 14px; font-weight: bold; }
         
-        @keyframes pulseSos {
+}
+#bhErpRoot .form-group {
+ margin-bottom: 12px; 
+}
+#bhErpRoot .form-group label {
+ display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #334155; 
+}
+#bhErpRoot .form-group input, #bhErpRoot .form-group select, #bhErpRoot .form-group textarea {
+ width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; 
+}
+#bhErpRoot .readonly-input {
+ background-color: #f1f5f9; color: #64748b; font-weight: bold; 
+}
+#bhErpRoot .btn {
+ width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; margin-top: 6px; 
+}
+#bhErpRoot .btn-primary {
+ background: #2563eb; color: white; 
+}
+#bhErpRoot .btn-success {
+ background: #16a34a; color: white; 
+}
+#bhErpRoot .btn-info {
+ background: #0284c7; color: white; 
+}
+#bhErpRoot .btn-whatsapp {
+ background: #25d366; color: white; 
+}
+#bhErpRoot .btn-danger {
+ background: #dc2626; color: white; 
+}
+#bhErpRoot .btn-bluetooth {
+ background: #7c3aed; color: white; 
+}
+#bhErpRoot .btn-thermal {
+ background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; 
+}
+#bhErpRoot .btn-warning {
+ background: #d97706; color: white; 
+}
+#bhErpRoot .btn-sos {
+ background: #e11d48; color: white; animation: pulseSos 1.5s infinite; font-size: 14px; font-weight: bold; 
+}
+@keyframes pulseSos {
+
             0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
             100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
-        }
-
-        .tab-menu { display: flex; gap: 4px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 4px; }
-        .tab-btn { flex: 1; padding: 8px 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold; font-size: 10.5px; border-radius: 6px; cursor: pointer; text-align: center; white-space: nowrap; }
-        .tab-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
-
-        .delegate-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; }
         
-        .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
-        .report-table th, .report-table td { border: 1px solid #cbd5e1; padding: 6px; text-align: center; }
-        .report-table th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; }
-        .grand-box { background: #0f172a; color: #fff; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; margin: 12px 0; }
-        .filter-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
-        .client-history-box { background: #fef08a; padding: 8px; border-radius: 6px; font-size: 11px; margin-top: 6px; display: none; color: #713f12; }
+}
+#bhErpRoot .tab-menu {
+ display: flex; gap: 4px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 4px; 
+}
+#bhErpRoot .tab-btn {
+ flex: 1; padding: 8px 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold; font-size: 10.5px; border-radius: 6px; cursor: pointer; text-align: center; white-space: nowrap; 
+}
+#bhErpRoot .tab-btn.active {
+ background: #0f172a; color: #fff; border-color: #0f172a; 
+}
+#bhErpRoot .delegate-info {
+ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; 
+}
+#bhErpRoot .report-table {
+ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; 
+}
+#bhErpRoot .report-table th, #bhErpRoot .report-table td {
+ border: 1px solid #cbd5e1; padding: 6px; text-align: center; 
+}
+#bhErpRoot .report-table th {
+ background-color: #f1f5f9; color: #0f172a; font-weight: bold; 
+}
+#bhErpRoot .grand-box {
+ background: #0f172a; color: #fff; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; margin: 12px 0; 
+}
+#bhErpRoot .filter-box {
+ background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 15px; 
+}
+#bhErpRoot .client-history-box {
+ background: #fef08a; padding: 8px; border-radius: 6px; font-size: 11px; margin-top: 6px; display: none; color: #713f12; 
+}
+#bhErpRoot .stat-grid {
+ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; 
+}
+#bhErpRoot .stat-card {
+ background: #fff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center; 
+}
+#bhErpRoot .stat-card .title {
+ font-size: 10.5px; color: #64748b; margin-bottom: 2px; 
+}
+#bhErpRoot .stat-card .val {
+ font-size: 13px; font-weight: bold; color: #0f172a; 
+}
+#bhErpRoot .badge-notify {
+ background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 9px; margin-right: 4px; 
+}
+#bhErpRoot .modal-bg {
+ display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; 
+}
+#bhErpRoot .modal-content {
+ background:#fff; padding:18px; border-radius:10px; width:92%; max-width:480px; max-height:85vh; overflow-y:auto; 
+}
+#bhErpRoot #oilChangeAlertBanner {
+ display:none; background:#fff1f2; border:2px solid #e11d48; color:#9f1239; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; font-weight:bold; 
+}
+#bhErpRoot #toastContainer {
+ position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; width: 90%; max-width: 420px; pointer-events: none; 
+}
+#bhErpRoot .toast-msg {
+ background: #1e293b; color: #fff; padding: 12px 16px; border-radius: 8px; font-size: 12.5px; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.25); border-right: 5px solid #38bdf8; pointer-events: auto; animation: slideDown 0.3s ease; 
+}
+#bhErpRoot .toast-msg.success {
+ border-right-color: #22c55e; background: #064e3b; 
+}
+#bhErpRoot .toast-msg.error {
+ border-right-color: #ef4444; background: #7f1d1d; 
+}
+#bhErpRoot .toast-msg.warning {
+ border-right-color: #f59e0b; background: #78350f; 
+}
+@keyframes slideDown {
+ from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } 
+}
+@media print {
 
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        .stat-card { background: #fff; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center; }
-        .stat-card .title { font-size: 10.5px; color: #64748b; margin-bottom: 2px; }
-        .stat-card .val { font-size: 13px; font-weight: bold; color: #0f172a; }
-
-        .badge-notify { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 9px; margin-right: 4px; }
-        .modal-bg { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
-        .modal-content { background:#fff; padding:18px; border-radius:10px; width:92%; max-width:480px; max-height:85vh; overflow-y:auto; }
-        
-        #oilChangeAlertBanner { display:none; background:#fff1f2; border:2px solid #e11d48; color:#9f1239; padding:12px; border-radius:8px; margin-bottom:12px; font-size:12.5px; font-weight:bold; }
-        
-        /* نظام الإشعارات الاحترافي بديل alert و confirm */
-        #toastContainer { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; width: 90%; max-width: 420px; pointer-events: none; }
-        .toast-msg { background: #1e293b; color: #fff; padding: 12px 16px; border-radius: 8px; font-size: 12.5px; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.25); border-right: 5px solid #38bdf8; pointer-events: auto; animation: slideDown 0.3s ease; }
-        .toast-msg.success { border-right-color: #22c55e; background: #064e3b; }
-        .toast-msg.error { border-right-color: #ef4444; background: #7f1d1d; }
-        .toast-msg.warning { border-right-color: #f59e0b; background: #78350f; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
-
-        @media print {
             body * { visibility: hidden; }
             #thermalPrintArea, #thermalPrintArea * { visibility: visible; }
             #thermalPrintArea {
@@ -110,11 +1196,13 @@
                 font-family: 'Courier New', Courier, monospace;
                 font-size: 12px;
             }
-        }
+        
+}
+#bhErpRoot .client-autocomplete-wrap {
+ position: relative; flex: 2; 
+}
+#bhErpRoot .client-suggestions-box {
 
-        /* تنسيق القائمة الذكية لاقتراح العملاء */
-        .client-autocomplete-wrap { position: relative; flex: 2; }
-        .client-suggestions-box {
             position: absolute;
             top: 100%;
             right: 0;
@@ -128,8 +1216,10 @@
             z-index: 2500;
             box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
             display: none;
-        }
-        .client-suggestion-item {
+        
+}
+#bhErpRoot .client-suggestion-item {
+
             padding: 9px 12px;
             border-bottom: 1px solid #f1f5f9;
             cursor: pointer;
@@ -137,13 +1227,429 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-        .client-suggestion-item:last-child { border-bottom: none; }
-        .client-suggestion-item:hover, .client-suggestion-item:active { background-color: #eff6ff; }
-        .client-suggestion-meta { font-size: 11px; color: #64748b; }
-    </style>
+        
+}
+#bhErpRoot .client-suggestion-item:last-child {
+ border-bottom: none; 
+}
+#bhErpRoot .client-suggestion-item:hover, #bhErpRoot .client-suggestion-item:active {
+ background-color: #eff6ff; 
+}
+#bhErpRoot .client-suggestion-meta {
+ font-size: 11px; color: #64748b; 
+}
+
+    
+  </style>
 </head>
 <body>
+
+  <!-- ======================================================================= -->
+  <!-- القسم الأول: البوابة التعريفية وشاشة تسجيل الدخول الموحدة               -->
+  <!-- ======================================================================= -->
+  <div id="bhPortalRoot">
+<div id="publicSiteView">
+    <header class="site-header">
+      <div class="container header-row">
+        <div class="brand">
+          <div class="brand-emblem">BH</div>
+          <div class="brand-text">
+            <h1 id="pub_brandName">BLACK HORSE</h1>
+            <span id="pub_brandSub">شركة بلاك هورس للتجارة والتوزيع</span>
+          </div>
+        </div>
+
+        <button class="drawer-trigger" onclick="openDrawer()" aria-label="فتح القائمة الجانبية">
+          <span class="drawer-line"></span>
+          <span class="drawer-line"></span>
+          <span class="drawer-line"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- طبقة التعتيم والقائمة الجانبية المنسدلة -->
+    <div id="drawerBackdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
+    <aside id="sideDrawer" class="side-drawer">
+      <div>
+        <div class="drawer-top">
+          <div class="brand">
+            <div class="brand-emblem" style="width:38px; height:38px; font-size:15px;">BH</div>
+            <div class="brand-text">
+              <h1 style="font-size:16px;">BLACK HORSE</h1>
+              <span>القائمة الرئيسية</span>
+            </div>
+          </div>
+          <button class="drawer-close" onclick="closeDrawer()">✕</button>
+        </div>
+
+        <div class="drawer-links">
+          <a href="#topHero" class="drawer-link" onclick="closeDrawer()">
+            <span>النبذة التعريفية</span>
+            <span>←</span>
+          </a>
+          <a href="#about" class="drawer-link" onclick="closeDrawer()">
+            <span>نبذة عن الشركة</span>
+            <span>←</span>
+          </a>
+          <a href="#departments" class="drawer-link" onclick="closeDrawer()">
+            <span>أقسام الشركة</span>
+            <span>←</span>
+          </a>
+          <a href="#administration" class="drawer-link" onclick="closeDrawer()">
+            <span>الإدارة</span>
+            <span>←</span>
+          </a>
+          <a href="#partners" class="drawer-link" onclick="closeDrawer()">
+            <span>الشركات والمنتجات</span>
+            <span>←</span>
+          </a>
+          <a href="#contact" class="drawer-link" onclick="closeDrawer()">
+            <span>للتواصل</span>
+            <span>←</span>
+          </a>
+        </div>
+
+        <button class="drawer-login-btn" style="width:100%;" onclick="closeDrawer(); openLoginPage();">
+          <span>تسجيل الدخول للنظام</span>
+        </button>
+      </div>
+
+      <div style="font-size:12px; color:var(--text-secondary); border-top:1px solid var(--border-subtle); padding-top:14px;">
+        شركة بلاك هورس للتجارة والتوزيع — المنوفية
+      </div>
+    </aside>
+
+    <!-- Hero: شعار الشركة + النبذة التعريفية مباشرة (بدون زر دخول الموظفين في وش الصفحة) -->
+    <section id="topHero" class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="hero-logo-row">
+            <div class="brand-emblem" style="width:56px; height:56px; font-size:21px;">BH</div>
+            <div class="hero-badge" id="pub_heroBadge">توزيع معتمد • المنوفية وخطوط السير</div>
+          </div>
+
+          <h2>
+            <span id="pub_heroTitlePrefix">شركة</span>
+            <span class="gold-word" id="pub_heroTitleHighlight">بلاك هورس</span>
+            <span id="pub_heroTitleSuffix">لتجارة وتوزيع منتجات التبغ والسجائر</span>
+          </h2>
+
+          <p id="pub_heroDesc">
+            نعمل وفق منظومة توزيع احترافية تغطي تجار الجملة والقطاعي والمحلات في محافظة المنوفية
+            (سدود، منوف، شبين الكوم، وكافة خطوط السير المعتمدة)، مع الالتزام الكامل بالشفافية
+            والدقة وتوفير منتجات كبرى الشركات العاملة في السوق.
+          </p>
+
+          <div class="hero-cta">
+            <a href="#partners" class="btn btn-gold">استعراض الشركات والمنتجات</a>
+            <a href="#about" class="btn btn-outline">تفاصيل الشركة</a>
+          </div>
+        </div>
+
+        <div class="company-profile-card">
+          <h3>البيانات التعريفية للشركة</h3>
+          <div class="spec-item">
+            <span class="spec-label">الاسم التجاري</span>
+            <span class="spec-value" id="pub_infoName">شركة بلاك هورس (BLACK HORSE)</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">النشاط</span>
+            <span class="spec-value" id="pub_infoActivity">تجارة وتوزيع منتجات التبغ والسجائر</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">نطاق التغطية</span>
+            <span class="spec-value" id="pub_infoArea">منوف • سدود • شبين الكوم • المنوفية</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">كود النشاط</span>
+            <span class="spec-value" id="pub_infoCode">4630</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">الرقم الضريبي</span>
+            <span class="spec-value" id="pub_infoTax">يُدرج من لوحة الإدارة</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- نبذة عن الشركة -->
+    <section id="about" class="page-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">من نحن</span>
+          <h3 id="pub_aboutTitle">نبذة عن شركة بلاك هورس</h3>
+          <p id="pub_aboutDesc">
+            تعمل شركة بلاك هورس في تجارة وتوزيع منتجات التبغ والسجائر، وتخدم التجار والمحلات
+            في محافظة المنوفية عبر خطوط توزيع منتظمة ونظام متابعة واضح.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <div class="glass-card">
+            <div class="num-badge">01</div>
+            <h4 id="pub_aboutCard1Title">تغطية خطوط السير</h4>
+            <p id="pub_aboutCard1Desc">
+              توفير المنتجات للتجار والمحلات في منوف، سدود، شبين الكوم، والمناطق التابعة
+              بصورة مستمرة ومنظمة.
+            </p>
+          </div>
+          <div class="glass-card">
+            <div class="num-badge">02</div>
+            <h4 id="pub_aboutCard2Title">تنوع الشركات والمنتجات</h4>
+            <p id="pub_aboutCard2Desc">
+              توفير أصناف متعددة من الشركات الموردة لتلبية احتياجات السوق بالجملة والتجزئة.
+            </p>
+          </div>
+          <div class="glass-card">
+            <div class="num-badge">03</div>
+            <h4 id="pub_aboutCard3Title">تنظيم الفواتير والحسابات</h4>
+            <p id="pub_aboutCard3Desc">
+              متابعة الفواتير والمدفوعات وحسابات العملاء بشكل منظم وواضح.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- أقسام الشركة -->
+    <section id="departments" class="page-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">الهيكل التشغيلي</span>
+          <h3 id="pub_deptTitle">أقسام الشركة</h3>
+          <p id="pub_deptDesc">تقسيم العمل داخل الشركة لتنظيم المبيعات والحسابات والمتابعة</p>
+        </div>
+
+        <div class="grid-3">
+          <div class="glass-card">
+            <div class="num-badge">م</div>
+            <h4 id="pub_dept1Title">قسم المبيعات والتوزيع</h4>
+            <p id="pub_dept1Desc">
+              متابعة العملاء، خطوط التوزيع، وتنفيذ الطلبات والفواتير اليومية.
+            </p>
+          </div>
+          <div class="glass-card">
+            <div class="num-badge">مخ</div>
+            <h4 id="pub_dept2Title">قسم المخازن</h4>
+            <p id="pub_dept2Desc">
+              تنظيم استلام وصرف الأصناف وتجهيز طلبيات التوزيع.
+            </p>
+          </div>
+          <div class="glass-card">
+            <div class="num-badge">ح</div>
+            <h4 id="pub_dept3Title">قسم الحسابات</h4>
+            <p id="pub_dept3Desc">
+              متابعة الفواتير، التحصيلات، والبيانات المالية والضريبية للشركة.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- الإدارة -->
+    <section id="administration" class="page-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">القيادة والإشراف</span>
+          <h3>إدارة الشركة</h3>
+          <p>هيكل الإدارة والمسؤوليات التنفيذية لشركة بلاك هورس</p>
+        </div>
+
+        <div class="grid-3" id="publicManagementGrid"></div>
+      </div>
+    </section>
+
+    <!-- الشركات والمنتجات -->
+    <section id="partners" class="page-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">الشركاء والأصناف</span>
+          <h3>الشركات والمنتجات</h3>
+          <p>الشركات التي نتعامل معها ومنتجاتها مع عرض صور العلب</p>
+        </div>
+
+        <div class="companies-strip">
+          <div class="company-pill-card">
+            <h4>الشركة الشرقية</h4>
+            <span>منتجات التبغ والسجائر</span>
+          </div>
+          <div class="company-pill-card">
+            <h4>شركة منصور</h4>
+            <span>تارجت • كابتن بلاك • ديفيدوف إيفولف</span>
+          </div>
+          <div class="company-pill-card">
+            <h4>ترانس بيزنس</h4>
+            <span>منتجات التبغ والتوزيع</span>
+          </div>
+          <div class="company-pill-card">
+            <h4>جي تي آي</h4>
+            <span>منتجات التبغ المعتمدة</span>
+          </div>
+          <div class="company-pill-card">
+            <h4>قصر البرج</h4>
+            <span>التابعة لها: <strong>أدخنة الوردة</strong></span>
+          </div>
+        </div>
+
+        <div class="gallery-bar">
+          <div>
+            <strong>معرض صور العلب والمنتجات</strong>
+            <span style="color: var(--text-secondary); font-size: 13px; margin-right: 8px;">
+              تشكيلة المنتجات المتوفرة لدى الشركة
+            </span>
+          </div>
+          <button id="togglePricesBtn" class="btn btn-outline" onclick="togglePublicPrices()">
+            إظهار الأسعار
+          </button>
+        </div>
+
+        <div class="grid-3" id="publicProductsGrid"></div>
+      </div>
+    </section>
+
+
+    <!-- للتواصل -->
+    <section id="contact" class="page-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">تواصل معنا</span>
+          <h3 id="pub_contactTitle">للتواصل</h3>
+          <p id="pub_contactDesc">بيانات التواصل الرسمية مع شركة بلاك هورس للتجارة والتوزيع</p>
+        </div>
+
+        <div class="grid-3" id="publicContactGrid"></div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="container" id="pub_footerText">
+        جميع الحقوق محفوظة © 2026 شركة بلاك هورس (BLACK HORSE) للتجارة والتوزيع — المنوفية
+      </div>
+    </footer>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- 2. شاشة تسجيل الدخول الموحدة (بتصميم البورتابل ومربوطة بالنظام مباشرة) -->
+  <!-- ===================================================================== -->
+  <div id="loginPageView" class="hidden">
+    <div class="auth-card" style="max-width: 470px;">
+      <div class="auth-header">
+        <div class="brand-emblem">BH</div>
+        <h2 id="portalLoginTitle">تسجيل الدخول للنظام</h2>
+        <p id="portalLoginSub">شركة بلاك هورس — موزع معتمد لدى الشركة الشرقية</p>
+        <div id="portalLoginTax" style="font-size: 11px; color: var(--gold-bright); margin-top: 6px; opacity: 0.9;">
+          كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027
+        </div>
+        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 3px;">
+          البريد الرسمي: <span id="portalFixedOfficialEmailText" style="color: var(--gold-bright);">blsmoking1@gmail.com</span>
+        </div>
+      </div>
+
+      <!-- نموذج الدخول الرئيسي -->
+      <div id="loginMainForm">
+        <form onsubmit="event.preventDefault(); handleLogin();">
+          <div class="form-field">
+            <label>كود المستخدم / الإيميل / رقم الهاتف / اسم المحل</label>
+            <input type="text" id="loginCode" class="input-box" placeholder="أدخل الكود، الإيميل، الموبايل، أو اسم المحل..." autocomplete="username" />
+          </div>
+
+          <div class="form-field">
+            <label>كلمة السر</label>
+            <input type="password" id="loginPass" class="input-box" placeholder="أدخل كلمة السر..." autocomplete="current-password" />
+          </div>
+
+          <button type="submit" class="btn btn-gold" style="width: 100%; margin-top: 6px; padding: 12px; font-size: 15px;">
+            دخول للنظام ➔
+          </button>
+        </form>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
+          <button type="button" class="btn btn-outline" style="padding: 9px 10px; font-size: 12.5px;" onclick="showCustomerRegisterScreen()">
+            👤 تسجيل عميل جديد
+          </button>
+          <button type="button" class="btn btn-outline" style="padding: 9px 10px; font-size: 12.5px;" onclick="openForgotPasswordModal()">
+            🔑 نسيت كلمة السر؟
+          </button>
+        </div>
+
+        <div style="margin-top: 12px; text-align: center;">
+          <button type="button" class="btn btn-ghost" style="width: 100%;" onclick="backToPublicFromLogin()">
+            ← العودة لواجهة الشركة
+          </button>
+        </div>
+      </div>
+
+      <!-- نموذج تسجيل عميل جديد -->
+      <div id="customerRegisterScreen" style="display: none;">
+        <h3 style="text-align: center; font-size: 16px; color: var(--gold-bright); margin-bottom: 14px;">تسجيل حساب عميل جديد</h3>
+
+        <div class="form-field">
+          <label>اسم المحل / العميل</label>
+          <input type="text" id="regClientName" class="input-box" placeholder="أدخل اسم المحل..." />
+        </div>
+
+        <div class="form-field">
+          <label>البريد الإلكتروني</label>
+          <input type="email" id="regClientEmail" class="input-box" placeholder="example@domain.com" />
+        </div>
+
+        <div class="form-field">
+          <label>كلمة السر لحسابك (6 أحرف على الأقل)</label>
+          <input type="password" id="regClientPass" class="input-box" placeholder="أدخل كلمة السر..." />
+        </div>
+
+        <div class="form-field">
+          <label>رقم التليفون (اختياري)</label>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" value="+20" readonly class="input-box" style="width: 68px; text-align: center; opacity: 0.75;" />
+            <input type="text" id="regClientPhone" class="input-box" placeholder="1012345678" style="flex: 1;" maxlength="10" />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>خط السير / الخط</label>
+          <input type="text" id="regClientRoute" class="input-box" placeholder="مثال: منوف / سدود / شبين الكوم..." />
+        </div>
+
+        <div class="form-field">
+          <label>عنوان المحل بالتفصيل</label>
+          <input type="text" id="regClientAddress" class="input-box" placeholder="المدينة، الشارع..." />
+        </div>
+
+        <div class="form-field">
+          <label>القرية / المركز</label>
+          <input type="text" id="regClientVillage" class="input-box" placeholder="مثال: سدود / منوف..." />
+        </div>
+
+        <button type="button" class="btn btn-outline" style="width: 100%; margin-bottom: 8px; font-size: 12.5px;" onclick="captureCustomerGpsLocation()">
+          📍 تحديد موقع المحل الحالي بالـ GPS
+        </button>
+        <div id="regGpsStatus" style="font-size: 11px; color: var(--gold-bright); margin-bottom: 10px; text-align: center;">
+          لم يتم تحديد موقع GPS للمحل بعد
+        </div>
+
+        <div style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 12px; background: rgba(255,255,255,0.03); padding: 9px; border-radius: 10px; border: 1px dashed var(--border-subtle);">
+          ℹ️ بعد التسجيل، يقوم المدير باعتماد وتفعيل حسابك وتحديد فئتك وتعيين الكود الثابت لمحلك.
+        </div>
+
+        <button type="button" class="btn btn-gold" style="width: 100%; padding: 11px;" onclick="registerCustomerWithEmail()">
+          إتمام التسجيل والحفظ
+        </button>
+        <button type="button" class="btn btn-ghost" style="width: 100%; margin-top: 8px;" onclick="backToLoginMain()">
+          ← رجوع لتسجيل الدخول
+        </button>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- القسم الثاني: نظام إدارة المبيعات والتتبع الشامل (يفتح بعد الدخول)     -->
+  <!-- ======================================================================= -->
+  <div id="bhErpRoot">
+
 
     <div id="toastContainer"></div>
     <div id="oilChangeAlertBanner"></div>
@@ -157,60 +1663,6 @@
                 <button id="customConfirmYesBtn" class="btn btn-success" style="margin: 0;">نعم، متابعة</button>
                 <button id="customConfirmNoBtn" class="btn btn-danger" style="margin: 0; background: #64748b;">إلغاء</button>
             </div>
-        </div>
-    </div>
-
-    <!-- 1. شاشة تسجيل الدخول -->
-    <div id="loginView" class="card">
-        <div class="logo-box">
-            <h1 id="loginHeaderName">BLACK HORSE</h1>
-            <p id="loginHeaderSubtitle">شركة بلاك هورس - موزع معتمد لدى الشركة الشرقية</p>
-            <div class="tax-info" id="loginHeaderTax">كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027</div>
-            <div style="font-size:11px; color:#0284c7; font-weight:bold; margin-top:4px;">📧 البريد الرسمي للمراسلات: <span id="fixedOfficialEmailText">blsmoking1@gmail.com</span></div>
-        </div>
-        
-        <div id="loginMainForm">
-            <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل الدخول للنظام</h3>
-            <div class="form-group">
-                <label>كود المستخدم / الإيميل / رقم الهاتف / اسم المحل:</label>
-                <input type="text" id="loginCode" placeholder="أدخل الكود، الإيميل، الموبايل، أو اسم المحل...">
-            </div>
-            <div class="form-group">
-                <label>كلمة السر:</label>
-                <input type="password" id="loginPass" placeholder="أدخل كلمة السر...">
-            </div>
-            <button class="btn btn-primary" onclick="handleLogin()">دخول للنظام ➔</button>
-            <div style="display:flex; justify-content:space-between; margin-top:8px; gap:6px;">
-                <button class="btn btn-info" style="flex:1; margin-top:0; font-size:11px;" onclick="showCustomerRegisterScreen()">👤 تسجيل عميل جديد</button>
-                <button class="btn btn-warning" style="flex:1; margin-top:0; font-size:11px;" onclick="openForgotPasswordModal()">🔑 نسيت كلمة السر؟</button>
-            </div>
-        </div>
-
-        <div id="customerRegisterScreen" style="display:none;">
-            <h3 class="text-center" style="font-size: 15px; margin-bottom: 15px; color: #1e293b;">تسجيل حساب عميل جديد</h3>
-            <div class="form-group"><label>اسم المحل / العميل:</label><input type="text" id="regClientName" placeholder="أدخل اسم المحل..."></div>
-            <div class="form-group"><label>البريد الإلكتروني:</label><input type="email" id="regClientEmail" placeholder="example@domain.com"></div>
-            <div class="form-group"><label>كلمة السر لحسابك:</label><input type="password" id="regClientPass" placeholder="أدخل كلمة السر..."></div>
-            <div class="form-group">
-                <label>رقم التليفون (اختياري):</label>
-                <div style="display: flex; gap: 5px;">
-                    <input type="text" value="+20" readonly class="readonly-input" style="width: 65px; text-align: center;">
-                    <input type="text" id="regClientPhone" placeholder="1012345678 (اختياري)" style="flex: 1;" maxlength="10">
-                </div>
-            </div>
-            <div class="form-group"><label>خط السير / الخط:</label><input type="text" id="regClientRoute" placeholder="مثال: خط سنتريس / خط أشمون..."></div>
-            <div class="form-group"><label>عنوان المحل بالتفصيل:</label><input type="text" id="regClientAddress" placeholder="المدينة، الشارع..."></div>
-            <div class="form-group"><label>القرية / المركز:</label><input type="text" id="regClientVillage" placeholder="مثال: أشمون / سنتريس..."></div>
-            
-            <button type="button" class="btn btn-info" style="margin-bottom:8px; font-size:11px;" onclick="captureCustomerGpsLocation()">📍 تحديد موقع المحل الحالي بالـ GPS</button>
-            <div id="regGpsStatus" style="font-size:10.5px; color:#0284c7; margin-bottom:8px; font-weight:bold;">لم يتم تحديد موقع GPS للمحل بعد</div>
-            
-            <div style="font-size: 11px; color: #475569; margin-bottom: 10px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
-                ℹ️ بعد التسجيل، يقوم المدير باعتماد وتفعيل حسابك وتحديد فئتك وتعيين الكود الثابت لمحلك.
-            </div>
-            
-            <button class="btn btn-success" onclick="registerCustomerWithEmail()">إتمام التسجيل والحفظ</button>
-            <button class="btn btn-danger" style="background:#64748b; margin-top:8px;" onclick="backToLoginMain()">← رجوع لتسجيل الدخول</button>
         </div>
     </div>
 
@@ -268,6 +1720,7 @@
             <div id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙️ الإعدادات والتحكم</div>
             <div id="tabWhatsappQuotas" class="tab-btn" onclick="switchTab('whatsappQuotas')" style="display:none; background:#dcfce7; color:#166534;">💬 إشعارات الحصص (واتساب)</div>
             <div id="tabSecretPayment" class="tab-btn" onclick="switchTab('secretPayment')" style="display:none; background:#e0f2fe; color:#0369a1; border:1px dashed #0284c7;">💳 روابط الدفع</div>
+            <div id="tabEgyptianTaxes" class="tab-btn" onclick="switchTab('egyptianTaxes')" style="display:none; background:#fef2f2; color:#991b1b; border:1px solid #fca5a5;">🏛️ الضرائب المصرية</div>
         </div>
 
         <!-- أ) فاتورة جديدة -->
@@ -1206,6 +2659,63 @@
                 <button class="btn btn-primary" onclick="saveSystemSettingsDirect()">💾 حفظ وتحديث إعدادات النظام بالكامل</button>
             </div>
 
+            <!-- لوحة تحكم المدير في محتوى وصور وتواصل البوابة التعريفية -->
+            <div id="portalSiteControlPanel" style="display:none; background:#0f172a; color:#f8fafc; border:1.5px solid #d4af37; padding:14px; border-radius:10px; margin-bottom:14px;">
+                <h4 style="margin-top:0; font-size:14px; color:#f5d76e;">🌐 إدارة البوابة التعريفية الخارجية (للإدارة فقط):</h4>
+
+                <div style="background:#162035; border:1px solid rgba(212,175,55,0.25); padding:10px; border-radius:8px; margin-bottom:12px;">
+                    <h5 style="margin:0 0 8px 0; color:#f5d76e; font-size:13px;">1. إدارة أسماء ومسميات الإدارة في الواجهة</h5>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+                        <div class="form-group" style="margin-bottom:4px;"><label style="color:#cbd5e1;">الاسم:</label><input type="text" id="adminMgmtName" placeholder="اكتب الاسم..."></div>
+                        <div class="form-group" style="margin-bottom:4px;"><label style="color:#cbd5e1;">المسمى الوظيفي:</label><input type="text" id="adminMgmtRole" placeholder="مثال: رئيس مجلس الإدارة..."></div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:8px;"><label style="color:#cbd5e1;">ملاحظة إضافية (اختياري):</label><input type="text" id="adminMgmtNote" placeholder="اختياري..."></div>
+                    <button type="button" class="btn btn-warning" style="color:#070b14; margin-bottom:8px;" onclick="addManagementMember()">+ إضافة عضو للإدارة</button>
+                    <div id="adminMgmtList" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:8px;"></div>
+                </div>
+
+                <div style="background:#162035; border:1px solid rgba(212,175,55,0.25); padding:10px; border-radius:8px; margin-bottom:12px;">
+                    <h5 style="margin:0 0 8px 0; color:#f5d76e; font-size:13px;">2. إدارة صور علب المنتجات في المعرض الخارجي</h5>
+                    <div id="adminProductsList" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:8px;"></div>
+                </div>
+
+                <div style="background:#162035; border:1px solid rgba(212,175,55,0.25); padding:10px; border-radius:8px; margin-bottom:12px;">
+                    <h5 style="margin:0 0 8px 0; color:#f5d76e; font-size:13px;">3. بيانات قسم (للتواصل) — أرقام التليفونات والإيميلات</h5>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+                        <div class="form-group" style="margin-bottom:4px;">
+                            <label style="color:#cbd5e1;">نوع وسيلة التواصل:</label>
+                            <select id="adminContactType">
+                                <option value="هاتف / موبايل">هاتف / موبايل</option>
+                                <option value="بريد إلكتروني">بريد إلكتروني</option>
+                                <option value="واتساب">واتساب</option>
+                                <option value="العنوان / الفرع">العنوان / الفرع</option>
+                                <option value="أخرى">أخرى</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:4px;">
+                            <label style="color:#cbd5e1;">العنوان أو القسم:</label>
+                            <input type="text" id="adminContactLabel" placeholder="مثال: الإدارة، المبيعات...">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:8px;">
+                        <label style="color:#cbd5e1;">الرقم أو الإيميل أو التفصيل:</label>
+                        <input type="text" id="adminContactValue" placeholder="مثال: 010... أو name@domain.com">
+                    </div>
+                    <button type="button" class="btn btn-warning" style="color:#070b14; margin-bottom:8px;" onclick="addContactItem()">+ إضافة وسيلة تواصل</button>
+                    <div id="adminContactList" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:8px;"></div>
+                </div>
+
+                <div style="background:#162035; border:1px solid rgba(212,175,55,0.25); padding:10px; border-radius:8px;">
+                    <h5 style="margin:0 0 8px 0; color:#f5d76e; font-size:13px;">4. تعديل نصوص وبيانات الواجهة الخارجية</h5>
+                    <div id="siteTextsForm" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:8px;"></div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
+                        <button type="button" class="btn btn-success" onclick="saveSiteTextsFromAdmin()">💾 حفظ تعديلات الواجهة</button>
+                        <button type="button" class="btn btn-danger" onclick="resetSiteTexts()">↺ استعادة النصوص الافتراضية</button>
+                    </div>
+                </div>
+            </div>
+
+
             <div id="adminRepRoutesControlBox" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; padding:12px; border-radius:8px; margin-bottom:12px;">
                 <h4 style="margin-top:0; font-size:13px; color:#1e40af;">🛣️ تعيين وتحديد خطوط السير للمناديب:</h4>
                 <div id="repRoutesInputsList"></div>
@@ -1353,6 +2863,146 @@
                     <tbody id="waQuotaTableBody">
                         <tr><td colspan="8" style="text-align:center; color:#64748b; padding:18px;">لم يتم رفع ملف إكسيل بعد. ارفع الملف أو اضغط "تحميل نموذج ملف إكسيل" لمعرفة التنسيق.</td></tr>
                     </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- تبويب الضرائب المصرية (إقرارات القيمة المضافة والخصم والتحصيل والفاتورة الإلكترونية) -->
+        <div id="sectionEgyptianTaxes" style="display: none;">
+            <div style="background:#0f172a; color:#fff; padding:14px; border-radius:10px; margin-bottom:14px; border-right:5px solid #ef4444;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <h3 style="margin:0; font-size:16px; color:#f8fafc;">🏛️ منظومة الضرائب المصرية (ETA / eDariba)</h3>
+                        <div style="font-size:11.5px; color:#94a3b8; margin-top:3px;">متابعة القيمة المضافة، الخصم والتحصيل تحت حساب الضريبة، رصيد الفواتير، والبيانات الضريبية لشركة بلاك هورس</div>
+                    </div>
+                    <button type="button" class="btn btn-success" style="width:auto; margin:0; padding:8px 14px; font-size:12px;" onclick="exportEgyptianTaxesExcel()">📥 تصدير التقرير الضريبي (Excel)</button>
+                </div>
+            </div>
+
+            <div class="filter-box" style="background:#f8fafc; border:1.5px solid #cbd5e1; margin-bottom:14px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap:8px; align-items:flex-end;">
+                    <div>
+                        <label style="font-size:11.5px; font-weight:bold; color:#0f172a;">📅 شهر الفترة الضريبية:</label>
+                        <input type="month" id="taxMonthFilter" onchange="onTaxMonthChange()" style="font-weight:bold; background:#fff;">
+                    </div>
+                    <div>
+                        <label style="font-size:11.5px; font-weight:bold; color:#0f172a;">من تاريخ:</label>
+                        <input type="date" id="taxFromDate" onchange="renderEgyptianTaxesDashboard()" style="background:#fff;">
+                    </div>
+                    <div>
+                        <label style="font-size:11.5px; font-weight:bold; color:#0f172a;">إلى تاريخ:</label>
+                        <input type="date" id="taxToDate" onchange="renderEgyptianTaxesDashboard()" style="background:#fff;">
+                    </div>
+                    <div>
+                        <label style="font-size:11.5px; font-weight:bold; color:#0f172a;">نسبة القيمة المضافة (VAT %):</label>
+                        <input type="number" id="taxVatRateInput" value="14" min="0" max="100" step="0.5" oninput="renderEgyptianTaxesDashboard()" style="font-weight:bold; background:#fff;">
+                    </div>
+                    <div>
+                        <label style="font-size:11.5px; font-weight:bold; color:#0f172a;">نسبة الخصم والتحصيل (%):</label>
+                        <input type="number" id="taxWithholdingRateInput" value="1" min="0" max="50" step="0.5" oninput="renderEgyptianTaxesDashboard()" style="font-weight:bold; background:#fff;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); margin-bottom:14px;">
+                <div class="stat-card" style="background:#eff6ff; border-color:#93c5fd;">
+                    <div class="title" style="color:#1e40af;">إجمالي المبيعات الخاضعة (الفترة)</div>
+                    <div class="val" id="taxGrossSalesVal" style="color:#1d4ed8; font-size:15px;">0.00 ج.م</div>
+                    <div style="font-size:10.5px; color:#475569; margin-top:2px;">عدد الفواتير النشطة: <b id="taxActiveInvoicesCount">0</b></div>
+                </div>
+                <div class="stat-card" style="background:#fef2f2; border-color:#fca5a5;">
+                    <div class="title" style="color:#991b1b;">ضريبة القيمة المضافة المحسوبة (VAT)</div>
+                    <div class="val" id="taxVatAmountVal" style="color:#dc2626; font-size:15px;">0.00 ج.م</div>
+                    <div style="font-size:10.5px; color:#475569; margin-top:2px;">الصافي بدون VAT: <b id="taxNetBeforeVatVal">0.00</b> ج.م</div>
+                </div>
+                <div class="stat-card" style="background:#fffbeb; border-color:#fcd34d;">
+                    <div class="title" style="color:#92400e;">الخصم والتحصيل تحت حساب الضريبة</div>
+                    <div class="val" id="taxWithholdingAmountVal" style="color:#b45309; font-size:15px;">0.00 ج.م</div>
+                    <div style="font-size:10.5px; color:#475569; margin-top:2px;">مشتريات/شحنات الفترة: <b id="taxPeriodPurchasesVal">0.00</b> ج.م</div>
+                </div>
+                <div class="stat-card" style="background:#f0fdf4; border-color:#86efac;">
+                    <div class="title" style="color:#166534;">الرصيد التراكمي لكافة الفواتير</div>
+                    <div class="val" id="taxCumulativeSalesVal" style="color:#15803d; font-size:15px;">0.00 ج.م</div>
+                    <div style="font-size:10.5px; color:#475569; margin-top:2px;">إجمالي فواتير النظام: <b id="taxTotalInvoicesCount">0</b></div>
+                </div>
+            </div>
+
+            <div class="filter-box" style="background:#fff; border:1.5px solid #0284c7; margin-bottom:14px;">
+                <h4 style="margin:0 0 10px 0; color:#0369a1; font-size:14px;">🧾 بيانات التسجيل الضريبي والختم / التوقيع الإلكتروني:</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:10px; font-size:12.5px;">
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+                        <div style="color:#64748b; font-size:11px;">الكيان والنشاط المعتمد</div>
+                        <div id="taxEntityInfoText" style="font-weight:bold; color:#0f172a; margin-top:4px;">--</div>
+                    </div>
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+                        <div style="color:#64748b; font-size:11px;">البطاقة الضريبية / السجل / النشاط</div>
+                        <div id="taxRegistrationDetailsText" style="font-weight:bold; color:#991b1b; margin-top:4px;">--</div>
+                    </div>
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+                        <div style="color:#64748b; font-size:11px;">البريد الرسمي والمراسلات الضريبية</div>
+                        <div id="taxEmailsInfoText" style="font-weight:bold; color:#0369a1; margin-top:4px;">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-box" style="background:#fffbeb; border:1.5px solid #f59e0b; margin-bottom:14px;">
+                <h4 style="margin:0 0 8px 0; color:#92400e; font-size:13.5px;">📝 تسجيل قيد / دفعة سداد ضريبي للفترة:</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:8px; margin-bottom:8px;">
+                    <div>
+                        <label style="font-size:11px; font-weight:bold;">نوع الإقرار / السداد:</label>
+                        <select id="taxPaymentTypeSelect" style="background:#fff; font-weight:bold;">
+                            <option value="القيمة المضافة (VAT)">إقرار / سداد القيمة المضافة (VAT)</option>
+                            <option value="الخصم والتحصيل">إقرار / سداد الخصم والتحصيل</option>
+                            <option value="دفعة مقدمة / تسوية">دفعة مقدمة / تسوية ضريبية</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:bold;">التاريخ:</label>
+                        <input type="date" id="taxPaymentDateInput" style="background:#fff;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:bold;">المبلغ المسدد (ج.م):</label>
+                        <input type="number" id="taxPaymentAmountInput" placeholder="0.00" min="0" step="0.01" style="background:#fff; font-weight:bold;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:bold;">رقم الإيصال / المرجع:</label>
+                        <input type="text" id="taxPaymentRefInput" placeholder="مثال: ETA-2026-11" style="background:#fff;">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-warning" style="margin:0;" onclick="saveEgyptianTaxPayment()">💾 حفظ سجل السداد الضريبي</button>
+            </div>
+
+            <h4 style="margin:0 0 6px 0; color:#0f172a; font-size:13.5px;">📋 سجل السدادات والإقرارات الضريبية المسجلة:</h4>
+            <div style="overflow-x:auto; margin-bottom:16px;">
+                <table class="report-table" style="background:#fff;">
+                    <thead>
+                        <tr style="background:#0f172a; color:#fff;">
+                            <th>التاريخ</th>
+                            <th>النوع</th>
+                            <th>رقم المرجع / الإيصال</th>
+                            <th>المبلغ المسدد (ج.م)</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="egyptianTaxPaymentsBody"></tbody>
+                </table>
+            </div>
+
+            <h4 style="margin:0 0 6px 0; color:#0f172a; font-size:13.5px;">🧾 كشف الفواتير الخاضعة في الفترة المحددة:</h4>
+            <div style="overflow-x:auto;">
+                <table class="report-table" style="background:#fff;">
+                    <thead>
+                        <tr style="background:#1e293b; color:#fff;">
+                            <th>رقم الفاتورة</th>
+                            <th>التاريخ</th>
+                            <th>العميل</th>
+                            <th>المندوب</th>
+                            <th>إجمالي الفاتورة</th>
+                            <th>القيمة المضافة التقديرية</th>
+                            <th>الخصم والتحصيل التقديري</th>
+                        </tr>
+                    </thead>
+                    <tbody id="egyptianTaxInvoicesBody"></tbody>
                 </table>
             </div>
         </div>
@@ -1563,7 +3213,11 @@
 
     <div id="thermalPrintArea" style="display:none;"></div>
 
-    <script>
+    
+  </div>
+
+  <script>
+
         // ==================== نظام الإشعارات والتأكيدات الاحترافي (بديل alert و confirm) ====================
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -2652,11 +4306,17 @@
             const hSub = document.getElementById('loginHeaderSubtitle');
             const hTax = document.getElementById('loginHeaderTax');
             const hFixedMail = document.getElementById('fixedOfficialEmailText');
+            const pSub = document.getElementById('portalLoginSub');
+            const pTax = document.getElementById('portalLoginTax');
+            const pMail = document.getElementById('portalFixedOfficialEmailText');
 
             if(hName) hName.innerText = systemSettings.companyName || "BLACK HORSE";
             if(hSub) hSub.innerText = systemSettings.companySubtitle || "";
             if(hTax) hTax.innerText = systemSettings.taxInfo || "";
             if(hFixedMail) hFixedMail.innerText = systemSettings.officialEmail || FIXED_CORRESPONDENCE_EMAIL;
+            if(pSub && systemSettings.companySubtitle) pSub.innerText = systemSettings.companySubtitle;
+            if(pTax && systemSettings.taxInfo) pTax.innerText = systemSettings.taxInfo;
+            if(pMail) pMail.innerText = systemSettings.officialEmail || FIXED_CORRESPONDENCE_EMAIL;
 
             const inputName = document.getElementById('sysInputName');
             const inputSub = document.getElementById('sysInputSubtitle');
@@ -3729,8 +5389,11 @@ async function handleLogin() {
                           (currentDelegate.role === 'accounting' ? 'الحسابات' : 'مندوب مبيعات'))));
             document.getElementById('lblDelegateRoleText').innerText = roleText;
             
-            document.getElementById('loginView').style.display = 'none';
+            if (document.getElementById('publicSiteView')) document.getElementById('publicSiteView').classList.add('hidden');
+            if (document.getElementById('loginPageView')) document.getElementById('loginPageView').classList.add('hidden');
+            document.body.classList.add('erp-active');
             document.getElementById('salesView').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'auto' });
 
             try { setupUserTabs(); } catch (e) { console.error("setupUserTabs:", e); }
             try {
@@ -3750,8 +5413,11 @@ async function handleLogin() {
         }
 
         function enterPortalCustomerDashboard() {
-            document.getElementById('loginView').style.display = 'none';
+            if (document.getElementById('publicSiteView')) document.getElementById('publicSiteView').classList.add('hidden');
+            if (document.getElementById('loginPageView')) document.getElementById('loginPageView').classList.add('hidden');
+            document.body.classList.add('erp-active');
             document.getElementById('salesView').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'auto' });
             document.getElementById('sosButtonContainer').style.display = 'none';
 
             let typeLabel = "قيد انتظار مراجعة وتحديد المدير";
@@ -5198,6 +6864,7 @@ async function handleLogin() {
             document.getElementById('tabNewInvoice').style.display = (isViewer || isStore || isHR || isAccounting || isFleet) ? 'none' : 'block';
             document.getElementById('tabClientQuota').style.display = isAdm ? 'block' : 'none';
             if(document.getElementById('tabWhatsappQuotas')) document.getElementById('tabWhatsappQuotas').style.display = isAdm ? 'block' : 'none';
+            if(document.getElementById('tabEgyptianTaxes')) document.getElementById('tabEgyptianTaxes').style.display = (isAdm || isAccounting) ? 'block' : 'none';
 
             const canAccessWarehouse = (isAdm || isStore);
             document.getElementById('tabWarehouse').style.display = canAccessWarehouse ? 'block' : 'none';
@@ -5232,10 +6899,22 @@ async function handleLogin() {
 
             if(isAdm) {
                 document.getElementById('adminUserManagement').style.display = 'block';
+                if (document.getElementById('portalSiteControlPanel')) {
+                    document.getElementById('portalSiteControlPanel').style.display = 'block';
+                    try {
+                        renderAdminManagement();
+                        renderAdminProducts();
+                        renderAdminContacts();
+                        renderAdminTextEditor();
+                    } catch (e) { console.error("Portal admin render:", e); }
+                }
                 updatePendingOrdersBadge();
                 renderAdminUsersTable();
             } else {
                 document.getElementById('adminUserManagement').style.display = 'none';
+                if (document.getElementById('portalSiteControlPanel')) {
+                    document.getElementById('portalSiteControlPanel').style.display = 'none';
+                }
             }
             updateDelegatesSelects();
         }
@@ -5260,7 +6939,8 @@ async function handleLogin() {
                 'lmInvoices': { btn: 'tabLmInvoices', sec: 'sectionLmInvoices' },
                 'settings': { btn: 'tabSettings', sec: 'sectionSettings' },
                 'whatsappQuotas': { btn: 'tabWhatsappQuotas', sec: 'sectionWhatsappQuotas' },
-                'secretPayment': { btn: 'tabSecretPayment', sec: 'sectionSecretPayment' }
+                'secretPayment': { btn: 'tabSecretPayment', sec: 'sectionSecretPayment' },
+                'egyptianTaxes': { btn: 'tabEgyptianTaxes', sec: 'sectionEgyptianTaxes' }
             };
 
             for(let k in tabsMap) {
@@ -5272,6 +6952,7 @@ async function handleLogin() {
 
             if(tabKey === 'clientQuota') { populateQuotaClientsSelect(); renderClientQuotasTable(); }
             if(tabKey === 'secretPayment') { onInvoicePaymentMethodChange(); updateElectronicPaymentPreview(); }
+            if(tabKey === 'egyptianTaxes') { initEgyptianTaxesDefaults(); renderEgyptianTaxesDashboard(); }
             if(tabKey === 'saved') { populateRoutesList(); renderSavedInvoices(); }
             if(tabKey === 'report') { populateRoutesList(); updateReportClientsSelect(); updateReportProductsSelect(); renderDailyReport(); }
             if(tabKey === 'carStock') renderCarStockTable();
@@ -7394,7 +9075,10 @@ function showClientMonthlyStats(clientName) {
             currentDelegate = null;
             currentPortalCustomer = null;
             document.getElementById('salesView').style.display = 'none';
-            document.getElementById('loginView').style.display = 'block';
+            document.body.classList.remove('erp-active');
+            if (document.getElementById('loginPageView')) document.getElementById('loginPageView').classList.add('hidden');
+            if (document.getElementById('publicSiteView')) document.getElementById('publicSiteView').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     
 // ==================== 1. استخراج وتطبيع بيانات تحميلات منوف (قراءة صحيحة من map الأصناف) ====================
@@ -8093,6 +9777,614 @@ initSalesForm = function() {
     selectRepPaymentMethod('cash');
 };
 
-</script>
+
+        // ==================== منظومة الضرائب المصرية ====================
+        let egyptianTaxPayments = [];
+
+        db.ref('egyptianTaxPayments').on('value', (s) => {
+            const val = s.val();
+            if (val && typeof val === 'object') {
+                egyptianTaxPayments = Object.values(val).filter(Boolean);
+            } else {
+                egyptianTaxPayments = [];
+            }
+            if (currentActiveTab === 'egyptianTaxes') {
+                renderEgyptianTaxesPaymentsTable();
+            }
+        });
+
+        function initEgyptianTaxesDefaults() {
+            const today = new Date();
+            const monthStr = today.toISOString().slice(0, 7);
+            const mInput = document.getElementById('taxMonthFilter');
+            const fromInput = document.getElementById('taxFromDate');
+            const toInput = document.getElementById('taxToDate');
+            const payDateInput = document.getElementById('taxPaymentDateInput');
+
+            if (mInput && !mInput.value) mInput.value = monthStr;
+            if (payDateInput && !payDateInput.value) payDateInput.value = today.toISOString().slice(0, 10);
+
+            if (fromInput && toInput && !fromInput.value && !toInput.value) {
+                const activeM = (mInput && mInput.value) ? mInput.value : monthStr;
+                const [y, m] = activeM.split('-').map(Number);
+                fromInput.value = `${activeM}-01`;
+                const lastDay = new Date(y, m, 0).getDate();
+                toInput.value = `${activeM}-${String(lastDay).padStart(2, '0')}`;
+            }
+        }
+
+        function onTaxMonthChange() {
+            const mVal = document.getElementById('taxMonthFilter')?.value;
+            if (!mVal || !/^\d{4}-\d{2}$/.test(mVal)) return;
+            const [y, m] = mVal.split('-').map(Number);
+            const lastDay = new Date(y, m, 0).getDate();
+            if (document.getElementById('taxFromDate')) document.getElementById('taxFromDate').value = `${mVal}-01`;
+            if (document.getElementById('taxToDate')) document.getElementById('taxToDate').value = `${mVal}-${String(lastDay).padStart(2, '0')}`;
+            renderEgyptianTaxesDashboard();
+        }
+
+        function renderEgyptianTaxesDashboard() {
+            initEgyptianTaxesDefaults();
+
+            const fromDate = document.getElementById('taxFromDate')?.value || '';
+            const toDate = document.getElementById('taxToDate')?.value || '';
+            const vatRate = parseFloat(document.getElementById('taxVatRateInput')?.value) || 0;
+            const whRate = parseFloat(document.getElementById('taxWithholdingRateInput')?.value) || 0;
+
+            const activeSales = (cloudSales || []).filter(s => s && s.status !== 'cancelled');
+            const cumulativeSales = activeSales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+
+            const periodSales = activeSales.filter(s => {
+                if (!s.date) return false;
+                if (fromDate && s.date < fromDate) return false;
+                if (toDate && s.date > toDate) return false;
+                return true;
+            });
+
+            const grossSales = periodSales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+            const vatAmount = grossSales * (vatRate / 100);
+            const netBeforeVat = Math.max(0, grossSales - vatAmount);
+            const withholdingAmount = grossSales * (whRate / 100);
+
+            const periodPurchases = (cloudMenofLoads || []).reduce((sum, m) => {
+                if (!m || !m.date) return sum;
+                if (fromDate && m.date < fromDate) return sum;
+                if (toDate && m.date > toDate) return sum;
+                return sum + (parseFloat(m.totalGoods) || 0);
+            }, 0);
+
+            if (document.getElementById('taxGrossSalesVal')) document.getElementById('taxGrossSalesVal').innerText = grossSales.toFixed(2) + " ج.م";
+            if (document.getElementById('taxActiveInvoicesCount')) document.getElementById('taxActiveInvoicesCount').innerText = periodSales.length;
+            if (document.getElementById('taxVatAmountVal')) document.getElementById('taxVatAmountVal').innerText = vatAmount.toFixed(2) + " ج.م";
+            if (document.getElementById('taxNetBeforeVatVal')) document.getElementById('taxNetBeforeVatVal').innerText = netBeforeVat.toFixed(2);
+            if (document.getElementById('taxWithholdingAmountVal')) document.getElementById('taxWithholdingAmountVal').innerText = withholdingAmount.toFixed(2) + " ج.م";
+            if (document.getElementById('taxPeriodPurchasesVal')) document.getElementById('taxPeriodPurchasesVal').innerText = periodPurchases.toFixed(2) + " ج.م";
+            if (document.getElementById('taxCumulativeSalesVal')) document.getElementById('taxCumulativeSalesVal').innerText = cumulativeSales.toFixed(2) + " ج.م";
+            if (document.getElementById('taxTotalInvoicesCount')) document.getElementById('taxTotalInvoicesCount').innerText = activeSales.length;
+
+            if (document.getElementById('taxEntityInfoText')) {
+                document.getElementById('taxEntityInfoText').innerHTML = `${systemSettings.companyName || 'BLACK HORSE'}<br><span style="font-weight:normal; color:#475569;">${systemSettings.companySubtitle || ''}</span>`;
+            }
+            if (document.getElementById('taxRegistrationDetailsText')) {
+                document.getElementById('taxRegistrationDetailsText').innerText = systemSettings.taxInfo || "كود النشاط: 7761 | ت.ض: 474386335 | س.ت: 76027";
+            }
+            if (document.getElementById('taxEmailsInfoText')) {
+                document.getElementById('taxEmailsInfoText').innerHTML = `رسمي: ${systemSettings.officialEmail || FIXED_CORRESPONDENCE_EMAIL}<br>فواتير: ${systemSettings.invoiceEmail || 'hosamrezoo@gmail.com'}`;
+            }
+
+            const invBody = document.getElementById('egyptianTaxInvoicesBody');
+            if (invBody) {
+                if (periodSales.length === 0) {
+                    invBody.innerHTML = '<tr><td colspan="7" style="color:#64748b;">لا توجد فواتير نشطة في الفترة المحددة.</td></tr>';
+                } else {
+                    invBody.innerHTML = periodSales.slice().reverse().map(inv => {
+                        const t = parseFloat(inv.total) || 0;
+                        const v = t * (vatRate / 100);
+                        const w = t * (whRate / 100);
+                        return `
+                            <tr>
+                                <td><b>#${inv.invNo || ''}</b></td>
+                                <td>${inv.date || '-'}</td>
+                                <td>${inv.client || '-'}</td>
+                                <td>${inv.delegateName || '-'}</td>
+                                <td><b>${t.toFixed(2)}</b> ج.م</td>
+                                <td style="color:#dc2626; font-weight:bold;">${v.toFixed(2)} ج.م</td>
+                                <td style="color:#b45309; font-weight:bold;">${w.toFixed(2)} ج.م</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+
+            renderEgyptianTaxesPaymentsTable();
+        }
+
+        function saveEgyptianTaxPayment() {
+            const type = document.getElementById('taxPaymentTypeSelect')?.value || 'القيمة المضافة (VAT)';
+            const date = document.getElementById('taxPaymentDateInput')?.value || new Date().toISOString().slice(0, 10);
+            const amount = parseFloat(document.getElementById('taxPaymentAmountInput')?.value) || 0;
+            const refNo = (document.getElementById('taxPaymentRefInput')?.value || '').trim();
+
+            if (amount <= 0) {
+                showToast("❌ يرجى إدخال مبلغ سداد ضريبي صحيح أكبر من صفر.", "error");
+                return;
+            }
+
+            const rec = {
+                id: String(Date.now()),
+                type: type,
+                date: date,
+                amount: amount,
+                refNo: refNo || '-'
+            };
+
+            egyptianTaxPayments.push(rec);
+            db.ref('egyptianTaxPayments/' + rec.id).set(rec).then(() => {
+                showToast("✅ تم حفظ سجل السداد الضريبي بنجاح!", "success");
+                if (document.getElementById('taxPaymentAmountInput')) document.getElementById('taxPaymentAmountInput').value = '';
+                if (document.getElementById('taxPaymentRefInput')) document.getElementById('taxPaymentRefInput').value = '';
+                renderEgyptianTaxesPaymentsTable();
+            });
+        }
+
+        async function deleteEgyptianTaxPayment(id) {
+            const ok = await showCustomConfirm("⚠️ هل تريد حذف هذا السجل الضريبي؟");
+            if (!ok) return;
+            egyptianTaxPayments = egyptianTaxPayments.filter(p => String(p.id) !== String(id));
+            db.ref('egyptianTaxPayments/' + id).remove().then(() => {
+                showToast("✅ تم حذف السجل الضريبي.", "success");
+                renderEgyptianTaxesPaymentsTable();
+            });
+        }
+
+        function renderEgyptianTaxesPaymentsTable() {
+            const body = document.getElementById('egyptianTaxPaymentsBody');
+            if (!body) return;
+            if (!egyptianTaxPayments || egyptianTaxPayments.length === 0) {
+                body.innerHTML = '<tr><td colspan="5" style="color:#64748b;">لا توجد سدادات أو إقرارات ضريبية مسجلة بعد.</td></tr>';
+                return;
+            }
+            body.innerHTML = egyptianTaxPayments.slice().reverse().map(p => `
+                <tr>
+                    <td>${p.date || '-'}</td>
+                    <td><b>${p.type || '-'}</b></td>
+                    <td><code>${p.refNo || '-'}</code></td>
+                    <td style="color:#16a34a; font-weight:bold;">${(parseFloat(p.amount) || 0).toFixed(2)} ج.م</td>
+                    <td>
+                        <button type="button" class="btn btn-danger" style="padding:2px 7px; font-size:10px; width:auto; margin:0;" onclick="deleteEgyptianTaxPayment('${p.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function exportEgyptianTaxesExcel() {
+            const fromDate = document.getElementById('taxFromDate')?.value || '';
+            const toDate = document.getElementById('taxToDate')?.value || '';
+            const vatRate = parseFloat(document.getElementById('taxVatRateInput')?.value) || 0;
+            const whRate = parseFloat(document.getElementById('taxWithholdingRateInput')?.value) || 0;
+
+            const periodSales = (cloudSales || []).filter(s => {
+                if (!s || s.status === 'cancelled' || !s.date) return false;
+                if (fromDate && s.date < fromDate) return false;
+                if (toDate && s.date > toDate) return false;
+                return true;
+            });
+
+            if (periodSales.length === 0) {
+                showToast("⚠️ لا توجد فواتير في الفترة المحددة لتصديرها.", "warning");
+                return;
+            }
+
+            const rows = periodSales.map((inv, idx) => {
+                const t = parseFloat(inv.total) || 0;
+                return {
+                    "م": idx + 1,
+                    "رقم الفاتورة": "#" + (inv.invNo || ''),
+                    "التاريخ": inv.date || '',
+                    "العميل": inv.client || '',
+                    "البطاقة الضريبية / بيانات الشركة": systemSettings.taxInfo || '',
+                    "إجمالي الفاتورة (ج.م)": t.toFixed(2),
+                    [`القيمة المضافة (${vatRate}%)`]: (t * (vatRate / 100)).toFixed(2),
+                    [`الخصم والتحصيل (${whRate}%)`]: (t * (whRate / 100)).toFixed(2)
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "الضرائب المصرية");
+            if (!ws['!views']) ws['!views'] = [];
+            ws['!views'].push({ rightToLeft: true });
+            XLSX.writeFile(wb, `تقرير_الضرائب_المصرية_${fromDate || 'all'}_الى_${toDate || 'all'}.xlsx`);
+        }
+
+
+
+
+    // ================= البوابة التعريفية والتحكم في محتواها =================
+    function openDrawer() {
+      document.getElementById("drawerBackdrop").classList.add("open");
+      document.getElementById("sideDrawer").classList.add("open");
+    }
+
+    function closeDrawer() {
+      document.getElementById("drawerBackdrop").classList.remove("open");
+      document.getElementById("sideDrawer").classList.remove("open");
+    }
+
+    function openLoginPage() {
+      const codeEl = document.getElementById("loginCode");
+      const passEl = document.getElementById("loginPass");
+      if (codeEl) codeEl.value = "";
+      if (passEl) passEl.value = "";
+      if (typeof backToLoginMain === "function") backToLoginMain();
+      document.getElementById("publicSiteView").classList.add("hidden");
+      document.getElementById("loginPageView").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (codeEl) setTimeout(() => codeEl.focus(), 100);
+    }
+
+    function backToPublicFromLogin() {
+      document.getElementById("loginPageView").classList.add("hidden");
+      document.getElementById("publicSiteView").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    const TEXT_FIELDS = [
+      { key: "brandName", label: "اسم الشركة (إنجليزي)", el: "pub_brandName", defaultVal: "BLACK HORSE" },
+      { key: "brandSub", label: "وصف الشعار", el: "pub_brandSub", defaultVal: "شركة بلاك هورس للتجارة والتوزيع" },
+      { key: "heroBadge", label: "شارة أعلى الصفحة", el: "pub_heroBadge", defaultVal: "توزيع معتمد • المنوفية وخطوط السير" },
+      { key: "heroDesc", label: "النبذة التعريفية الرئيسية", el: "pub_heroDesc", defaultVal: "نعمل وفق منظومة توزيع احترافية تغطي تجار الجملة والقطاعي والمحلات في محافظة المنوفية (سدود، منوف، شبين الكوم، وكافة خطوط السير المعتمدة)، مع الالتزام الكامل بالشفافية والدقة وتوفير منتجات كبرى الشركات العاملة في السوق." },
+      { key: "infoName", label: "الاسم التجاري", el: "pub_infoName", defaultVal: "شركة بلاك هورس (BLACK HORSE)" },
+      { key: "infoActivity", label: "النشاط", el: "pub_infoActivity", defaultVal: "تجارة وتوزيع منتجات التبغ والسجائر" },
+      { key: "infoArea", label: "نطاق التغطية", el: "pub_infoArea", defaultVal: "منوف • سدود • شبين الكوم • المنوفية" },
+      { key: "infoCode", label: "كود النشاط", el: "pub_infoCode", defaultVal: "4630" },
+      { key: "infoTax", label: "الرقم الضريبي", el: "pub_infoTax", defaultVal: "474386335" },
+      { key: "aboutTitle", label: "عنوان قسم النبذة", el: "pub_aboutTitle", defaultVal: "نبذة عن شركة بلاك هورس" },
+      { key: "aboutDesc", label: "وصف قسم النبذة", el: "pub_aboutDesc", defaultVal: "تعمل شركة بلاك هورس في تجارة وتوزيع منتجات التبغ والسجائر، وتخدم التجار والمحلات في محافظة المنوفية عبر خطوط توزيع منتظمة ونظام متابعة واضح." },
+      { key: "aboutCard1Title", label: "بطاقة النبذة 1 - العنوان", el: "pub_aboutCard1Title", defaultVal: "تغطية خطوط السير" },
+      { key: "aboutCard1Desc", label: "بطاقة النبذة 1 - الوصف", el: "pub_aboutCard1Desc", defaultVal: "توفير المنتجات للتجار والمحلات في منوف، سدود، شبين الكوم، والمناطق التابعة بصورة مستمرة ومنظمة." },
+      { key: "aboutCard2Title", label: "بطاقة النبذة 2 - العنوان", el: "pub_aboutCard2Title", defaultVal: "تنوع الشركات والمنتجات" },
+      { key: "aboutCard2Desc", label: "بطاقة النبذة 2 - الوصف", el: "pub_aboutCard2Desc", defaultVal: "توفير أصناف متعددة من الشركات الموردة لتلبية احتياجات السوق بالجملة والتجزئة." },
+      { key: "aboutCard3Title", label: "بطاقة النبذة 3 - العنوان", el: "pub_aboutCard3Title", defaultVal: "تنظيم الفواتير والحسابات" },
+      { key: "aboutCard3Desc", label: "بطاقة النبذة 3 - الوصف", el: "pub_aboutCard3Desc", defaultVal: "متابعة الفواتير والمدفوعات وحسابات العملاء بشكل منظم وواضح." },
+      { key: "dept1Title", label: "القسم 1 - العنوان", el: "pub_dept1Title", defaultVal: "قسم المبيعات والتوزيع" },
+      { key: "dept1Desc", label: "القسم 1 - الوصف", el: "pub_dept1Desc", defaultVal: "متابعة العملاء، خطوط التوزيع، وتنفيذ الطلبات والفواتير اليومية." },
+      { key: "dept2Title", label: "القسم 2 - العنوان", el: "pub_dept2Title", defaultVal: "قسم المخازن" },
+      { key: "dept2Desc", label: "القسم 2 - الوصف", el: "pub_dept2Desc", defaultVal: "تنظيم استلام وصرف الأصناف وتجهيز طلبيات التوزيع." },
+      { key: "dept3Title", label: "القسم 3 - العنوان", el: "pub_dept3Title", defaultVal: "قسم الحسابات" },
+      { key: "dept3Desc", label: "القسم 3 - الوصف", el: "pub_dept3Desc", defaultVal: "متابعة الفواتير، التحصيلات، والبيانات المالية والضريبية للشركة." },
+      { key: "footerText", label: "نص التذييل أسفل الموقع", el: "pub_footerText", defaultVal: "جميع الحقوق محفوظة © 2026 شركة بلاك هورس (BLACK HORSE) للتجارة والتوزيع — المنوفية" },
+      { key: "contactTitle", label: "عنوان قسم للتواصل", el: "pub_contactTitle", defaultVal: "للتواصل" },
+      { key: "contactDesc", label: "وصف قسم للتواصل", el: "pub_contactDesc", defaultVal: "بيانات التواصل الرسمية مع شركة بلاك هورس للتجارة والتوزيع" }
+    ];
+
+    const STORAGE_TEXTS = "bh_site_texts_v5";
+    const STORAGE_MGMT = "bh_mgmt_list_v5";
+    const STORAGE_PRODS = "bh_products_v5";
+    const STORAGE_CONTACTS = "bh_contacts_v5";
+
+    let portalSiteTextsCache = JSON.parse(localStorage.getItem(STORAGE_TEXTS) || "{}");
+    let managementList = JSON.parse(localStorage.getItem(STORAGE_MGMT) || "[]");
+    let contactItems = JSON.parse(localStorage.getItem(STORAGE_CONTACTS) || "[]");
+    let showPrices = false;
+    let productsList = JSON.parse(localStorage.getItem(STORAGE_PRODS) || "null") || [
+      { id: 1, name: "كليوباترا كينج / بوكس", company: "الشركة الشرقية", desc: "منتجات الشركة الشرقية للتوزيع.", price: "متاح بالكميات المعتمدة", img: "" },
+      { id: 2, name: "تارجت / كابتن بلاك / ديفيدوف إيفولف", company: "شركة منصور", desc: "منتجات شركة منصور للتوزيع.", price: "حسب قائمة الأسعار المعتمدة", img: "" },
+      { id: 3, name: "أدخنة الوردة", company: "قصر البرج", desc: "أدخنة الوردة التابعة لشركة قصر البرج.", price: "متاح للجملة والتجزئة", img: "" },
+      { id: 4, name: "أصناف ترانس بيزنس", company: "ترانس بيزنس", desc: "منتجات ترانس بيزنس للتوزيع.", price: "متاح حسب التوريد", img: "" },
+      { id: 5, name: "أصناف جي تي آي", company: "جي تي آي", desc: "منتجات جي تي آي المعتمدة.", price: "متاح حسب الحصص", img: "" }
+    ];
+
+    function syncPortalPublicToCloud(subKey, val) {
+      try {
+        if (typeof db !== "undefined" && db && typeof db.ref === "function") {
+          db.ref("portalPublicContent/" + subKey).set(val).catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    function loadSiteTexts() {
+      TEXT_FIELDS.forEach(f => {
+        const val = portalSiteTextsCache[f.key] !== undefined ? portalSiteTextsCache[f.key] : f.defaultVal;
+        const target = document.getElementById(f.el);
+        if (target) target.textContent = val;
+      });
+    }
+
+    function renderAdminTextEditor() {
+      const container = document.getElementById("siteTextsForm");
+      if (!container) return;
+      container.innerHTML = TEXT_FIELDS.map(f => {
+        const val = portalSiteTextsCache[f.key] !== undefined ? portalSiteTextsCache[f.key] : f.defaultVal;
+        return `
+          <div class="form-group" style="margin-bottom:0;">
+            <label style="color:#cbd5e1;">${f.label}</label>
+            <input type="text" data-text-key="${f.key}" value="${String(val).replace(/"/g, '&quot;')}" />
+          </div>
+        `;
+      }).join("");
+    }
+
+    function saveSiteTextsFromAdmin() {
+      const data = {};
+      document.querySelectorAll("[data-text-key]").forEach(inp => {
+        data[inp.dataset.textKey] = inp.value;
+      });
+      portalSiteTextsCache = data;
+      localStorage.setItem(STORAGE_TEXTS, JSON.stringify(data));
+      syncPortalPublicToCloud("siteTexts", data);
+      loadSiteTexts();
+      if (typeof showToast === "function") showToast("✅ تم حفظ تعديلات الواجهة الخارجية بنجاح!", "success");
+    }
+
+    function resetSiteTexts() {
+      portalSiteTextsCache = {};
+      localStorage.removeItem(STORAGE_TEXTS);
+      syncPortalPublicToCloud("siteTexts", {});
+      loadSiteTexts();
+      renderAdminTextEditor();
+      if (typeof showToast === "function") showToast("↺ تم استعادة النصوص الافتراضية للواجهة.", "info");
+    }
+
+    function renderPublicContacts() {
+      const grid = document.getElementById("publicContactGrid");
+      if (!grid) return;
+      if (!contactItems.length) {
+        grid.innerHTML = `
+          <div class="glass-card" style="grid-column: 1 / -1; text-align: center;">
+            <p>سيتم إضافة أرقام التليفونات والبريد الإلكتروني وبيانات التواصل من لوحة الإدارة.</p>
+          </div>
+        `;
+        return;
+      }
+      grid.innerHTML = contactItems.map(c => {
+        const val = (c.value || "").trim();
+        let displayVal = val;
+        if (c.type === "بريد إلكتروني" && val) {
+          displayVal = `<a href="mailto:${val}" style="color: var(--gold-bright); font-weight: 800; word-break: break-all;">${val}</a>`;
+        } else if ((c.type === "هاتف / موبايل" || c.type === "واتساب") && val) {
+          const cleanPhone = val.replace(/[^\d+]/g, "");
+          displayVal = `<a href="tel:${cleanPhone}" dir="ltr" style="color: var(--gold-bright); font-weight: 800; display: inline-block;">${val}</a>`;
+        } else {
+          displayVal = `<strong style="color: var(--gold-bright);">${val}</strong>`;
+        }
+        return `
+          <div class="glass-card">
+            <span class="mgmt-role-badge">${c.type || "تواصل"}</span>
+            <h4>${c.label || "جهة اتصال"}</h4>
+            <p style="margin-top: 8px; font-size: 15px;">${displayVal}</p>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderAdminContacts() {
+      const box = document.getElementById("adminContactList");
+      if (!box) return;
+      if (!contactItems.length) {
+        box.innerHTML = `<p style="color: #94a3b8; font-size: 12px;">لم تُضف أرقام تليفونات أو إيميلات بعد.</p>`;
+        return;
+      }
+      box.innerHTML = contactItems.map(c => `
+        <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px;">
+          <span style="font-size:11px; color:#f5d76e; font-weight:bold;">${c.type || "تواصل"}</span>
+          <div style="font-weight:bold; font-size:13px; margin-top:2px;">${c.label || "جهة اتصال"}</div>
+          <div style="font-size:12px; color:#cbd5e1; word-break:break-all; margin:4px 0;">${c.value || ""}</div>
+          <button type="button" class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="deleteContactItem(${c.id})">حذف</button>
+        </div>
+      `).join("");
+    }
+
+    function addContactItem() {
+      const type = document.getElementById("adminContactType").value;
+      const label = document.getElementById("adminContactLabel").value.trim();
+      const value = document.getElementById("adminContactValue").value.trim();
+      if (!value) {
+        if (typeof showToast === "function") showToast("⚠️ اكتب رقم التليفون أو البريد الإلكتروني أولاً.", "warning");
+        return;
+      }
+      contactItems.push({ id: Date.now(), type, label: label || type, value });
+      localStorage.setItem(STORAGE_CONTACTS, JSON.stringify(contactItems));
+      syncPortalPublicToCloud("contacts", contactItems);
+      document.getElementById("adminContactLabel").value = "";
+      document.getElementById("adminContactValue").value = "";
+      renderPublicContacts();
+      renderAdminContacts();
+      if (typeof showToast === "function") showToast("✅ تم إضافة وسيلة التواصل للواجهة!", "success");
+    }
+
+    function deleteContactItem(id) {
+      contactItems = contactItems.filter(c => c.id !== id);
+      localStorage.setItem(STORAGE_CONTACTS, JSON.stringify(contactItems));
+      syncPortalPublicToCloud("contacts", contactItems);
+      renderPublicContacts();
+      renderAdminContacts();
+    }
+
+    function renderPublicManagement() {
+      const grid = document.getElementById("publicManagementGrid");
+      if (!grid) return;
+      if (!managementList.length) {
+        grid.innerHTML = `
+          <div class="glass-card" style="grid-column: 1 / -1; text-align: center;">
+            <p>يتم تحديث بيانات الإدارة من لوحة التحكم الداخلية.</p>
+          </div>
+        `;
+        return;
+      }
+      grid.innerHTML = managementList.map(m => `
+        <div class="mgmt-public-card">
+          <div class="mgmt-avatar">${(m.name || "BH").trim().charAt(0)}</div>
+          ${m.role ? `<div class="mgmt-role-badge">${m.role}</div>` : ""}
+          <h4>${m.name || ""}</h4>
+          ${m.note ? `<p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">${m.note}</p>` : ""}
+        </div>
+      `).join("");
+    }
+
+    function renderAdminManagement() {
+      const box = document.getElementById("adminMgmtList");
+      if (!box) return;
+      if (!managementList.length) {
+        box.innerHTML = `<p style="color: #94a3b8; font-size: 12px;">لا يوجد أعضاء مضافون حالياً.</p>`;
+        return;
+      }
+      box.innerHTML = managementList.map(m => `
+        <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px;">
+          ${m.role ? `<span style="font-size:11px; color:#f5d76e; font-weight:bold;">${m.role}</span>` : ""}
+          <div style="font-weight:bold; font-size:13px; margin-top:2px;">${m.name || "بدون اسم"}</div>
+          <div style="font-size:11.5px; color:#94a3b8; margin:4px 0;">${m.note || ""}</div>
+          <button type="button" class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="deleteManagementMember(${m.id})">حذف</button>
+        </div>
+      `).join("");
+    }
+
+    function addManagementMember() {
+      const name = document.getElementById("adminMgmtName").value.trim();
+      const role = document.getElementById("adminMgmtRole").value.trim();
+      const note = document.getElementById("adminMgmtNote").value.trim();
+      if (!name && !role) {
+        if (typeof showToast === "function") showToast("⚠️ اكتب الاسم أو المسمى الوظيفي أولاً.", "warning");
+        return;
+      }
+      managementList.push({ id: Date.now(), name, role, note });
+      localStorage.setItem(STORAGE_MGMT, JSON.stringify(managementList));
+      syncPortalPublicToCloud("management", managementList);
+      document.getElementById("adminMgmtName").value = "";
+      document.getElementById("adminMgmtRole").value = "";
+      document.getElementById("adminMgmtNote").value = "";
+      renderPublicManagement();
+      renderAdminManagement();
+      if (typeof showToast === "function") showToast("✅ تم إضافة عضو الإدارة للواجهة!", "success");
+    }
+
+    function deleteManagementMember(id) {
+      managementList = managementList.filter(m => m.id !== id);
+      localStorage.setItem(STORAGE_MGMT, JSON.stringify(managementList));
+      syncPortalPublicToCloud("management", managementList);
+      renderPublicManagement();
+      renderAdminManagement();
+    }
+
+    function renderPublicProducts() {
+      const grid = document.getElementById("publicProductsGrid");
+      if (!grid) return;
+      grid.innerHTML = productsList.map(p => `
+        <div class="pack-card">
+          <div class="pack-visual">
+            <span class="pack-company-badge">${p.company}</span>
+            ${
+              p.img
+                ? `<img src="${p.img}" alt="${p.name}" />`
+                : `<div class="pack-frame">
+                     <span>صورة العلبة</span>
+                     <small style="opacity:0.7; font-size:10px; margin-top:4px;">${p.company}</small>
+                   </div>`
+            }
+          </div>
+          <div class="pack-details">
+            <div>
+              <h4>${p.name}</h4>
+              <p>${p.desc}</p>
+            </div>
+            <div>
+              <div class="price-tag ${showPrices ? '' : 'hidden'}">${p.price}</div>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderAdminProducts() {
+      const grid = document.getElementById("adminProductsList");
+      if (!grid) return;
+      grid.innerHTML = productsList.map(p => `
+        <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px;">
+          <span style="font-size:11px; color:#f5d76e; font-weight:bold;">${p.company}</span>
+          <div style="font-weight:bold; font-size:13px; margin:2px 0;">${p.name}</div>
+          <div style="font-size:11px; color:#94a3b8; margin-bottom:8px;">${p.img ? "✅ تم رفع صورة للعلبة" : "لم تُرفع صورة بعد"}</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <label class="btn btn-warning" style="padding:5px 8px; font-size:11px; color:#070b14; cursor:pointer; width:auto; margin:0;">
+              رفع / تغيير الصورة
+              <input type="file" accept="image/*" style="display:none;" onchange="uploadPackImage(event, ${p.id})" />
+            </label>
+            ${p.img ? `<button type="button" class="btn btn-danger" style="padding:5px 8px; font-size:11px; width:auto; margin:0;" onclick="removePackImage(${p.id})">حذف الصورة</button>` : ""}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function uploadPackImage(event, prodId) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const prod = productsList.find(x => x.id === prodId);
+        if (prod) {
+          prod.img = e.target.result;
+          localStorage.setItem(STORAGE_PRODS, JSON.stringify(productsList));
+          syncPortalPublicToCloud("products", productsList);
+          renderPublicProducts();
+          renderAdminProducts();
+          if (typeof showToast === "function") showToast("✅ تم تحديث صورة العلبة بنجاح!", "success");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removePackImage(prodId) {
+      const prod = productsList.find(x => x.id === prodId);
+      if (prod) {
+        prod.img = "";
+        localStorage.setItem(STORAGE_PRODS, JSON.stringify(productsList));
+        syncPortalPublicToCloud("products", productsList);
+        renderPublicProducts();
+        renderAdminProducts();
+      }
+    }
+
+    function togglePublicPrices() {
+      showPrices = !showPrices;
+      const btn = document.getElementById("togglePricesBtn");
+      if (btn) btn.textContent = showPrices ? "إخفاء الأسعار" : "إظهار الأسعار";
+      renderPublicProducts();
+    }
+
+    // مزامنة بيانات البوابة من Firebase إن وجدت
+    try {
+      if (typeof db !== "undefined" && db && typeof db.ref === "function") {
+        db.ref("portalPublicContent").on("value", (snap) => {
+          const val = snap.val();
+          if (!val) return;
+          if (val.siteTexts) {
+            portalSiteTextsCache = val.siteTexts;
+            localStorage.setItem(STORAGE_TEXTS, JSON.stringify(portalSiteTextsCache));
+            loadSiteTexts();
+          }
+          if (Array.isArray(val.management)) {
+            managementList = val.management;
+            localStorage.setItem(STORAGE_MGMT, JSON.stringify(managementList));
+            renderPublicManagement();
+          }
+          if (Array.isArray(val.products)) {
+            productsList = val.products;
+            localStorage.setItem(STORAGE_PRODS, JSON.stringify(productsList));
+            renderPublicProducts();
+          }
+          if (Array.isArray(val.contacts)) {
+            contactItems = val.contacts;
+            localStorage.setItem(STORAGE_CONTACTS, JSON.stringify(contactItems));
+            renderPublicContacts();
+          }
+        });
+      }
+    } catch (e) {}
+
+    loadSiteTexts();
+    renderPublicManagement();
+    renderPublicProducts();
+    renderPublicContacts();
+
+  </script>
 </body>
 </html>
